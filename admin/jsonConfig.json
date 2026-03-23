@@ -1,0 +1,137 @@
+{
+  "i18n": true,
+  "type": "tabs",
+  "items": {
+    "connectionTab": {
+      "type": "panel",
+      "label": "tab_connection",
+      "items": {
+        "connectionHeader": {
+          "type": "header",
+          "text": "header_connection",
+          "size": 4
+        },
+        "apiKeyInfo": {
+          "type": "staticText",
+          "text": "apiKeyInfo",
+          "xs": 12, "sm": 12, "md": 12, "lg": 12, "xl": 12,
+          "style": {
+            "fontSize": 14,
+            "color": "#666",
+            "marginBottom": 16
+          }
+        },
+        "apiKey": {
+          "type": "password",
+          "label": "label_apiKey",
+          "xs": 12, "sm": 12, "md": 8, "lg": 8, "xl": 8
+        },
+        "checkConnection": {
+          "newLine": true,
+          "type": "sendTo",
+          "label": "btn_checkConnection",
+          "command": "checkConnection",
+          "jsonData": "{\"apiKey\": \"${data.apiKey}\"}",
+          "variant": "outlined",
+          "color": "primary",
+          "icon": "wifi",
+          "alsoDependsOn": ["apiKey"],
+          "xs": 12, "sm": 12, "md": 4, "lg": 4, "xl": 4,
+          "showProcess": true,
+          "timeout": 15000,
+          "result": {
+            "success": "msg_connectionOk",
+            "error": "msg_connectionFailed"
+          }
+        }
+      }
+    },
+    "settingsTab": {
+      "type": "panel",
+      "label": "tab_settings",
+      "items": {
+        "pollingHeader": {
+          "type": "header",
+          "text": "header_polling",
+          "size": 5
+        },
+        "pollInterval": {
+          "type": "number",
+          "label": "label_pollInterval",
+          "tooltip": "tooltip_pollInterval",
+          "min": 5,
+          "max": 60,
+          "default": 10,
+          "xs": 12, "sm": 12, "md": 6, "lg": 6, "xl": 6
+        },
+        "filterMode": {
+          "type": "select",
+          "label": "label_filterMode",
+          "tooltip": "tooltip_filterMode",
+          "default": "active",
+          "options": [
+            { "label": "filterMode_active", "value": "active" },
+            { "label": "filterMode_recent", "value": "recent" }
+          ],
+          "xs": 12, "sm": 12, "md": 6, "lg": 6, "xl": 6
+        },
+        "displayHeader": {
+          "newLine": true,
+          "type": "header",
+          "text": "header_display",
+          "size": 5
+        },
+        "language": {
+          "type": "select",
+          "label": "label_language",
+          "tooltip": "tooltip_language",
+          "default": "de",
+          "options": [
+            { "label": "lang_de", "value": "de" },
+            { "label": "lang_en", "value": "en" }
+          ],
+          "xs": 12, "sm": 12, "md": 6, "lg": 6, "xl": 6
+        }
+      }
+    },
+    "aboutTab": {
+      "type": "panel",
+      "label": "aboutTab",
+      "items": {
+        "aboutHeader": {
+          "type": "header",
+          "text": "aboutHeader",
+          "size": 4
+        },
+        "aboutInfo": {
+          "type": "staticText",
+          "text": "aboutInfo",
+          "xs": 12, "sm": 12, "md": 12, "lg": 12, "xl": 12,
+          "style": {
+            "fontSize": 14,
+            "marginBottom": 16
+          }
+        },
+        "_kofiLink": {
+          "type": "staticLink",
+          "href": "https://ko-fi.com/krobipd",
+          "label": "donateKofi",
+          "button": true,
+          "variant": "outlined",
+          "color": "primary",
+          "icon": "favorite",
+          "xs": 12, "sm": 6, "md": 4, "lg": 4, "xl": 4
+        },
+        "_paypalLink": {
+          "type": "staticLink",
+          "href": "https://paypal.me/krobipd",
+          "label": "donatePaypal",
+          "button": true,
+          "variant": "outlined",
+          "color": "primary",
+          "xs": 12, "sm": 6, "md": 4, "lg": 4, "xl": 4
+        }
+      }
+    }
+  }
+}

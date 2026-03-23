@@ -1,0 +1,125 @@
+{
+  "common": {
+    "name": "parcelapp",
+    "version": "0.1.0",
+    "news": {
+      "0.1.0": {
+        "en": "Initial release — track packages from 300+ carriers via parcel.app",
+        "de": "Erstveröffentlichung — Pakete von 300+ Versandunternehmen über parcel.app verfolgen",
+        "ru": "Первый выпуск — отслеживание посылок от 300+ перевозчиков через parcel.app",
+        "pt": "Lançamento inicial — rastreie pacotes de mais de 300 transportadoras via parcel.app",
+        "nl": "Eerste release — volg pakketten van 300+ vervoerders via parcel.app",
+        "fr": "Version initiale — suivez vos colis de plus de 300 transporteurs via parcel.app",
+        "it": "Prima versione — traccia pacchi da più di 300 corrieri tramite parcel.app",
+        "es": "Versión inicial — rastrea paquetes de más de 300 transportistas a través de parcel.app",
+        "pl": "Pierwsze wydanie — śledź przesyłki od 300+ przewoźników przez parcel.app",
+        "uk": "Перший випуск — відстеження посилок від 300+ перевізників через parcel.app",
+        "zh-cn": "初始版本 — 通过 parcel.app 追踪 300+ 快递公司的包裹"
+      }
+    },
+    "titleLang": {
+      "en": "Parcel Tracking",
+      "de": "Paketverfolgung",
+      "ru": "Отслеживание посылок",
+      "pt": "Rastreamento de encomendas",
+      "nl": "Pakkettracking",
+      "fr": "Suivi de colis",
+      "it": "Tracciamento pacchi",
+      "es": "Seguimiento de paquetes",
+      "pl": "Śledzenie przesyłek",
+      "uk": "Відстеження посилок",
+      "zh-cn": "包裹追踪"
+    },
+    "desc": {
+      "en": "Track your packages from 300+ carriers via parcel.app",
+      "de": "Verfolge deine Pakete von 300+ Versandunternehmen über parcel.app",
+      "ru": "Отслеживайте посылки от 300+ перевозчиков через parcel.app",
+      "pt": "Rastreie seus pacotes de mais de 300 transportadoras via parcel.app",
+      "nl": "Volg je pakketten van 300+ vervoerders via parcel.app",
+      "fr": "Suivez vos colis de plus de 300 transporteurs via parcel.app",
+      "it": "Traccia i tuoi pacchi da più di 300 corrieri tramite parcel.app",
+      "es": "Rastrea tus paquetes de más de 300 transportistas a través de parcel.app",
+      "pl": "Śledź swoje przesyłki od 300+ przewoźników przez parcel.app",
+      "uk": "Відстежуйте свої посилки від 300+ перевізників через parcel.app",
+      "zh-cn": "通过 parcel.app 追踪 300+ 快递公司的包裹"
+    },
+    "authors": [
+      "krobi <krobi@power-dreams.com>"
+    ],
+    "keywords": [
+      "parcel",
+      "tracking",
+      "delivery",
+      "package",
+      "shipment",
+      "carrier"
+    ],
+    "licenseInformation": {
+      "license": "MIT",
+      "type": "free"
+    },
+    "platform": "Javascript/Node.js",
+    "icon": "parcelapp.svg",
+    "extIcon": "https://raw.githubusercontent.com/krobipd/ioBroker.parcelapp/main/admin/parcelapp.svg",
+    "readme": "https://github.com/krobipd/ioBroker.parcelapp/blob/main/README.md",
+    "enabled": true,
+    "tier": 3,
+    "loglevel": "info",
+    "mode": "daemon",
+    "type": "infrastructure",
+    "compact": true,
+    "connectionType": "cloud",
+    "dataSource": "poll",
+    "adminUI": {
+      "config": "json"
+    },
+    "supportedMessages": {
+      "stopInstance": true
+    },
+    "dependencies": [
+      {
+        "js-controller": ">=7.0.0"
+      }
+    ],
+    "globalDependencies": [
+      {
+        "admin": ">=7.6.20"
+      }
+    ]
+  },
+  "encryptedNative": [
+    "apiKey"
+  ],
+  "protectedNative": [
+    "apiKey"
+  ],
+  "native": {
+    "apiKey": "",
+    "pollInterval": 10,
+    "filterMode": "active",
+    "language": "de"
+  },
+  "instanceObjects": [
+    {
+      "_id": "info",
+      "type": "channel",
+      "common": {
+        "name": "Adapter Information"
+      },
+      "native": {}
+    },
+    {
+      "_id": "info.connection",
+      "type": "state",
+      "common": {
+        "name": "Connection status",
+        "type": "boolean",
+        "role": "indicator.connected",
+        "read": true,
+        "write": false,
+        "def": false
+      },
+      "native": {}
+    }
+  ]
+}
