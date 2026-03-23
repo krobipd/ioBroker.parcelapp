@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.STATUS_LABELS_EN = exports.STATUS_LABELS_DE = void 0;
-/** Delivery status codes (0-8) */
+/** Delivery status codes (0-8) in German */
 exports.STATUS_LABELS_DE = {
     0: "Zugestellt",
     1: "Eingefroren",
@@ -13,6 +13,7 @@ exports.STATUS_LABELS_DE = {
     7: "Ausnahme",
     8: "Registriert",
 };
+/** Delivery status codes (0-8) in English */
 exports.STATUS_LABELS_EN = {
     0: "Delivered",
     1: "Frozen",

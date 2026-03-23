@@ -2,12 +2,34 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StateManager = void 0;
 const types_1 = require("./types");
+/** Status codes that have expected delivery date/time */
+const TRACKABLE_STATUSES = new Set([2, 4, 8]);
+const ESTIMATE_LABELS = {
+    de: {
+        overdue: "überfällig",
+        today: "heute",
+        tomorrow: "morgen",
+        days: "in %d Tagen",
+    },
+    en: {
+        overdue: "overdue",
+        today: "today",
+        tomorrow: "tomorrow",
+        days: "in %d days",
+    },
+};
+/** Manages ioBroker states for parcel deliveries */
 class StateManager {
     adapter;
+    /** @param adapter The ioBroker adapter instance */
     constructor(adapter) {
         this.adapter = adapter;
     }
-    /** Sanitize a string for use as ioBroker object ID */
+    /**
+     * Sanitize a string for use as ioBroker object ID.
+     *
+     * @param name Raw string to sanitize
+     */
     sanitize(name) {
         return (name
             .toLowerCase()
@@ -15,7 +37,11 @@ class StateManager {
             .replace(/^_+|_+$/g, "")
             .slice(0, 50) || "unknown");
     }
-    /** Build a unique package ID from a delivery */
+    /**
+     * Build a unique package ID from a delivery.
+     *
+     * @param delivery The delivery to build an ID for
+     */
     packageId(delivery) {
         let id = this.sanitize(delivery.tracking_number);
         if (delivery.extra_information) {
@@ -23,11 +49,15 @@ class StateManager {
         }
         return id;
     }
-    /** Update or create all states for a delivery */
+    /**
+     * Update or create all states for a delivery.
+     *
+     * @param delivery The delivery data from API
+     * @param carrierName Resolved carrier display name
+     */
     async updateDelivery(delivery, carrierName) {
         const pkgId = this.packageId(delivery);
         const devicePath = `deliveries.${pkgId}`;
-        // Ensure device exists
         await this.adapter.extendObjectAsync(devicePath, {
             type: "device",
             common: {
@@ -38,132 +68,48 @@ class StateManager {
         const statusCode = parseInt(delivery.status_code, 10) || 0;
         const lang = this.adapter.config.language || "de";
         const labels = lang === "de" ? types_1.STATUS_LABELS_DE : types_1.STATUS_LABELS_EN;
-        // Update all states
         await Promise.all([
-            this.createAndSet(`${devicePath}.carrier`, {
-                name: "Carrier",
-                type: "string",
-                role: "text",
-                read: true,
-                write: false,
-            }, carrierName),
-            this.createAndSet(`${devicePath}.status`, {
-                name: "Status",
-                type: "string",
-                role: "text",
-                read: true,
-                write: false,
-            }, labels[statusCode] || `Unknown (${statusCode})`),
-            this.createAndSet(`${devicePath}.statusCode`, {
-                name: "Status Code",
-                type: "number",
-                role: "value",
-                read: true,
-                write: false,
-            }, statusCode),
-            this.createAndSet(`${devicePath}.description`, {
-                name: "Description",
-                type: "string",
-                role: "text",
-                read: true,
-                write: false,
-            }, delivery.description || ""),
-            this.createAndSet(`${devicePath}.trackingNumber`, {
-                name: "Tracking Number",
-                type: "string",
-                role: "text",
-                read: true,
-                write: false,
-            }, delivery.tracking_number),
-            this.createAndSet(`${devicePath}.extraInfo`, {
-                name: "Extra Information",
-                type: "string",
-                role: "text",
-                read: true,
-                write: false,
-            }, delivery.extra_information || ""),
-            this.createAndSet(`${devicePath}.deliveryWindow`, {
-                name: "Delivery Window",
-                type: "string",
-                role: "text",
-                read: true,
-                write: false,
-            }, this.calculateDeliveryWindow(delivery)),
-            this.createAndSet(`${devicePath}.deliveryEstimate`, {
-                name: "Delivery Estimate",
-                type: "string",
-                role: "text",
-                read: true,
-                write: false,
-            }, this.calculateDeliveryEstimate(delivery)),
-            this.createAndSet(`${devicePath}.lastEvent`, {
-                name: "Last Event",
-                type: "string",
-                role: "text",
-                read: true,
-                write: false,
-            }, this.formatLastEvent(delivery)),
-            this.createAndSet(`${devicePath}.lastLocation`, {
-                name: "Last Location",
-                type: "string",
-                role: "text",
-                read: true,
-                write: false,
-            }, this.extractLastLocation(delivery)),
-            this.createAndSet(`${devicePath}.lastUpdated`, {
-                name: "Last Updated",
-                type: "string",
-                role: "date",
-                read: true,
-                write: false,
-            }, new Date().toISOString()),
+            this.createAndSet(`${devicePath}.carrier`, "Carrier", "string", "text", carrierName),
+            this.createAndSet(`${devicePath}.status`, "Status", "string", "text", labels[statusCode] || `Unknown (${statusCode})`),
+            this.createAndSet(`${devicePath}.statusCode`, "Status Code", "number", "value", statusCode),
+            this.createAndSet(`${devicePath}.description`, "Description", "string", "text", delivery.description || ""),
+            this.createAndSet(`${devicePath}.trackingNumber`, "Tracking Number", "string", "text", delivery.tracking_number),
+            this.createAndSet(`${devicePath}.extraInfo`, "Extra Information", "string", "text", delivery.extra_information || ""),
+            this.createAndSet(`${devicePath}.deliveryWindow`, "Delivery Window", "string", "text", this.calculateDeliveryWindow(delivery, statusCode)),
+            this.createAndSet(`${devicePath}.deliveryEstimate`, "Delivery Estimate", "string", "text", this.calculateDeliveryEstimate(delivery, statusCode)),
+            this.createAndSet(`${devicePath}.lastEvent`, "Last Event", "string", "text", this.formatLastEvent(delivery)),
+            this.createAndSet(`${devicePath}.lastLocation`, "Last Location", "string", "text", this.extractLastLocation(delivery)),
+            this.createAndSet(`${devicePath}.lastUpdated`, "Last Updated", "string", "date", new Date().toISOString()),
         ]);
     }
-    /** Update summary states */
-    async updateSummary(deliveries) {
-        // Ensure summary channel
+    /**
+     * Update summary states. Expects already-filtered active deliveries.
+     *
+     * @param activeDeliveries Only active (non-delivered) deliveries
+     */
+    async updateSummary(activeDeliveries) {
         await this.adapter.extendObjectAsync("summary", {
             type: "channel",
             common: { name: "Summary" },
             native: {},
         });
-        const activeDeliveries = deliveries.filter((d) => parseInt(d.status_code, 10) !== 0);
         const todayDeliveries = activeDeliveries.filter((d) => {
-            const estimate = this.calculateDeliveryEstimate(d);
+            const statusCode = parseInt(d.status_code, 10) || 0;
+            const estimate = this.calculateDeliveryEstimate(d, statusCode);
             return estimate === "heute" || estimate === "today";
         });
         await Promise.all([
-            this.createAndSet("summary.activeCount", {
-                name: "Active Deliveries",
-                type: "number",
-                role: "value",
-                read: true,
-                write: false,
-            }, activeDeliveries.length),
-            this.createAndSet("summary.todayCount", {
-                name: "Deliveries Today",
-                type: "number",
-                role: "value",
-                read: true,
-                write: false,
-            }, todayDeliveries.length),
-            this.createAndSet("summary.deliveryWindow", {
-                name: "Combined Delivery Window",
-                type: "string",
-                role: "text",
-                read: true,
-                write: false,
-            }, this.calculateCombinedWindow(todayDeliveries)),
-            this.createAndSet("summary.json", {
-                name: "All Deliveries (JSON)",
-                type: "string",
-                role: "json",
-                read: true,
-                write: false,
-            }, JSON.stringify(activeDeliveries)),
+            this.createAndSet("summary.activeCount", "Active Deliveries", "number", "value", activeDeliveries.length),
+            this.createAndSet("summary.todayCount", "Deliveries Today", "number", "value", todayDeliveries.length),
+            this.createAndSet("summary.deliveryWindow", "Combined Delivery Window", "string", "text", this.calculateCombinedWindow(todayDeliveries)),
+            this.createAndSet("summary.json", "All Deliveries (JSON)", "string", "json", JSON.stringify(activeDeliveries)),
         ]);
     }
-    /** Remove deliveries that are no longer active */
+    /**
+     * Remove deliveries that are no longer active.
+     *
+     * @param activeIds List of currently active package IDs
+     */
     async cleanupDeliveries(activeIds) {
         const activeSet = new Set(activeIds.map((id) => `deliveries.${id}`));
         const objects = await this.adapter.getObjectViewAsync("system", "device", {
@@ -178,10 +124,14 @@ class StateManager {
             }
         }
     }
-    /** Calculate delivery time window string — only from Unix timestamps (date strings lack time precision) */
-    calculateDeliveryWindow(delivery) {
-        const statusCode = parseInt(delivery.status_code, 10) || 0;
-        if (![2, 4, 8].includes(statusCode)) {
+    /**
+     * Calculate delivery time window — only from Unix timestamps.
+     *
+     * @param delivery The delivery data
+     * @param statusCode Pre-parsed status code
+     */
+    calculateDeliveryWindow(delivery, statusCode) {
+        if (!TRACKABLE_STATUSES.has(statusCode)) {
             return "";
         }
         const formatTime = (timestamp) => {
@@ -200,10 +150,14 @@ class StateManager {
         }
         return end ? `${start} - ${end}` : start;
     }
-    /** Calculate human-readable delivery estimate */
-    calculateDeliveryEstimate(delivery) {
-        const statusCode = parseInt(delivery.status_code, 10) || 0;
-        if (![2, 4, 8].includes(statusCode)) {
+    /**
+     * Calculate human-readable delivery estimate.
+     *
+     * @param delivery The delivery data
+     * @param statusCode Pre-parsed status code
+     */
+    calculateDeliveryEstimate(delivery, statusCode) {
+        if (!TRACKABLE_STATUSES.has(statusCode)) {
             return "";
         }
         let expectedDate = null;
@@ -221,30 +175,23 @@ class StateManager {
         const expectedStart = new Date(expectedDate.getFullYear(), expectedDate.getMonth(), expectedDate.getDate());
         const diffDays = Math.round((expectedStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24));
         const lang = this.adapter.config.language || "de";
-        if (lang === "de") {
-            if (diffDays < 0) {
-                return "überfällig";
-            }
-            if (diffDays === 0) {
-                return "heute";
-            }
-            if (diffDays === 1) {
-                return "morgen";
-            }
-            return `in ${diffDays} Tagen`;
-        }
+        const l = ESTIMATE_LABELS[lang] || ESTIMATE_LABELS.en;
         if (diffDays < 0) {
-            return "overdue";
+            return l.overdue;
         }
         if (diffDays === 0) {
-            return "today";
+            return l.today;
         }
         if (diffDays === 1) {
-            return "tomorrow";
+            return l.tomorrow;
         }
-        return `in ${diffDays} days`;
+        return l.days.replace("%d", String(diffDays));
     }
-    /** Format the latest tracking event */
+    /**
+     * Format the latest tracking event.
+     *
+     * @param delivery The delivery data
+     */
     formatLastEvent(delivery) {
         if (!delivery.events || delivery.events.length === 0) {
             return "";
@@ -259,17 +206,28 @@ class StateManager {
         }
         return parts.join(" - ");
     }
-    /** Extract location from latest event */
+    /**
+     * Extract location from latest event.
+     *
+     * @param delivery The delivery data
+     */
     extractLastLocation(delivery) {
         if (!delivery.events || delivery.events.length === 0) {
             return "";
         }
         return delivery.events[0].location || "";
     }
-    /** Calculate combined delivery window for today's packages */
+    /**
+     * Calculate combined delivery window for today's packages.
+     *
+     * @param todayDeliveries Deliveries expected today
+     */
     calculateCombinedWindow(todayDeliveries) {
         const windows = todayDeliveries
-            .map((d) => this.calculateDeliveryWindow(d))
+            .map((d) => {
+            const sc = parseInt(d.status_code, 10) || 0;
+            return this.calculateDeliveryWindow(d, sc);
+        })
             .filter((w) => w.length > 0);
         if (windows.length === 0) {
             return "";
@@ -277,15 +235,11 @@ class StateManager {
         if (windows.length === 1) {
             return windows[0];
         }
-        // Parse all times and find earliest start / latest end
         const times = [];
         for (const w of windows) {
             const match = w.match(/(\d{2}:\d{2})(?:\s*-\s*(\d{2}:\d{2}))?/);
             if (match) {
-                times.push({
-                    start: match[1],
-                    end: match[2] || match[1],
-                });
+                times.push({ start: match[1], end: match[2] || match[1] });
             }
         }
         if (times.length === 0) {
@@ -294,11 +248,19 @@ class StateManager {
         times.sort((a, b) => a.start.localeCompare(b.start));
         return `${times[0].start} - ${times[times.length - 1].end}`;
     }
-    /** Create/extend an object and set its value */
-    async createAndSet(id, common, val) {
+    /**
+     * Create/extend a read-only state and set its value.
+     *
+     * @param id State ID relative to adapter namespace
+     * @param name Display name
+     * @param type Value type
+     * @param role ioBroker role
+     * @param val Value to set
+     */
+    async createAndSet(id, name, type, role, val) {
         await this.adapter.extendObjectAsync(id, {
             type: "state",
-            common,
+            common: { name, type, role, read: true, write: false },
             native: {},
         });
         await this.adapter.setStateAsync(id, { val, ack: true });

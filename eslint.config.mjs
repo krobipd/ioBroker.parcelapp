@@ -15,9 +15,6 @@ export default [
   {
     rules: {
       "@typescript-eslint/no-require-imports": "off",
-      "jsdoc/require-jsdoc": "off",
-      "jsdoc/require-param": "off",
-      "jsdoc/require-returns": "off",
     },
   },
   {

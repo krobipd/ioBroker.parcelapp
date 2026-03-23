@@ -10,15 +10,21 @@ import type {
 const API_BASE = "https://api.parcel.app/external";
 const REQUEST_TIMEOUT = 15_000;
 
+/** HTTP client for the parcel.app API */
 export class ParcelClient {
   private apiKey: string;
   private carrierCache: CarrierMap | null = null;
 
+  /** @param apiKey The parcel.app API key */
   constructor(apiKey: string) {
     this.apiKey = apiKey;
   }
 
-  /** Fetch deliveries from parcel.app */
+  /**
+   * Fetch deliveries from parcel.app.
+   *
+   * @param filterMode Filter active or recent deliveries
+   */
   async getDeliveries(
     filterMode: "active" | "recent" = "active",
   ): Promise<ParcelDelivery[]> {
@@ -42,7 +48,11 @@ export class ParcelClient {
     return response.deliveries || [];
   }
 
-  /** Add a new delivery to parcel.app */
+  /**
+   * Add a new delivery to parcel.app.
+   *
+   * @param delivery The delivery to add
+   */
   async addDelivery(
     delivery: AddDeliveryRequest,
   ): Promise<AddDeliveryResponse> {
@@ -73,7 +83,11 @@ export class ParcelClient {
     return this.carrierCache;
   }
 
-  /** Resolve a carrier code to a display name */
+  /**
+   * Resolve a carrier code to a display name.
+   *
+   * @param carrierCode The carrier code from API
+   */
   async getCarrierName(carrierCode: string): Promise<string> {
     const carriers = await this.getCarrierNames();
     return carriers[carrierCode] || carrierCode.toUpperCase();
@@ -93,6 +107,14 @@ export class ParcelClient {
     }
   }
 
+  /**
+   * Execute an HTTP request against the parcel.app API.
+   *
+   * @param method HTTP method
+   * @param path API path
+   * @param authenticated Whether to send the API key
+   * @param body Optional request body
+   */
   private request<T>(
     method: string,
     path: string,

@@ -40,11 +40,13 @@ require("./lib/types");
 const MIN_POLL_INTERVAL = 5;
 const MAX_POLL_INTERVAL = 60;
 const DEFAULT_POLL_INTERVAL = 10;
+/** ioBroker adapter for parcel.app package tracking */
 class ParcelappAdapter extends utils.Adapter {
     client = null;
     stateManager = null;
     pollTimer = null;
     isPolling = false;
+    /** @param options Adapter options */
     constructor(options = {}) {
         super({
             ...options,
@@ -55,24 +57,6 @@ class ParcelappAdapter extends utils.Adapter {
         this.on("message", this.onMessage.bind(this));
     }
     async onReady() {
-        // Ensure info objects exist before any setState
-        await this.setObjectNotExistsAsync("info", {
-            type: "channel",
-            common: { name: "Adapter Information" },
-            native: {},
-        });
-        await this.setObjectNotExistsAsync("info.connection", {
-            type: "state",
-            common: {
-                name: "Connection status",
-                type: "boolean",
-                role: "indicator.connected",
-                read: true,
-                write: false,
-                def: false,
-            },
-            native: {},
-        });
         await this.setStateAsync("info.connection", { val: false, ack: true });
         // Validate config
         const { apiKey } = this.config;
@@ -160,8 +144,8 @@ class ParcelappAdapter extends utils.Adapter {
             }
             // Cleanup stale deliveries
             await this.stateManager.cleanupDeliveries(activeIds);
-            // Update summary
-            await this.stateManager.updateSummary(deliveries);
+            // Update summary (already filtered — no re-filtering needed)
+            await this.stateManager.updateSummary(activeDeliveries);
             this.log.debug(`Polled ${activeDeliveries.length} active deliveries`);
         }
         catch (err) {

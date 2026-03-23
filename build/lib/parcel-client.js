@@ -37,13 +37,19 @@ exports.ParcelClient = void 0;
 const https = __importStar(require("node:https"));
 const API_BASE = "https://api.parcel.app/external";
 const REQUEST_TIMEOUT = 15_000;
+/** HTTP client for the parcel.app API */
 class ParcelClient {
     apiKey;
     carrierCache = null;
+    /** @param apiKey The parcel.app API key */
     constructor(apiKey) {
         this.apiKey = apiKey;
     }
-    /** Fetch deliveries from parcel.app */
+    /**
+     * Fetch deliveries from parcel.app.
+     *
+     * @param filterMode Filter active or recent deliveries
+     */
     async getDeliveries(filterMode = "active") {
         const response = await this.request("GET", `/deliveries/?filter_mode=${filterMode}`, true);
         if (!response.success) {
@@ -54,7 +60,11 @@ class ParcelClient {
         }
         return response.deliveries || [];
     }
-    /** Add a new delivery to parcel.app */
+    /**
+     * Add a new delivery to parcel.app.
+     *
+     * @param delivery The delivery to add
+     */
     async addDelivery(delivery) {
         return this.request("POST", "/add-delivery/", true, delivery);
     }
@@ -71,7 +81,11 @@ class ParcelClient {
         }
         return this.carrierCache;
     }
-    /** Resolve a carrier code to a display name */
+    /**
+     * Resolve a carrier code to a display name.
+     *
+     * @param carrierCode The carrier code from API
+     */
     async getCarrierName(carrierCode) {
         const carriers = await this.getCarrierNames();
         return carriers[carrierCode] || carrierCode.toUpperCase();
@@ -90,6 +104,14 @@ class ParcelClient {
             return { success: false, message: error.message };
         }
     }
+    /**
+     * Execute an HTTP request against the parcel.app API.
+     *
+     * @param method HTTP method
+     * @param path API path
+     * @param authenticated Whether to send the API key
+     * @param body Optional request body
+     */
     request(method, path, authenticated, body) {
         return new Promise((resolve, reject) => {
             const url = new URL(`${API_BASE}${path}`);
