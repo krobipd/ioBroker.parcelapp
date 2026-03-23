@@ -36,7 +36,7 @@
     "@iobroker/build-tools": "^2.0.5",
     "@iobroker/eslint-config": "^2.2.0",
     "@iobroker/testing": "^5.2.2",
-    "@types/node": "^22.15.0",
+    "@types/node": "^25.5.0",
     "eslint": "^9.25.0",
     "source-map-support": "^0.5.21",
     "ts-node": "^10.9.2",
