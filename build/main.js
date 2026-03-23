@@ -91,17 +91,12 @@ class ParcelappAdapter extends utils.Adapter {
         this.pollTimer = setInterval(() => void this.poll(), intervalMs);
         this.log.info(`Parcel tracking started — polling every ${interval} minutes`);
     }
-    async onUnload(callback) {
-        try {
-            if (this.pollTimer) {
-                clearInterval(this.pollTimer);
-                this.pollTimer = null;
-            }
-            await this.setStateAsync("info.connection", { val: false, ack: true });
+    onUnload(callback) {
+        if (this.pollTimer) {
+            clearInterval(this.pollTimer);
+            this.pollTimer = null;
         }
-        catch {
-            // Ignore errors during unload
-        }
+        void this.setState("info.connection", { val: false, ack: true });
         callback();
     }
     async onMessage(obj) {

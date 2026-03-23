@@ -76,16 +76,12 @@ class ParcelappAdapter extends utils.Adapter {
     );
   }
 
-  private async onUnload(callback: () => void): Promise<void> {
-    try {
-      if (this.pollTimer) {
-        clearInterval(this.pollTimer);
-        this.pollTimer = null;
-      }
-      await this.setStateAsync("info.connection", { val: false, ack: true });
-    } catch {
-      // Ignore errors during unload
+  private onUnload(callback: () => void): void {
+    if (this.pollTimer) {
+      clearInterval(this.pollTimer);
+      this.pollTimer = null;
     }
+    void this.setState("info.connection", { val: false, ack: true });
     callback();
   }
 

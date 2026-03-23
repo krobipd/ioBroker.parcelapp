@@ -13,7 +13,7 @@ export declare class StateManager {
     updateSummary(deliveries: ParcelDelivery[]): Promise<void>;
     /** Remove deliveries that are no longer active */
     cleanupDeliveries(activeIds: string[]): Promise<void>;
-    /** Calculate delivery time window string */
+    /** Calculate delivery time window string — only from Unix timestamps (date strings lack time precision) */
     private calculateDeliveryWindow;
     /** Calculate human-readable delivery estimate */
     private calculateDeliveryEstimate;

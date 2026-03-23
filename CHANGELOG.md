@@ -10,3 +10,6 @@
 - Summary states (active count, today count, delivery window, JSON)
 - Multilingual status labels (German/English)
 - Add delivery support via sendTo message
+- Fixed: deliveryWindow showing "00:00" for carriers without time info
+- Fixed: jsonConfig validation error (invalid sendTo properties)
+- Fixed: synchronous onUnload for clean adapter shutdown

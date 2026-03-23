@@ -178,32 +178,23 @@ class StateManager {
             }
         }
     }
-    /** Calculate delivery time window string */
+    /** Calculate delivery time window string — only from Unix timestamps (date strings lack time precision) */
     calculateDeliveryWindow(delivery) {
         const statusCode = parseInt(delivery.status_code, 10) || 0;
         if (![2, 4, 8].includes(statusCode)) {
             return "";
         }
-        const formatTime = (timestamp, dateString) => {
-            if (timestamp) {
-                return new Date(timestamp * 1000).toLocaleTimeString("de-DE", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                });
+        const formatTime = (timestamp) => {
+            if (!timestamp) {
+                return null;
             }
-            if (dateString) {
-                const parsed = new Date(dateString);
-                if (!isNaN(parsed.getTime())) {
-                    return parsed.toLocaleTimeString("de-DE", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                    });
-                }
-            }
-            return null;
+            return new Date(timestamp * 1000).toLocaleTimeString("de-DE", {
+                hour: "2-digit",
+                minute: "2-digit",
+            });
         };
-        const start = formatTime(delivery.timestamp_expected, delivery.date_expected);
-        const end = formatTime(delivery.timestamp_expected_end, delivery.date_expected_end);
+        const start = formatTime(delivery.timestamp_expected);
+        const end = formatTime(delivery.timestamp_expected_end);
         if (!start) {
             return "";
         }

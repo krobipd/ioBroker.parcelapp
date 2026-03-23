@@ -7,7 +7,7 @@ Paketverfolgung über die [parcel.app](https://parcelapp.net) API. 300+ Carrier 
 ## API-Details
 
 - **Base URL:** `https://api.parcel.app/external/`
-- **Auth:** Header `api-key: <key>` (Premium-Only, $4.99/Jahr)
+- **Auth:** Header `api-key: <key>` (Premium-Abo nötig)
 - **Rate Limits:** GET 20/Stunde, POST 20/Tag
 - **Doku:** https://parcelapp.net/help/api.html
 

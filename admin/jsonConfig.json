@@ -32,17 +32,11 @@
           "label": "btn_checkConnection",
           "command": "checkConnection",
           "jsonData": "{\"apiKey\": \"${data.apiKey}\"}",
-          "variant": "outlined",
-          "color": "primary",
-          "icon": "wifi",
-          "alsoDependsOn": ["apiKey"],
-          "xs": 12, "sm": 12, "md": 4, "lg": 4, "xl": 4,
-          "showProcess": true,
-          "timeout": 15000,
           "result": {
-            "success": "msg_connectionOk",
-            "error": "msg_connectionFailed"
-          }
+            "okText": "msg_connectionOk",
+            "errorText": "msg_connectionFailed"
+          },
+          "xs": 12, "sm": 12, "md": 4, "lg": 4, "xl": 4
         }
       }
     },
