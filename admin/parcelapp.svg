@@ -1,20 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
   <defs>
-    <linearGradient id="boxGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#4A90D9;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#2C5F8A;stop-opacity:1" />
+    <linearGradient id="box" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#C4956A" />
+      <stop offset="100%" stop-color="#8B6544" />
+    </linearGradient>
+    <linearGradient id="lid" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#D4A574" />
+      <stop offset="100%" stop-color="#C4956A" />
     </linearGradient>
   </defs>
   <!-- Box body -->
-  <rect x="15" y="35" width="70" height="50" rx="4" fill="url(#boxGrad)" />
-  <!-- Box lid -->
-  <polygon points="10,35 50,15 90,35 50,40" fill="#5BA3EC" />
-  <!-- Box tape vertical -->
-  <rect x="45" y="35" width="10" height="50" fill="#F5A623" opacity="0.9" />
-  <!-- Box tape horizontal -->
-  <rect x="10" y="32" width="80" height="8" rx="2" fill="#F5A623" opacity="0.9" />
-  <!-- Location pin -->
-  <circle cx="75" cy="25" r="10" fill="#E74C3C" />
-  <circle cx="75" cy="23" r="4" fill="white" />
-  <polygon points="75,35 71,27 79,27" fill="#E74C3C" />
+  <rect x="12" y="42" width="55" height="40" rx="3" fill="url(#box)" />
+  <!-- Box front face highlight -->
+  <rect x="12" y="42" width="55" height="40" rx="3" fill="white" opacity="0.08" />
+  <!-- Tape strip (single horizontal — shipping tape) -->
+  <rect x="12" y="56" width="55" height="6" fill="#D4A574" opacity="0.7" />
+  <!-- Box lid / flap -->
+  <polygon points="8,42 39,28 71,42" fill="url(#lid)" />
+  <line x1="39" y1="28" x2="39" y2="42" stroke="#8B6544" stroke-width="1" opacity="0.5" />
+  <!-- Tracking pin -->
+  <g transform="translate(72,22)">
+    <path d="M0,22 C0,22 -12,-2 -12,-10 A12,12 0 1,1 12,-10 C12,-2 0,22 0,22 Z" fill="#3B82F6" />
+    <circle cx="0" cy="-10" r="5" fill="white" />
+  </g>
+  <!-- Signal waves (tracking active) -->
+  <path d="M80,10 Q86,6 82,0" fill="none" stroke="#3B82F6" stroke-width="1.5" stroke-linecap="round" opacity="0.6" />
+  <path d="M84,14 Q92,8 87,-1" fill="none" stroke="#3B82F6" stroke-width="1.5" stroke-linecap="round" opacity="0.35" />
 </svg>
