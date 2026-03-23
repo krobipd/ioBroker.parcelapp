@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1 (2026-03-23)
+
+- Redesigned adapter logo (cardboard package with tracking pin)
+- Fixed repochecker issues (dependabot config, test artifacts, mocha dependency)
+
 ## 0.1.0 (2026-03-23)
 
 - Initial release

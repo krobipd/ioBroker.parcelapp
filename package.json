@@ -1,6 +1,6 @@
 {
   "name": "iobroker.parcelapp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Track your packages from 300+ carriers via parcel.app",
   "author": {
     "name": "krobi",
