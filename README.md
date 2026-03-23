@@ -96,6 +96,9 @@ parcelapp.0.
 
 ## Changelog
 
+### 0.1.2 (2026-03-23)
+- Updated devDependencies
+
 ### 0.1.1 (2026-03-23)
 - Redesigned adapter logo
 - Fixed repochecker issues

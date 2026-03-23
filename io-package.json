@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "news": {
+      "0.1.2": {
+        "en": "Updated devDependencies",
+        "de": "Entwicklungsabhängigkeiten aktualisiert",
+        "ru": "Обновлены зависимости разработки",
+        "pt": "Dependências de desenvolvimento atualizadas",
+        "nl": "Ontwikkelingsafhankelijkheden bijgewerkt",
+        "fr": "Dépendances de développement mises à jour",
+        "it": "Dipendenze di sviluppo aggiornate",
+        "es": "Dependencias de desarrollo actualizadas",
+        "pl": "Zaktualizowano zależności deweloperskie",
+        "uk": "Оновлено залежності розробки",
+        "zh-cn": "更新开发依赖"
+      },
       "0.1.1": {
         "en": "Redesigned adapter logo, fixed repochecker issues",
         "de": "Adapter-Logo überarbeitet, Repochecker-Probleme behoben",

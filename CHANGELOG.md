@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2 (2026-03-23)
+
+- Updated devDependencies (@iobroker/build-tools 3.x, @types/node 25.x)
+
 ## 0.1.1 (2026-03-23)
 
 - Redesigned adapter logo (cardboard package with tracking pin)
