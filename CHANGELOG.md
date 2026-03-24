@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.5 (2026-03-24)
+
+- Added auto-merge.yml config
+- Changed Dependabot schedule from monthly to weekly
+- Updated actions/checkout to v6
+
 ## 0.1.4 (2026-03-24)
 
 - Improved README: clearer ioBroker adapter framing and feature descriptions

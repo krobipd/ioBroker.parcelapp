@@ -96,6 +96,9 @@ parcelapp.0.
 
 ## Changelog
 
+### 0.1.5 (2026-03-24)
+- Added auto-merge config, weekly Dependabot schedule
+
 ### 0.1.4 (2026-03-24)
 - Improved README
 

@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.1.4",
+    "version": "0.1.5",
     "news": {
+      "0.1.5": {
+        "en": "Added auto-merge config, weekly Dependabot schedule, actions/checkout v6",
+        "de": "Auto-Merge-Konfiguration hinzugefügt, wöchentlicher Dependabot-Zeitplan, actions/checkout v6",
+        "ru": "Добавлена конфигурация автослияния, еженедельное расписание Dependabot, actions/checkout v6",
+        "pt": "Adicionada configuração de auto-merge, agendamento semanal do Dependabot, actions/checkout v6",
+        "nl": "Auto-merge-configuratie toegevoegd, wekelijks Dependabot-schema, actions/checkout v6",
+        "fr": "Configuration auto-merge ajoutée, planification hebdomadaire Dependabot, actions/checkout v6",
+        "it": "Aggiunta configurazione auto-merge, pianificazione settimanale Dependabot, actions/checkout v6",
+        "es": "Añadida configuración de auto-merge, programación semanal de Dependabot, actions/checkout v6",
+        "pl": "Dodano konfigurację auto-merge, tygodniowy harmonogram Dependabot, actions/checkout v6",
+        "uk": "Додано конфігурацію автозлиття, щотижневий розклад Dependabot, actions/checkout v6",
+        "zh-cn": "添加自动合并配置，每周 Dependabot 计划，actions/checkout v6"
+      },
       "0.1.4": {
         "en": "Improved README with clearer ioBroker adapter framing",
         "de": "README verbessert mit klarerer ioBroker-Adapter-Beschreibung",
