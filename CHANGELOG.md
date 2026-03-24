@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.4 (2026-03-24)
+
+- Improved README: clearer ioBroker adapter framing and feature descriptions
+
 ## 0.1.3 (2026-03-24)
 
 - Added automerge workflow for Dependabot PRs

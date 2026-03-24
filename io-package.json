@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.1.3",
+    "version": "0.1.4",
     "news": {
+      "0.1.4": {
+        "en": "Improved README with clearer ioBroker adapter framing",
+        "de": "README verbessert mit klarerer ioBroker-Adapter-Beschreibung",
+        "ru": "Улучшен README с более четким описанием адаптера ioBroker",
+        "pt": "README melhorado com descrição mais clara do adaptador ioBroker",
+        "nl": "README verbeterd met duidelijkere ioBroker-adapterbeschrijving",
+        "fr": "README amélioré avec une description plus claire de l adaptateur ioBroker",
+        "it": "README migliorato con descrizione più chiara dell adattatore ioBroker",
+        "es": "README mejorado con descripción más clara del adaptador ioBroker",
+        "pl": "Ulepszony README z jaśniejszym opisem adaptera ioBroker",
+        "uk": "Покращено README з чіткішим описом адаптера ioBroker",
+        "zh-cn": "改进 README，更清楚地描述 ioBroker 适配器"
+      },
       "0.1.3": {
         "en": "Added Dependabot automerge workflow, randomized schedule",
         "de": "Dependabot-Automerge-Workflow hinzugefügt, Zeitplan randomisiert",
@@ -70,17 +83,17 @@
       "zh-cn": "包裹追踪"
     },
     "desc": {
-      "en": "Track your packages from 300+ carriers via parcel.app",
-      "de": "Verfolge deine Pakete von 300+ Versandunternehmen über parcel.app",
-      "ru": "Отслеживайте посылки от 300+ перевозчиков через parcel.app",
-      "pt": "Rastreie seus pacotes de mais de 300 transportadoras via parcel.app",
-      "nl": "Volg je pakketten van 300+ vervoerders via parcel.app",
-      "fr": "Suivez vos colis de plus de 300 transporteurs via parcel.app",
-      "it": "Traccia i tuoi pacchi da più di 300 corrieri tramite parcel.app",
-      "es": "Rastrea tus paquetes de más de 300 transportistas a través de parcel.app",
-      "pl": "Śledź swoje przesyłki od 300+ przewoźników przez parcel.app",
-      "uk": "Відстежуйте свої посилки від 300+ перевізників через parcel.app",
-      "zh-cn": "通过 parcel.app 追踪 300+ 快递公司的包裹"
+      "en": "ioBroker adapter for parcel.app — track packages from 300+ carriers as ioBroker states",
+      "de": "ioBroker-Adapter für parcel.app — Pakete von 300+ Versandunternehmen als ioBroker-States verfolgen",
+      "ru": "Адаптер ioBroker для parcel.app — отслеживание посылок от 300+ перевозчиков как состояния ioBroker",
+      "pt": "Adaptador ioBroker para parcel.app — rastreie pacotes de mais de 300 transportadoras como estados ioBroker",
+      "nl": "ioBroker-adapter voor parcel.app — volg pakketten van 300+ vervoerders als ioBroker-states",
+      "fr": "Adaptateur ioBroker pour parcel.app — suivez vos colis de plus de 300 transporteurs comme états ioBroker",
+      "it": "Adattatore ioBroker per parcel.app — traccia pacchi da più di 300 corrieri come stati ioBroker",
+      "es": "Adaptador ioBroker para parcel.app — rastrea paquetes de más de 300 transportistas como estados ioBroker",
+      "pl": "Adapter ioBroker dla parcel.app — śledź przesyłki od 300+ przewoźników jako stany ioBroker",
+      "uk": "Адаптер ioBroker для parcel.app — відстеження посилок від 300+ перевізників як стани ioBroker",
+      "zh-cn": "parcel.app 的 ioBroker 适配器 — 将 300+ 快递公司的包裹追踪数据作为 ioBroker 状态"
     },
     "authors": [
       "krobi <krobi@power-dreams.com>"

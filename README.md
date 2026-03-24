@@ -11,21 +11,21 @@
 
 <img src="https://raw.githubusercontent.com/krobipd/ioBroker.parcelapp/main/admin/parcelapp.svg" width="100" />
 
-Track your packages from 300+ carriers in ioBroker via [parcel.app](https://parcelapp.net).
+ioBroker adapter that connects to the [parcel.app](https://parcelapp.net) API and exposes package tracking data from 300+ carriers as ioBroker states — including delivery status, time windows, and tracking events.
 
 ---
 
 ## Features
 
-- Track deliveries from **300+ carriers** (DHL, FedEx, UPS, Amazon, Hermes, GLS, DPD, and many more)
-- Automatic polling with configurable interval (5-60 minutes)
-- Delivery time window and estimate (today, tomorrow, in X days)
-- Combined delivery window for all packages arriving today
-- Summary states (active count, today count, JSON data)
-- Automatic cleanup of delivered packages
-- Add deliveries via sendTo message
-- Connection test in Admin UI
-- Multilingual status labels (German/English)
+- **300+ carriers** — DHL, FedEx, UPS, Amazon, Hermes, GLS, DPD, and many more via parcel.app
+- **Per-package ioBroker states** — carrier, status, tracking number, delivery window, last event, last location
+- **Summary states** — active count, today count, combined delivery window, full JSON data
+- **Delivery time estimates** — today, tomorrow, in X days with combined time window
+- **Automatic polling** with configurable interval (5–60 minutes)
+- **Automatic cleanup** of delivered packages from the ioBroker object tree
+- **Add deliveries** via sendTo message from scripts or other adapters
+- **Admin UI** with connection test, polling settings, and status language selection
+- **Multilingual status labels** (German/English)
 
 ---
 
@@ -95,6 +95,9 @@ parcelapp.0.
 ---
 
 ## Changelog
+
+### 0.1.4 (2026-03-24)
+- Improved README
 
 ### 0.1.3 (2026-03-24)
 - Added Dependabot automerge workflow
