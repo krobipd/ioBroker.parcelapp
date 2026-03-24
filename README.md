@@ -96,6 +96,9 @@ parcelapp.0.
 
 ## Changelog
 
+### 0.1.3 (2026-03-24)
+- Added Dependabot automerge workflow
+
 ### 0.1.2 (2026-03-23)
 - Updated devDependencies
 

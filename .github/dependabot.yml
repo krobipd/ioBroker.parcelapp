@@ -4,9 +4,11 @@ updates:
     directory: /
     schedule:
       interval: monthly
+      time: "04:27"
     open-pull-requests-limit: 20
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
+      time: "04:27"
     open-pull-requests-limit: 20

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.3 (2026-03-24)
+
+- Added automerge workflow for Dependabot PRs
+- Randomized Dependabot schedule time for load distribution
+
 ## 0.1.2 (2026-03-23)
 
 - Updated devDependencies (@iobroker/build-tools 3.x, @types/node 25.x)
