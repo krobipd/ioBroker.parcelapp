@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1 (2026-03-25)
+
+- Added API rate limit detection (HTTP 429) with automatic cooldown
+- Added connection error deduplication to prevent log spam during outages
+- Added poll throttling (minimum 60s between requests)
+- Improved error classification for network, timeout, and API errors
+
 ## 0.2.0 (2026-03-25)
 
 - Added option to keep delivered packages in states instead of auto-removing

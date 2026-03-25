@@ -40,12 +40,16 @@ require("./lib/types");
 const MIN_POLL_INTERVAL = 5;
 const MAX_POLL_INTERVAL = 60;
 const DEFAULT_POLL_INTERVAL = 10;
+const MIN_POLL_GAP_MS = 60_000; // Minimum 60s between polls
 /** ioBroker adapter for parcel.app package tracking */
 class ParcelappAdapter extends utils.Adapter {
     client = null;
     stateManager = null;
     pollTimer = null;
     isPolling = false;
+    lastPollTime = 0;
+    rateLimitedUntil = 0;
+    lastErrorCode = "";
     /** @param options Adapter options */
     constructor(options = {}) {
         super({
@@ -138,15 +142,59 @@ class ParcelappAdapter extends utils.Adapter {
             }
         }
     }
+    /**
+     * Classify an error for deduplication and log-level decisions.
+     *
+     * @param error The error to classify
+     */
+    classifyError(error) {
+        if (error.code === "RATE_LIMITED") {
+            return "RATE_LIMITED";
+        }
+        if (error.code === "INVALID_API_KEY") {
+            return "INVALID_API_KEY";
+        }
+        // Network errors: DNS, connection refused, no internet
+        if (error.code === "ENOTFOUND" ||
+            error.code === "ECONNREFUSED" ||
+            error.code === "ECONNRESET" ||
+            error.code === "ENETUNREACH" ||
+            error.code === "EAI_AGAIN") {
+            return "NETWORK";
+        }
+        if (error.message.includes("timeout") || error.code === "ETIMEDOUT") {
+            return "TIMEOUT";
+        }
+        return error.code || "UNKNOWN";
+    }
     async poll() {
         if (this.isPolling || !this.client || !this.stateManager) {
             return;
         }
+        const now = Date.now();
+        // Skip if rate limited
+        if (now < this.rateLimitedUntil) {
+            const waitMin = Math.ceil((this.rateLimitedUntil - now) / 60_000);
+            this.log.debug(`Skipping poll — rate limited for ${waitMin} more minute(s)`);
+            return;
+        }
+        // Throttle: minimum gap between polls
+        if (now - this.lastPollTime < MIN_POLL_GAP_MS) {
+            this.log.debug("Skipping poll — too soon after last poll");
+            return;
+        }
         this.isPolling = true;
+        this.lastPollTime = now;
         try {
             // When keeping delivered packages, use "recent" to get them from API
             const autoRemove = this.config.autoRemoveDelivered !== false;
             const deliveries = await this.client.getDeliveries(autoRemove ? "active" : "recent");
+            // Reset error state on success
+            this.rateLimitedUntil = 0;
+            if (this.lastErrorCode) {
+                this.log.info("Connection restored");
+                this.lastErrorCode = "";
+            }
             await this.setStateAsync("info.connection", { val: true, ack: true });
             // Filter deliveries based on auto-remove setting
             const visibleDeliveries = autoRemove
@@ -170,11 +218,28 @@ class ParcelappAdapter extends utils.Adapter {
         }
         catch (err) {
             const error = err;
-            if (error.code === "INVALID_API_KEY") {
+            // Classify the error
+            const errorCode = this.classifyError(error);
+            const isRepeat = errorCode === this.lastErrorCode;
+            this.lastErrorCode = errorCode;
+            if (error.code === "RATE_LIMITED") {
+                const cooldownSec = error.retryAfterSeconds || 5 * 60;
+                this.rateLimitedUntil = Date.now() + cooldownSec * 1000;
+                this.log.warn(`Rate limit hit — pausing API requests for ${Math.ceil(cooldownSec / 60)} minute(s)`);
+            }
+            else if (error.code === "INVALID_API_KEY") {
+                // Always log — user must fix config
                 this.log.error("Invalid API key — please check your parcel.app API key");
             }
-            else if (error.message.includes("timeout")) {
-                this.log.error(`API request timeout: ${error.message}`);
+            else if (isRepeat) {
+                // Same error as last time — don't spam the log
+                this.log.debug(`Poll failed (ongoing): ${error.message}`);
+            }
+            else if (errorCode === "NETWORK") {
+                this.log.warn(`Cannot reach parcel.app API — will keep retrying`);
+            }
+            else if (errorCode === "TIMEOUT") {
+                this.log.warn(`API request timeout — will retry next cycle`);
             }
             else {
                 this.log.error(`Poll failed: ${error.message}`);

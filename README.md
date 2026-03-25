@@ -94,6 +94,9 @@ parcelapp.0.
 
 ## Changelog
 
+### 0.2.1 (2026-03-25)
+- Robust error handling: rate limit detection, connection error deduplication, poll throttling
+
 ### 0.2.0 (2026-03-25)
 - Added option to keep delivered packages in states
 - Simplified admin UI to single page
@@ -113,9 +116,6 @@ parcelapp.0.
 
 ### 0.1.1 (2026-03-23)
 - Redesigned adapter logo
-
-### 0.1.0 (2026-03-23)
-- Initial release
 
 Older changelog: [CHANGELOG.md](CHANGELOG.md)
 

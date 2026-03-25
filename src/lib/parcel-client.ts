@@ -152,6 +152,18 @@ export class ParcelClient {
             res.statusCode &&
             (res.statusCode < 200 || res.statusCode >= 300)
           ) {
+            if (res.statusCode === 429) {
+              const retryAfter = parseInt(res.headers["retry-after"] || "", 10);
+              const err = new Error("Rate limit exceeded") as Error & {
+                code: string;
+                retryAfterSeconds: number;
+              };
+              err.code = "RATE_LIMITED";
+              // Use Retry-After header or default to 5 minutes
+              err.retryAfterSeconds = retryAfter > 0 ? retryAfter : 5 * 60;
+              reject(err);
+              return;
+            }
             const err = new Error(
               `HTTP ${res.statusCode}: ${res.statusMessage}`,
             ) as Error & { code: string };
