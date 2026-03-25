@@ -22,7 +22,7 @@ ioBroker adapter that connects to the [parcel.app](https://parcelapp.net) API an
 - **Summary states** — active count, today count, combined delivery window
 - **Delivery time estimates** — today, tomorrow, in X days with combined time window
 - **Automatic polling** with configurable interval (5–60 minutes)
-- **Configurable cleanup** of delivered packages — auto-remove or keep as "Delivered"
+- **Configurable cleanup** — auto-remove delivered packages or keep them until deleted in parcel.app
 - **Add deliveries** via sendTo message from scripts or other adapters
 - **Admin UI** with connection test, polling settings, and status language selection
 - **Multilingual status labels** (German/English)
@@ -44,7 +44,7 @@ ioBroker adapter that connects to the [parcel.app](https://parcelapp.net) API an
 |--------|-------------|---------|
 | **API Key** | Your parcel.app API key (get it at [web.parcelapp.net](https://web.parcelapp.net)) | — |
 | **Poll Interval** | How often to fetch updates (minutes) | 10 |
-| **Auto-remove delivered** | Remove delivered packages from states automatically | Yes |
+| **Auto-remove delivered** | Remove delivered packages from states automatically. When disabled, they stay until deleted in parcel.app. | Yes |
 | **Status Language** | Language for status labels (German/English) | German |
 
 ---
