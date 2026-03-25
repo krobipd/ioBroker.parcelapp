@@ -1,6 +1,6 @@
 {
   "name": "iobroker.parcelapp",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "description": "ioBroker adapter for parcel.app — track packages from 300+ carriers",
   "author": {
     "name": "krobi",
@@ -61,6 +61,7 @@
     "test:integration": "npm run build:test && mocha --exit \"build/test/**/*.js\"",
     "test": "npm run build:test && mocha --exit \"build/test/**/*.js\"",
     "test:ci": "npm run build:test && mocha --exit --reporter spec \"build/test/**/*.js\"",
+    "translate": "translate-adapter",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
     "release": "release-script"

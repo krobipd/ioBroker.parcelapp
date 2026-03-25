@@ -203,13 +203,6 @@ export class StateManager {
         "text",
         this.calculateCombinedWindow(todayDeliveries),
       ),
-      this.createAndSet(
-        "summary.json",
-        "All Deliveries (JSON)",
-        "string",
-        "json",
-        JSON.stringify(activeDeliveries),
-      ),
     ]);
   }
 

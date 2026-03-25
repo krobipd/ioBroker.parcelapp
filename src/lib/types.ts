@@ -106,10 +106,10 @@ declare global {
       apiKey: string;
       /** Polling interval in minutes */
       pollInterval: number;
-      /** Filter mode for deliveries */
-      filterMode: "active" | "recent";
       /** Language for status labels */
       language: "de" | "en";
+      /** Automatically remove delivered packages from states */
+      autoRemoveDelivered: boolean;
     }
   }
 }

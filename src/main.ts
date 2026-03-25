@@ -41,6 +41,9 @@ class ParcelappAdapter extends utils.Adapter {
     this.client = new ParcelClient(apiKey.trim());
     this.stateManager = new StateManager(this);
 
+    // Cleanup obsolete states
+    await this.cleanupObsoleteStates();
+
     // Initial poll
     await this.poll();
 
@@ -131,6 +134,19 @@ class ParcelappAdapter extends utils.Adapter {
     }
   }
 
+  private async cleanupObsoleteStates(): Promise<void> {
+    const obsoleteStates = [
+      "summary.json", // removed in 0.2.0
+    ];
+    for (const stateId of obsoleteStates) {
+      const obj = await this.getObjectAsync(stateId);
+      if (obj) {
+        await this.delObjectAsync(stateId);
+        this.log.debug(`Removed obsolete state: ${stateId}`);
+      }
+    }
+  }
+
   private async poll(): Promise<void> {
     if (this.isPolling || !this.client || !this.stateManager) {
       return;
@@ -138,19 +154,22 @@ class ParcelappAdapter extends utils.Adapter {
 
     this.isPolling = true;
     try {
-      const filterMode = this.config.filterMode || "active";
-      const deliveries = await this.client.getDeliveries(filterMode);
+      // When keeping delivered packages, use "recent" to get them from API
+      const autoRemove = this.config.autoRemoveDelivered !== false;
+      const deliveries = await this.client.getDeliveries(
+        autoRemove ? "active" : "recent",
+      );
 
       await this.setStateAsync("info.connection", { val: true, ack: true });
 
-      // Filter active deliveries (exclude delivered)
-      const activeDeliveries = deliveries.filter(
-        (d) => parseInt(d.status_code, 10) !== 0,
-      );
+      // Filter deliveries based on auto-remove setting
+      const visibleDeliveries = autoRemove
+        ? deliveries.filter((d) => parseInt(d.status_code, 10) !== 0)
+        : deliveries;
 
       // Update each delivery
       const activeIds: string[] = [];
-      for (const delivery of activeDeliveries) {
+      for (const delivery of visibleDeliveries) {
         const carrierName = await this.client.getCarrierName(
           delivery.carrier_code,
         );
@@ -161,10 +180,15 @@ class ParcelappAdapter extends utils.Adapter {
       // Cleanup stale deliveries
       await this.stateManager.cleanupDeliveries(activeIds);
 
-      // Update summary (already filtered — no re-filtering needed)
-      await this.stateManager.updateSummary(activeDeliveries);
+      // Update summary
+      const summaryDeliveries = autoRemove
+        ? visibleDeliveries
+        : deliveries.filter((d) => parseInt(d.status_code, 10) !== 0);
+      await this.stateManager.updateSummary(summaryDeliveries);
 
-      this.log.debug(`Polled ${activeDeliveries.length} active deliveries`);
+      this.log.debug(
+        `Polled ${visibleDeliveries.length} deliveries (${summaryDeliveries.length} active)`,
+      );
     } catch (err) {
       const error = err as Error & { code?: string };
 

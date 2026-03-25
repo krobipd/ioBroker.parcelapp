@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0 (2026-03-25)
+
+- Added option to keep delivered packages in states instead of auto-removing
+- Simplified admin UI from tabs to single page layout
+- Removed redundant summary.json state
+- Removed filter mode setting (now automatic based on delivery behavior)
+
 ## 0.1.5 (2026-03-24)
 
 - Added auto-merge.yml config

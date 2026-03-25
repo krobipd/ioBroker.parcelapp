@@ -67,6 +67,8 @@ class ParcelappAdapter extends utils.Adapter {
         // Initialize
         this.client = new parcel_client_1.ParcelClient(apiKey.trim());
         this.stateManager = new state_manager_1.StateManager(this);
+        // Cleanup obsolete states
+        await this.cleanupObsoleteStates();
         // Initial poll
         await this.poll();
         // Set up recurring poll
@@ -124,29 +126,47 @@ class ParcelappAdapter extends utils.Adapter {
                 this.sendTo(obj.from, obj.command, { error: "Unknown command" }, obj.callback);
         }
     }
+    async cleanupObsoleteStates() {
+        const obsoleteStates = [
+            "summary.json", // removed in 0.2.0
+        ];
+        for (const stateId of obsoleteStates) {
+            const obj = await this.getObjectAsync(stateId);
+            if (obj) {
+                await this.delObjectAsync(stateId);
+                this.log.debug(`Removed obsolete state: ${stateId}`);
+            }
+        }
+    }
     async poll() {
         if (this.isPolling || !this.client || !this.stateManager) {
             return;
         }
         this.isPolling = true;
         try {
-            const filterMode = this.config.filterMode || "active";
-            const deliveries = await this.client.getDeliveries(filterMode);
+            // When keeping delivered packages, use "recent" to get them from API
+            const autoRemove = this.config.autoRemoveDelivered !== false;
+            const deliveries = await this.client.getDeliveries(autoRemove ? "active" : "recent");
             await this.setStateAsync("info.connection", { val: true, ack: true });
-            // Filter active deliveries (exclude delivered)
-            const activeDeliveries = deliveries.filter((d) => parseInt(d.status_code, 10) !== 0);
+            // Filter deliveries based on auto-remove setting
+            const visibleDeliveries = autoRemove
+                ? deliveries.filter((d) => parseInt(d.status_code, 10) !== 0)
+                : deliveries;
             // Update each delivery
             const activeIds = [];
-            for (const delivery of activeDeliveries) {
+            for (const delivery of visibleDeliveries) {
                 const carrierName = await this.client.getCarrierName(delivery.carrier_code);
                 await this.stateManager.updateDelivery(delivery, carrierName);
                 activeIds.push(this.stateManager.packageId(delivery));
             }
             // Cleanup stale deliveries
             await this.stateManager.cleanupDeliveries(activeIds);
-            // Update summary (already filtered — no re-filtering needed)
-            await this.stateManager.updateSummary(activeDeliveries);
-            this.log.debug(`Polled ${activeDeliveries.length} active deliveries`);
+            // Update summary
+            const summaryDeliveries = autoRemove
+                ? visibleDeliveries
+                : deliveries.filter((d) => parseInt(d.status_code, 10) !== 0);
+            await this.stateManager.updateSummary(summaryDeliveries);
+            this.log.debug(`Polled ${visibleDeliveries.length} deliveries (${summaryDeliveries.length} active)`);
         }
         catch (err) {
             const error = err;

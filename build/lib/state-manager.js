@@ -102,7 +102,6 @@ class StateManager {
             this.createAndSet("summary.activeCount", "Active Deliveries", "number", "value", activeDeliveries.length),
             this.createAndSet("summary.todayCount", "Deliveries Today", "number", "value", todayDeliveries.length),
             this.createAndSet("summary.deliveryWindow", "Combined Delivery Window", "string", "text", this.calculateCombinedWindow(todayDeliveries)),
-            this.createAndSet("summary.json", "All Deliveries (JSON)", "string", "json", JSON.stringify(activeDeliveries)),
         ]);
     }
     /**

@@ -19,10 +19,10 @@ ioBroker adapter that connects to the [parcel.app](https://parcelapp.net) API an
 
 - **300+ carriers** — DHL, FedEx, UPS, Amazon, Hermes, GLS, DPD, and many more via parcel.app
 - **Per-package ioBroker states** — carrier, status, tracking number, delivery window, last event, last location
-- **Summary states** — active count, today count, combined delivery window, full JSON data
+- **Summary states** — active count, today count, combined delivery window
 - **Delivery time estimates** — today, tomorrow, in X days with combined time window
 - **Automatic polling** with configurable interval (5–60 minutes)
-- **Automatic cleanup** of delivered packages from the ioBroker object tree
+- **Configurable cleanup** of delivered packages — auto-remove or keep as "Delivered"
 - **Add deliveries** via sendTo message from scripts or other adapters
 - **Admin UI** with connection test, polling settings, and status language selection
 - **Multilingual status labels** (German/English)
@@ -44,7 +44,7 @@ ioBroker adapter that connects to the [parcel.app](https://parcelapp.net) API an
 |--------|-------------|---------|
 | **API Key** | Your parcel.app API key (get it at [web.parcelapp.net](https://web.parcelapp.net)) | — |
 | **Poll Interval** | How often to fetch updates (minutes) | 10 |
-| **Filter Mode** | Active (current only) or Recent (includes completed) | Active |
+| **Auto-remove delivered** | Remove delivered packages from states automatically | Yes |
 | **Status Language** | Language for status labels (German/English) | German |
 
 ---
@@ -57,8 +57,7 @@ parcelapp.0.
 ├── summary.
 │   ├── activeCount              — Number of active deliveries
 │   ├── todayCount               — Number of deliveries expected today
-│   ├── deliveryWindow           — Combined delivery window for today
-│   └── json                     — All active deliveries as JSON
+│   └── deliveryWindow           — Combined delivery window for today
 └── deliveries.
     └── {packageId}.             — One device per package
         ├── carrier              — Carrier name (e.g. DHL Express)
@@ -86,7 +85,6 @@ parcelapp.0.
 ### No deliveries shown
 - The API returns cached data — new deliveries may take a few minutes to appear
 - Check if you have active deliveries in the parcel.app
-- Try changing the filter mode to "Recent" to see completed deliveries
 
 ### Rate limit
 - The parcel.app API allows 20 requests per hour
@@ -95,6 +93,11 @@ parcelapp.0.
 ---
 
 ## Changelog
+
+### 0.2.0 (2026-03-25)
+- Added option to keep delivered packages in states
+- Simplified admin UI to single page
+- Removed redundant summary.json state
 
 ### 0.1.5 (2026-03-24)
 - Added auto-merge config, weekly Dependabot schedule
@@ -110,7 +113,6 @@ parcelapp.0.
 
 ### 0.1.1 (2026-03-23)
 - Redesigned adapter logo
-- Fixed repochecker issues
 
 ### 0.1.0 (2026-03-23)
 - Initial release

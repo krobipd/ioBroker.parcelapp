@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.1.5",
+    "version": "0.2.0",
     "news": {
+      "0.2.0": {
+        "en": "Added option to keep delivered packages, simplified admin UI, removed summary.json state",
+        "de": "Option zum Beibehalten gelieferter Pakete hinzugefügt, Admin-Benutzeroberfläche vereinfacht, Status „summary.json“ entfernt",
+        "ru": "Добавлена ​​опция сохранения доставленных пакетов, упрощен пользовательский интерфейс администратора, удалено состояние summary.json.",
+        "pt": "Adicionada opção para manter pacotes entregues, UI de administração simplificada, estado summary.json removido",
+        "nl": "Optie toegevoegd om afgeleverde pakketten te behouden, vereenvoudigde beheerdersinterface, verwijderde summary.json-status",
+        "fr": "Ajout d'une option pour conserver les packages livrés, interface utilisateur d'administration simplifiée, suppression de l'état summary.json",
+        "it": "Aggiunta opzione per mantenere i pacchetti consegnati, interfaccia utente di amministrazione semplificata, stato summary.json rimosso",
+        "es": "Opción agregada para conservar los paquetes entregados, interfaz de usuario de administración simplificada, estado de resumen.json eliminado",
+        "pl": "Dodano opcję przechowywania dostarczonych paczek, uproszczony interfejs administratora, usunięto stan podsumowania.json",
+        "uk": "Додано параметр збереження доставлених пакетів, спрощений інтерфейс адміністратора, видалено стан summary.json",
+        "zh-cn": "添加了保留已交付包的选项，简化了管理 UI，删除了summary.json 状态"
+      },
       "0.1.5": {
         "en": "Added auto-merge config, weekly Dependabot schedule, actions/checkout v6",
         "de": "Auto-Merge-Konfiguration hinzugefügt, wöchentlicher Dependabot-Zeitplan, actions/checkout v6",
@@ -161,8 +174,8 @@
   "native": {
     "apiKey": "",
     "pollInterval": 10,
-    "filterMode": "active",
-    "language": "de"
+    "language": "de",
+    "autoRemoveDelivered": true
   },
   "instanceObjects": [
     {
