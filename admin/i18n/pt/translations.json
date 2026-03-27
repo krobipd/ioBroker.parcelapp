@@ -1,7 +1,6 @@
 {
-  "aboutHeader": "Apoie este adaptador",
+  "supportHeader": "Apoie este adaptador",
   "aboutInfo": "Este adaptador é gratuito e de código aberto. Se você o achar útil, considere apoiar o desenvolvimento com uma pequena doação.",
-  "aboutTab": "Sobre",
   "apiKeyInfo": "Insira sua chave API do parcel.app. É necessária uma assinatura Premium. Obtenha sua chave em web.parcelapp.net → painel API.",
   "btn_checkConnection": "Testar Conexão",
   "donateKofi": "Apoiar no Ko-fi",

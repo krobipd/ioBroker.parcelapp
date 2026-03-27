@@ -99,6 +99,14 @@ Einseiten-Layout (kein Tabs) mit Sektionen:
 | `checkConnection` | `{ apiKey }` | API-Key testen |
 | `addDelivery` | `{ tracking_number, carrier_code, description }` | Lieferung hinzufügen |
 
+## Error Handling & Rate Limiting (v0.2.1)
+
+- **Rate Limit (HTTP 429):** `Retry-After` Header ausgewertet, Fallback 5 Min Cooldown. Polls werden übersprungen solange Cooldown aktiv.
+- **Netzwerk-Fehler:** ENOTFOUND, ECONNREFUSED, ECONNRESET, ENETUNREACH, EAI_AGAIN → einmal `warn`, danach nur `debug` (kein Log-Spam)
+- **Error-Dedup:** `lastErrorCode` trackt den letzten Fehlertyp. Gleicher Fehler → `debug`. Neuer Fehler → `warn`/`error`.
+- **Poll-Throttling:** `MIN_POLL_GAP_MS = 60_000` — verhindert zu häufige Requests (z.B. addDelivery direkt nach regulärem Poll)
+- **Recovery:** Bei erfolgreicher Abfrage nach Fehler → `info: Connection restored`, `lastErrorCode` reset
+
 ## Obsolete States (Cleanup in onReady)
 - `summary.json` — entfernt in 0.2.0, war redundanter JSON-Dump aller Deliveries
 

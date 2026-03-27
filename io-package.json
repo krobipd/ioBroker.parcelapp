@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "news": {
+      "0.2.2": {
+        "en": "Adapter-managed timers, CI on Windows/macOS, consistent admin UI i18n keys, full MIT license in README",
+        "de": "Adapter-verwaltete Timer, CI auf Windows/macOS, konsistente Admin-UI i18n-Keys, vollständige MIT-Lizenz in README",
+        "ru": "Таймеры, управляемые адаптером, CI на Windows/macOS, согласованные ключи i18n в Admin UI, полная лицензия MIT в README",
+        "pt": "Timers gerenciados pelo adaptador, CI no Windows/macOS, chaves i18n consistentes na UI admin, licença MIT completa no README",
+        "nl": "Adapter-beheerde timers, CI op Windows/macOS, consistente admin-UI i18n-sleutels, volledige MIT-licentie in README",
+        "fr": "Minuteries gérées par l adaptateur, CI sur Windows/macOS, clés i18n cohérentes dans l interface admin, licence MIT complète dans README",
+        "it": "Timer gestiti dall adattatore, CI su Windows/macOS, chiavi i18n coerenti nell interfaccia admin, licenza MIT completa nel README",
+        "es": "Temporizadores gestionados por el adaptador, CI en Windows/macOS, claves i18n consistentes en la UI de admin, licencia MIT completa en README",
+        "pl": "Timery zarządzane przez adapter, CI na Windows/macOS, spójne klucze i18n w admin UI, pełna licencja MIT w README",
+        "uk": "Таймери, керовані адаптером, CI на Windows/macOS, узгоджені ключі i18n в Admin UI, повна ліцензія MIT в README",
+        "zh-cn": "适配器管理的定时器，Windows/macOS CI，一致的管理界面 i18n 键，README 中的完整 MIT 许可证"
+      },
       "0.2.1": {
         "en": "Robust error handling: API rate limit detection, connection error deduplication, poll throttling",
         "de": "Robuste Fehlerbehandlung: Erkennung von API-Ratenlimits, Deduplizierung von Verbindungsfehlern, Polling-Drosselung",
@@ -80,19 +93,6 @@
         "pl": "Zaktualizowano zależności deweloperskie",
         "uk": "Оновлено залежності розробки",
         "zh-cn": "更新开发依赖"
-      },
-      "0.1.1": {
-        "en": "Redesigned adapter logo, fixed repochecker issues",
-        "de": "Adapter-Logo überarbeitet, Repochecker-Probleme behoben",
-        "ru": "Обновлён логотип адаптера, исправлены проблемы repochecker",
-        "pt": "Logo do adaptador redesenhado, problemas do repochecker corrigidos",
-        "nl": "Adapter-logo opnieuw ontworpen, repochecker-problemen opgelost",
-        "fr": "Logo de l'adaptateur redessiné, problèmes repochecker corrigés",
-        "it": "Logo dell'adattatore ridisegnato, problemi repochecker risolti",
-        "es": "Logo del adaptador rediseñado, problemas de repochecker corregidos",
-        "pl": "Przeprojektowano logo adaptera, naprawiono problemy repochecker",
-        "uk": "Оновлено логотип адаптера, виправлено проблеми repochecker",
-        "zh-cn": "重新设计适配器图标，修复 repochecker 问题"
       }
     },
     "titleLang": {

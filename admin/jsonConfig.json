@@ -79,13 +79,13 @@
       ],
       "xs": 12, "sm": 12, "md": 6, "lg": 6, "xl": 6
     },
-    "aboutHeader": {
+    "_supportHeader": {
       "newLine": true,
       "type": "header",
-      "text": "aboutHeader",
+      "text": "supportHeader",
       "size": 5
     },
-    "aboutInfo": {
+    "_aboutInfo": {
       "type": "staticText",
       "text": "aboutInfo",
       "xs": 12, "sm": 12, "md": 12, "lg": 12, "xl": 12,

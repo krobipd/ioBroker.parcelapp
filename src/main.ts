@@ -12,7 +12,7 @@ const MIN_POLL_GAP_MS = 60_000; // Minimum 60s between polls
 class ParcelappAdapter extends utils.Adapter {
   private client: ParcelClient | null = null;
   private stateManager: StateManager | null = null;
-  private pollTimer: ReturnType<typeof setInterval> | null = null;
+  private pollTimer: ioBroker.Interval | undefined = undefined;
   private isPolling = false;
   private lastPollTime = 0;
   private rateLimitedUntil = 0;
@@ -60,7 +60,7 @@ class ParcelappAdapter extends utils.Adapter {
       ),
     );
     const intervalMs = interval * 60 * 1000;
-    this.pollTimer = setInterval(() => void this.poll(), intervalMs);
+    this.pollTimer = this.setInterval(() => void this.poll(), intervalMs);
 
     this.log.info(
       `Parcel tracking started — polling every ${interval} minutes`,
@@ -69,8 +69,8 @@ class ParcelappAdapter extends utils.Adapter {
 
   private onUnload(callback: () => void): void {
     if (this.pollTimer) {
-      clearInterval(this.pollTimer);
-      this.pollTimer = null;
+      this.clearInterval(this.pollTimer);
+      this.pollTimer = undefined;
     }
     void this.setState("info.connection", { val: false, ack: true });
     callback();

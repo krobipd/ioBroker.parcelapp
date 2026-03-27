@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.2 (2026-03-28)
+
+- Switched to adapter-managed timers (this.setInterval/this.clearInterval)
+- Added Windows and macOS to CI test matrix
+- Consistent admin UI i18n keys (supportHeader)
+- Full MIT license text in README
+
 ## 0.2.1 (2026-03-25)
 
 - Added API rate limit detection (HTTP 429) with automatic cooldown

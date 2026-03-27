@@ -1,7 +1,6 @@
 {
-  "aboutHeader": "支持此适配器",
+  "supportHeader": "支持此适配器",
   "aboutInfo": "此适配器免费且开源。如果您觉得有用，请考虑通过小额捐赠支持开发。",
-  "aboutTab": "关于",
   "apiKeyInfo": "输入你的 parcel.app API 密钥。需要 Premium 订阅。在 web.parcelapp.net → API 面板获取密钥。",
   "btn_checkConnection": "测试连接",
   "donateKofi": "在 Ko-fi 上支持",

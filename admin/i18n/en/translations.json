@@ -16,8 +16,7 @@
   "tooltip_language": "Language for delivery status labels (e.g. 'In Transit' vs 'Unterwegs')",
   "lang_de": "German",
   "lang_en": "English",
-  "aboutTab": "About",
-  "aboutHeader": "Support this Adapter",
+  "supportHeader": "Support this Adapter",
   "aboutInfo": "This adapter is free and open source. If you find it useful, please consider supporting its development with a small donation.",
   "donateKofi": "Support on Ko-fi",
   "donatePaypal": "Donate via PayPal"
