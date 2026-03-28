@@ -77,7 +77,8 @@ export class ParcelClient {
         false,
       );
     } catch {
-      this.carrierCache = {};
+      // Return empty map but don't cache it — allow retry next time
+      return {};
     }
 
     return this.carrierCache;

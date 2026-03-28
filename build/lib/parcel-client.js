@@ -77,7 +77,8 @@ class ParcelClient {
             this.carrierCache = await this.request("GET", "/supported_carriers.json", false);
         }
         catch {
-            this.carrierCache = {};
+            // Return empty map but don't cache it — allow retry next time
+            return {};
         }
         return this.carrierCache;
     }

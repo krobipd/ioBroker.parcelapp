@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.2.2",
+    "version": "0.2.3",
     "news": {
+      "0.2.3": {
+        "en": "Fix carrier name cache not retrying after initial failure",
+        "de": "Fix: Carrier-Namen-Cache versucht nach initialem Fehler erneut zu laden",
+        "ru": "Исправление: кэш имен перевозчиков повторяет попытку после начального сбоя",
+        "pt": "Correção: cache de nomes de transportadoras tenta novamente após falha inicial",
+        "nl": "Fix: carrier naam cache probeert opnieuw na initiële fout",
+        "fr": "Correction: le cache des noms de transporteurs réessaie après un échec initial",
+        "it": "Fix: la cache dei nomi dei corrieri riprova dopo un errore iniziale",
+        "es": "Corrección: la caché de nombres de transportistas reintenta tras fallo inicial",
+        "pl": "Poprawka: pamięć podręczna nazw przewoźników ponawia próbę po początkowym błędzie",
+        "uk": "Виправлення: кеш назв перевізників повторює спробу після початкової помилки",
+        "zh-cn": "修复：运营商名称缓存在初次失败后重新尝试加载"
+      },
       "0.2.2": {
         "en": "Adapter-managed timers, CI on Windows/macOS, consistent admin UI i18n keys, full MIT license in README",
         "de": "Adapter-verwaltete Timer, CI auf Windows/macOS, konsistente Admin-UI i18n-Keys, vollständige MIT-Lizenz in README",
@@ -80,19 +93,6 @@
         "pl": "Dodano workflow automerge Dependabot, losowy harmonogram",
         "uk": "Додано робочий процес автозлиття Dependabot, рандомізований розклад",
         "zh-cn": "添加 Dependabot 自动合并工作流，随机化调度"
-      },
-      "0.1.2": {
-        "en": "Updated devDependencies",
-        "de": "Entwicklungsabhängigkeiten aktualisiert",
-        "ru": "Обновлены зависимости разработки",
-        "pt": "Dependências de desenvolvimento atualizadas",
-        "nl": "Ontwikkelingsafhankelijkheden bijgewerkt",
-        "fr": "Dépendances de développement mises à jour",
-        "it": "Dipendenze di sviluppo aggiornate",
-        "es": "Dependencias de desarrollo actualizadas",
-        "pl": "Zaktualizowano zależności deweloperskie",
-        "uk": "Оновлено залежності розробки",
-        "zh-cn": "更新开发依赖"
       }
     },
     "titleLang": {

@@ -94,6 +94,9 @@ parcelapp.0.
 
 ## Changelog
 
+### 0.2.3 (2026-03-28)
+- Fix carrier name cache not retrying after initial failure
+
 ### 0.2.2 (2026-03-28)
 - Adapter-managed timers, CI on Windows/macOS, consistent i18n keys, full MIT license in README
 
@@ -113,9 +116,6 @@ parcelapp.0.
 
 ### 0.1.3 (2026-03-24)
 - Added Dependabot automerge workflow
-
-### 0.1.2 (2026-03-23)
-- Updated devDependencies
 
 Older changelog: [CHANGELOG.md](CHANGELOG.md)
 

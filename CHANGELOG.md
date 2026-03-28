@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.3 (2026-03-28)
+
+- Fix carrier name cache not retrying after initial failure
+
 ## 0.2.2 (2026-03-28)
 
 - Switched to adapter-managed timers (this.setInterval/this.clearInterval)
