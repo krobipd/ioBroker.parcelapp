@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.2.3",
+    "version": "0.2.4",
     "news": {
+      "0.2.4": {
+        "en": "Modernize dev tooling (esbuild, TypeScript 5.9 pin, testing-action-check v2)",
+        "de": "Dev-Tooling modernisiert (esbuild, TypeScript 5.9 Pin, testing-action-check v2)",
+        "ru": "Модернизация инструментов разработки (esbuild, TypeScript 5.9, testing-action-check v2)",
+        "pt": "Modernização das ferramentas de desenvolvimento (esbuild, TypeScript 5.9, testing-action-check v2)",
+        "nl": "Ontwikkeltools gemoderniseerd (esbuild, TypeScript 5.9 pin, testing-action-check v2)",
+        "fr": "Modernisation des outils de développement (esbuild, TypeScript 5.9, testing-action-check v2)",
+        "it": "Modernizzazione degli strumenti di sviluppo (esbuild, TypeScript 5.9, testing-action-check v2)",
+        "es": "Modernización de herramientas de desarrollo (esbuild, TypeScript 5.9, testing-action-check v2)",
+        "pl": "Modernizacja narzędzi programistycznych (esbuild, TypeScript 5.9, testing-action-check v2)",
+        "uk": "Модернізація інструментів розробки (esbuild, TypeScript 5.9, testing-action-check v2)",
+        "zh-cn": "开发工具现代化（esbuild、TypeScript 5.9 固定、testing-action-check v2）"
+      },
       "0.2.3": {
         "en": "Fix carrier name cache not retrying after initial failure",
         "de": "Fix: Carrier-Namen-Cache versucht nach initialem Fehler erneut zu laden",
@@ -80,19 +93,6 @@
         "pl": "Ulepszony README z jaśniejszym opisem adaptera ioBroker",
         "uk": "Покращено README з чіткішим описом адаптера ioBroker",
         "zh-cn": "改进 README，更清楚地描述 ioBroker 适配器"
-      },
-      "0.1.3": {
-        "en": "Added Dependabot automerge workflow, randomized schedule",
-        "de": "Dependabot-Automerge-Workflow hinzugefügt, Zeitplan randomisiert",
-        "ru": "Добавлен рабочий процесс автослияния Dependabot, рандомизированное расписание",
-        "pt": "Adicionado workflow de automerge do Dependabot, agendamento randomizado",
-        "nl": "Dependabot automerge-workflow toegevoegd, schema gerandomiseerd",
-        "fr": "Ajout du workflow automerge Dependabot, planification aléatoire",
-        "it": "Aggiunto workflow automerge Dependabot, pianificazione randomizzata",
-        "es": "Añadido workflow de automerge de Dependabot, programación aleatorizada",
-        "pl": "Dodano workflow automerge Dependabot, losowy harmonogram",
-        "uk": "Додано робочий процес автозлиття Dependabot, рандомізований розклад",
-        "zh-cn": "添加 Dependabot 自动合并工作流，随机化调度"
       }
     },
     "titleLang": {

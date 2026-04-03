@@ -94,6 +94,9 @@ parcelapp.0.
 
 ## Changelog
 
+### 0.2.4 (2026-04-03)
+- Modernize dev tooling (esbuild, TypeScript 5.9 pin, testing-action-check v2)
+
 ### 0.2.3 (2026-03-28)
 - Fix carrier name cache not retrying after initial failure
 
@@ -113,9 +116,6 @@ parcelapp.0.
 
 ### 0.1.4 (2026-03-24)
 - Improved README
-
-### 0.1.3 (2026-03-24)
-- Added Dependabot automerge workflow
 
 Older changelog: [CHANGELOG.md](CHANGELOG.md)
 

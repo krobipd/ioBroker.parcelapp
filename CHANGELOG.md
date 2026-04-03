@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.4 (2026-04-03)
+
+- Modernize dev tooling: esbuild via build-adapter, @tsconfig/node20, rimraf, TypeScript ~5.9.3 pin
+- Upgrade testing-action-check to v2.0.0
+- Dependabot: monthly schedule, auto-merge skips major updates
+- Branch protection: require check-and-lint status check
+
 ## 0.2.3 (2026-03-28)
 
 - Fix carrier name cache not retrying after initial failure
