@@ -57,7 +57,7 @@
     "build": "build-adapter ts",
     "build:test": "tsc -p tsconfig.test.json",
     "watch": "build-adapter ts --watch",
-    "check": "tsc -p tsconfig.build.json --noEmit",
+    "check": "tsc --noEmit",
     "test:package": "npm run build:test && mocha --exit \"build/test/testPackageFiles.js\"",
     "test:integration": "npm run build:test && mocha --exit \"build/test/**/*.js\"",
     "test": "npm run build:test && mocha --exit \"build/test/**/*.js\"",
