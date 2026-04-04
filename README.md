@@ -94,6 +94,9 @@ parcelapp.0.
 
 ## Changelog
 
+### 0.2.5 (2026-04-04)
+- Fix delivery window timeout on Windows (deterministic time formatting)
+
 ### 0.2.4 (2026-04-03)
 - Modernize dev tooling (esbuild, TypeScript 5.9 pin, testing-action-check v2)
 
@@ -113,9 +116,6 @@ parcelapp.0.
 
 ### 0.1.5 (2026-03-24)
 - Added auto-merge config, weekly Dependabot schedule
-
-### 0.1.4 (2026-03-24)
-- Improved README
 
 Older changelog: [CHANGELOG.md](CHANGELOG.md)
 

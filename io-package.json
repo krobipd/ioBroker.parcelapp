@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.2.4",
+    "version": "0.2.5",
     "news": {
+      "0.2.5": {
+        "en": "Fix delivery window timeout on Windows (replace toLocaleTimeString with manual formatting)",
+        "de": "Fix Zeitfenster-Timeout auf Windows (toLocaleTimeString durch manuelle Formatierung ersetzt)",
+        "ru": "Исправлен тайм-аут окна доставки в Windows",
+        "pt": "Correção de timeout de janela de entrega no Windows",
+        "nl": "Fix leveringsvenster timeout op Windows",
+        "fr": "Correction du timeout de la fenêtre de livraison sous Windows",
+        "it": "Correzione timeout finestra di consegna su Windows",
+        "es": "Corrección del timeout de la ventana de entrega en Windows",
+        "pl": "Naprawiono timeout okna dostawy w systemie Windows",
+        "uk": "Виправлено тайм-аут вікна доставки в Windows",
+        "zh-cn": "修复Windows上的交付窗口超时问题"
+      },
       "0.2.4": {
         "en": "Modernize dev tooling (esbuild, TypeScript 5.9 pin, testing-action-check v2)",
         "de": "Dev-Tooling modernisiert (esbuild, TypeScript 5.9 Pin, testing-action-check v2)",
@@ -80,19 +93,6 @@
         "pl": "Dodano konfigurację auto-merge, tygodniowy harmonogram Dependabot, actions/checkout v6",
         "uk": "Додано конфігурацію автозлиття, щотижневий розклад Dependabot, actions/checkout v6",
         "zh-cn": "添加自动合并配置，每周 Dependabot 计划，actions/checkout v6"
-      },
-      "0.1.4": {
-        "en": "Improved README with clearer ioBroker adapter framing",
-        "de": "README verbessert mit klarerer ioBroker-Adapter-Beschreibung",
-        "ru": "Улучшен README с более четким описанием адаптера ioBroker",
-        "pt": "README melhorado com descrição mais clara do adaptador ioBroker",
-        "nl": "README verbeterd met duidelijkere ioBroker-adapterbeschrijving",
-        "fr": "README amélioré avec une description plus claire de l adaptateur ioBroker",
-        "it": "README migliorato con descrizione più chiara dell adattatore ioBroker",
-        "es": "README mejorado con descripción más clara del adaptador ioBroker",
-        "pl": "Ulepszony README z jaśniejszym opisem adaptera ioBroker",
-        "uk": "Покращено README з чіткішим описом адаптера ioBroker",
-        "zh-cn": "改进 README，更清楚地描述 ioBroker 适配器"
       }
     },
     "titleLang": {

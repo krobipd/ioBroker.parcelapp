@@ -135,7 +135,7 @@ pkgId = `sanitize(tracking_number)` + optional `_sanitize(extra_information)`
 
 ## Status
 
-**Auf npm veröffentlicht** ✅ — `iobroker.parcelapp@0.2.4`
+**Auf npm veröffentlicht** ✅ — `iobroker.parcelapp@0.2.5`
 **ioBroker Repository PR** ✅ — https://github.com/ioBroker/ioBroker.repositories/pull/5667 (ausstehend)
 **Release-Pipeline** ✅ — vollautomatisch via `test-and-release.yml` (einziger Workflow!)
 
@@ -162,6 +162,7 @@ Tests werden mit `tsconfig.test.json` kompiliert und aus `build/test/` ausgefüh
 
 | Version | Änderungen |
 |---------|------------|
+| 0.2.5 | Fix toLocaleTimeString Timeout auf Windows (deterministische Zeitformatierung) |
 | 0.2.4 | Dev-Tooling modernisiert (esbuild, TS 5.9 Pin, testing-action-check v2) |
 | 0.2.3 | Fix Carrier-Cache Retry nach initialem Fehler |
 | 0.2.2 | Adapter-Timer, Windows/macOS CI, konsistente i18n-Keys, MIT-Volltext README |

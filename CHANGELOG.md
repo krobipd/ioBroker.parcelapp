@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.5 (2026-04-04)
+
+- Fix delivery window test timeout on Windows (replace `toLocaleTimeString` with deterministic formatting)
+
 ## 0.2.4 (2026-04-03)
 
 - Modernize dev tooling: esbuild via build-adapter, @tsconfig/node20, rimraf, TypeScript ~5.9.3 pin

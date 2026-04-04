@@ -246,10 +246,8 @@ export class StateManager {
       if (!timestamp) {
         return null;
       }
-      return new Date(timestamp * 1000).toLocaleTimeString("de-DE", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
+      const d = new Date(timestamp * 1000);
+      return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
     };
 
     const start = formatTime(delivery.timestamp_expected);
