@@ -6,7 +6,7 @@
 
 **ioBroker Parcel Tracking Adapter** — Paketverfolgung über [parcel.app](https://parcelapp.net) API. 300+ Carrier, ein API-Key.
 
-- **Version:** 0.2.6 (April 2026)
+- **Version:** 0.2.7 (April 2026)
 - **GitHub:** https://github.com/krobipd/ioBroker.parcelapp
 - **npm:** https://www.npmjs.com/package/iobroker.parcelapp
 - **Repository PR:** ioBroker/ioBroker.repositories#5667
@@ -55,6 +55,7 @@ test/testPackageFiles.ts  → @iobroker/testing (57)
 
 | Version | Highlights |
 |---------|------------|
+| 0.2.7 | Konsistente UI-Labels über alle Adapter |
 | 0.2.6 | Redundante Scripts entfernt, CLAUDE.md komprimiert |
 | 0.2.5 | Fix toLocaleTimeString Timeout auf Windows |
 | 0.2.4 | Dev-Tooling modernisiert (esbuild, TS 5.9 Pin) |
