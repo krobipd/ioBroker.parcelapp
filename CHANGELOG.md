@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.8 (2026-04-05)
+
+- Clean up empty parent folders after removing obsolete states
+
 ## 0.2.7 (2026-04-05)
 
 - Consistent UI labels across all adapters

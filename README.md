@@ -94,6 +94,9 @@ parcelapp.0.
 
 ## Changelog
 
+### 0.2.8 (2026-04-05)
+- Clean up empty parent folders after removing obsolete states
+
 ### 0.2.7 (2026-04-05)
 - Consistent UI labels across all adapters
 
@@ -111,9 +114,6 @@ parcelapp.0.
 
 ### 0.2.2 (2026-03-28)
 - Adapter-managed timers, CI on Windows/macOS, consistent i18n keys, full MIT license in README
-
-### 0.2.1 (2026-03-25)
-- Robust error handling: rate limit detection, connection error deduplication, poll throttling
 
 Older changelog: [CHANGELOG.md](CHANGELOG.md)
 

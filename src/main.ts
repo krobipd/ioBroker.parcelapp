@@ -147,6 +147,21 @@ class ParcelappAdapter extends utils.Adapter {
       if (obj) {
         await this.delObjectAsync(stateId);
         this.log.debug(`Removed obsolete state: ${stateId}`);
+
+        // Clean up empty parent channel/folder
+        const parentId = stateId.includes(".")
+          ? stateId.substring(0, stateId.lastIndexOf("."))
+          : null;
+        if (parentId) {
+          const children = await this.getObjectListAsync({
+            startkey: `${this.namespace}.${parentId}.`,
+            endkey: `${this.namespace}.${parentId}.\u9999`,
+          });
+          if (children?.rows.length === 0) {
+            await this.delObjectAsync(parentId);
+            this.log.debug(`Removed empty parent: ${parentId}`);
+          }
+        }
       }
     }
   }

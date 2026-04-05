@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.2.7",
+    "version": "0.2.8",
     "news": {
+      "0.2.8": {
+        "en": "Clean up empty parent folders after removing obsolete states",
+        "de": "Leere Eltern-Ordner nach Entfernen obsoleter States löschen",
+        "ru": "Удаление пустых родительских папок после удаления устаревших состояний",
+        "pt": "Limpar pastas pai vazias após remover estados obsoletos",
+        "nl": "Lege bovenliggende mappen opruimen na verwijderen van verouderde statussen",
+        "fr": "Nettoyage des dossiers parents vides après suppression des états obsolètes",
+        "it": "Pulizia delle cartelle padre vuote dopo la rimozione degli stati obsoleti",
+        "es": "Limpiar carpetas padre vacías después de eliminar estados obsoletos",
+        "pl": "Usuwanie pustych folderów nadrzędnych po usunięciu przestarzałych stanów",
+        "uk": "Видалення порожніх батьківських папок після видалення застарілих станів",
+        "zh-cn": "移除过时状态后清理空父文件夹"
+      },
       "0.2.7": {
         "en": "Consistent UI labels across all adapters",
         "de": "Einheitliche UI-Labels über alle Adapter",
@@ -80,19 +93,6 @@
         "pl": "Timery zarządzane przez adapter, CI na Windows/macOS, spójne klucze i18n w admin UI, pełna licencja MIT w README",
         "uk": "Таймери, керовані адаптером, CI на Windows/macOS, узгоджені ключі i18n в Admin UI, повна ліцензія MIT в README",
         "zh-cn": "适配器管理的定时器，Windows/macOS CI，一致的管理界面 i18n 键，README 中的完整 MIT 许可证"
-      },
-      "0.2.1": {
-        "en": "Robust error handling: API rate limit detection, connection error deduplication, poll throttling",
-        "de": "Robuste Fehlerbehandlung: Erkennung von API-Ratenlimits, Deduplizierung von Verbindungsfehlern, Polling-Drosselung",
-        "ru": "Надежная обработка ошибок: обнаружение ограничения скорости API, дедупликация ошибок соединения, регулирование опроса.",
-        "pt": "Tratamento robusto de erros: detecção de limite de taxa de API, desduplicação de erros de conexão, otimização de pesquisa",
-        "nl": "Robuuste foutafhandeling: detectie van API-snelheidslimieten, deduplicatie van verbindingsfouten, poll-throttling",
-        "fr": "Gestion robuste des erreurs : détection de limite de débit API, déduplication des erreurs de connexion, limitation des interrogations",
-        "it": "Gestione efficace degli errori: rilevamento del limite di velocità dell'API, deduplicazione degli errori di connessione, limitazione del poll",
-        "es": "Manejo sólido de errores: detección de límite de tasa de API, deduplicación de errores de conexión, limitación de encuestas",
-        "pl": "Solidna obsługa błędów: wykrywanie limitów szybkości interfejsu API, deduplikacja błędów połączenia, ograniczanie odpytywania",
-        "uk": "Надійна обробка помилок: виявлення обмеження швидкості API, дедуплікація помилок підключення, регулювання опитування",
-        "zh-cn": "强大的错误处理：API 速率限制检测、连接错误重复数据删除、轮询限制"
       }
     },
     "titleLang": {
