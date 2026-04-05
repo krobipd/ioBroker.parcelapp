@@ -1,5 +1,5 @@
 {
-  "supportHeader": "支持此适配器",
+  "supportHeader": "支持",
   "aboutInfo": "此适配器免费且开源。如果您觉得有用，请考虑通过小额捐赠支持开发。",
   "apiKeyInfo": "输入你的 parcel.app API 密钥。需要 Premium 订阅。在 web.parcelapp.net → API 面板获取密钥。",
   "btn_checkConnection": "测试连接",
