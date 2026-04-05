@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.7 (2026-04-05)
+
+- Consistent UI labels across all adapters
+
 ## 0.2.6 (2026-04-05)
 
 - Remove redundant `build:ts` and `prepare` scripts

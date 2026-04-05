@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.2.6",
+    "version": "0.2.7",
     "news": {
+      "0.2.7": {
+        "en": "Consistent UI labels across all adapters",
+        "de": "Einheitliche UI-Labels über alle Adapter",
+        "ru": "Единообразные метки интерфейса во всех адаптерах",
+        "pt": "Rótulos de interface consistentes em todos os adaptadores",
+        "nl": "Consistente UI-labels in alle adapters",
+        "fr": "Libellés d'interface cohérents dans tous les adaptateurs",
+        "it": "Etichette di interfaccia coerenti in tutti gli adattatori",
+        "es": "Etiquetas de interfaz consistentes en todos los adaptadores",
+        "pl": "Spójne etykiety interfejsu we wszystkich adapterach",
+        "uk": "Узгоджені мітки інтерфейсу у всіх адаптерах",
+        "zh-cn": "所有适配器中统一的界面标签"
+      },
       "0.2.6": {
         "en": "Remove redundant scripts, compress documentation",
         "de": "Redundante Scripts entfernt, Dokumentation komprimiert",
@@ -80,19 +93,6 @@
         "pl": "Solidna obsługa błędów: wykrywanie limitów szybkości interfejsu API, deduplikacja błędów połączenia, ograniczanie odpytywania",
         "uk": "Надійна обробка помилок: виявлення обмеження швидкості API, дедуплікація помилок підключення, регулювання опитування",
         "zh-cn": "强大的错误处理：API 速率限制检测、连接错误重复数据删除、轮询限制"
-      },
-      "0.2.0": {
-        "en": "Added option to keep delivered packages, simplified admin UI, removed summary.json state",
-        "de": "Option zum Beibehalten gelieferter Pakete hinzugefügt, Admin-Benutzeroberfläche vereinfacht, Status „summary.json“ entfernt",
-        "ru": "Добавлена ​​опция сохранения доставленных пакетов, упрощен пользовательский интерфейс администратора, удалено состояние summary.json.",
-        "pt": "Adicionada opção para manter pacotes entregues, UI de administração simplificada, estado summary.json removido",
-        "nl": "Optie toegevoegd om afgeleverde pakketten te behouden, vereenvoudigde beheerdersinterface, verwijderde summary.json-status",
-        "fr": "Ajout d'une option pour conserver les packages livrés, interface utilisateur d'administration simplifiée, suppression de l'état summary.json",
-        "it": "Aggiunta opzione per mantenere i pacchetti consegnati, interfaccia utente di amministrazione semplificata, stato summary.json rimosso",
-        "es": "Opción agregada para conservar los paquetes entregados, interfaz de usuario de administración simplificada, estado de resumen.json eliminado",
-        "pl": "Dodano opcję przechowywania dostarczonych paczek, uproszczony interfejs administratora, usunięto stan podsumowania.json",
-        "uk": "Додано параметр збереження доставлених пакетів, спрощений інтерфейс адміністратора, видалено стан summary.json",
-        "zh-cn": "添加了保留已交付包的选项，简化了管理 UI，删除了summary.json 状态"
       }
     },
     "titleLang": {
