@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.6 (2026-04-05)
+
+- Remove redundant `build:ts` and `prepare` scripts
+- Compress CLAUDE.md documentation (204 → 72 lines)
+
 ## 0.2.5 (2026-04-04)
 
 - Fix delivery window test timeout on Windows (replace `toLocaleTimeString` with deterministic formatting)
@@ -35,24 +40,5 @@
 - Simplified admin UI from tabs to single page layout
 - Removed redundant summary.json state
 - Removed filter mode setting (now automatic based on delivery behavior)
-
-## 0.1.5 (2026-03-24)
-
-- Added auto-merge.yml config
-- Changed Dependabot schedule from monthly to weekly
-- Updated actions/checkout to v6
-
-## 0.1.4 (2026-03-24)
-
-- Improved README: clearer ioBroker adapter framing and feature descriptions
-
-## 0.1.3 (2026-03-24)
-
-- Added automerge workflow for Dependabot PRs
-- Randomized Dependabot schedule time for load distribution
-
-## 0.1.2 (2026-03-23)
-
-- Updated devDependencies (@iobroker/build-tools 3.x, @types/node 25.x)
 
 Older changes: [CHANGELOG_OLD.md](CHANGELOG_OLD.md)

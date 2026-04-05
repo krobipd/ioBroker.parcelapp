@@ -94,6 +94,9 @@ parcelapp.0.
 
 ## Changelog
 
+### 0.2.6 (2026-04-05)
+- Remove redundant scripts, compress documentation
+
 ### 0.2.5 (2026-04-04)
 - Fix delivery window timeout on Windows (deterministic time formatting)
 
@@ -113,9 +116,6 @@ parcelapp.0.
 - Added option to keep delivered packages in states
 - Simplified admin UI to single page
 - Removed redundant summary.json state
-
-### 0.1.5 (2026-03-24)
-- Added auto-merge config, weekly Dependabot schedule
 
 Older changelog: [CHANGELOG.md](CHANGELOG.md)
 

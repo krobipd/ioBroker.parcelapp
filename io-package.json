@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.2.5",
+    "version": "0.2.6",
     "news": {
+      "0.2.6": {
+        "en": "Remove redundant scripts, compress documentation",
+        "de": "Redundante Scripts entfernt, Dokumentation komprimiert",
+        "ru": "Удалены избыточные скрипты, сжата документация",
+        "pt": "Scripts redundantes removidos, documentacao comprimida",
+        "nl": "Overbodige scripts verwijderd, documentatie gecomprimeerd",
+        "fr": "Scripts redondants supprimes, documentation comprimee",
+        "it": "Script ridondanti rimossi, documentazione compressa",
+        "es": "Scripts redundantes eliminados, documentacion comprimida",
+        "pl": "Usunieto nadmiarowe skrypty, skompresowano dokumentacje",
+        "uk": "Видалено зайвi скрипти, стиснуто документацiю",
+        "zh-cn": "移除冗余脚本，压缩文档"
+      },
       "0.2.5": {
         "en": "Fix delivery window timeout on Windows (replace toLocaleTimeString with manual formatting)",
         "de": "Fix Zeitfenster-Timeout auf Windows (toLocaleTimeString durch manuelle Formatierung ersetzt)",
@@ -80,19 +93,6 @@
         "pl": "Dodano opcję przechowywania dostarczonych paczek, uproszczony interfejs administratora, usunięto stan podsumowania.json",
         "uk": "Додано параметр збереження доставлених пакетів, спрощений інтерфейс адміністратора, видалено стан summary.json",
         "zh-cn": "添加了保留已交付包的选项，简化了管理 UI，删除了summary.json 状态"
-      },
-      "0.1.5": {
-        "en": "Added auto-merge config, weekly Dependabot schedule, actions/checkout v6",
-        "de": "Auto-Merge-Konfiguration hinzugefügt, wöchentlicher Dependabot-Zeitplan, actions/checkout v6",
-        "ru": "Добавлена конфигурация автослияния, еженедельное расписание Dependabot, actions/checkout v6",
-        "pt": "Adicionada configuração de auto-merge, agendamento semanal do Dependabot, actions/checkout v6",
-        "nl": "Auto-merge-configuratie toegevoegd, wekelijks Dependabot-schema, actions/checkout v6",
-        "fr": "Configuration auto-merge ajoutée, planification hebdomadaire Dependabot, actions/checkout v6",
-        "it": "Aggiunta configurazione auto-merge, pianificazione settimanale Dependabot, actions/checkout v6",
-        "es": "Añadida configuración de auto-merge, programación semanal de Dependabot, actions/checkout v6",
-        "pl": "Dodano konfigurację auto-merge, tygodniowy harmonogram Dependabot, actions/checkout v6",
-        "uk": "Додано конфігурацію автозлиття, щотижневий розклад Dependabot, actions/checkout v6",
-        "zh-cn": "添加自动合并配置，每周 Dependabot 计划，actions/checkout v6"
       }
     },
     "titleLang": {

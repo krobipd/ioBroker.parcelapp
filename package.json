@@ -1,6 +1,6 @@
 {
   "name": "iobroker.parcelapp",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "ioBroker adapter for parcel.app — track packages from 300+ carriers",
   "author": {
     "name": "krobi",
@@ -51,9 +51,7 @@
     "README.md"
   ],
   "scripts": {
-    "prepare": "test -d build || npm run build",
     "prebuild": "rimraf build",
-    "build:ts": "build-adapter ts",
     "build": "build-adapter ts",
     "build:test": "tsc -p tsconfig.test.json",
     "watch": "build-adapter ts --watch",
