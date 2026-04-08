@@ -59,7 +59,7 @@
     "test:ts": "npm run build:test && mocha --exit \"build/test/testParcelClient.js\" \"build/test/testStateManager.js\"",
     "test:package": "mocha test/package --exit",
     "test:integration": "mocha test/integration --exit",
-    "test": "npm run test:ts && npm run test:package",
+    "test": "npm run build && npm run test:ts && npm run test:package",
     "translate": "translate-adapter",
     "lint": "eslint",
     "lint:fix": "eslint --fix",

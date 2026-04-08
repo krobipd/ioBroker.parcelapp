@@ -1,25 +1,28 @@
-# Build output (test only - production build IS committed)
-build/test/
-build/src/
+# macOS
+.DS_Store
 
-# Dependencies
+# Node.js
 node_modules/
+npm-debug.log*
 
 # IDE
 .idea/
-*.code-workspace
+.vscode/*
+!.vscode/settings.json
+*.swp
+*.swo
 
-# OS
-.DS_Store
-Thumbs.db
+# ioBroker repochecker
+.commitinfo
 
-# Logs
-*.log
-npm-debug.log*
+# ioBroker
+admin/i18n/flat.txt
 
-# Coverage
+# Build & Test
+build/
 coverage/
 .nyc_output/
 
-# Misc
-.commitinfo
+# Environment
+.env
+.env.local
