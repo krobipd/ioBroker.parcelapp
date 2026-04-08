@@ -1,5 +1,34 @@
 # Older Changes
 
+## 0.2.4 (2026-04-03)
+
+- Modernize dev tooling (esbuild, TypeScript 5.9 pin, testing-action-check v2)
+
+## 0.2.3 (2026-03-28)
+
+- Fix carrier name cache not retrying after initial failure
+
+## 0.2.2 (2026-03-28)
+
+- Switched to adapter-managed timers (this.setInterval/this.clearInterval)
+- Added Windows and macOS to CI test matrix
+- Consistent admin UI i18n keys (supportHeader)
+- Full MIT license text in README
+
+## 0.2.1 (2026-03-25)
+
+- Added API rate limit detection (HTTP 429) with automatic cooldown
+- Added connection error deduplication to prevent log spam during outages
+- Added poll throttling (minimum 60s between requests)
+- Improved error classification for network, timeout, and API errors
+
+## 0.2.0 (2026-03-25)
+
+- Added option to keep delivered packages in states instead of auto-removing
+- Simplified admin UI from tabs to single page layout
+- Removed redundant summary.json state
+- Removed filter mode setting (now automatic based on delivery behavior)
+
 ## 0.1.5 (2026-03-24)
 
 - Added auto-merge.yml config

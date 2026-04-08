@@ -1,6 +1,6 @@
 {
   "name": "iobroker.parcelapp",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "ioBroker adapter for parcel.app — track packages from 300+ carriers",
   "author": {
     "name": "krobi",
@@ -56,10 +56,10 @@
     "build:test": "tsc -p tsconfig.test.json",
     "watch": "build-adapter ts --watch",
     "check": "tsc --noEmit",
-    "test:package": "npm run build:test && mocha --exit \"build/test/testPackageFiles.js\"",
-    "test:integration": "npm run build:test && mocha --exit \"build/test/**/*.js\"",
-    "test": "npm run build:test && mocha --exit \"build/test/**/*.js\"",
-    "test:ci": "npm run build:test && mocha --exit --reporter spec \"build/test/**/*.js\"",
+    "test:ts": "npm run build:test && mocha --exit \"build/test/testParcelClient.js\" \"build/test/testStateManager.js\"",
+    "test:package": "mocha test/package --exit",
+    "test:integration": "mocha test/integration --exit",
+    "test": "npm run test:ts && npm run test:package",
     "translate": "translate-adapter",
     "lint": "eslint",
     "lint:fix": "eslint --fix",

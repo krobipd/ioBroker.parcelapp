@@ -30,7 +30,7 @@ export class StateManager {
   }
 
   /**
-   * Sanitize a string for use as ioBroker object ID.
+   * Sanitize a string for use as ioBroker object ID (see adapter.FORBIDDEN_CHARS).
    *
    * @param name Raw string to sanitize
    */

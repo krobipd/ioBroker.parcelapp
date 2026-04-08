@@ -4,8 +4,12 @@
     "noEmit": false,
     "outDir": "./build",
     "rootDir": ".",
-    "sourceMap": false
+    "sourceMap": false,
+    "declaration": false,
+    "declarationMap": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
   },
-  "include": ["src/**/*", "test/**/*"],
+  "include": ["src/**/*.ts", "test/**/*.ts"],
   "exclude": ["node_modules"]
 }

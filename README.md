@@ -94,6 +94,9 @@ parcelapp.0.
 
 ## Changelog
 
+### 0.2.9 (2026-04-08)
+- Add standard ioBroker test suite, optimize test build config
+
 ### 0.2.8 (2026-04-05)
 - Clean up empty parent folders after removing obsolete states
 
@@ -106,16 +109,7 @@ parcelapp.0.
 ### 0.2.5 (2026-04-04)
 - Fix delivery window timeout on Windows (deterministic time formatting)
 
-### 0.2.4 (2026-04-03)
-- Modernize dev tooling (esbuild, TypeScript 5.9 pin, testing-action-check v2)
-
-### 0.2.3 (2026-03-28)
-- Fix carrier name cache not retrying after initial failure
-
-### 0.2.2 (2026-03-28)
-- Adapter-managed timers, CI on Windows/macOS, consistent i18n keys, full MIT license in README
-
-Older changelog: [CHANGELOG.md](CHANGELOG.md)
+Older changelog: [CHANGELOG_OLD.md](CHANGELOG_OLD.md)
 
 ---
 

@@ -1,5 +1,6 @@
 # Build output (test only - production build IS committed)
 build/test/
+build/src/
 
 # Dependencies
 node_modules/
