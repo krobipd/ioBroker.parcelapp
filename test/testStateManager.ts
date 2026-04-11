@@ -621,7 +621,7 @@ describe("StateManager", () => {
         it("should use date_expected as fallback when no timestamp", async () => {
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
-            const dateStr = tomorrow.toISOString().split("T")[0]; // YYYY-MM-DD
+            const dateStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, "0")}-${String(tomorrow.getDate()).padStart(2, "0")}`;
 
             const delivery = makeDelivery({
                 status_code: "2",

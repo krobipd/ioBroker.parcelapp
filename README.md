@@ -11,13 +11,13 @@
 
 <img src="https://raw.githubusercontent.com/krobipd/ioBroker.parcelapp/main/admin/parcelapp.svg" width="100" />
 
-ioBroker adapter that connects to the [parcel.app](https://parcelapp.net) API and exposes package tracking data from 300+ carriers as ioBroker states — including delivery status, time windows, and tracking events.
+ioBroker adapter that connects to the [parcel.app](https://parcelapp.net) API and exposes package tracking data from 400+ carriers as ioBroker states — including delivery status, time windows, and tracking events.
 
 ---
 
 ## Features
 
-- **300+ carriers** — DHL, FedEx, UPS, Amazon, Hermes, GLS, DPD, and many more via parcel.app
+- **400+ carriers** — DHL, FedEx, UPS, Amazon, Hermes, GLS, DPD, and many more via parcel.app
 - **Per-package ioBroker states** — carrier, status, tracking number, delivery window, last event, last location
 - **Summary states** — active count, today count, combined delivery window
 - **Delivery time estimates** — today, tomorrow, in X days with combined time window
@@ -94,6 +94,10 @@ parcelapp.0.
 
 ## Changelog
 
+### 0.2.10 (2026-04-12)
+- Fix test timezone bug, remove unused devDependencies, add `no-floating-promises` lint rule
+- Remove redundant `actions/checkout` from CI workflow
+
 ### 0.2.9 (2026-04-08)
 - Add standard ioBroker test suite, optimize test build config
 
@@ -109,7 +113,10 @@ parcelapp.0.
 ### 0.2.5 (2026-04-04)
 - Fix delivery window timeout on Windows (deterministic time formatting)
 
-Older changelog: [CHANGELOG_OLD.md](CHANGELOG_OLD.md)
+### 0.2.4 (2026-04-03)
+- Modernize dev tooling (esbuild, TypeScript 5.9 pin, testing-action-check v2)
+
+Older entries have been moved to [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
 
 ---
 

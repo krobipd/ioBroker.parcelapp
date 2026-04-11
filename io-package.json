@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.2.9",
+    "version": "0.2.10",
     "news": {
+      "0.2.10": {
+        "en": "Fix test timezone bug, remove unused devDependencies, add no-floating-promises lint rule",
+        "de": "Test-Zeitzonenfehler behoben, ungenutzte devDependencies entfernt, no-floating-promises Lint-Regel hinzugefügt",
+        "ru": "Исправлена ошибка часового пояса в тестах, удалены неиспользуемые devDependencies, добавлено правило линтинга no-floating-promises",
+        "pt": "Corrigido bug de fuso horário em testes, removidas devDependencies não utilizadas, adicionada regra de lint no-floating-promises",
+        "nl": "Tijdzonebug in tests opgelost, ongebruikte devDependencies verwijderd, no-floating-promises lintregel toegevoegd",
+        "fr": "Correction du bug de fuseau horaire dans les tests, suppression des devDependencies inutilisées, ajout de la règle de lint no-floating-promises",
+        "it": "Corretto bug fuso orario nei test, rimosse devDependencies inutilizzate, aggiunta regola lint no-floating-promises",
+        "es": "Corregido error de zona horaria en pruebas, eliminadas devDependencies no utilizadas, añadida regla de lint no-floating-promises",
+        "pl": "Naprawiono błąd strefy czasowej w testach, usunięto nieużywane devDependencies, dodano regułę lint no-floating-promises",
+        "uk": "Виправлено помилку часового поясу в тестах, видалено невикористані devDependencies, додано правило лінтингу no-floating-promises",
+        "zh-cn": "修复测试时区错误，移除未使用的开发依赖，添加 no-floating-promises 检查规则"
+      },
       "0.2.9": {
         "en": "Add standard ioBroker test suite, optimize test build config",
         "de": "Standard-ioBroker-Testsuite hinzugefügt, Test-Build-Konfiguration optimiert",
@@ -80,19 +93,6 @@
         "pl": "Modernizacja narzędzi programistycznych (esbuild, TypeScript 5.9, testing-action-check v2)",
         "uk": "Модернізація інструментів розробки (esbuild, TypeScript 5.9, testing-action-check v2)",
         "zh-cn": "开发工具现代化（esbuild、TypeScript 5.9 固定、testing-action-check v2）"
-      },
-      "0.2.3": {
-        "en": "Fix carrier name cache not retrying after initial failure",
-        "de": "Fix: Carrier-Namen-Cache versucht nach initialem Fehler erneut zu laden",
-        "ru": "Исправление: кэш имен перевозчиков повторяет попытку после начального сбоя",
-        "pt": "Correção: cache de nomes de transportadoras tenta novamente após falha inicial",
-        "nl": "Fix: carrier naam cache probeert opnieuw na initiële fout",
-        "fr": "Correction: le cache des noms de transporteurs réessaie après un échec initial",
-        "it": "Fix: la cache dei nomi dei corrieri riprova dopo un errore iniziale",
-        "es": "Corrección: la caché de nombres de transportistas reintenta tras fallo inicial",
-        "pl": "Poprawka: pamięć podręczna nazw przewoźników ponawia próbę po początkowym błędzie",
-        "uk": "Виправлення: кеш назв перевізників повторює спробу після початкової помилки",
-        "zh-cn": "修复：运营商名称缓存在初次失败后重新尝试加载"
       }
     },
     "titleLang": {
@@ -109,17 +109,17 @@
       "zh-cn": "包裹追踪"
     },
     "desc": {
-      "en": "ioBroker adapter for parcel.app — track packages from 300+ carriers as ioBroker states",
-      "de": "ioBroker-Adapter für parcel.app — Pakete von 300+ Versandunternehmen als ioBroker-States verfolgen",
-      "ru": "Адаптер ioBroker для parcel.app — отслеживание посылок от 300+ перевозчиков как состояния ioBroker",
-      "pt": "Adaptador ioBroker para parcel.app — rastreie pacotes de mais de 300 transportadoras como estados ioBroker",
-      "nl": "ioBroker-adapter voor parcel.app — volg pakketten van 300+ vervoerders als ioBroker-states",
-      "fr": "Adaptateur ioBroker pour parcel.app — suivez vos colis de plus de 300 transporteurs comme états ioBroker",
-      "it": "Adattatore ioBroker per parcel.app — traccia pacchi da più di 300 corrieri come stati ioBroker",
-      "es": "Adaptador ioBroker para parcel.app — rastrea paquetes de más de 300 transportistas como estados ioBroker",
-      "pl": "Adapter ioBroker dla parcel.app — śledź przesyłki od 300+ przewoźników jako stany ioBroker",
-      "uk": "Адаптер ioBroker для parcel.app — відстеження посилок від 300+ перевізників як стани ioBroker",
-      "zh-cn": "parcel.app 的 ioBroker 适配器 — 将 300+ 快递公司的包裹追踪数据作为 ioBroker 状态"
+      "en": "ioBroker adapter for parcel.app — track packages from 400+ carriers as ioBroker states",
+      "de": "ioBroker-Adapter für parcel.app — Pakete von 400+ Versandunternehmen als ioBroker-States verfolgen",
+      "ru": "Адаптер ioBroker для parcel.app — отслеживание посылок от 400+ перевозчиков как состояния ioBroker",
+      "pt": "Adaptador ioBroker para parcel.app — rastreie pacotes de mais de 400 transportadoras como estados ioBroker",
+      "nl": "ioBroker-adapter voor parcel.app — volg pakketten van 400+ vervoerders als ioBroker-states",
+      "fr": "Adaptateur ioBroker pour parcel.app — suivez vos colis de plus de 400 transporteurs comme états ioBroker",
+      "it": "Adattatore ioBroker per parcel.app — traccia pacchi da più di 400 corrieri come stati ioBroker",
+      "es": "Adaptador ioBroker para parcel.app — rastrea paquetes de más de 400 transportistas como estados ioBroker",
+      "pl": "Adapter ioBroker dla parcel.app — śledź przesyłki od 400+ przewoźników jako stany ioBroker",
+      "uk": "Адаптер ioBroker для parcel.app — відстеження посилок від 400+ перевізників як стани ioBroker",
+      "zh-cn": "parcel.app 的 ioBroker 适配器 — 将 400+ 快递公司的包裹追踪数据作为 ioBroker 状态"
     },
     "authors": [
       "krobi <krobi@power-dreams.com>"
