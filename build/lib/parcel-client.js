@@ -141,6 +141,7 @@ class ParcelClient {
       };
       const req = https.request(options, (res) => {
         const chunks = [];
+        res.on("error", (err) => reject(err));
         res.on("data", (chunk) => chunks.push(chunk));
         res.on("end", () => {
           const raw = Buffer.concat(chunks).toString("utf-8");

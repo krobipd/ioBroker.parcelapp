@@ -24,7 +24,6 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 var utils = __toESM(require("@iobroker/adapter-core"));
 var import_parcel_client = require("./lib/parcel-client");
 var import_state_manager = require("./lib/state-manager");
-var import_types = require("./lib/types");
 const MIN_POLL_INTERVAL = 5;
 const MAX_POLL_INTERVAL = 60;
 const DEFAULT_POLL_INTERVAL = 10;
@@ -37,6 +36,7 @@ class ParcelappAdapter extends utils.Adapter {
   lastPollTime = 0;
   rateLimitedUntil = 0;
   lastErrorCode = "";
+  failedDeliveries = /* @__PURE__ */ new Set();
   /** @param options Adapter options */
   constructor(options = {}) {
     super({
@@ -75,67 +75,74 @@ class ParcelappAdapter extends utils.Adapter {
     );
   }
   onUnload(callback) {
-    if (this.pollTimer) {
-      this.clearInterval(this.pollTimer);
-      this.pollTimer = void 0;
+    try {
+      if (this.pollTimer) {
+        this.clearInterval(this.pollTimer);
+        this.pollTimer = void 0;
+      }
+      void this.setState("info.connection", { val: false, ack: true });
+    } catch {
     }
-    void this.setState("info.connection", { val: false, ack: true });
     callback();
   }
   async onMessage(obj) {
     var _a;
-    if (!(obj == null ? void 0 : obj.command)) {
+    if (!(obj == null ? void 0 : obj.command) || !obj.callback) {
       return;
     }
-    switch (obj.command) {
-      case "checkConnection": {
-        const msg = obj.message;
-        const key = ((_a = msg == null ? void 0 : msg.apiKey) == null ? void 0 : _a.trim()) || "";
-        if (!key || key.length < 10) {
+    try {
+      switch (obj.command) {
+        case "checkConnection": {
+          const msg = obj.message;
+          const key = ((_a = msg == null ? void 0 : msg.apiKey) == null ? void 0 : _a.trim()) || "";
+          if (!key || key.length < 10) {
+            this.sendTo(
+              obj.from,
+              obj.command,
+              { success: false, message: "API key is too short" },
+              obj.callback
+            );
+            return;
+          }
+          const testClient = new import_parcel_client.ParcelClient(key);
+          const result = await testClient.testConnection();
+          this.sendTo(obj.from, obj.command, result, obj.callback);
+          break;
+        }
+        case "addDelivery": {
+          if (!this.client) {
+            this.sendTo(
+              obj.from,
+              obj.command,
+              { success: false, error_message: "Adapter not initialized" },
+              obj.callback
+            );
+            return;
+          }
+          const request = obj.message;
+          const addResult = await this.client.addDelivery(request);
+          this.sendTo(obj.from, obj.command, addResult, obj.callback);
+          if (addResult.success) {
+            void this.poll();
+          }
+          break;
+        }
+        default:
           this.sendTo(
             obj.from,
             obj.command,
-            {
-              success: false,
-              message: "API key is too short"
-            },
+            { error: "Unknown command" },
             obj.callback
           );
-          return;
-        }
-        const testClient = new import_parcel_client.ParcelClient(key);
-        const result = await testClient.testConnection();
-        this.sendTo(obj.from, obj.command, result, obj.callback);
-        break;
       }
-      case "addDelivery": {
-        if (!this.client) {
-          this.sendTo(
-            obj.from,
-            obj.command,
-            {
-              success: false,
-              error_message: "Adapter not initialized"
-            },
-            obj.callback
-          );
-          return;
-        }
-        const request = obj.message;
-        const addResult = await this.client.addDelivery(request);
-        this.sendTo(obj.from, obj.command, addResult, obj.callback);
-        if (addResult.success) {
-          void this.poll();
-        }
-        break;
-      }
-      default:
-        this.sendTo(
-          obj.from,
-          obj.command,
-          { error: "Unknown command" },
-          obj.callback
-        );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.sendTo(
+        obj.from,
+        obj.command,
+        { success: false, error_message: msg },
+        obj.callback
+      );
     }
   }
   async cleanupObsoleteStates() {
@@ -148,17 +155,6 @@ class ParcelappAdapter extends utils.Adapter {
       if (obj) {
         await this.delObjectAsync(stateId);
         this.log.debug(`Removed obsolete state: ${stateId}`);
-        const parentId = stateId.includes(".") ? stateId.substring(0, stateId.lastIndexOf(".")) : null;
-        if (parentId) {
-          const children = await this.getObjectListAsync({
-            startkey: `${this.namespace}.${parentId}.`,
-            endkey: `${this.namespace}.${parentId}.\u9999`
-          });
-          if ((children == null ? void 0 : children.rows.length) === 0) {
-            await this.delObjectAsync(parentId);
-            this.log.debug(`Removed empty parent: ${parentId}`);
-          }
-        }
       }
     }
   }
@@ -174,7 +170,7 @@ class ParcelappAdapter extends utils.Adapter {
     if (error.code === "INVALID_API_KEY") {
       return "INVALID_API_KEY";
     }
-    if (error.code === "ENOTFOUND" || error.code === "ECONNREFUSED" || error.code === "ECONNRESET" || error.code === "ENETUNREACH" || error.code === "EAI_AGAIN") {
+    if (error.code === "ENOTFOUND" || error.code === "ECONNREFUSED" || error.code === "ECONNRESET" || error.code === "ENETUNREACH" || error.code === "EHOSTUNREACH" || error.code === "EAI_AGAIN") {
       return "NETWORK";
     }
     if (error.message.includes("timeout") || error.code === "ETIMEDOUT") {
@@ -211,20 +207,37 @@ class ParcelappAdapter extends utils.Adapter {
         this.lastErrorCode = "";
       }
       await this.setStateAsync("info.connection", { val: true, ack: true });
-      const visibleDeliveries = autoRemove ? deliveries.filter((d) => parseInt(d.status_code, 10) !== 0) : deliveries;
+      const activeDeliveries = deliveries.filter(
+        (d) => this.stateManager.parseStatus(d) !== 0
+      );
+      const visibleDeliveries = autoRemove ? activeDeliveries : deliveries;
       const activeIds = [];
       for (const delivery of visibleDeliveries) {
-        const carrierName = await this.client.getCarrierName(
-          delivery.carrier_code
-        );
-        await this.stateManager.updateDelivery(delivery, carrierName);
-        activeIds.push(this.stateManager.packageId(delivery));
+        try {
+          const carrierName = await this.client.getCarrierName(
+            delivery.carrier_code
+          );
+          await this.stateManager.updateDelivery(delivery, carrierName);
+          activeIds.push(this.stateManager.packageId(delivery));
+          this.failedDeliveries.delete(delivery.tracking_number);
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          if (this.failedDeliveries.has(delivery.tracking_number)) {
+            this.log.debug(
+              `Failed to update "${delivery.tracking_number}": ${msg}`
+            );
+          } else {
+            this.log.warn(
+              `Failed to update "${delivery.tracking_number}": ${msg}`
+            );
+            this.failedDeliveries.add(delivery.tracking_number);
+          }
+        }
       }
       await this.stateManager.cleanupDeliveries(activeIds);
-      const summaryDeliveries = autoRemove ? visibleDeliveries : deliveries.filter((d) => parseInt(d.status_code, 10) !== 0);
-      await this.stateManager.updateSummary(summaryDeliveries);
+      await this.stateManager.updateSummary(activeDeliveries);
       this.log.debug(
-        `Polled ${visibleDeliveries.length} deliveries (${summaryDeliveries.length} active)`
+        `Polled ${visibleDeliveries.length} deliveries (${activeDeliveries.length} active)`
       );
     } catch (err) {
       const error = err;

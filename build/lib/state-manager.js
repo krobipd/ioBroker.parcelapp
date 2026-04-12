@@ -52,6 +52,14 @@ class StateManager {
     return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 50) || "unknown";
   }
   /**
+   * Parse the status code from a delivery (API returns it as string).
+   *
+   * @param delivery The delivery to parse
+   */
+  parseStatus(delivery) {
+    return parseInt(delivery.status_code, 10) || 0;
+  }
+  /**
    * Build a unique package ID from a delivery.
    *
    * @param delivery The delivery to build an ID for
@@ -79,7 +87,7 @@ class StateManager {
       },
       native: {}
     });
-    const statusCode = parseInt(delivery.status_code, 10) || 0;
+    const statusCode = this.parseStatus(delivery);
     const lang = this.adapter.config.language || "de";
     const labels = lang === "de" ? import_types.STATUS_LABELS_DE : import_types.STATUS_LABELS_EN;
     await Promise.all([
@@ -174,7 +182,7 @@ class StateManager {
       native: {}
     });
     const todayDeliveries = activeDeliveries.filter((d) => {
-      const statusCode = parseInt(d.status_code, 10) || 0;
+      const statusCode = this.parseStatus(d);
       const estimate = this.calculateDeliveryEstimate(d, statusCode);
       return estimate === "heute" || estimate === "today";
     });
@@ -327,10 +335,7 @@ class StateManager {
    * @param todayDeliveries Deliveries expected today
    */
   calculateCombinedWindow(todayDeliveries) {
-    const windows = todayDeliveries.map((d) => {
-      const sc = parseInt(d.status_code, 10) || 0;
-      return this.calculateDeliveryWindow(d, sc);
-    }).filter((w) => w.length > 0);
+    const windows = todayDeliveries.map((d) => this.calculateDeliveryWindow(d, this.parseStatus(d))).filter((w) => w.length > 0);
     if (windows.length === 0) {
       return "";
     }
@@ -360,7 +365,7 @@ class StateManager {
    * @param val Value to set
    */
   async createAndSet(id, name, type, role, val) {
-    await this.adapter.extendObjectAsync(id, {
+    await this.adapter.setObjectNotExistsAsync(id, {
       type: "state",
       common: { name, type, role, read: true, write: false },
       native: {}

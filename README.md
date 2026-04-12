@@ -94,6 +94,14 @@ parcelapp.0.
 
 ## Changelog
 
+### 0.2.11 (2026-04-12)
+- Fix: handle response stream errors (prevents unhandled exceptions on connection drop)
+- Fix: isolate per-delivery poll failures (one broken delivery no longer blocks all others)
+- Fix: harden onMessage with try/catch and callback guard
+- Fix: onUnload try/catch prevents adapter hang on shutdown
+- DRY: parseStatus helper eliminates repeated parseInt calls
+- Simplify obsolete state cleanup, use setObjectNotExistsAsync for states
+
 ### 0.2.10 (2026-04-12)
 - Fix test timezone bug, remove unused devDependencies, add `no-floating-promises` lint rule
 - Remove redundant `actions/checkout` from CI workflow

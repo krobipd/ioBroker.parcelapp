@@ -6,7 +6,7 @@
 
 **ioBroker Parcel Tracking Adapter** — Paketverfolgung über [parcel.app](https://parcelapp.net) API. 400+ Carrier, ein API-Key.
 
-- **Version:** 0.2.10 (April 2026)
+- **Version:** 0.2.11 (April 2026)
 - **GitHub:** https://github.com/krobipd/ioBroker.parcelapp
 - **npm:** https://www.npmjs.com/package/iobroker.parcelapp
 - **Repository PR:** ioBroker/ioBroker.repositories#5667
@@ -56,6 +56,7 @@ test/integration.js       → @iobroker/testing integration
 
 | Version | Highlights |
 |---------|------------|
+| 0.2.11 | Error-Handling: res.on("error"), per-delivery Poll-Isolation, onMessage/onUnload try/catch, parseStatus DRY |
 | 0.2.10 | Test-Timezone-Fix, unused Deps entfernt, no-floating-promises, CI checkout entfernt |
 | 0.2.9 | Standard-ioBroker-Testsuite, optimierte Test-Build-Konfiguration |
 | 0.2.8 | Leere Eltern-Ordner nach State-Cleanup löschen |

@@ -45,6 +45,15 @@ export class StateManager {
   }
 
   /**
+   * Parse the status code from a delivery (API returns it as string).
+   *
+   * @param delivery The delivery to parse
+   */
+  parseStatus(delivery: ParcelDelivery): number {
+    return parseInt(delivery.status_code, 10) || 0;
+  }
+
+  /**
    * Build a unique package ID from a delivery.
    *
    * @param delivery The delivery to build an ID for
@@ -78,7 +87,7 @@ export class StateManager {
       native: {},
     });
 
-    const statusCode = parseInt(delivery.status_code, 10) || 0;
+    const statusCode = this.parseStatus(delivery);
     const lang = this.adapter.config.language || "de";
     const labels = lang === "de" ? STATUS_LABELS_DE : STATUS_LABELS_EN;
 
@@ -176,7 +185,7 @@ export class StateManager {
     });
 
     const todayDeliveries = activeDeliveries.filter((d) => {
-      const statusCode = parseInt(d.status_code, 10) || 0;
+      const statusCode = this.parseStatus(d);
       const estimate = this.calculateDeliveryEstimate(d, statusCode);
       return estimate === "heute" || estimate === "today";
     });
@@ -353,10 +362,7 @@ export class StateManager {
    */
   private calculateCombinedWindow(todayDeliveries: ParcelDelivery[]): string {
     const windows = todayDeliveries
-      .map((d) => {
-        const sc = parseInt(d.status_code, 10) || 0;
-        return this.calculateDeliveryWindow(d, sc);
-      })
+      .map((d) => this.calculateDeliveryWindow(d, this.parseStatus(d)))
       .filter((w) => w.length > 0);
 
     if (windows.length === 0) {
@@ -401,7 +407,7 @@ export class StateManager {
     role: string,
     val: ioBroker.StateValue,
   ): Promise<void> {
-    await this.adapter.extendObjectAsync(id, {
+    await this.adapter.setObjectNotExistsAsync(id, {
       type: "state",
       common: { name, type, role, read: true, write: false },
       native: {},

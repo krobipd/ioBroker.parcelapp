@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.2.10",
+    "version": "0.2.11",
     "news": {
+      "0.2.11": {
+        "en": "Fix response stream error handling, isolate per-delivery poll failures, harden onMessage and onUnload",
+        "de": "Response-Stream-Fehlerbehandlung gefixt, per-Delivery Poll-Fehler isoliert, onMessage und onUnload gehärtet",
+        "ru": "Исправлена обработка ошибок потока ответа, изолированы ошибки опроса по доставкам, усилены onMessage и onUnload",
+        "pt": "Corrigido tratamento de erros do stream de resposta, falhas de polling isoladas por entrega, onMessage e onUnload reforçados",
+        "nl": "Response stream foutafhandeling gerepareerd, per-levering poll fouten geïsoleerd, onMessage en onUnload versterkt",
+        "fr": "Correction de la gestion des erreurs du flux de réponse, isolation des erreurs de sondage par livraison, renforcement de onMessage et onUnload",
+        "it": "Corretta gestione errori stream risposta, errori di polling isolati per consegna, onMessage e onUnload rafforzati",
+        "es": "Corregido manejo de errores del flujo de respuesta, errores de sondeo aislados por envío, onMessage y onUnload reforzados",
+        "pl": "Naprawiono obsługę błędów strumienia odpowiedzi, izolacja błędów odpytywania per dostawa, wzmocnione onMessage i onUnload",
+        "uk": "Виправлено обробку помилок потоку відповіді, ізольовано помилки опитування per-delivery, посилено onMessage та onUnload",
+        "zh-cn": "修复响应流错误处理，隔离每个快递轮询失败，加固onMessage和onUnload"
+      },
       "0.2.10": {
         "en": "Fix test timezone bug, remove unused devDependencies, add no-floating-promises lint rule",
         "de": "Test-Zeitzonenfehler behoben, ungenutzte devDependencies entfernt, no-floating-promises Lint-Regel hinzugefügt",
@@ -80,19 +93,6 @@
         "pl": "Naprawiono timeout okna dostawy w systemie Windows",
         "uk": "Виправлено тайм-аут вікна доставки в Windows",
         "zh-cn": "修复Windows上的交付窗口超时问题"
-      },
-      "0.2.4": {
-        "en": "Modernize dev tooling (esbuild, TypeScript 5.9 pin, testing-action-check v2)",
-        "de": "Dev-Tooling modernisiert (esbuild, TypeScript 5.9 Pin, testing-action-check v2)",
-        "ru": "Модернизация инструментов разработки (esbuild, TypeScript 5.9, testing-action-check v2)",
-        "pt": "Modernização das ferramentas de desenvolvimento (esbuild, TypeScript 5.9, testing-action-check v2)",
-        "nl": "Ontwikkeltools gemoderniseerd (esbuild, TypeScript 5.9 pin, testing-action-check v2)",
-        "fr": "Modernisation des outils de développement (esbuild, TypeScript 5.9, testing-action-check v2)",
-        "it": "Modernizzazione degli strumenti di sviluppo (esbuild, TypeScript 5.9, testing-action-check v2)",
-        "es": "Modernización de herramientas de desarrollo (esbuild, TypeScript 5.9, testing-action-check v2)",
-        "pl": "Modernizacja narzędzi programistycznych (esbuild, TypeScript 5.9, testing-action-check v2)",
-        "uk": "Модернізація інструментів розробки (esbuild, TypeScript 5.9, testing-action-check v2)",
-        "zh-cn": "开发工具现代化（esbuild、TypeScript 5.9 固定、testing-action-check v2）"
       }
     },
     "titleLang": {
