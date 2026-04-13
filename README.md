@@ -11,13 +11,13 @@
 
 <img src="https://raw.githubusercontent.com/krobipd/ioBroker.parcelapp/main/admin/parcelapp.svg" width="100" />
 
-ioBroker adapter that connects to the [parcel.app](https://parcelapp.net) API and exposes package tracking data from 400+ carriers as ioBroker states — including delivery status, time windows, and tracking events.
+ioBroker adapter that connects to the [parcel.app](https://parcelapp.net) API and exposes package tracking data as ioBroker states — including delivery status, time windows, and tracking events. Supports all carriers that parcel.app supports.
 
 ---
 
 ## Features
 
-- **400+ carriers** — DHL, FedEx, UPS, Amazon, Hermes, GLS, DPD, and many more via parcel.app
+- **All parcel.app carriers** — DHL, FedEx, UPS, Amazon, Hermes, GLS, DPD, and everything else parcel.app supports
 - **Per-package ioBroker states** — carrier, status, tracking number, delivery window, last event, last location
 - **Summary states** — active count, today count, combined delivery window
 - **Delivery time estimates** — today, tomorrow, in X days with combined time window
@@ -72,6 +72,22 @@ parcelapp.0.
         ├── lastLocation         — Last known location
         └── lastUpdated          — Last update timestamp
 ```
+
+---
+
+## Add Deliveries via Script
+
+You can add new deliveries from JavaScript/Blockly scripts:
+
+```javascript
+sendTo('parcelapp.0', 'addDelivery', {
+    tracking_number: '1234567890',
+    carrier_code: 'dhl',
+    description: 'My package'
+});
+```
+
+The delivery is added to your parcel.app account and immediately appears in ioBroker after an automatic poll.
 
 ---
 

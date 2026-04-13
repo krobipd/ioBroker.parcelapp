@@ -1,7 +1,7 @@
 {
   "name": "iobroker.parcelapp",
   "version": "0.2.11",
-  "description": "ioBroker adapter for parcel.app — track packages from 400+ carriers",
+  "description": "ioBroker adapter for parcel.app — track packages as ioBroker states",
   "author": {
     "name": "krobi",
     "email": "krobi@power-dreams.com"

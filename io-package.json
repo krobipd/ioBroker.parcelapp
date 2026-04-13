@@ -109,17 +109,17 @@
       "zh-cn": "包裹追踪"
     },
     "desc": {
-      "en": "ioBroker adapter for parcel.app — track packages from 400+ carriers as ioBroker states",
-      "de": "ioBroker-Adapter für parcel.app — Pakete von 400+ Versandunternehmen als ioBroker-States verfolgen",
-      "ru": "Адаптер ioBroker для parcel.app — отслеживание посылок от 400+ перевозчиков как состояния ioBroker",
-      "pt": "Adaptador ioBroker para parcel.app — rastreie pacotes de mais de 400 transportadoras como estados ioBroker",
-      "nl": "ioBroker-adapter voor parcel.app — volg pakketten van 400+ vervoerders als ioBroker-states",
-      "fr": "Adaptateur ioBroker pour parcel.app — suivez vos colis de plus de 400 transporteurs comme états ioBroker",
-      "it": "Adattatore ioBroker per parcel.app — traccia pacchi da più di 400 corrieri come stati ioBroker",
-      "es": "Adaptador ioBroker para parcel.app — rastrea paquetes de más de 400 transportistas como estados ioBroker",
-      "pl": "Adapter ioBroker dla parcel.app — śledź przesyłki od 400+ przewoźników jako stany ioBroker",
-      "uk": "Адаптер ioBroker для parcel.app — відстеження посилок від 400+ перевізників як стани ioBroker",
-      "zh-cn": "parcel.app 的 ioBroker 适配器 — 将 400+ 快递公司的包裹追踪数据作为 ioBroker 状态"
+      "en": "ioBroker adapter for parcel.app — track packages as ioBroker states",
+      "de": "ioBroker-Adapter für parcel.app — Pakete als ioBroker-States verfolgen",
+      "ru": "Адаптер ioBroker для parcel.app — отслеживание посылок как состояния ioBroker",
+      "pt": "Adaptador ioBroker para parcel.app — rastreie pacotes como estados ioBroker",
+      "nl": "ioBroker-adapter voor parcel.app — volg pakketten als ioBroker-states",
+      "fr": "Adaptateur ioBroker pour parcel.app — suivez vos colis comme états ioBroker",
+      "it": "Adattatore ioBroker per parcel.app — traccia pacchi come stati ioBroker",
+      "es": "Adaptador ioBroker para parcel.app — rastrea paquetes como estados ioBroker",
+      "pl": "Adapter ioBroker dla parcel.app — śledź przesyłki jako stany ioBroker",
+      "uk": "Адаптер ioBroker для parcel.app — відстеження посилок як стани ioBroker",
+      "zh-cn": "parcel.app 的 ioBroker 适配器 — 将包裹追踪数据作为 ioBroker 状态"
     },
     "authors": [
       "krobi <krobi@power-dreams.com>"
