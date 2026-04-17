@@ -4,7 +4,7 @@
 
 ## Projekt
 
-**ioBroker Parcel Tracking Adapter** — Paketverfolgung über [parcel.app](https://parcelapp.net) API. 400+ Carrier, ein API-Key.
+**ioBroker Parcel Tracking Adapter** — Paketverfolgung über [parcel.app](https://parcelapp.net) API. Alle Carrier die parcel.app unterstützt, ein API-Key (Premium).
 
 - **Version:** 0.2.11 (April 2026)
 - **GitHub:** https://github.com/krobipd/ioBroker.parcelapp
