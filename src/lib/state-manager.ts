@@ -5,6 +5,23 @@ import { STATUS_LABELS_DE, STATUS_LABELS_EN } from "./types";
 /** Status codes that have expected delivery date/time */
 const TRACKABLE_STATUSES = new Set([2, 4, 8]);
 
+/**
+ * Coerce a value to a finite number. Accepts numbers and numeric strings.
+ * Returns null for anything else — used to guard against API drift.
+ *
+ * @param v Value to coerce
+ */
+function coerceNumber(v: unknown): number | null {
+  if (typeof v === "number" && Number.isFinite(v)) {
+    return v;
+  }
+  if (typeof v === "string" && v.length > 0) {
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
 const ESTIMATE_LABELS: Record<string, Record<string, string>> = {
   de: {
     overdue: "überfällig",
@@ -31,10 +48,14 @@ export class StateManager {
 
   /**
    * Sanitize a string for use as ioBroker object ID (see adapter.FORBIDDEN_CHARS).
+   * API-drift guard: returns "unknown" for non-string input.
    *
-   * @param name Raw string to sanitize
+   * @param name Raw value to sanitize (any type)
    */
-  sanitize(name: string): string {
+  sanitize(name: unknown): string {
+    if (typeof name !== "string") {
+      return "unknown";
+    }
     return (
       name
         .toLowerCase()
@@ -45,12 +66,21 @@ export class StateManager {
   }
 
   /**
-   * Parse the status code from a delivery (API returns it as string).
+   * Parse the status code from a delivery. API documents `status_code` as
+   * a numeric string, but we accept numbers too and fall back to 0 for drift.
    *
    * @param delivery The delivery to parse
    */
   parseStatus(delivery: ParcelDelivery): number {
-    return parseInt(delivery.status_code, 10) || 0;
+    const raw = delivery.status_code as unknown;
+    if (typeof raw === "number" && Number.isFinite(raw)) {
+      return Math.trunc(raw);
+    }
+    if (typeof raw === "string") {
+      const n = parseInt(raw, 10);
+      return Number.isFinite(n) ? n : 0;
+    }
+    return 0;
   }
 
   /**
@@ -60,7 +90,11 @@ export class StateManager {
    */
   packageId(delivery: ParcelDelivery): string {
     let id = this.sanitize(delivery.tracking_number);
-    if (delivery.extra_information) {
+    // API-drift guard: only string values extend the id
+    if (
+      typeof delivery.extra_information === "string" &&
+      delivery.extra_information.length > 0
+    ) {
       id += `_${this.sanitize(delivery.extra_information)}`;
     }
     return id;
@@ -79,10 +113,21 @@ export class StateManager {
     const pkgId = this.packageId(delivery);
     const devicePath = `deliveries.${pkgId}`;
 
+    const description =
+      typeof delivery.description === "string" ? delivery.description : "";
+    const trackingNumber =
+      typeof delivery.tracking_number === "string"
+        ? delivery.tracking_number
+        : "";
+    const extraInfo =
+      typeof delivery.extra_information === "string"
+        ? delivery.extra_information
+        : "";
+
     await this.adapter.extendObjectAsync(devicePath, {
       type: "device",
       common: {
-        name: delivery.description || `Package ${delivery.tracking_number}`,
+        name: description || `Package ${trackingNumber || pkgId}`,
       },
       native: {},
     });
@@ -118,21 +163,21 @@ export class StateManager {
         "Description",
         "string",
         "text",
-        delivery.description || "",
+        description,
       ),
       this.createAndSet(
         `${devicePath}.trackingNumber`,
         "Tracking Number",
         "string",
         "text",
-        delivery.tracking_number,
+        trackingNumber,
       ),
       this.createAndSet(
         `${devicePath}.extraInfo`,
         "Extra Information",
         "string",
         "text",
-        delivery.extra_information || "",
+        extraInfo,
       ),
       this.createAndSet(
         `${devicePath}.deliveryWindow`,
@@ -251,11 +296,15 @@ export class StateManager {
       return "";
     }
 
-    const formatTime = (timestamp?: number): string | null => {
-      if (!timestamp) {
+    const formatTime = (timestamp: unknown): string | null => {
+      const ts = coerceNumber(timestamp);
+      if (ts === null || ts <= 0) {
         return null;
       }
-      const d = new Date(timestamp * 1000);
+      const d = new Date(ts * 1000);
+      if (Number.isNaN(d.getTime())) {
+        return null;
+      }
       return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
     };
 
@@ -283,9 +332,13 @@ export class StateManager {
     }
 
     let expectedDate: Date | null = null;
-    if (delivery.timestamp_expected) {
-      expectedDate = new Date(delivery.timestamp_expected * 1000);
-    } else if (delivery.date_expected) {
+    const ts = coerceNumber(delivery.timestamp_expected);
+    if (ts !== null && ts > 0) {
+      expectedDate = new Date(ts * 1000);
+    } else if (
+      typeof delivery.date_expected === "string" &&
+      delivery.date_expected.length > 0
+    ) {
       expectedDate = new Date(delivery.date_expected);
     }
 
@@ -329,15 +382,18 @@ export class StateManager {
    * @param delivery The delivery data
    */
   private formatLastEvent(delivery: ParcelDelivery): string {
-    if (!delivery.events || delivery.events.length === 0) {
+    if (!Array.isArray(delivery.events) || delivery.events.length === 0) {
       return "";
     }
     const latest = delivery.events[0];
+    if (!latest || typeof latest !== "object") {
+      return "";
+    }
     const parts: string[] = [];
-    if (latest.event) {
+    if (typeof latest.event === "string" && latest.event.length > 0) {
       parts.push(latest.event);
     }
-    if (latest.date) {
+    if (typeof latest.date === "string" && latest.date.length > 0) {
       parts.push(latest.date);
     }
     return parts.join(" - ");
@@ -349,10 +405,14 @@ export class StateManager {
    * @param delivery The delivery data
    */
   private extractLastLocation(delivery: ParcelDelivery): string {
-    if (!delivery.events || delivery.events.length === 0) {
+    if (!Array.isArray(delivery.events) || delivery.events.length === 0) {
       return "";
     }
-    return delivery.events[0].location || "";
+    const latest = delivery.events[0];
+    if (!latest || typeof latest !== "object") {
+      return "";
+    }
+    return typeof latest.location === "string" ? latest.location : "";
   }
 
   /**

@@ -11,7 +11,7 @@
 
 <img src="https://raw.githubusercontent.com/krobipd/ioBroker.parcelapp/main/admin/parcelapp.svg" width="100" />
 
-ioBroker adapter that connects to the [parcel.app](https://parcelapp.net) API and exposes package tracking data as ioBroker states — including delivery status, time windows, and tracking events. Supports all carriers that parcel.app supports.
+ioBroker adapter that connects to the [parcel.app](https://parcelapp.net) API and exposes package tracking data as ioBroker states — including delivery status, time windows, and tracking events. Supports all carriers that parcel.app tracks.
 
 ---
 
@@ -25,7 +25,7 @@ ioBroker adapter that connects to the [parcel.app](https://parcelapp.net) API an
 - **Configurable cleanup** — auto-remove delivered packages or keep them until deleted in parcel.app
 - **Add deliveries** via sendTo message from scripts or other adapters
 - **Admin UI** with connection test, polling settings, and status language selection
-- **Multilingual status labels** (German/English)
+- **Status labels in German or English**
 
 ---
 
@@ -89,6 +89,11 @@ sendTo('parcelapp.0', 'addDelivery', {
 
 The delivery is added to your parcel.app account and immediately appears in ioBroker after an automatic poll.
 
+**Notes:**
+- **POST rate limit: 20 deliveries per day** — failed attempts (e.g. wrong `carrier_code`) also count against this limit.
+- Fresh deliveries usually have no tracking events for **45–90 minutes** after they are added. That's a parcel.app-side delay, not an adapter issue.
+- **Deleting packages is only possible in the parcel.app app/web UI** — the API has no delete endpoint. With `autoRemoveDelivered` enabled, the adapter still drops delivered packages from ioBroker states automatically.
+
 ---
 
 ## Troubleshooting
@@ -103,12 +108,16 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 - Check if you have active deliveries in the parcel.app
 
 ### Rate limit
-- The parcel.app API allows 20 requests per hour
-- The minimum poll interval is 5 minutes to stay within limits
+- GET (polling): **20 requests per hour** — the minimum poll interval is 5 minutes to stay within this limit
+- POST (adding deliveries): **20 requests per day**, failed attempts count too
 
 ---
 
 ## Changelog
+
+### 0.2.12 (2026-04-18)
+- Harden API-drift guards in `ParcelClient` and `StateManager` (non-boolean `success`, non-array `deliveries`, non-string `error_code`/`error_message`, non-object carrier map, non-string delivery fields, numeric/string `status_code`, numeric-string `timestamp_expected`, malformed `events`)
+- Add 38 regression tests (128 total) covering the new drift paths
 
 ### 0.2.11 (2026-04-12)
 - Fix: handle response stream errors (prevents unhandled exceptions on connection drop)
@@ -133,12 +142,6 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 
 ### 0.2.6 (2026-04-05)
 - Remove redundant scripts, compress documentation
-
-### 0.2.5 (2026-04-04)
-- Fix delivery window timeout on Windows (deterministic time formatting)
-
-### 0.2.4 (2026-04-03)
-- Modernize dev tooling (esbuild, TypeScript 5.9 pin, testing-action-check v2)
 
 Older entries have been moved to [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
 

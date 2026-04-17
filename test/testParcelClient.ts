@@ -550,6 +550,218 @@ describe("ParcelClient", () => {
         });
     });
 
+    describe("API-drift guards", () => {
+        it("should return [] when deliveries is not an array", async () => {
+            const { server, port } = await startMockServer((_req, res) => {
+                res.writeHead(200, { "Content-Type": "application/json" });
+                res.end(JSON.stringify({ success: true, deliveries: "not-an-array" }));
+            });
+
+            try {
+                const client = createTestClient("key", port);
+                const result = await client.getDeliveries("active");
+                expect(result).to.deep.equal([]);
+            } finally {
+                await stopServer(server);
+            }
+        });
+
+        it("should return [] when deliveries is null", async () => {
+            const { server, port } = await startMockServer((_req, res) => {
+                res.writeHead(200, { "Content-Type": "application/json" });
+                res.end(JSON.stringify({ success: true, deliveries: null }));
+            });
+
+            try {
+                const client = createTestClient("key", port);
+                const result = await client.getDeliveries("active");
+                expect(result).to.deep.equal([]);
+            } finally {
+                await stopServer(server);
+            }
+        });
+
+        it("should throw API_ERROR when response is null", async () => {
+            const { server, port } = await startMockServer((_req, res) => {
+                res.writeHead(200, { "Content-Type": "application/json" });
+                res.end("null");
+            });
+
+            try {
+                const client = createTestClient("key", port);
+                await client.getDeliveries("active");
+                expect.fail("Should have thrown");
+            } catch (err) {
+                const error = err as Error & { code: string };
+                expect(error.code).to.equal("API_ERROR");
+                expect(error.message).to.include("malformed");
+            } finally {
+                await stopServer(server);
+            }
+        });
+
+        it("should throw API_ERROR when response is an array", async () => {
+            const { server, port } = await startMockServer((_req, res) => {
+                res.writeHead(200, { "Content-Type": "application/json" });
+                res.end(JSON.stringify([1, 2, 3]));
+            });
+
+            try {
+                const client = createTestClient("key", port);
+                await client.getDeliveries("active");
+                expect.fail("Should have thrown");
+            } catch (err) {
+                const error = err as Error & { code: string };
+                expect(error.code).to.equal("API_ERROR");
+            } finally {
+                await stopServer(server);
+            }
+        });
+
+        it("should accept string 'true' as success (API drift)", async () => {
+            const { server, port } = await startMockServer((_req, res) => {
+                res.writeHead(200, { "Content-Type": "application/json" });
+                res.end(JSON.stringify({ success: "true", deliveries: [] }));
+            });
+
+            try {
+                const client = createTestClient("key", port);
+                const result = await client.getDeliveries("active");
+                expect(result).to.deep.equal([]);
+            } finally {
+                await stopServer(server);
+            }
+        });
+
+        it("should accept number 1 as success (API drift)", async () => {
+            const { server, port } = await startMockServer((_req, res) => {
+                res.writeHead(200, { "Content-Type": "application/json" });
+                res.end(JSON.stringify({ success: 1, deliveries: [] }));
+            });
+
+            try {
+                const client = createTestClient("key", port);
+                const result = await client.getDeliveries("active");
+                expect(result).to.deep.equal([]);
+            } finally {
+                await stopServer(server);
+            }
+        });
+
+        it("should reject 'false' string as success (API drift)", async () => {
+            const { server, port } = await startMockServer((_req, res) => {
+                res.writeHead(200, { "Content-Type": "application/json" });
+                res.end(JSON.stringify({ success: "false" }));
+            });
+
+            try {
+                const client = createTestClient("key", port);
+                await client.getDeliveries("active");
+                expect.fail("Should have thrown");
+            } catch (err) {
+                const error = err as Error & { code: string };
+                expect(error.code).to.equal("API_ERROR");
+            } finally {
+                await stopServer(server);
+            }
+        });
+
+        it("should handle non-string error_code/error_message (API drift)", async () => {
+            const { server, port } = await startMockServer((_req, res) => {
+                res.writeHead(200, { "Content-Type": "application/json" });
+                res.end(
+                    JSON.stringify({
+                        success: false,
+                        error_code: 42,
+                        error_message: { nested: "object" },
+                    }),
+                );
+            });
+
+            try {
+                const client = createTestClient("key", port);
+                await client.getDeliveries("active");
+                expect.fail("Should have thrown");
+            } catch (err) {
+                const error = err as Error & { code: string };
+                expect(error.code).to.equal("API_ERROR");
+                expect(error.message).to.include("UNKNOWN");
+            } finally {
+                await stopServer(server);
+            }
+        });
+
+        it("should return empty map when carrier response is an array", async () => {
+            const { server, port } = await startMockServer((_req, res) => {
+                res.writeHead(200, { "Content-Type": "application/json" });
+                res.end(JSON.stringify(["dhl", "ups"]));
+            });
+
+            try {
+                const client = createTestClient("key", port);
+                const result = await client.getCarrierNames();
+                expect(result).to.deep.equal({});
+            } finally {
+                await stopServer(server);
+            }
+        });
+
+        it("should return empty map when carrier response is null", async () => {
+            const { server, port } = await startMockServer((_req, res) => {
+                res.writeHead(200, { "Content-Type": "application/json" });
+                res.end("null");
+            });
+
+            try {
+                const client = createTestClient("key", port);
+                const result = await client.getCarrierNames();
+                expect(result).to.deep.equal({});
+            } finally {
+                await stopServer(server);
+            }
+        });
+
+        it("getCarrierName should return UNKNOWN for non-string input", async () => {
+            const { server, port } = await startMockServer((_req, res) => {
+                res.writeHead(200, { "Content-Type": "application/json" });
+                res.end(JSON.stringify({ dhl: "DHL" }));
+            });
+
+            try {
+                const client = createTestClient("key", port);
+                const name1 = await client.getCarrierName(null);
+                const name2 = await client.getCarrierName(42);
+                const name3 = await client.getCarrierName(undefined);
+                const name4 = await client.getCarrierName("");
+                expect(name1).to.equal("UNKNOWN");
+                expect(name2).to.equal("UNKNOWN");
+                expect(name3).to.equal("UNKNOWN");
+                expect(name4).to.equal("UNKNOWN");
+            } finally {
+                await stopServer(server);
+            }
+        });
+
+        it("getCarrierName should fall back to uppercase code for non-string map value", async () => {
+            const { server, port } = await startMockServer((_req, res) => {
+                res.writeHead(200, { "Content-Type": "application/json" });
+                res.end(JSON.stringify({ dhl: 42, ups: null, fedex: "FedEx" }));
+            });
+
+            try {
+                const client = createTestClient("key", port);
+                const dhl = await client.getCarrierName("dhl");
+                const ups = await client.getCarrierName("ups");
+                const fedex = await client.getCarrierName("fedex");
+                expect(dhl).to.equal("DHL");
+                expect(ups).to.equal("UPS");
+                expect(fedex).to.equal("FedEx");
+            } finally {
+                await stopServer(server);
+            }
+        });
+    });
+
     describe("testConnection", () => {
         it("should return success when API responds", async () => {
             const { server, port } = await startMockServer((_req, res) => {

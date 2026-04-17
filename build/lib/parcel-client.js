@@ -34,6 +34,19 @@ module.exports = __toCommonJS(parcel_client_exports);
 var https = __toESM(require("node:https"));
 const API_BASE = "https://api.parcel.app/external";
 const REQUEST_TIMEOUT = 15e3;
+function isTrueish(v) {
+  if (typeof v === "boolean") {
+    return v;
+  }
+  if (typeof v === "number") {
+    return v === 1;
+  }
+  if (typeof v === "string") {
+    const s = v.toLowerCase();
+    return s === "true" || s === "1";
+  }
+  return false;
+}
 class ParcelClient {
   apiKey;
   carrierCache = null;
@@ -52,15 +65,20 @@ class ParcelClient {
       `/deliveries/?filter_mode=${filterMode}`,
       true
     );
-    if (!response.success) {
-      const code = response.error_code || response.error_message || "UNKNOWN";
-      const err = new Error(
-        `API error: ${response.error_message || code}`
-      );
-      err.code = code === "INVALID_API_KEY" ? "INVALID_API_KEY" : "API_ERROR";
+    if (!response || typeof response !== "object") {
+      const err = new Error("API error: malformed response");
+      err.code = "API_ERROR";
       throw err;
     }
-    return response.deliveries || [];
+    if (!isTrueish(response.success)) {
+      const rawCode = typeof response.error_code === "string" ? response.error_code : "";
+      const rawMsg = typeof response.error_message === "string" ? response.error_message : "";
+      const code = rawCode || rawMsg || "UNKNOWN";
+      const err = new Error(`API error: ${rawMsg || code}`);
+      err.code = rawCode === "INVALID_API_KEY" ? "INVALID_API_KEY" : "API_ERROR";
+      throw err;
+    }
+    return Array.isArray(response.deliveries) ? response.deliveries : [];
   }
   /**
    * Add a new delivery to parcel.app.
@@ -81,11 +99,16 @@ class ParcelClient {
       return this.carrierCache;
     }
     try {
-      this.carrierCache = await this.request(
+      const raw = await this.request(
         "GET",
         "/supported_carriers.json",
         false
       );
+      if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+        this.carrierCache = raw;
+      } else {
+        return {};
+      }
     } catch {
       return {};
     }
@@ -97,8 +120,12 @@ class ParcelClient {
    * @param carrierCode The carrier code from API
    */
   async getCarrierName(carrierCode) {
+    if (typeof carrierCode !== "string" || carrierCode.length === 0) {
+      return "UNKNOWN";
+    }
     const carriers = await this.getCarrierNames();
-    return carriers[carrierCode] || carrierCode.toUpperCase();
+    const mapped = carriers[carrierCode];
+    return typeof mapped === "string" && mapped.length > 0 ? mapped : carrierCode.toUpperCase();
   }
   /** Test if the API key is valid */
   async testConnection() {

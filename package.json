@@ -1,6 +1,6 @@
 {
   "name": "iobroker.parcelapp",
-  "version": "0.2.11",
+  "version": "0.2.12",
   "description": "ioBroker adapter for parcel.app — track packages as ioBroker states",
   "author": {
     "name": "krobi",

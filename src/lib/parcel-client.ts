@@ -10,6 +10,26 @@ import type {
 const API_BASE = "https://api.parcel.app/external";
 const REQUEST_TIMEOUT = 15_000;
 
+/**
+ * Coerce API-drift boolean responses. parcel.app should return a real boolean
+ * for `success`, but the guard accepts common string/number encodings too.
+ *
+ * @param v Value to interpret as a success flag
+ */
+function isTrueish(v: unknown): boolean {
+  if (typeof v === "boolean") {
+    return v;
+  }
+  if (typeof v === "number") {
+    return v === 1;
+  }
+  if (typeof v === "string") {
+    const s = v.toLowerCase();
+    return s === "true" || s === "1";
+  }
+  return false;
+}
+
 /** HTTP client for the parcel.app API */
 export class ParcelClient {
   private apiKey: string;
@@ -34,18 +54,33 @@ export class ParcelClient {
       true,
     );
 
-    if (!response.success) {
-      const code = response.error_code || response.error_message || "UNKNOWN";
-      const err = new Error(
-        `API error: ${response.error_message || code}`,
-      ) as Error & {
+    // API-drift guard: response may be null or a non-object
+    if (!response || typeof response !== "object") {
+      const err = new Error("API error: malformed response") as Error & {
         code: string;
       };
-      err.code = code === "INVALID_API_KEY" ? "INVALID_API_KEY" : "API_ERROR";
+      err.code = "API_ERROR";
       throw err;
     }
 
-    return response.deliveries || [];
+    if (!isTrueish(response.success)) {
+      const rawCode =
+        typeof response.error_code === "string" ? response.error_code : "";
+      const rawMsg =
+        typeof response.error_message === "string"
+          ? response.error_message
+          : "";
+      const code = rawCode || rawMsg || "UNKNOWN";
+      const err = new Error(`API error: ${rawMsg || code}`) as Error & {
+        code: string;
+      };
+      err.code =
+        rawCode === "INVALID_API_KEY" ? "INVALID_API_KEY" : "API_ERROR";
+      throw err;
+    }
+
+    // API-drift guard: deliveries must be an array
+    return Array.isArray(response.deliveries) ? response.deliveries : [];
   }
 
   /**
@@ -71,11 +106,17 @@ export class ParcelClient {
     }
 
     try {
-      this.carrierCache = await this.request<CarrierMap>(
+      const raw = await this.request<unknown>(
         "GET",
         "/supported_carriers.json",
         false,
       );
+      // API-drift guard: must be a plain object (not null, array, or primitive)
+      if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+        this.carrierCache = raw as CarrierMap;
+      } else {
+        return {};
+      }
     } catch {
       // Return empty map but don't cache it — allow retry next time
       return {};
@@ -89,9 +130,16 @@ export class ParcelClient {
    *
    * @param carrierCode The carrier code from API
    */
-  async getCarrierName(carrierCode: string): Promise<string> {
+  async getCarrierName(carrierCode: unknown): Promise<string> {
+    // API-drift guard: non-string codes fall back to "UNKNOWN"
+    if (typeof carrierCode !== "string" || carrierCode.length === 0) {
+      return "UNKNOWN";
+    }
     const carriers = await this.getCarrierNames();
-    return carriers[carrierCode] || carrierCode.toUpperCase();
+    const mapped = carriers[carrierCode];
+    return typeof mapped === "string" && mapped.length > 0
+      ? mapped
+      : carrierCode.toUpperCase();
   }
 
   /** Test if the API key is valid */

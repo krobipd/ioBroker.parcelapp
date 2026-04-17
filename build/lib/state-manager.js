@@ -23,6 +23,16 @@ __export(state_manager_exports, {
 module.exports = __toCommonJS(state_manager_exports);
 var import_types = require("./types");
 const TRACKABLE_STATUSES = /* @__PURE__ */ new Set([2, 4, 8]);
+function coerceNumber(v) {
+  if (typeof v === "number" && Number.isFinite(v)) {
+    return v;
+  }
+  if (typeof v === "string" && v.length > 0) {
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
 const ESTIMATE_LABELS = {
   de: {
     overdue: "\xFCberf\xE4llig",
@@ -45,19 +55,32 @@ class StateManager {
   }
   /**
    * Sanitize a string for use as ioBroker object ID (see adapter.FORBIDDEN_CHARS).
+   * API-drift guard: returns "unknown" for non-string input.
    *
-   * @param name Raw string to sanitize
+   * @param name Raw value to sanitize (any type)
    */
   sanitize(name) {
+    if (typeof name !== "string") {
+      return "unknown";
+    }
     return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 50) || "unknown";
   }
   /**
-   * Parse the status code from a delivery (API returns it as string).
+   * Parse the status code from a delivery. API documents `status_code` as
+   * a numeric string, but we accept numbers too and fall back to 0 for drift.
    *
    * @param delivery The delivery to parse
    */
   parseStatus(delivery) {
-    return parseInt(delivery.status_code, 10) || 0;
+    const raw = delivery.status_code;
+    if (typeof raw === "number" && Number.isFinite(raw)) {
+      return Math.trunc(raw);
+    }
+    if (typeof raw === "string") {
+      const n = parseInt(raw, 10);
+      return Number.isFinite(n) ? n : 0;
+    }
+    return 0;
   }
   /**
    * Build a unique package ID from a delivery.
@@ -66,7 +89,7 @@ class StateManager {
    */
   packageId(delivery) {
     let id = this.sanitize(delivery.tracking_number);
-    if (delivery.extra_information) {
+    if (typeof delivery.extra_information === "string" && delivery.extra_information.length > 0) {
       id += `_${this.sanitize(delivery.extra_information)}`;
     }
     return id;
@@ -80,10 +103,13 @@ class StateManager {
   async updateDelivery(delivery, carrierName) {
     const pkgId = this.packageId(delivery);
     const devicePath = `deliveries.${pkgId}`;
+    const description = typeof delivery.description === "string" ? delivery.description : "";
+    const trackingNumber = typeof delivery.tracking_number === "string" ? delivery.tracking_number : "";
+    const extraInfo = typeof delivery.extra_information === "string" ? delivery.extra_information : "";
     await this.adapter.extendObjectAsync(devicePath, {
       type: "device",
       common: {
-        name: delivery.description || `Package ${delivery.tracking_number}`
+        name: description || `Package ${trackingNumber || pkgId}`
       },
       native: {}
     });
@@ -117,21 +143,21 @@ class StateManager {
         "Description",
         "string",
         "text",
-        delivery.description || ""
+        description
       ),
       this.createAndSet(
         `${devicePath}.trackingNumber`,
         "Tracking Number",
         "string",
         "text",
-        delivery.tracking_number
+        trackingNumber
       ),
       this.createAndSet(
         `${devicePath}.extraInfo`,
         "Extra Information",
         "string",
         "text",
-        delivery.extra_information || ""
+        extraInfo
       ),
       this.createAndSet(
         `${devicePath}.deliveryWindow`,
@@ -240,10 +266,14 @@ class StateManager {
       return "";
     }
     const formatTime = (timestamp) => {
-      if (!timestamp) {
+      const ts = coerceNumber(timestamp);
+      if (ts === null || ts <= 0) {
         return null;
       }
-      const d = new Date(timestamp * 1e3);
+      const d = new Date(ts * 1e3);
+      if (Number.isNaN(d.getTime())) {
+        return null;
+      }
       return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
     };
     const start = formatTime(delivery.timestamp_expected);
@@ -264,9 +294,10 @@ class StateManager {
       return "";
     }
     let expectedDate = null;
-    if (delivery.timestamp_expected) {
-      expectedDate = new Date(delivery.timestamp_expected * 1e3);
-    } else if (delivery.date_expected) {
+    const ts = coerceNumber(delivery.timestamp_expected);
+    if (ts !== null && ts > 0) {
+      expectedDate = new Date(ts * 1e3);
+    } else if (typeof delivery.date_expected === "string" && delivery.date_expected.length > 0) {
       expectedDate = new Date(delivery.date_expected);
     }
     if (!expectedDate || isNaN(expectedDate.getTime())) {
@@ -305,15 +336,18 @@ class StateManager {
    * @param delivery The delivery data
    */
   formatLastEvent(delivery) {
-    if (!delivery.events || delivery.events.length === 0) {
+    if (!Array.isArray(delivery.events) || delivery.events.length === 0) {
       return "";
     }
     const latest = delivery.events[0];
+    if (!latest || typeof latest !== "object") {
+      return "";
+    }
     const parts = [];
-    if (latest.event) {
+    if (typeof latest.event === "string" && latest.event.length > 0) {
       parts.push(latest.event);
     }
-    if (latest.date) {
+    if (typeof latest.date === "string" && latest.date.length > 0) {
       parts.push(latest.date);
     }
     return parts.join(" - ");
@@ -324,10 +358,14 @@ class StateManager {
    * @param delivery The delivery data
    */
   extractLastLocation(delivery) {
-    if (!delivery.events || delivery.events.length === 0) {
+    if (!Array.isArray(delivery.events) || delivery.events.length === 0) {
       return "";
     }
-    return delivery.events[0].location || "";
+    const latest = delivery.events[0];
+    if (!latest || typeof latest !== "object") {
+      return "";
+    }
+    return typeof latest.location === "string" ? latest.location : "";
   }
   /**
    * Calculate combined delivery window for today's packages.

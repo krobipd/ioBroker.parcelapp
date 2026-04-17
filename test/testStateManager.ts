@@ -863,6 +863,251 @@ describe("StateManager", () => {
         });
     });
 
+    describe("API-drift guards", () => {
+        describe("sanitize", () => {
+            it("should return 'unknown' for null", () => {
+                expect(manager.sanitize(null as unknown as string)).to.equal("unknown");
+            });
+
+            it("should return 'unknown' for undefined", () => {
+                expect(manager.sanitize(undefined as unknown as string)).to.equal("unknown");
+            });
+
+            it("should return 'unknown' for number", () => {
+                expect(manager.sanitize(42 as unknown as string)).to.equal("unknown");
+            });
+
+            it("should return 'unknown' for object", () => {
+                expect(manager.sanitize({} as unknown as string)).to.equal("unknown");
+            });
+
+            it("should return 'unknown' for array", () => {
+                expect(manager.sanitize([] as unknown as string)).to.equal("unknown");
+            });
+        });
+
+        describe("parseStatus", () => {
+            it("should accept number status_code (API drift)", () => {
+                const delivery = makeDelivery({
+                    status_code: 2 as unknown as string,
+                });
+                expect(manager.parseStatus(delivery)).to.equal(2);
+            });
+
+            it("should truncate fractional numbers", () => {
+                const delivery = makeDelivery({
+                    status_code: 2.7 as unknown as string,
+                });
+                expect(manager.parseStatus(delivery)).to.equal(2);
+            });
+
+            it("should return 0 for NaN number", () => {
+                const delivery = makeDelivery({
+                    status_code: NaN as unknown as string,
+                });
+                expect(manager.parseStatus(delivery)).to.equal(0);
+            });
+
+            it("should return 0 for Infinity", () => {
+                const delivery = makeDelivery({
+                    status_code: Infinity as unknown as string,
+                });
+                expect(manager.parseStatus(delivery)).to.equal(0);
+            });
+
+            it("should return 0 for null", () => {
+                const delivery = makeDelivery({
+                    status_code: null as unknown as string,
+                });
+                expect(manager.parseStatus(delivery)).to.equal(0);
+            });
+
+            it("should return 0 for object", () => {
+                const delivery = makeDelivery({
+                    status_code: {} as unknown as string,
+                });
+                expect(manager.parseStatus(delivery)).to.equal(0);
+            });
+
+            it("should return 0 for non-numeric string", () => {
+                const delivery = makeDelivery({ status_code: "abc" });
+                expect(manager.parseStatus(delivery)).to.equal(0);
+            });
+        });
+
+        describe("packageId", () => {
+            it("should ignore non-string extra_information (number)", () => {
+                const delivery = makeDelivery({
+                    tracking_number: "ABC",
+                    extra_information: 12345 as unknown as string,
+                });
+                expect(manager.packageId(delivery)).to.equal("abc");
+            });
+
+            it("should ignore non-string extra_information (object)", () => {
+                const delivery = makeDelivery({
+                    tracking_number: "ABC",
+                    extra_information: { foo: "bar" } as unknown as string,
+                });
+                expect(manager.packageId(delivery)).to.equal("abc");
+            });
+
+            it("should handle non-string tracking_number", () => {
+                const delivery = makeDelivery({
+                    tracking_number: null as unknown as string,
+                });
+                expect(manager.packageId(delivery)).to.equal("unknown");
+            });
+        });
+
+        describe("updateDelivery with malformed fields", () => {
+            it("should handle non-string description (number)", async () => {
+                const delivery = makeDelivery({
+                    description: 42 as unknown as string,
+                    tracking_number: "TRK1",
+                });
+                await manager.updateDelivery(delivery, "DHL");
+
+                const pkgId = manager.packageId(delivery);
+                const state = adapter.states.get(`deliveries.${pkgId}.description`);
+                expect(state?.val).to.equal("");
+                const device = adapter.objects.get(`deliveries.${pkgId}`);
+                expect(device!.common.name).to.equal("Package TRK1");
+            });
+
+            it("should handle non-string tracking_number", async () => {
+                const delivery = makeDelivery({
+                    tracking_number: 999 as unknown as string,
+                    description: "",
+                });
+                await manager.updateDelivery(delivery, "DHL");
+
+                const pkgId = manager.packageId(delivery);
+                const state = adapter.states.get(`deliveries.${pkgId}.trackingNumber`);
+                expect(state?.val).to.equal("");
+            });
+
+            it("should handle non-string extra_information", async () => {
+                const delivery = makeDelivery({
+                    extra_information: { zip: "12345" } as unknown as string,
+                });
+                await manager.updateDelivery(delivery, "DHL");
+
+                const pkgId = manager.packageId(delivery);
+                const state = adapter.states.get(`deliveries.${pkgId}.extraInfo`);
+                expect(state?.val).to.equal("");
+            });
+
+            it("should handle events as non-array (object)", async () => {
+                const delivery = makeDelivery({
+                    events: { event: "x", date: "y" } as unknown as never,
+                });
+                await manager.updateDelivery(delivery, "DHL");
+
+                const pkgId = manager.packageId(delivery);
+                expect(adapter.states.get(`deliveries.${pkgId}.lastEvent`)?.val).to.equal("");
+                expect(adapter.states.get(`deliveries.${pkgId}.lastLocation`)?.val).to.equal("");
+            });
+
+            it("should handle events with null first entry", async () => {
+                const delivery = makeDelivery({
+                    events: [null as unknown as { event: string; date: string }],
+                });
+                await manager.updateDelivery(delivery, "DHL");
+
+                const pkgId = manager.packageId(delivery);
+                expect(adapter.states.get(`deliveries.${pkgId}.lastEvent`)?.val).to.equal("");
+                expect(adapter.states.get(`deliveries.${pkgId}.lastLocation`)?.val).to.equal("");
+            });
+
+            it("should handle event with non-string fields", async () => {
+                const delivery = makeDelivery({
+                    events: [
+                        {
+                            event: 123 as unknown as string,
+                            date: null as unknown as string,
+                            location: 42 as unknown as string,
+                        },
+                    ],
+                });
+                await manager.updateDelivery(delivery, "DHL");
+
+                const pkgId = manager.packageId(delivery);
+                expect(adapter.states.get(`deliveries.${pkgId}.lastEvent`)?.val).to.equal("");
+                expect(adapter.states.get(`deliveries.${pkgId}.lastLocation`)?.val).to.equal("");
+            });
+
+            it("should handle timestamp_expected as numeric string (API drift)", async () => {
+                const now = new Date();
+                now.setHours(11, 15, 0, 0);
+                const ts = Math.floor(now.getTime() / 1000);
+
+                const delivery = makeDelivery({
+                    status_code: "2",
+                    timestamp_expected: String(ts) as unknown as number,
+                });
+                await manager.updateDelivery(delivery, "DHL");
+
+                const pkgId = manager.packageId(delivery);
+                const window = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
+                expect(window?.val).to.equal("11:15");
+            });
+
+            it("should handle timestamp_expected as non-finite value", async () => {
+                const delivery = makeDelivery({
+                    status_code: "2",
+                    timestamp_expected: NaN as unknown as number,
+                });
+                await manager.updateDelivery(delivery, "DHL");
+
+                const pkgId = manager.packageId(delivery);
+                const window = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
+                expect(window?.val).to.equal("");
+            });
+
+            it("should handle date_expected as non-string (null)", async () => {
+                const delivery = makeDelivery({
+                    status_code: "2",
+                    date_expected: null as unknown as string,
+                });
+                await manager.updateDelivery(delivery, "DHL");
+
+                const pkgId = manager.packageId(delivery);
+                const estimate = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
+                expect(estimate?.val).to.equal("");
+            });
+
+            it("should handle timestamp_expected_end as garbage", async () => {
+                const start = new Date();
+                start.setHours(9, 0, 0, 0);
+
+                const delivery = makeDelivery({
+                    status_code: "2",
+                    timestamp_expected: Math.floor(start.getTime() / 1000),
+                    timestamp_expected_end: "not-a-number" as unknown as number,
+                });
+                await manager.updateDelivery(delivery, "DHL");
+
+                const pkgId = manager.packageId(delivery);
+                const window = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
+                expect(window?.val).to.equal("09:00");
+            });
+
+            it("should handle numeric status_code (API drift)", async () => {
+                const delivery = makeDelivery({
+                    status_code: 4 as unknown as string,
+                });
+                await manager.updateDelivery(delivery, "DHL");
+
+                const pkgId = manager.packageId(delivery);
+                expect(adapter.states.get(`deliveries.${pkgId}.statusCode`)?.val).to.equal(4);
+                expect(adapter.states.get(`deliveries.${pkgId}.status`)?.val).to.equal(
+                    "In Zustellung",
+                );
+            });
+        });
+    });
+
     describe("cleanupDeliveries", () => {
         it("should remove stale deliveries", async () => {
             // Create two deliveries

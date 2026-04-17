@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.2.11",
+    "version": "0.2.12",
     "news": {
+      "0.2.12": {
+        "en": "Harden API-drift guards in parcel-client and state-manager, add 38 regression tests",
+        "de": "API-Drift-Härtung in parcel-client und state-manager, 38 zusätzliche Regressions-Tests",
+        "ru": "Усиление защиты от дрейфа API в parcel-client и state-manager, добавлено 38 регрессионных тестов",
+        "pt": "Reforço de proteções contra API-drift em parcel-client e state-manager, 38 testes de regressão adicionais",
+        "nl": "API-drift guards versterkt in parcel-client en state-manager, 38 extra regressietests",
+        "fr": "Renforcement des protections contre la dérive d'API dans parcel-client et state-manager, 38 tests de régression supplémentaires",
+        "it": "Rafforzate protezioni contro API-drift in parcel-client e state-manager, 38 test di regressione aggiuntivi",
+        "es": "Reforzadas las protecciones contra API-drift en parcel-client y state-manager, 38 pruebas de regresión adicionales",
+        "pl": "Wzmocniono zabezpieczenia przed dryfem API w parcel-client i state-manager, 38 dodatkowych testów regresji",
+        "uk": "Посилено захист від дрейфу API у parcel-client та state-manager, 38 додаткових регресійних тестів",
+        "zh-cn": "加固parcel-client和state-manager中的API漂移防护，新增38个回归测试"
+      },
       "0.2.11": {
         "en": "Fix response stream error handling, isolate per-delivery poll failures, harden onMessage and onUnload",
         "de": "Response-Stream-Fehlerbehandlung gefixt, per-Delivery Poll-Fehler isoliert, onMessage und onUnload gehärtet",
@@ -80,19 +93,6 @@
         "pl": "Usunieto nadmiarowe skrypty, skompresowano dokumentacje",
         "uk": "Видалено зайвi скрипти, стиснуто документацiю",
         "zh-cn": "移除冗余脚本，压缩文档"
-      },
-      "0.2.5": {
-        "en": "Fix delivery window timeout on Windows (replace toLocaleTimeString with manual formatting)",
-        "de": "Fix Zeitfenster-Timeout auf Windows (toLocaleTimeString durch manuelle Formatierung ersetzt)",
-        "ru": "Исправлен тайм-аут окна доставки в Windows",
-        "pt": "Correção de timeout de janela de entrega no Windows",
-        "nl": "Fix leveringsvenster timeout op Windows",
-        "fr": "Correction du timeout de la fenêtre de livraison sous Windows",
-        "it": "Correzione timeout finestra di consegna su Windows",
-        "es": "Corrección del timeout de la ventana de entrega en Windows",
-        "pl": "Naprawiono timeout okna dostawy w systemie Windows",
-        "uk": "Виправлено тайм-аут вікна доставки в Windows",
-        "zh-cn": "修复Windows上的交付窗口超时问题"
       }
     },
     "titleLang": {
