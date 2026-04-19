@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.2.12",
+    "version": "0.2.13",
     "news": {
+      "0.2.13": {
+        "en": "Latest-repo review compliance: set common.messagebox=true because the onMessage handler is used for admin-UI Check Connection and Add Delivery.",
+        "de": "Latest-Repo-Review-Compliance: common.messagebox=true, weil der onMessage-Handler für Admin-UI Check Connection + Add Delivery genutzt wird.",
+        "ru": "Соответствие ioBroker Latest: messagebox=true для admin-UI.",
+        "pt": "Conformidade ioBroker Latest: messagebox=true para admin-UI.",
+        "nl": "Compliance ioBroker Latest: messagebox=true voor admin-UI.",
+        "fr": "Conformité ioBroker Latest : messagebox=true pour admin-UI.",
+        "it": "Conformità ioBroker Latest: messagebox=true per admin-UI.",
+        "es": "Cumplimiento ioBroker Latest: messagebox=true para admin-UI.",
+        "pl": "Zgodność ioBroker Latest: messagebox=true dla admin-UI.",
+        "uk": "Відповідність ioBroker Latest: messagebox=true для admin-UI.",
+        "zh-cn": "符合 ioBroker Latest 仓库规范: messagebox=true, 供 admin-UI 使用。"
+      },
       "0.2.12": {
         "en": "Harden API-drift guards in parcel-client and state-manager, add 38 regression tests",
         "de": "API-Drift-Härtung in parcel-client und state-manager, 38 zusätzliche Regressions-Tests",
@@ -80,19 +93,6 @@
         "pl": "Spójne etykiety interfejsu we wszystkich adapterach",
         "uk": "Узгоджені мітки інтерфейсу у всіх адаптерах",
         "zh-cn": "所有适配器中统一的界面标签"
-      },
-      "0.2.6": {
-        "en": "Remove redundant scripts, compress documentation",
-        "de": "Redundante Scripts entfernt, Dokumentation komprimiert",
-        "ru": "Удалены избыточные скрипты, сжата документация",
-        "pt": "Scripts redundantes removidos, documentacao comprimida",
-        "nl": "Overbodige scripts verwijderd, documentatie gecomprimeerd",
-        "fr": "Scripts redondants supprimes, documentation comprimee",
-        "it": "Script ridondanti rimossi, documentazione compressa",
-        "es": "Scripts redundantes eliminados, documentacion comprimida",
-        "pl": "Usunieto nadmiarowe skrypty, skompresowano dokumentacje",
-        "uk": "Видалено зайвi скрипти, стиснуто документацiю",
-        "zh-cn": "移除冗余脚本，压缩文档"
       }
     },
     "titleLang": {
@@ -144,6 +144,7 @@
     "tier": 3,
     "loglevel": "info",
     "mode": "daemon",
+    "messagebox": true,
     "type": "infrastructure",
     "compact": true,
     "connectionType": "cloud",
