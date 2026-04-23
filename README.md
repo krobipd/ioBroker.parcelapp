@@ -115,8 +115,7 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 ---
 
 ## Changelog
-
-### **WORK IN PROGRESS**
+### 0.2.14 (2026-04-23)
 - Separate test-build output (`build-test/`) from production `build/`, no more duplicated `build/src` + `build/test` tree in published packages.
 - Declare `deliveries` folder and `summary` channel as instance objects so their parent exists before per-package states appear.
 - Localize status labels and delivery estimates to all 11 ioBroker languages via `system.config.language`; the per-instance `Status Language` option is removed.
@@ -140,22 +139,6 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 ### 0.2.10 (2026-04-12)
 - Fix test timezone bug, remove unused devDependencies, add `no-floating-promises` lint rule
 - Remove redundant `actions/checkout` from CI workflow
-
-### 0.2.9 (2026-04-08)
-- Add standard ioBroker test suite, optimize test build config
-
-### 0.2.8 (2026-04-05)
-- Clean up empty parent folders after removing obsolete states
-
-### 0.2.7 (2026-04-05)
-- Consistent UI labels across all adapters
-
-### 0.2.6 (2026-04-05)
-- Remove redundant scripts, compress documentation
-
-Older entries have been moved to [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
-
----
 
 ## Support
 

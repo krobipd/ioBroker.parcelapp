@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.2.13",
+    "version": "0.2.14",
     "news": {
+      "0.2.14": {
+        "en": "Latest-repo review round 2: separate test build into build-test/, declare deliveries folder and summary channel as instance objects, localize status labels to all 11 ioBroker languages via system.config.language, harden async event handlers with .catch()",
+        "de": "Latest-Repo Review Runde 2: Test-Build in build-test/ getrennt, deliveries-Ordner und summary-Kanal als instance objects deklariert, Status-Labels in allen 11 ioBroker-Sprachen via system.config.language lokalisiert, async Event-Handler mit .catch() gehärtet",
+        "ru": "Исправления 2-го раунда обзора Latest-repo: тестовая сборка вынесена в build-test/, папка deliveries и канал summary объявлены как instance objects, метки статусов локализованы на все 11 языков ioBroker через system.config.language, асинхронные обработчики событий защищены .catch()",
+        "pt": "Correções da revisão Latest-repo 2.ª ronda: build de testes separado em build-test/, pasta deliveries e canal summary declarados como instance objects, labels de estado localizados nas 11 línguas do ioBroker via system.config.language, handlers de eventos assíncronos protegidos com .catch()",
+        "nl": "Latest-repo review ronde 2: test-build afgesplitst naar build-test/, deliveries-folder en summary-kanaal als instance objects gedeclareerd, statuslabels gelokaliseerd in alle 11 ioBroker-talen via system.config.language, async event handlers met .catch() gehard",
+        "fr": "Corrections revue Latest-repo round 2 : build de test séparé dans build-test/, dossier deliveries et canal summary déclarés comme instance objects, libellés d'état localisés dans les 11 langues ioBroker via system.config.language, gestionnaires d'événements asynchrones protégés par .catch()",
+        "it": "Correzioni revisione Latest-repo round 2: build di test separato in build-test/, cartella deliveries e canale summary dichiarati come instance objects, etichette di stato localizzate in tutte le 11 lingue ioBroker tramite system.config.language, gestori di eventi asincroni protetti con .catch()",
+        "es": "Correcciones revisión Latest-repo ronda 2: compilación de pruebas separada en build-test/, carpeta deliveries y canal summary declarados como instance objects, etiquetas de estado localizadas a los 11 idiomas de ioBroker vía system.config.language, manejadores de eventos asíncronos protegidos con .catch()",
+        "pl": "Poprawki przeglądu Latest-repo runda 2: build testowy wydzielony do build-test/, folder deliveries i kanał summary zadeklarowane jako instance objects, etykiety stanów zlokalizowane we wszystkich 11 językach ioBroker przez system.config.language, obsługa zdarzeń asynchronicznych zabezpieczona .catch()",
+        "uk": "Виправлення огляду Latest-repo раунд 2: тестова збірка винесена в build-test/, папка deliveries та канал summary оголошені як instance objects, мітки статусів локалізовано на всі 11 мов ioBroker через system.config.language, асинхронні обробники подій захищені .catch()",
+        "zh-cn": "Latest-repo 审核第二轮修复：测试构建分离到 build-test/，deliveries 文件夹和 summary 通道声明为 instance objects，通过 system.config.language 本地化状态标签到所有 11 种 ioBroker 语言，使用 .catch() 加固异步事件处理器"
+      },
       "0.2.13": {
         "en": "Latest-repo review compliance: set common.messagebox=true because the onMessage handler is used for admin-UI Check Connection and Add Delivery.",
         "de": "Latest-Repo-Review-Compliance: common.messagebox=true, weil der onMessage-Handler für Admin-UI Check Connection + Add Delivery genutzt wird.",
@@ -80,19 +93,6 @@
         "pl": "Usuwanie pustych folderów nadrzędnych po usunięciu przestarzałych stanów",
         "uk": "Видалення порожніх батьківських папок після видалення застарілих станів",
         "zh-cn": "移除过时状态后清理空父文件夹"
-      },
-      "0.2.7": {
-        "en": "Consistent UI labels across all adapters",
-        "de": "Einheitliche UI-Labels über alle Adapter",
-        "ru": "Единообразные метки интерфейса во всех адаптерах",
-        "pt": "Rótulos de interface consistentes em todos os adaptadores",
-        "nl": "Consistente UI-labels in alle adapters",
-        "fr": "Libellés d'interface cohérents dans tous les adaptateurs",
-        "it": "Etichette di interfaccia coerenti in tutti gli adattatori",
-        "es": "Etiquetas de interfaz consistentes en todos los adaptadores",
-        "pl": "Spójne etykiety interfejsu we wszystkich adapterach",
-        "uk": "Узгоджені мітки інтерфейсу у всіх адаптерах",
-        "zh-cn": "所有适配器中统一的界面标签"
       }
     },
     "titleLang": {

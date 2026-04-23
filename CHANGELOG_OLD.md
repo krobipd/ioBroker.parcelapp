@@ -1,4 +1,19 @@
 # Older Changes
+## 0.2.9 (2026-04-08)
+- Add standard ioBroker test suite, optimize test build config
+
+## 0.2.8 (2026-04-05)
+- Clean up empty parent folders after removing obsolete states
+
+## 0.2.7 (2026-04-05)
+- Consistent UI labels across all adapters
+
+## 0.2.6 (2026-04-05)
+- Remove redundant scripts, compress documentation
+
+Older entries have been moved to [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
+
+---
 
 ## 0.2.5 (2026-04-04)
 
