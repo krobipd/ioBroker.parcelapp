@@ -62,23 +62,6 @@
       "default": true,
       "xs": 12, "sm": 12, "md": 12, "lg": 12, "xl": 12
     },
-    "displayHeader": {
-      "newLine": true,
-      "type": "header",
-      "text": "header_display",
-      "size": 5
-    },
-    "language": {
-      "type": "select",
-      "label": "label_language",
-      "tooltip": "tooltip_language",
-      "default": "de",
-      "options": [
-        { "label": "lang_de", "value": "de" },
-        { "label": "lang_en", "value": "en" }
-      ],
-      "xs": 12, "sm": 12, "md": 6, "lg": 6, "xl": 6
-    },
     "_supportHeader": {
       "newLine": true,
       "type": "header",

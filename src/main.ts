@@ -7,6 +7,15 @@ const MAX_POLL_INTERVAL = 60;
 const DEFAULT_POLL_INTERVAL = 10;
 const MIN_POLL_GAP_MS = 60_000; // Minimum 60s between polls
 
+/**
+ * Extract a log-friendly message from an unknown error value.
+ *
+ * @param err Value caught in a promise rejection (may or may not be an Error)
+ */
+function errText(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
 /** ioBroker adapter for parcel.app package tracking */
 class ParcelappAdapter extends utils.Adapter {
   private client: ParcelClient | null = null;
@@ -24,9 +33,20 @@ class ParcelappAdapter extends utils.Adapter {
       ...options,
       name: "parcelapp",
     });
-    this.on("ready", this.onReady.bind(this));
+    // Wrap async handlers with .catch() so a rejection can never become an
+    // unhandled promise rejection (which would SIGKILL the adapter and trap
+    // js-controller in a restart loop without any stack trace).
+    this.on("ready", () => {
+      this.onReady().catch((err) =>
+        this.log.error(`onReady failed: ${errText(err)}`),
+      );
+    });
     this.on("unload", this.onUnload.bind(this));
-    this.on("message", this.onMessage.bind(this));
+    this.on("message", (obj) => {
+      this.onMessage(obj).catch((err) =>
+        this.log.error(`onMessage failed: ${errText(err)}`),
+      );
+    });
   }
 
   private async onReady(): Promise<void> {
@@ -41,9 +61,15 @@ class ParcelappAdapter extends utils.Adapter {
       return;
     }
 
+    // Pick the label language from the ioBroker system configuration.
+    // StateManager falls back to English if the language is unsupported.
+    const sysConfig = await this.getForeignObjectAsync("system.config");
+    const language =
+      (sysConfig?.common as { language?: string } | undefined)?.language ?? "";
+
     // Initialize
     this.client = new ParcelClient(apiKey.trim());
-    this.stateManager = new StateManager(this);
+    this.stateManager = new StateManager(this, language);
 
     // Cleanup obsolete states
     await this.cleanupObsoleteStates();

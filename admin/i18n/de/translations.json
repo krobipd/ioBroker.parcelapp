@@ -7,17 +7,12 @@
   "donatePaypal": "Spenden via PayPal",
   "header_connection": "parcel.app API",
   "header_delivery": "Lieferungen",
-  "header_display": "Anzeige",
   "header_polling": "Abfrage",
   "label_apiKey": "API-Schlüssel",
   "label_autoRemoveDelivered": "Zugestellte Pakete automatisch entfernen",
-  "label_language": "Status-Sprache",
   "label_pollInterval": "Abfrageintervall (Minuten)",
-  "lang_de": "Deutsch",
-  "lang_en": "Englisch",
   "msg_connectionFailed": "Verbindung fehlgeschlagen!",
   "msg_connectionOk": "Verbindung erfolgreich!",
   "tooltip_autoRemoveDelivered": "Wenn aktiviert, werden zugestellte Pakete automatisch aus dem Objektbaum entfernt. Wenn deaktiviert, bleiben sie mit Status 'Zugestellt' bestehen, bis sie in parcel.app gelöscht werden.",
-  "tooltip_language": "Sprache für Statusmeldungen (z.B. 'Unterwegs' vs 'In Transit')",
   "tooltip_pollInterval": "Wie oft Lieferupdates abgefragt werden (5-60 Minuten, Standard: 10). Rate-Limit: 20 Anfragen/Stunde."
 }

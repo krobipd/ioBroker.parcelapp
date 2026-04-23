@@ -7,17 +7,12 @@
   "donatePaypal": "Dona tramite PayPal",
   "header_connection": "parcel.app API",
   "header_delivery": "Consegne",
-  "header_display": "Visualizzazione",
   "header_polling": "Polling",
   "label_apiKey": "Chiave API",
   "label_autoRemoveDelivered": "Rimuovi automaticamente i pacchi consegnati",
-  "label_language": "Lingua degli stati",
   "label_pollInterval": "Intervallo di polling (minuti)",
-  "lang_de": "Tedesco",
-  "lang_en": "Inglese",
   "msg_connectionFailed": "Connessione fallita!",
   "msg_connectionOk": "Connessione riuscita!",
   "tooltip_autoRemoveDelivered": "Se attivato, i pacchi consegnati vengono automaticamente rimossi dall'albero degli stati. Se disattivato, rimangono con lo stato 'Consegnato' fino alla cancellazione in parcel.app.",
-  "tooltip_language": "Lingua per le etichette di stato della consegna",
   "tooltip_pollInterval": "Frequenza di aggiornamento delle consegne (5-60 minuti, predefinito: 10). Limite: 20 richieste/ora."
 }

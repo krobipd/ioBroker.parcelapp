@@ -7,17 +7,12 @@
   "donatePaypal": "Donar vía PayPal",
   "header_connection": "parcel.app API",
   "header_delivery": "Entregas",
-  "header_display": "Visualización",
   "header_polling": "Consulta",
   "label_apiKey": "Clave API",
   "label_autoRemoveDelivered": "Eliminar automáticamente paquetes entregados",
-  "label_language": "Idioma de estados",
   "label_pollInterval": "Intervalo de consulta (minutos)",
-  "lang_de": "Alemán",
-  "lang_en": "Inglés",
   "msg_connectionFailed": "¡Error de conexión!",
   "msg_connectionOk": "¡Conexión exitosa!",
   "tooltip_autoRemoveDelivered": "Cuando está activado, los paquetes entregados se eliminan automáticamente del árbol de estados. Cuando está desactivado, permanecen con el estado 'Entregado' hasta ser eliminados en parcel.app.",
-  "tooltip_language": "Idioma para las etiquetas de estado de entrega",
   "tooltip_pollInterval": "Con qué frecuencia obtener actualizaciones de entrega (5-60 minutos, predeterminado: 10). Límite: 20 solicitudes/hora."
 }

@@ -175,7 +175,6 @@
   "native": {
     "apiKey": "",
     "pollInterval": 10,
-    "language": "de",
     "autoRemoveDelivered": true
   },
   "instanceObjects": [
@@ -197,6 +196,46 @@
         "read": true,
         "write": false,
         "def": false
+      },
+      "native": {}
+    },
+    {
+      "_id": "deliveries",
+      "type": "folder",
+      "common": {
+        "name": {
+          "en": "Deliveries",
+          "de": "Sendungen",
+          "ru": "Доставки",
+          "pt": "Entregas",
+          "nl": "Zendingen",
+          "fr": "Livraisons",
+          "it": "Consegne",
+          "es": "Envíos",
+          "pl": "Przesyłki",
+          "uk": "Доставки",
+          "zh-cn": "包裹"
+        }
+      },
+      "native": {}
+    },
+    {
+      "_id": "summary",
+      "type": "channel",
+      "common": {
+        "name": {
+          "en": "Summary",
+          "de": "Zusammenfassung",
+          "ru": "Сводка",
+          "pt": "Resumo",
+          "nl": "Samenvatting",
+          "fr": "Résumé",
+          "it": "Riepilogo",
+          "es": "Resumen",
+          "pl": "Podsumowanie",
+          "uk": "Підсумок",
+          "zh-cn": "汇总"
+        }
       },
       "native": {}
     }

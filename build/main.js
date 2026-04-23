@@ -28,6 +28,9 @@ const MIN_POLL_INTERVAL = 5;
 const MAX_POLL_INTERVAL = 60;
 const DEFAULT_POLL_INTERVAL = 10;
 const MIN_POLL_GAP_MS = 6e4;
+function errText(err) {
+  return err instanceof Error ? err.message : String(err);
+}
 class ParcelappAdapter extends utils.Adapter {
   client = null;
   stateManager = null;
@@ -43,12 +46,20 @@ class ParcelappAdapter extends utils.Adapter {
       ...options,
       name: "parcelapp"
     });
-    this.on("ready", this.onReady.bind(this));
+    this.on("ready", () => {
+      this.onReady().catch(
+        (err) => this.log.error(`onReady failed: ${errText(err)}`)
+      );
+    });
     this.on("unload", this.onUnload.bind(this));
-    this.on("message", this.onMessage.bind(this));
+    this.on("message", (obj) => {
+      this.onMessage(obj).catch(
+        (err) => this.log.error(`onMessage failed: ${errText(err)}`)
+      );
+    });
   }
   async onReady() {
-    var _a;
+    var _a, _b, _c;
     await this.setStateAsync("info.connection", { val: false, ack: true });
     const { apiKey } = this.config;
     if (!apiKey || apiKey.trim().length < 10) {
@@ -57,15 +68,17 @@ class ParcelappAdapter extends utils.Adapter {
       );
       return;
     }
+    const sysConfig = await this.getForeignObjectAsync("system.config");
+    const language = (_b = (_a = sysConfig == null ? void 0 : sysConfig.common) == null ? void 0 : _a.language) != null ? _b : "";
     this.client = new import_parcel_client.ParcelClient(apiKey.trim());
-    this.stateManager = new import_state_manager.StateManager(this);
+    this.stateManager = new import_state_manager.StateManager(this, language);
     await this.cleanupObsoleteStates();
     await this.poll();
     const interval = Math.max(
       MIN_POLL_INTERVAL,
       Math.min(
         MAX_POLL_INTERVAL,
-        (_a = this.config.pollInterval) != null ? _a : DEFAULT_POLL_INTERVAL
+        (_c = this.config.pollInterval) != null ? _c : DEFAULT_POLL_INTERVAL
       )
     );
     const intervalMs = interval * 60 * 1e3;

@@ -6,11 +6,12 @@
 
 **ioBroker Parcel Tracking Adapter** — Paketverfolgung über [parcel.app](https://parcelapp.net) API. Alle Carrier die parcel.app unterstützt, ein API-Key (Premium).
 
-- **Version:** 0.2.12 (April 2026) — 185 Tests, API-Drift-Härtung
+- **Version:** 0.2.13 released; 0.2.14 WIP (Latest-repo review round 2)
 - **GitHub:** https://github.com/krobipd/ioBroker.parcelapp
 - **npm:** https://www.npmjs.com/package/iobroker.parcelapp
 - **Repository PR:** ioBroker/ioBroker.repositories#5667
 - **Runtime-Deps:** nur `@iobroker/adapter-core` (HTTPS via Node.js built-in)
+- **Build-Layout:** `build/` = Production (esbuild, shipped via npm). `build-test/` = Test-Kompilat (tsc), gitignored.
 
 ## API
 
@@ -38,24 +39,30 @@ src/lib/state-manager.ts → State CRUD + Cleanup + Berechnungen
 5. **Rate Limit** — Retry-After Header, Cooldown-Timer, Polls übersprungen
 6. **sendTo** — `checkConnection` (Admin-UI Button), `addDelivery` (triggert sofortigen Poll)
 7. **pkgId** — `sanitize(tracking_number)` + optional `_sanitize(extra_information)`
+8. **Sprache** — `system.config.language` einmalig in `onReady` gelesen und an `StateManager` übergeben. Unbekannte Codes fallen via `resolveLanguage()` auf `en` zurück. Kein per-Instanz Language-Setting.
+9. **Intermediate Objects** — `deliveries` (folder) + `summary` (channel) sind in io-package.json `instanceObjects` deklariert; `StateManager` legt nur die States darunter an.
 
 ## Status-Codes
 
 0=Zugestellt, 1=Eingefroren, 2=Unterwegs, 3=Abholung, 4=In Zustellung, 5=Nicht gefunden, 6=Zustellversuch, 7=Ausnahme, 8=Registriert
 
-## Tests (185)
+## Tests
 
 ```
-test/testParcelClient.ts  → API client, errors, rate limiting, API-drift (38)
-test/testStateManager.ts  → Deliveries, summary, cleanup, formatting, API-drift (90)
-test/package.js           → @iobroker/testing packageFiles (57)
+test/testParcelClient.ts  → API client, errors, rate limiting, API-drift
+test/testStateManager.ts  → Deliveries, summary, cleanup, formatting, API-drift, multilang, resolveLanguage, isToday-regression
+test/package.js           → @iobroker/testing packageFiles
 test/integration.js       → @iobroker/testing integration
 ```
+
+Run: `npm test` (builds prod + test, runs TS specs + @iobroker/testing packageFiles).
 
 ## Versionshistorie
 
 | Version | Highlights |
 |---------|------------|
+| 0.2.14 (WIP) | Latest-repo review round 2: separate `build-test/` from `build/`, `deliveries`+`summary` as instance objects, status labels + estimates in all 11 ioBroker languages via `system.config.language`, fix `summary.todayCount` for non-DE/EN |
+| 0.2.13 | Latest-repo review round 1 compliance: `common.messagebox=true` |
 | 0.2.12 | API-Drift-Härtung (parcel-client + state-manager): isTrueish, Array/Object-Guards, coerceNumber, typeof-Checks auf allen externen Feldern + 38 Regression-Tests |
 | 0.2.11 | Error-Handling: res.on("error"), per-delivery Poll-Isolation, onMessage/onUnload try/catch, parseStatus DRY |
 | 0.2.10 | Test-Timezone-Fix, unused Deps entfernt, no-floating-promises, CI checkout entfernt |

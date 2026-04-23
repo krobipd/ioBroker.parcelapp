@@ -7,17 +7,12 @@
   "donatePaypal": "Doneren via PayPal",
   "header_connection": "parcel.app API",
   "header_delivery": "Leveringen",
-  "header_display": "Weergave",
   "header_polling": "Polling",
   "label_apiKey": "API-sleutel",
   "label_autoRemoveDelivered": "Afgeleverde pakketten automatisch verwijderen",
-  "label_language": "Statustaal",
   "label_pollInterval": "Polling-interval (minuten)",
-  "lang_de": "Duits",
-  "lang_en": "Engels",
   "msg_connectionFailed": "Verbinding mislukt!",
   "msg_connectionOk": "Verbinding succesvol!",
   "tooltip_autoRemoveDelivered": "Indien ingeschakeld worden afgeleverde pakketten automatisch uit de objectboom verwijderd. Indien uitgeschakeld blijven ze met status 'Afgeleverd' bestaan tot ze in parcel.app worden verwijderd.",
-  "tooltip_language": "Taal voor bezorgingsstatussen",
   "tooltip_pollInterval": "Hoe vaak bezorgingsupdates ophalen (5-60 minuten, standaard: 10). Limiet: 20 verzoeken/uur."
 }

@@ -7,17 +7,12 @@
   "donatePaypal": "Faire un don via PayPal",
   "header_connection": "parcel.app API",
   "header_delivery": "Livraisons",
-  "header_display": "Affichage",
   "header_polling": "Interrogation",
   "label_apiKey": "Clé API",
   "label_autoRemoveDelivered": "Supprimer automatiquement les colis livrés",
-  "label_language": "Langue des statuts",
   "label_pollInterval": "Intervalle d interrogation (minutes)",
-  "lang_de": "Allemand",
-  "lang_en": "Anglais",
   "msg_connectionFailed": "Échec de la connexion !",
   "msg_connectionOk": "Connexion réussie !",
   "tooltip_autoRemoveDelivered": "Lorsque activé, les colis livrés sont automatiquement supprimés de l'arborescence d'états. Lorsque désactivé, ils restent avec le statut 'Livré' jusqu'à leur suppression dans parcel.app.",
-  "tooltip_language": "Langue pour les libellés de statut de livraison",
   "tooltip_pollInterval": "Fréquence de récupération des mises à jour de livraison (5-60 minutes, défaut : 10). Limite : 20 requêtes/heure."
 }

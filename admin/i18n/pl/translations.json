@@ -7,17 +7,12 @@
   "donatePaypal": "Przekaż darowiznę przez PayPal",
   "header_connection": "parcel.app API",
   "header_delivery": "Dostawy",
-  "header_display": "Wyświetlanie",
   "header_polling": "Odpytywanie",
   "label_apiKey": "Klucz API",
   "label_autoRemoveDelivered": "Automatycznie usuwaj dostarczone przesyłki",
-  "label_language": "Język statusów",
   "label_pollInterval": "Interwał odpytywania (minuty)",
-  "lang_de": "Niemiecki",
-  "lang_en": "Angielski",
   "msg_connectionFailed": "Połączenie nieudane!",
   "msg_connectionOk": "Połączenie udane!",
   "tooltip_autoRemoveDelivered": "Po włączeniu dostarczone przesyłki są automatycznie usuwane z drzewa stanów. Po wyłączeniu pozostają ze statusem 'Dostarczono' do usunięcia w parcel.app.",
-  "tooltip_language": "Język dla etykiet statusu dostawy",
   "tooltip_pollInterval": "Jak często pobierać aktualizacje dostaw (5-60 minut, domyślnie: 10). Limit: 20 zapytań/godzinę."
 }

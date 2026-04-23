@@ -1,6 +1,12 @@
 import { expect } from "chai";
-import { StateManager } from "../src/lib/state-manager";
-import { STATUS_LABELS_DE, STATUS_LABELS_EN } from "../src/lib/types";
+import { StateManager, resolveLanguage } from "../src/lib/state-manager";
+import {
+    STATUS_LABELS,
+    STATUS_LABELS_DE,
+    STATUS_LABELS_EN,
+    SUPPORTED_LANGUAGES,
+    FALLBACK_LANGUAGE,
+} from "../src/lib/types";
 import type { ParcelDelivery } from "../src/lib/types";
 
 interface ObjectDef {
@@ -21,7 +27,7 @@ interface ObjectViewRow {
 
 interface MockAdapter {
     namespace: string;
-    config: { language: "de" | "en"; autoRemoveDelivered: boolean };
+    config: { autoRemoveDelivered: boolean };
     objects: Map<string, ObjectDef>;
     states: Map<string, StateValue>;
     log: { debug: (msg: string) => void };
@@ -36,14 +42,14 @@ interface MockAdapter {
     ) => Promise<{ rows: ObjectViewRow[] }>;
 }
 
-function createMockAdapter(language: "de" | "en" = "de"): MockAdapter {
+function createMockAdapter(): MockAdapter {
     const objects = new Map<string, ObjectDef>();
     const states = new Map<string, StateValue>();
     const debugMessages: string[] = [];
 
     return {
         namespace: "parcelapp.0",
-        config: { language, autoRemoveDelivered: true },
+        config: { autoRemoveDelivered: true },
         objects,
         states,
         log: {
@@ -111,8 +117,8 @@ describe("StateManager", () => {
     let manager: StateManager;
 
     beforeEach(() => {
-        adapter = createMockAdapter("de");
-        manager = new StateManager(adapter as never);
+        adapter = createMockAdapter();
+        manager = new StateManager(adapter as never, "de");
     });
 
     describe("sanitize", () => {
@@ -217,8 +223,8 @@ describe("StateManager", () => {
         });
 
         it("should set status label in English when language is en", async () => {
-            adapter = createMockAdapter("en");
-            manager = new StateManager(adapter as never);
+            adapter = createMockAdapter();
+            manager = new StateManager(adapter as never, "en");
 
             const delivery = makeDelivery({ status_code: "4" });
             await manager.updateDelivery(delivery, "DHL");
@@ -363,8 +369,8 @@ describe("StateManager", () => {
 
         it("should map all codes through updateDelivery in DE", async () => {
             for (let code = 0; code <= 8; code++) {
-                adapter = createMockAdapter("de");
-                manager = new StateManager(adapter as never);
+                adapter = createMockAdapter();
+                manager = new StateManager(adapter as never, "de");
                 const delivery = makeDelivery({ status_code: String(code), tracking_number: `trk${code}` });
                 await manager.updateDelivery(delivery, "Test");
 
@@ -376,8 +382,8 @@ describe("StateManager", () => {
 
         it("should map all codes through updateDelivery in EN", async () => {
             for (let code = 0; code <= 8; code++) {
-                adapter = createMockAdapter("en");
-                manager = new StateManager(adapter as never);
+                adapter = createMockAdapter();
+                manager = new StateManager(adapter as never, "en");
                 const delivery = makeDelivery({ status_code: String(code), tracking_number: `trk${code}` });
                 await manager.updateDelivery(delivery, "Test");
 
@@ -501,8 +507,8 @@ describe("StateManager", () => {
         });
 
         it("should return 'today' for today delivery in English", async () => {
-            adapter = createMockAdapter("en");
-            manager = new StateManager(adapter as never);
+            adapter = createMockAdapter();
+            manager = new StateManager(adapter as never, "en");
 
             const today = new Date();
             today.setHours(15, 0, 0, 0);
@@ -535,8 +541,8 @@ describe("StateManager", () => {
         });
 
         it("should return 'tomorrow' for tomorrow delivery in English", async () => {
-            adapter = createMockAdapter("en");
-            manager = new StateManager(adapter as never);
+            adapter = createMockAdapter();
+            manager = new StateManager(adapter as never, "en");
 
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
@@ -570,8 +576,8 @@ describe("StateManager", () => {
         });
 
         it("should return 'in %d days' for future delivery in English", async () => {
-            adapter = createMockAdapter("en");
-            manager = new StateManager(adapter as never);
+            adapter = createMockAdapter();
+            manager = new StateManager(adapter as never, "en");
 
             const future = new Date();
             future.setDate(future.getDate() + 5);
@@ -606,8 +612,8 @@ describe("StateManager", () => {
         });
 
         it("should return 'overdue' for overdue delivery in English", async () => {
-            adapter = createMockAdapter("en");
-            manager = new StateManager(adapter as never);
+            adapter = createMockAdapter();
+            manager = new StateManager(adapter as never, "en");
 
             const past = new Date();
             past.setDate(past.getDate() - 2);
@@ -755,12 +761,14 @@ describe("StateManager", () => {
     });
 
     describe("updateSummary", () => {
-        it("should create summary channel", async () => {
+        it("should create all summary states under the summary channel", async () => {
             await manager.updateSummary([]);
 
-            const channel = adapter.objects.get("summary");
-            expect(channel).to.not.be.undefined;
-            expect(channel!.type).to.equal("channel");
+            // The `summary` channel itself is declared via io-package.json instanceObjects;
+            // StateManager only creates the states below it.
+            expect(adapter.objects.has("summary.activeCount")).to.be.true;
+            expect(adapter.objects.has("summary.todayCount")).to.be.true;
+            expect(adapter.objects.has("summary.deliveryWindow")).to.be.true;
         });
 
         it("should set activeCount to 0 for empty deliveries", async () => {
@@ -1152,6 +1160,116 @@ describe("StateManager", () => {
 
             // Everything should be removed
             expect(adapter.objects.has(`deliveries.${manager.packageId(d1)}`)).to.be.false;
+        });
+    });
+
+    describe("multilingual labels", () => {
+        const EXPECTED_LANGUAGES = ["de", "en", "ru", "pt", "nl", "fr", "it", "es", "pl", "uk", "zh-cn"];
+
+        it("should cover all 11 ioBroker languages", () => {
+            expect(SUPPORTED_LANGUAGES.sort()).to.deep.equal([...EXPECTED_LANGUAGES].sort());
+        });
+
+        it("should define status codes 0-8 for every language", () => {
+            for (const lang of EXPECTED_LANGUAGES) {
+                const labels = STATUS_LABELS[lang];
+                expect(labels, `Missing STATUS_LABELS.${lang}`).to.be.an("object");
+                for (let code = 0; code <= 8; code++) {
+                    expect(labels[code], `${lang} missing code ${code}`).to.be.a("string");
+                    expect(labels[code].length).to.be.greaterThan(0);
+                }
+            }
+        });
+
+        it("should use the selected language for status strings", async () => {
+            adapter = createMockAdapter();
+            manager = new StateManager(adapter as never, "fr");
+            const delivery = makeDelivery({ status_code: "2" });
+            await manager.updateDelivery(delivery, "DHL");
+
+            const pkgId = manager.packageId(delivery);
+            expect(adapter.states.get(`deliveries.${pkgId}.status`)?.val).to.equal("En transit");
+        });
+
+        it("should localize the today estimate in every language", async () => {
+            for (const lang of EXPECTED_LANGUAGES) {
+                adapter = createMockAdapter();
+                manager = new StateManager(adapter as never, lang);
+
+                const now = new Date();
+                now.setHours(14, 0, 0, 0);
+
+                const delivery = makeDelivery({
+                    status_code: "2",
+                    tracking_number: `trk_${lang.replace("-", "_")}`,
+                    timestamp_expected: Math.floor(now.getTime() / 1000),
+                });
+                await manager.updateDelivery(delivery, "DHL");
+
+                const pkgId = manager.packageId(delivery);
+                const estimate = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`)?.val;
+                expect(estimate, `today label in ${lang}`).to.be.a("string");
+                expect((estimate as string).length, `today label in ${lang}`).to.be.greaterThan(0);
+            }
+        });
+    });
+
+    describe("resolveLanguage", () => {
+        it("should pass through all supported languages", () => {
+            for (const lang of SUPPORTED_LANGUAGES) {
+                expect(resolveLanguage(lang)).to.equal(lang);
+            }
+        });
+
+        it("should fall back to English for unknown language codes", () => {
+            expect(resolveLanguage("jp")).to.equal(FALLBACK_LANGUAGE);
+            expect(resolveLanguage("xx")).to.equal(FALLBACK_LANGUAGE);
+            expect(resolveLanguage("")).to.equal(FALLBACK_LANGUAGE);
+        });
+
+        it("should fall back to English for non-string inputs", () => {
+            expect(resolveLanguage(undefined)).to.equal(FALLBACK_LANGUAGE);
+            expect(resolveLanguage(null)).to.equal(FALLBACK_LANGUAGE);
+            expect(resolveLanguage(42)).to.equal(FALLBACK_LANGUAGE);
+            expect(resolveLanguage({})).to.equal(FALLBACK_LANGUAGE);
+        });
+
+        it("FALLBACK_LANGUAGE must itself be a supported language", () => {
+            expect(SUPPORTED_LANGUAGES).to.include(FALLBACK_LANGUAGE);
+        });
+    });
+
+    describe("todayCount language-independence", () => {
+        // Regression: before the isToday refactor, summary.todayCount was
+        // filtered by string-matching the estimate against "heute"/"today",
+        // so non-DE/EN languages always reported 0.
+        it("should count today deliveries for every supported language", async () => {
+            for (const lang of SUPPORTED_LANGUAGES) {
+                adapter = createMockAdapter();
+                manager = new StateManager(adapter as never, lang);
+
+                const now = new Date();
+                now.setHours(15, 0, 0, 0);
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+
+                const deliveries = [
+                    makeDelivery({
+                        status_code: "2",
+                        tracking_number: "TODAY",
+                        timestamp_expected: Math.floor(now.getTime() / 1000),
+                    }),
+                    makeDelivery({
+                        status_code: "4",
+                        tracking_number: "NOT_TODAY",
+                        timestamp_expected: Math.floor(tomorrow.getTime() / 1000),
+                    }),
+                ];
+                await manager.updateSummary(deliveries);
+
+                const count = adapter.states.get("summary.todayCount")?.val;
+                expect(count, `todayCount in ${lang}`).to.equal(1);
+            }
         });
     });
 });

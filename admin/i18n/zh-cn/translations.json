@@ -7,17 +7,12 @@
   "donatePaypal": "通过 PayPal 捐赠",
   "header_connection": "parcel.app API",
   "header_delivery": "配送",
-  "header_display": "显示",
   "header_polling": "轮询",
   "label_apiKey": "API 密钥",
   "label_autoRemoveDelivered": "自动移除已送达的包裹",
-  "label_language": "状态语言",
   "label_pollInterval": "轮询间隔（分钟）",
-  "lang_de": "德语",
-  "lang_en": "英语",
   "msg_connectionFailed": "连接失败！",
   "msg_connectionOk": "连接成功！",
   "tooltip_autoRemoveDelivered": "启用后，已送达的包裹会自动从状态树中移除。禁用后，它们将保持'已送达'状态，直到在 parcel.app 中删除。",
-  "tooltip_language": "快递状态标签的语言",
   "tooltip_pollInterval": "多久获取一次快递更新（5-60分钟，默认：10）。速率限制：20次请求/小时。"
 }

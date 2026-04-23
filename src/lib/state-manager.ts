@@ -1,6 +1,6 @@
 import type { AdapterInstance } from "@iobroker/adapter-core";
 import type { ParcelDelivery } from "./types";
-import { STATUS_LABELS_DE, STATUS_LABELS_EN } from "./types";
+import { STATUS_LABELS, SUPPORTED_LANGUAGES, FALLBACK_LANGUAGE } from "./types";
 
 /** Status codes that have expected delivery date/time */
 const TRACKABLE_STATUSES = new Set([2, 4, 8]);
@@ -22,6 +22,7 @@ function coerceNumber(v: unknown): number | null {
   return null;
 }
 
+/** Delivery-estimate labels keyed by language code. Keys must match STATUS_LABELS. */
 const ESTIMATE_LABELS: Record<string, Record<string, string>> = {
   de: {
     overdue: "überfällig",
@@ -35,15 +36,87 @@ const ESTIMATE_LABELS: Record<string, Record<string, string>> = {
     tomorrow: "tomorrow",
     days: "in %d days",
   },
+  ru: {
+    overdue: "просрочено",
+    today: "сегодня",
+    tomorrow: "завтра",
+    days: "через %d дн.",
+  },
+  pt: {
+    overdue: "atrasado",
+    today: "hoje",
+    tomorrow: "amanhã",
+    days: "em %d dias",
+  },
+  nl: {
+    overdue: "te laat",
+    today: "vandaag",
+    tomorrow: "morgen",
+    days: "over %d dagen",
+  },
+  fr: {
+    overdue: "en retard",
+    today: "aujourd'hui",
+    tomorrow: "demain",
+    days: "dans %d jours",
+  },
+  it: {
+    overdue: "in ritardo",
+    today: "oggi",
+    tomorrow: "domani",
+    days: "tra %d giorni",
+  },
+  es: {
+    overdue: "atrasado",
+    today: "hoy",
+    tomorrow: "mañana",
+    days: "en %d días",
+  },
+  pl: {
+    overdue: "zaległe",
+    today: "dzisiaj",
+    tomorrow: "jutro",
+    days: "za %d dni",
+  },
+  uk: {
+    overdue: "прострочено",
+    today: "сьогодні",
+    tomorrow: "завтра",
+    days: "через %d дн.",
+  },
+  "zh-cn": {
+    overdue: "已逾期",
+    today: "今天",
+    tomorrow: "明天",
+    days: "%d 天后",
+  },
 };
+
+/**
+ * Resolve a language code to one that has labels. Falls back to English
+ * when the system language is not one of the supported ioBroker languages.
+ *
+ * @param language Raw language code (e.g. from system.config.language)
+ */
+export function resolveLanguage(language: unknown): string {
+  if (typeof language === "string" && SUPPORTED_LANGUAGES.includes(language)) {
+    return language;
+  }
+  return FALLBACK_LANGUAGE;
+}
 
 /** Manages ioBroker states for parcel deliveries */
 export class StateManager {
   private adapter: AdapterInstance;
+  private language: string;
 
-  /** @param adapter The ioBroker adapter instance */
-  constructor(adapter: AdapterInstance) {
+  /**
+   * @param adapter The ioBroker adapter instance
+   * @param language Language code from system.config.language (falls back to English)
+   */
+  constructor(adapter: AdapterInstance, language: string) {
     this.adapter = adapter;
+    this.language = resolveLanguage(language);
   }
 
   /**
@@ -133,8 +206,8 @@ export class StateManager {
     });
 
     const statusCode = this.parseStatus(delivery);
-    const lang = this.adapter.config.language || "de";
-    const labels = lang === "de" ? STATUS_LABELS_DE : STATUS_LABELS_EN;
+    const labels = STATUS_LABELS[this.language];
+    const statusText = labels[statusCode] || `Unknown (${statusCode})`;
 
     await Promise.all([
       this.createAndSet(
@@ -149,7 +222,7 @@ export class StateManager {
         "Status",
         "string",
         "text",
-        labels[statusCode] || `Unknown (${statusCode})`,
+        statusText,
       ),
       this.createAndSet(
         `${devicePath}.statusCode`,
@@ -219,21 +292,14 @@ export class StateManager {
 
   /**
    * Update summary states. Expects already-filtered active deliveries.
+   * The `summary` channel itself is declared via io-package.json instanceObjects.
    *
    * @param activeDeliveries Only active (non-delivered) deliveries
    */
   async updateSummary(activeDeliveries: ParcelDelivery[]): Promise<void> {
-    await this.adapter.extendObjectAsync("summary", {
-      type: "channel",
-      common: { name: "Summary" },
-      native: {},
-    });
-
-    const todayDeliveries = activeDeliveries.filter((d) => {
-      const statusCode = this.parseStatus(d);
-      const estimate = this.calculateDeliveryEstimate(d, statusCode);
-      return estimate === "heute" || estimate === "today";
-    });
+    const todayDeliveries = activeDeliveries.filter((d) =>
+      this.isToday(d, this.parseStatus(d)),
+    );
 
     await Promise.all([
       this.createAndSet(
@@ -270,7 +336,7 @@ export class StateManager {
 
     const objects = await this.adapter.getObjectViewAsync("system", "device", {
       startkey: `${this.adapter.namespace}.deliveries.`,
-      endkey: `${this.adapter.namespace}.deliveries.\u9999`,
+      endkey: `${this.adapter.namespace}.deliveries.香`,
     });
 
     for (const row of objects.rows) {
@@ -318,17 +384,18 @@ export class StateManager {
   }
 
   /**
-   * Calculate human-readable delivery estimate.
+   * Days from today to the expected delivery date. Returns null when the
+   * delivery has no usable expected date or is in a non-trackable status.
    *
    * @param delivery The delivery data
    * @param statusCode Pre-parsed status code
    */
-  private calculateDeliveryEstimate(
+  private computeDiffDays(
     delivery: ParcelDelivery,
     statusCode: number,
-  ): string {
+  ): number | null {
     if (!TRACKABLE_STATUSES.has(statusCode)) {
-      return "";
+      return null;
     }
 
     let expectedDate: Date | null = null;
@@ -343,7 +410,7 @@ export class StateManager {
     }
 
     if (!expectedDate || isNaN(expectedDate.getTime())) {
-      return "";
+      return null;
     }
 
     const now = new Date();
@@ -357,13 +424,26 @@ export class StateManager {
       expectedDate.getMonth(),
       expectedDate.getDate(),
     );
-    const diffDays = Math.round(
+    return Math.round(
       (expectedStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24),
     );
+  }
 
-    const lang = this.adapter.config.language || "de";
-    const l = ESTIMATE_LABELS[lang] || ESTIMATE_LABELS.en;
-
+  /**
+   * Calculate human-readable delivery estimate.
+   *
+   * @param delivery The delivery data
+   * @param statusCode Pre-parsed status code
+   */
+  private calculateDeliveryEstimate(
+    delivery: ParcelDelivery,
+    statusCode: number,
+  ): string {
+    const diffDays = this.computeDiffDays(delivery, statusCode);
+    if (diffDays === null) {
+      return "";
+    }
+    const l = ESTIMATE_LABELS[this.language];
     if (diffDays < 0) {
       return l.overdue;
     }
@@ -374,6 +454,17 @@ export class StateManager {
       return l.tomorrow;
     }
     return l.days.replace("%d", String(diffDays));
+  }
+
+  /**
+   * Whether the delivery is expected today. Language-agnostic, used by the
+   * summary filter so `todayCount` works across all languages.
+   *
+   * @param delivery The delivery data
+   * @param statusCode Pre-parsed status code
+   */
+  private isToday(delivery: ParcelDelivery, statusCode: number): boolean {
+    return this.computeDiffDays(delivery, statusCode) === 0;
   }
 
   /**

@@ -7,17 +7,12 @@
   "donatePaypal": "Пожертвувати через PayPal",
   "header_connection": "parcel.app API",
   "header_delivery": "Доставки",
-  "header_display": "Відображення",
   "header_polling": "Опитування",
   "label_apiKey": "API-ключ",
   "label_autoRemoveDelivered": "Автоматично видаляти доставлені посилки",
-  "label_language": "Мова статусів",
   "label_pollInterval": "Інтервал опитування (хвилини)",
-  "lang_de": "Німецька",
-  "lang_en": "Англійська",
   "msg_connectionFailed": "Помилка з'єднання!",
   "msg_connectionOk": "З'єднання успішне!",
   "tooltip_autoRemoveDelivered": "Якщо увімкнено, доставлені посилки автоматично видаляються з дерева станів. Якщо вимкнено, вони залишаються зі статусом 'Доставлено' до видалення в parcel.app.",
-  "tooltip_language": "Мова для міток статусу доставки",
   "tooltip_pollInterval": "Як часто отримувати оновлення доставки (5-60 хвилин, за замовчуванням: 10). Ліміт: 20 запитів/годину."
 }

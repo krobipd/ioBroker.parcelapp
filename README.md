@@ -24,8 +24,8 @@ ioBroker adapter that connects to the [parcel.app](https://parcelapp.net) API an
 - **Automatic polling** with configurable interval (5–60 minutes)
 - **Configurable cleanup** — auto-remove delivered packages or keep them until deleted in parcel.app
 - **Add deliveries** via sendTo message from scripts or other adapters
-- **Admin UI** with connection test, polling settings, and status language selection
-- **Status labels in German or English**
+- **Admin UI** with connection test and polling settings
+- **Status labels follow the ioBroker system language** — all 11 supported languages (de, en, ru, pt, nl, fr, it, es, pl, uk, zh-cn), English fallback for unknown codes
 
 ---
 
@@ -45,7 +45,8 @@ ioBroker adapter that connects to the [parcel.app](https://parcelapp.net) API an
 | **API Key** | Your parcel.app API key (get it at [web.parcelapp.net](https://web.parcelapp.net)) | — |
 | **Poll Interval** | How often to fetch updates (minutes) | 10 |
 | **Auto-remove delivered** | Remove delivered packages from states automatically. When disabled, they stay until deleted in parcel.app. | Yes |
-| **Status Language** | Language for status labels (German/English) | German |
+
+Status labels (`Delivered`, `In Transit`, …) and delivery estimates (`today`, `tomorrow`, `in X days`) are rendered in the ioBroker system language.
 
 ---
 
@@ -114,6 +115,12 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 ---
 
 ## Changelog
+
+### **WORK IN PROGRESS**
+- Separate test-build output (`build-test/`) from production `build/`, no more duplicated `build/src` + `build/test` tree in published packages.
+- Declare `deliveries` folder and `summary` channel as instance objects so their parent exists before per-package states appear.
+- Localize status labels and delivery estimates to all 11 ioBroker languages via `system.config.language`; the per-instance `Status Language` option is removed.
+- Fix `summary.todayCount` for non-DE/EN languages (filter compared estimate strings against `heute`/`today`, so it always returned zero elsewhere).
 
 ### 0.2.13 (2026-04-19)
 - Latest-repo review compliance: `common.messagebox=true` added because the admin-UI `Check Connection` and `Add Delivery` buttons route through `onMessage`. Runtime behaviour unchanged.
