@@ -115,8 +115,7 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 ---
 
 ## Changelog
-
-### **WORK IN PROGRESS**
+### 0.2.16 (2026-04-26)
 - Min js-controller correction: was incorrectly bumped to `>=7.0.23` in 0.2.15 (Wert kam aus Recherche-Synthese, nicht aus Repochecker-Source). Repochecker-recommended value is `>=6.0.11` — restored.
 
 ### 0.2.15 (2026-04-26)
@@ -138,23 +137,6 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 ### 0.2.12 (2026-04-18)
 - Harden API-drift guards in `ParcelClient` and `StateManager` (non-boolean `success`, non-array `deliveries`, non-string `error_code`/`error_message`, non-object carrier map, non-string delivery fields, numeric/string `status_code`, numeric-string `timestamp_expected`, malformed `events`)
 - Add 38 regression tests (128 total) covering the new drift paths
-
-### 0.2.11 (2026-04-12)
-- Fix: handle response stream errors (prevents unhandled exceptions on connection drop)
-- Fix: isolate per-delivery poll failures (one broken delivery no longer blocks all others)
-- Fix: harden onMessage with try/catch and callback guard
-- Fix: onUnload try/catch prevents adapter hang on shutdown
-- DRY: parseStatus helper eliminates repeated parseInt calls
-- Simplify obsolete state cleanup, use setObjectNotExistsAsync for states
-
-### 0.2.10 (2026-04-12)
-- Fix test timezone bug, remove unused devDependencies, add `no-floating-promises` lint rule.
-- Remove redundant `actions/checkout` from CI workflow.
-
-### 0.2.9 (2026-04-08)
-- Standard ioBroker test suite added, test-build config optimised.
-
-Older entries have been moved to [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
 
 ## Support
 

@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.2.15",
+    "version": "0.2.16",
     "news": {
+      "0.2.16": {
+        "en": "Min js-controller correction: was incorrectly bumped to `>=7.0.23` in 0.2.15 (Wert kam aus Recherche-Synthese, nicht aus Repochecker-Source). Repochecker-recommended value is `>=6.0.11` — restored.",
+        "de": "Min js-Controller-Korrektur: wurde falsch auf `>=7.0.23` in 0.2.15 (Wert kam aus Recherche-Synthese, nicht aus Repochecker-Source) gesprungen. Repochecker-recommended Wert ist `>=6.0.11` — restauriert.",
+        "ru": "Коррекция Min js-контроллера: в 0.2.15 она была неправильно увеличена до '>=7.0.23' (Wert kam aus Recherche-Synthese, nicht aus Repochecker-Source). Рекомендуемое значение репочекера ->=6.0.11 - восстановлено.",
+        "pt": "Min js-controller correção: foi incorretamente bateu para `>=7.0.23` em 0.2.15 (Wert kam aus Recherche-Syntheses, nicht aus Repochecker-Source). O valor recomendado pelo repochecker é `>=6.0.11` — restaurado.",
+        "nl": "Min js-controller correctie: werd foutief gestoten naar  Repochecker aanbevolen waarde is .",
+        "fr": "La correction de min js-controller : a été incorrectement cognée à `>=7.0.23` dans le 0,2.15 (Wert kam aus Recherche-Synthese, nicht aus Repochecker-Source). La valeur recommandée par Repochecker est `>=6.0.11` — restaurée.",
+        "it": "Min js-controller correzione: è stato erroneamente urtato a `>=7.0.23` in 0.2.15 (Wert kam aus Recherche-Synthese, nicht aus Repochecker-Source). Il valore ricondizionato da repochecker è `>=6.0.11` — restaurato.",
+        "es": "Min js-controller correction: was incorrectly toped to `=7.0.23` in 0.2.15 (Wert kam aus Recherche-Synthese, nicht aus Repochecker-Source). Repochecker-recomendado valor es `=6.0.11` — restaurado.",
+        "pl": "Min js- controller correction: was intruly bone to '> = 7.0.23' in 0.2.15 (Wert kam aus Recherche- Synthes, nicht aus Repochecker- Source). Repochecker- zalecana wartość jest '> = 6.0.11' - przywrócona.",
+        "uk": "Нормативно прибрано до `>=7.0.23` в 0.2.15 (Верт kam aus Recherche-Synthese, nicht aus Repochecker-Source). Repochecker-recommended значення `>=6.0.11` — відновлено.",
+        "zh-cn": "Min js-controller校正:在0.2.15中被误撞到QQ7.0.23 ' (Wert kam aus ReResearch-Synthese, nicht aus Repochecker-Source)。 复检员推荐值为 6.0.11 ' ——恢复."
+      },
       "0.2.15": {
         "en": "Process-level unhandledRejection/uncaughtException handlers added as last-line-of-defence. Stop shipping the manual-review release-script plugin. Min js-controller bumped to >=7.0.23. Audit-driven boilerplate sync with the other krobi adapters (.vscode json5 schemas, tsconfig.test looser test rules). CHANGELOG_OLD cleaned up.",
         "de": "Process-level unhandledRejection/uncaughtException-Handler als Last-Line-of-Defence hinzugefügt. Das manual-review-Release-Script-Plugin entfällt. js-controller-Mindestversion auf >=7.0.23 angehoben. Audit-getriebener Boilerplate-Sync gegenüber den anderen krobi-Adaptern (.vscode json5-Schemas, tsconfig.test loosere Test-Regeln). CHANGELOG_OLD aufgeräumt.",
@@ -80,19 +93,6 @@
         "pl": "Bug test-timezone naprawiony, nieużywane devDependencies usunięte, dodano regułę no-floating-promises. Zbędne actions/checkout usunięte z CI-workflow.",
         "uk": "Test-timezone-баг виправлено, невикористані devDependencies видалено, додано lint-правило no-floating-promises. Зайве actions/checkout видалено з CI-workflow.",
         "zh-cn": "修复 test-timezone bug，移除未使用的 devDependencies，添加 no-floating-promises lint 规则。从 CI workflow 中移除多余的 actions/checkout。"
-      },
-      "0.2.9": {
-        "en": "Standard ioBroker test suite added, test-build config optimised.",
-        "de": "ioBroker-Standard-Test-Suite hinzugefügt, Test-Build-Config optimiert.",
-        "ru": "Стандартний ioBroker test-suite додано, test-build-config оптимізовано.",
-        "pt": "Test-suite padrão do ioBroker adicionado, test-build-config otimizado.",
-        "nl": "Standaard ioBroker test-suite toegevoegd, test-build-config geoptimaliseerd.",
-        "fr": "Suite de tests standard ioBroker ajoutée, config test-build optimisée.",
-        "it": "Standard ioBroker test-suite aggiunta, config test-build ottimizzata.",
-        "es": "Test-suite estándar de ioBroker añadida, config de test-build optimizada.",
-        "pl": "Standardowy zestaw testów ioBroker dodany, test-build-config zoptymalizowany.",
-        "uk": "Стандартний ioBroker test-suite додано, test-build-config оптимізовано.",
-        "zh-cn": "添加 ioBroker 标准测试套件，优化 test-build-config。"
       }
     },
     "titleLang": {
