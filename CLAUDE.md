@@ -6,10 +6,10 @@
 
 **ioBroker Parcel Tracking Adapter** — Paketverfolgung über [parcel.app](https://parcelapp.net) API. Alle Carrier die parcel.app unterstützt, ein API-Key (Premium).
 
-- **Version:** 0.2.13 released; 0.2.14 WIP (Latest-repo review round 2)
+- **Version:** 0.2.14 (2026-04-23, Latest-repo review round 2 response)
 - **GitHub:** https://github.com/krobipd/ioBroker.parcelapp
 - **npm:** https://www.npmjs.com/package/iobroker.parcelapp
-- **Repository PR:** ioBroker/ioBroker.repositories#5667
+- **Repository PR:** ioBroker/ioBroker.repositories#5667 (re-review pending bei mcm1957)
 - **Runtime-Deps:** nur `@iobroker/adapter-core` (HTTPS via Node.js built-in)
 - **Build-Layout:** `build/` = Production (esbuild, shipped via npm). `build-test/` = Test-Kompilat (tsc), gitignored.
 
@@ -61,7 +61,7 @@ Run: `npm test` (builds prod + test, runs TS specs + @iobroker/testing packageFi
 
 | Version | Highlights |
 |---------|------------|
-| 0.2.14 (WIP) | Latest-repo review round 2: separate `build-test/` from `build/`, `deliveries`+`summary` as instance objects, status labels + estimates in all 11 ioBroker languages via `system.config.language`, fix `summary.todayCount` for non-DE/EN |
+| 0.2.14 | Latest-repo review round 2: separate `build-test/` from `build/`, `deliveries`+`summary` as instance objects, status labels + estimates in all 11 ioBroker languages via `system.config.language`, fix `summary.todayCount` for non-DE/EN, async-handler hardening with `.catch()` on `onReady`/`onMessage` |
 | 0.2.13 | Latest-repo review round 1 compliance: `common.messagebox=true` |
 | 0.2.12 | API-Drift-Härtung (parcel-client + state-manager): isTrueish, Array/Object-Guards, coerceNumber, typeof-Checks auf allen externen Feldern + 38 Regression-Tests |
 | 0.2.11 | Error-Handling: res.on("error"), per-delivery Poll-Isolation, onMessage/onUnload try/catch, parseStatus DRY |

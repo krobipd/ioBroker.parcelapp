@@ -26,6 +26,8 @@ class ParcelappAdapter extends utils.Adapter {
   private rateLimitedUntil = 0;
   private lastErrorCode = "";
   private failedDeliveries = new Set<string>();
+  private unhandledRejectionHandler: ((reason: unknown) => void) | null = null;
+  private uncaughtExceptionHandler: ((err: Error) => void) | null = null;
 
   /** @param options Adapter options */
   public constructor(options: Partial<utils.AdapterOptions> = {}) {
@@ -47,6 +49,18 @@ class ParcelappAdapter extends utils.Adapter {
         this.log.error(`onMessage failed: ${errText(err)}`),
       );
     });
+    // Last-line-of-defence against unhandled rejections / sync throws from
+    // fire-and-forget paths (e.g. `void this.poll()`). The per-handler
+    // .catch() wrappers cover the documented async paths; this catches
+    // anything that slips past during refactors.
+    this.unhandledRejectionHandler = (reason: unknown) => {
+      this.log.error(`Unhandled rejection: ${errText(reason)}`);
+    };
+    this.uncaughtExceptionHandler = (err: Error) => {
+      this.log.error(`Uncaught exception: ${errText(err)}`);
+    };
+    process.on("unhandledRejection", this.unhandledRejectionHandler);
+    process.on("uncaughtException", this.uncaughtExceptionHandler);
   }
 
   private async onReady(): Promise<void> {
@@ -98,6 +112,14 @@ class ParcelappAdapter extends utils.Adapter {
       if (this.pollTimer) {
         this.clearInterval(this.pollTimer);
         this.pollTimer = undefined;
+      }
+      if (this.unhandledRejectionHandler) {
+        process.off("unhandledRejection", this.unhandledRejectionHandler);
+        this.unhandledRejectionHandler = null;
+      }
+      if (this.uncaughtExceptionHandler) {
+        process.off("uncaughtException", this.uncaughtExceptionHandler);
+        this.uncaughtExceptionHandler = null;
       }
       void this.setState("info.connection", { val: false, ack: true });
     } catch {

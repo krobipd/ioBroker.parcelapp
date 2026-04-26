@@ -115,6 +115,14 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 ---
 
 ## Changelog
+
+### **WORK IN PROGRESS**
+- Process-level `unhandledRejection` / `uncaughtException` handlers added as last-line-of-defence against fire-and-forget rejections.
+- Stop shipping the `manual-review` release-script plugin — adapter-only consequence.
+- Bump min js-controller to `>=7.0.23` (matches latest-repo recommendation).
+- Audit-driven boilerplate sync with the other krobi adapters (`.vscode` json5 schemas, `tsconfig.test` looser test rules).
+- README footer-link to `CHANGELOG_OLD.md` restored, `CHANGELOG_OLD.md` cleaned up to consistent compact style.
+
 ### 0.2.14 (2026-04-23)
 - Separate test-build output (`build-test/`) from production `build/`, no more duplicated `build/src` + `build/test` tree in published packages.
 - Declare `deliveries` folder and `summary` channel as instance objects so their parent exists before per-package states appear.
@@ -137,8 +145,10 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 - Simplify obsolete state cleanup, use setObjectNotExistsAsync for states
 
 ### 0.2.10 (2026-04-12)
-- Fix test timezone bug, remove unused devDependencies, add `no-floating-promises` lint rule
-- Remove redundant `actions/checkout` from CI workflow
+- Fix test timezone bug, remove unused devDependencies, add `no-floating-promises` lint rule.
+- Remove redundant `actions/checkout` from CI workflow.
+
+Older entries have been moved to [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
 
 ## Support
 

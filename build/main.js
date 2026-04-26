@@ -40,6 +40,8 @@ class ParcelappAdapter extends utils.Adapter {
   rateLimitedUntil = 0;
   lastErrorCode = "";
   failedDeliveries = /* @__PURE__ */ new Set();
+  unhandledRejectionHandler = null;
+  uncaughtExceptionHandler = null;
   /** @param options Adapter options */
   constructor(options = {}) {
     super({
@@ -57,6 +59,14 @@ class ParcelappAdapter extends utils.Adapter {
         (err) => this.log.error(`onMessage failed: ${errText(err)}`)
       );
     });
+    this.unhandledRejectionHandler = (reason) => {
+      this.log.error(`Unhandled rejection: ${errText(reason)}`);
+    };
+    this.uncaughtExceptionHandler = (err) => {
+      this.log.error(`Uncaught exception: ${errText(err)}`);
+    };
+    process.on("unhandledRejection", this.unhandledRejectionHandler);
+    process.on("uncaughtException", this.uncaughtExceptionHandler);
   }
   async onReady() {
     var _a, _b, _c;
@@ -92,6 +102,14 @@ class ParcelappAdapter extends utils.Adapter {
       if (this.pollTimer) {
         this.clearInterval(this.pollTimer);
         this.pollTimer = void 0;
+      }
+      if (this.unhandledRejectionHandler) {
+        process.off("unhandledRejection", this.unhandledRejectionHandler);
+        this.unhandledRejectionHandler = null;
+      }
+      if (this.uncaughtExceptionHandler) {
+        process.off("uncaughtException", this.uncaughtExceptionHandler);
+        this.uncaughtExceptionHandler = null;
       }
       void this.setState("info.connection", { val: false, ack: true });
     } catch {
