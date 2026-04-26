@@ -1,8 +1,5 @@
 # Older Changes
 
-## 0.2.9 (2026-04-08)
-- Standard ioBroker test suite added, test-build config optimised.
-
 ## 0.2.8 (2026-04-05)
 - Empty parent folders cleaned up after removing obsolete states.
 

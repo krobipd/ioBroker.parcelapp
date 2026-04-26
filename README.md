@@ -115,8 +115,7 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 ---
 
 ## Changelog
-
-### **WORK IN PROGRESS**
+### 0.2.15 (2026-04-26)
 - Process-level `unhandledRejection` / `uncaughtException` handlers added as last-line-of-defence against fire-and-forget rejections.
 - Stop shipping the `manual-review` release-script plugin — adapter-only consequence.
 - Bump min js-controller to `>=7.0.23` (matches latest-repo recommendation).
@@ -147,6 +146,9 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 ### 0.2.10 (2026-04-12)
 - Fix test timezone bug, remove unused devDependencies, add `no-floating-promises` lint rule.
 - Remove redundant `actions/checkout` from CI workflow.
+
+### 0.2.9 (2026-04-08)
+- Standard ioBroker test suite added, test-build config optimised.
 
 Older entries have been moved to [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
 
