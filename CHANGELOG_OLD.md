@@ -1,4 +1,7 @@
 # Older Changes
+## 0.2.13 (2026-04-19)
+- Latest-repo review compliance: `common.messagebox=true` added because the admin-UI `Check Connection` and `Add Delivery` buttons route through `onMessage`. Runtime behaviour unchanged.
+
 ## 0.2.12 (2026-04-18)
 - Harden API-drift guards in `ParcelClient` and `StateManager` (non-boolean `success`, non-array `deliveries`, non-string `error_code`/`error_message`, non-object carrier map, non-string delivery fields, numeric/string `status_code`, numeric-string `timestamp_expected`, malformed `events`)
 - Add 38 regression tests (128 total) covering the new drift paths

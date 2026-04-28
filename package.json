@@ -1,6 +1,6 @@
 {
   "name": "iobroker.parcelapp",
-  "version": "0.2.17",
+  "version": "0.2.18",
   "description": "ioBroker adapter for parcel.app — track packages as ioBroker states",
   "author": {
     "name": "krobi",
@@ -72,11 +72,22 @@
     "release": "release-script"
   },
   "nyc": {
-    "include": ["src/**/*.ts"],
-    "exclude": ["src/**/*.test.ts"],
-    "extension": [".ts"],
-    "require": ["ts-node/register"],
-    "reporter": ["text-summary", "html"],
+    "include": [
+      "src/**/*.ts"
+    ],
+    "exclude": [
+      "src/**/*.test.ts"
+    ],
+    "extension": [
+      ".ts"
+    ],
+    "require": [
+      "ts-node/register"
+    ],
+    "reporter": [
+      "text-summary",
+      "html"
+    ],
     "sourceMap": true,
     "instrument": true
   },

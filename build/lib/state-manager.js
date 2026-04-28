@@ -183,48 +183,12 @@ class StateManager {
     const labels = import_types.STATUS_LABELS[this.language];
     const statusText = labels[statusCode] || `Unknown (${statusCode})`;
     await Promise.all([
-      this.createAndSet(
-        `${devicePath}.carrier`,
-        "Carrier",
-        "string",
-        "text",
-        carrierName
-      ),
-      this.createAndSet(
-        `${devicePath}.status`,
-        "Status",
-        "string",
-        "text",
-        statusText
-      ),
-      this.createAndSet(
-        `${devicePath}.statusCode`,
-        "Status Code",
-        "number",
-        "value",
-        statusCode
-      ),
-      this.createAndSet(
-        `${devicePath}.description`,
-        "Description",
-        "string",
-        "text",
-        description
-      ),
-      this.createAndSet(
-        `${devicePath}.trackingNumber`,
-        "Tracking Number",
-        "string",
-        "text",
-        trackingNumber
-      ),
-      this.createAndSet(
-        `${devicePath}.extraInfo`,
-        "Extra Information",
-        "string",
-        "text",
-        extraInfo
-      ),
+      this.createAndSet(`${devicePath}.carrier`, "Carrier", "string", "text", carrierName),
+      this.createAndSet(`${devicePath}.status`, "Status", "string", "text", statusText),
+      this.createAndSet(`${devicePath}.statusCode`, "Status Code", "number", "value", statusCode),
+      this.createAndSet(`${devicePath}.description`, "Description", "string", "text", description),
+      this.createAndSet(`${devicePath}.trackingNumber`, "Tracking Number", "string", "text", trackingNumber),
+      this.createAndSet(`${devicePath}.extraInfo`, "Extra Information", "string", "text", extraInfo),
       this.createAndSet(
         `${devicePath}.deliveryWindow`,
         "Delivery Window",
@@ -239,13 +203,7 @@ class StateManager {
         "text",
         this.calculateDeliveryEstimate(delivery, statusCode)
       ),
-      this.createAndSet(
-        `${devicePath}.lastEvent`,
-        "Last Event",
-        "string",
-        "text",
-        this.formatLastEvent(delivery)
-      ),
+      this.createAndSet(`${devicePath}.lastEvent`, "Last Event", "string", "text", this.formatLastEvent(delivery)),
       this.createAndSet(
         `${devicePath}.lastLocation`,
         "Last Location",
@@ -253,13 +211,7 @@ class StateManager {
         "text",
         this.extractLastLocation(delivery)
       ),
-      this.createAndSet(
-        `${devicePath}.lastUpdated`,
-        "Last Updated",
-        "string",
-        "date",
-        (/* @__PURE__ */ new Date()).toISOString()
-      )
+      this.createAndSet(`${devicePath}.lastUpdated`, "Last Updated", "string", "date", (/* @__PURE__ */ new Date()).toISOString())
     ]);
   }
   /**
@@ -269,24 +221,10 @@ class StateManager {
    * @param activeDeliveries Only active (non-delivered) deliveries
    */
   async updateSummary(activeDeliveries) {
-    const todayDeliveries = activeDeliveries.filter(
-      (d) => this.isToday(d, this.parseStatus(d))
-    );
+    const todayDeliveries = activeDeliveries.filter((d) => this.isToday(d, this.parseStatus(d)));
     await Promise.all([
-      this.createAndSet(
-        "summary.activeCount",
-        "Active Deliveries",
-        "number",
-        "value",
-        activeDeliveries.length
-      ),
-      this.createAndSet(
-        "summary.todayCount",
-        "Deliveries Today",
-        "number",
-        "value",
-        todayDeliveries.length
-      ),
+      this.createAndSet("summary.activeCount", "Active Deliveries", "number", "value", activeDeliveries.length),
+      this.createAndSet("summary.todayCount", "Deliveries Today", "number", "value", todayDeliveries.length),
       this.createAndSet(
         "summary.deliveryWindow",
         "Combined Delivery Window",
@@ -365,19 +303,9 @@ class StateManager {
       return null;
     }
     const now = /* @__PURE__ */ new Date();
-    const todayStart = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate()
-    );
-    const expectedStart = new Date(
-      expectedDate.getFullYear(),
-      expectedDate.getMonth(),
-      expectedDate.getDate()
-    );
-    return Math.round(
-      (expectedStart.getTime() - todayStart.getTime()) / (1e3 * 60 * 60 * 24)
-    );
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const expectedStart = new Date(expectedDate.getFullYear(), expectedDate.getMonth(), expectedDate.getDate());
+    return Math.round((expectedStart.getTime() - todayStart.getTime()) / (1e3 * 60 * 60 * 24));
   }
   /**
    * Calculate human-readable delivery estimate.

@@ -49,15 +49,11 @@ class ParcelappAdapter extends utils.Adapter {
       name: "parcelapp"
     });
     this.on("ready", () => {
-      this.onReady().catch(
-        (err) => this.log.error(`onReady failed: ${errText(err)}`)
-      );
+      this.onReady().catch((err) => this.log.error(`onReady failed: ${errText(err)}`));
     });
     this.on("unload", this.onUnload.bind(this));
     this.on("message", (obj) => {
-      this.onMessage(obj).catch(
-        (err) => this.log.error(`onMessage failed: ${errText(err)}`)
-      );
+      this.onMessage(obj).catch((err) => this.log.error(`onMessage failed: ${errText(err)}`));
     });
     this.unhandledRejectionHandler = (reason) => {
       this.log.error(`Unhandled rejection: ${errText(reason)}`);
@@ -73,9 +69,7 @@ class ParcelappAdapter extends utils.Adapter {
     await this.setStateAsync("info.connection", { val: false, ack: true });
     const { apiKey } = this.config;
     if (!apiKey || apiKey.trim().length < 10) {
-      this.log.error(
-        "No valid API key configured \u2014 please enter your parcel.app API key in the adapter settings"
-      );
+      this.log.error("No valid API key configured \u2014 please enter your parcel.app API key in the adapter settings");
       return;
     }
     const sysConfig = await this.getForeignObjectAsync("system.config");
@@ -86,16 +80,11 @@ class ParcelappAdapter extends utils.Adapter {
     await this.poll();
     const interval = Math.max(
       MIN_POLL_INTERVAL,
-      Math.min(
-        MAX_POLL_INTERVAL,
-        (_c = this.config.pollInterval) != null ? _c : DEFAULT_POLL_INTERVAL
-      )
+      Math.min(MAX_POLL_INTERVAL, (_c = this.config.pollInterval) != null ? _c : DEFAULT_POLL_INTERVAL)
     );
     const intervalMs = interval * 60 * 1e3;
     this.pollTimer = this.setInterval(() => void this.poll(), intervalMs);
-    this.log.info(
-      `Parcel tracking started \u2014 polling every ${interval} minutes`
-    );
+    this.log.info(`Parcel tracking started \u2014 polling every ${interval} minutes`);
   }
   onUnload(callback) {
     try {
@@ -127,12 +116,7 @@ class ParcelappAdapter extends utils.Adapter {
           const msg = obj.message;
           const key = ((_a = msg == null ? void 0 : msg.apiKey) == null ? void 0 : _a.trim()) || "";
           if (!key || key.length < 10) {
-            this.sendTo(
-              obj.from,
-              obj.command,
-              { success: false, message: "API key is too short" },
-              obj.callback
-            );
+            this.sendTo(obj.from, obj.command, { success: false, message: "API key is too short" }, obj.callback);
             return;
           }
           const testClient = new import_parcel_client.ParcelClient(key);
@@ -159,21 +143,11 @@ class ParcelappAdapter extends utils.Adapter {
           break;
         }
         default:
-          this.sendTo(
-            obj.from,
-            obj.command,
-            { error: "Unknown command" },
-            obj.callback
-          );
+          this.sendTo(obj.from, obj.command, { error: "Unknown command" }, obj.callback);
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      this.sendTo(
-        obj.from,
-        obj.command,
-        { success: false, error_message: msg },
-        obj.callback
-      );
+      this.sendTo(obj.from, obj.command, { success: false, error_message: msg }, obj.callback);
     }
   }
   async cleanupObsoleteStates() {
@@ -216,9 +190,7 @@ class ParcelappAdapter extends utils.Adapter {
     const now = Date.now();
     if (now < this.rateLimitedUntil) {
       const waitMin = Math.ceil((this.rateLimitedUntil - now) / 6e4);
-      this.log.debug(
-        `Skipping poll \u2014 rate limited for ${waitMin} more minute(s)`
-      );
+      this.log.debug(`Skipping poll \u2014 rate limited for ${waitMin} more minute(s)`);
       return;
     }
     if (now - this.lastPollTime < MIN_POLL_GAP_MS) {
@@ -229,47 +201,35 @@ class ParcelappAdapter extends utils.Adapter {
     this.lastPollTime = now;
     try {
       const autoRemove = this.config.autoRemoveDelivered !== false;
-      const deliveries = await this.client.getDeliveries(
-        autoRemove ? "active" : "recent"
-      );
+      const deliveries = await this.client.getDeliveries(autoRemove ? "active" : "recent");
       this.rateLimitedUntil = 0;
       if (this.lastErrorCode) {
         this.log.info("Connection restored");
         this.lastErrorCode = "";
       }
       await this.setStateAsync("info.connection", { val: true, ack: true });
-      const activeDeliveries = deliveries.filter(
-        (d) => this.stateManager.parseStatus(d) !== 0
-      );
+      const activeDeliveries = deliveries.filter((d) => this.stateManager.parseStatus(d) !== 0);
       const visibleDeliveries = autoRemove ? activeDeliveries : deliveries;
       const activeIds = [];
       for (const delivery of visibleDeliveries) {
         try {
-          const carrierName = await this.client.getCarrierName(
-            delivery.carrier_code
-          );
+          const carrierName = await this.client.getCarrierName(delivery.carrier_code);
           await this.stateManager.updateDelivery(delivery, carrierName);
           activeIds.push(this.stateManager.packageId(delivery));
           this.failedDeliveries.delete(delivery.tracking_number);
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
           if (this.failedDeliveries.has(delivery.tracking_number)) {
-            this.log.debug(
-              `Failed to update "${delivery.tracking_number}": ${msg}`
-            );
+            this.log.debug(`Failed to update "${delivery.tracking_number}": ${msg}`);
           } else {
-            this.log.warn(
-              `Failed to update "${delivery.tracking_number}": ${msg}`
-            );
+            this.log.warn(`Failed to update "${delivery.tracking_number}": ${msg}`);
             this.failedDeliveries.add(delivery.tracking_number);
           }
         }
       }
       await this.stateManager.cleanupDeliveries(activeIds);
       await this.stateManager.updateSummary(activeDeliveries);
-      this.log.debug(
-        `Polled ${visibleDeliveries.length} deliveries (${activeDeliveries.length} active)`
-      );
+      this.log.debug(`Polled ${visibleDeliveries.length} deliveries (${activeDeliveries.length} active)`);
     } catch (err) {
       const error = err;
       const errorCode = this.classifyError(error);
@@ -278,13 +238,9 @@ class ParcelappAdapter extends utils.Adapter {
       if (error.code === "RATE_LIMITED") {
         const cooldownSec = error.retryAfterSeconds || 5 * 60;
         this.rateLimitedUntil = Date.now() + cooldownSec * 1e3;
-        this.log.warn(
-          `Rate limit hit \u2014 pausing API requests for ${Math.ceil(cooldownSec / 60)} minute(s)`
-        );
+        this.log.warn(`Rate limit hit \u2014 pausing API requests for ${Math.ceil(cooldownSec / 60)} minute(s)`);
       } else if (error.code === "INVALID_API_KEY") {
-        this.log.error(
-          "Invalid API key \u2014 please check your parcel.app API key"
-        );
+        this.log.error("Invalid API key \u2014 please check your parcel.app API key");
       } else if (isRepeat) {
         this.log.debug(`Poll failed (ongoing): ${error.message}`);
       } else if (errorCode === "NETWORK") {

@@ -60,11 +60,7 @@ class ParcelClient {
    * @param filterMode Filter active or recent deliveries
    */
   async getDeliveries(filterMode = "active") {
-    const response = await this.request(
-      "GET",
-      `/deliveries/?filter_mode=${filterMode}`,
-      true
-    );
+    const response = await this.request("GET", `/deliveries/?filter_mode=${filterMode}`, true);
     if (!response || typeof response !== "object") {
       const err = new Error("API error: malformed response");
       err.code = "API_ERROR";
@@ -86,12 +82,7 @@ class ParcelClient {
    * @param delivery The delivery to add
    */
   async addDelivery(delivery) {
-    return this.request(
-      "POST",
-      "/add-delivery/",
-      true,
-      delivery
-    );
+    return this.request("POST", "/add-delivery/", true, delivery);
   }
   /** Get carrier names (cached after first call) */
   async getCarrierNames() {
@@ -99,11 +90,7 @@ class ParcelClient {
       return this.carrierCache;
     }
     try {
-      const raw = await this.request(
-        "GET",
-        "/supported_carriers.json",
-        false
-      );
+      const raw = await this.request("GET", "/supported_carriers.json", false);
       if (raw && typeof raw === "object" && !Array.isArray(raw)) {
         this.carrierCache = raw;
       } else {
@@ -181,9 +168,7 @@ class ParcelClient {
               reject(err2);
               return;
             }
-            const err = new Error(
-              `HTTP ${res.statusCode}: ${res.statusMessage}`
-            );
+            const err = new Error(`HTTP ${res.statusCode}: ${res.statusMessage}`);
             err.code = res.statusCode === 401 || res.statusCode === 403 ? "INVALID_API_KEY" : "HTTP_ERROR";
             reject(err);
             return;

@@ -115,7 +115,7 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 ---
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 0.2.18 (2026-04-28)
 - Audit cleanup against the upstream `ioBroker.example/TypeScript` full standard:
   - `@types/node` rolled back from `^25.6.0` to `^20.19.24` so type defs match `engines.node: ">=20"` (otherwise Node 21+-only APIs would type-check on Node 20 and crash at runtime)
   - Dependabot now ignores major bumps for `@types/node`, `typescript`, `eslint` so the runtime/toolchain pinning cannot drift via auto-merge
@@ -141,9 +141,6 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 - Declare `deliveries` folder and `summary` channel as instance objects so their parent exists before per-package states appear.
 - Localize status labels and delivery estimates to all 11 ioBroker languages via `system.config.language`; the per-instance `Status Language` option is removed.
 - Fix `summary.todayCount` for non-DE/EN languages (filter compared estimate strings against `heute`/`today`, so it always returned zero elsewhere).
-
-### 0.2.13 (2026-04-19)
-- Latest-repo review compliance: `common.messagebox=true` added because the admin-UI `Check Connection` and `Add Delivery` buttons route through `onMessage`. Runtime behaviour unchanged.
 
 ## Support
 
