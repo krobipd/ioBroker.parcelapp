@@ -6,12 +6,13 @@
 
 **ioBroker Parcel Tracking Adapter** — Paketverfolgung über [parcel.app](https://parcelapp.net) API. Alle Carrier die parcel.app unterstützt, ein API-Key (Premium).
 
-- **Version:** 0.2.16 (2026-04-26 — Hotfix: js-controller >=7.0.23 → >=6.0.11)
+- **Version:** 0.2.18 (2026-04-28 — Audit-Cleanup gegen ioBroker.example/TypeScript-Vollstandard)
 - **GitHub:** https://github.com/krobipd/ioBroker.parcelapp
 - **npm:** https://www.npmjs.com/package/iobroker.parcelapp
 - **Repository PR:** ioBroker/ioBroker.repositories#5667 (re-review pending bei mcm1957)
 - **Runtime-Deps:** nur `@iobroker/adapter-core` (HTTPS via Node.js built-in)
 - **Test-Setup:** offizieller ioBroker.example/TypeScript-Standard — Tests unter `src/**/*.test.ts` direkt mit `ts-node/register`, kein separater Build (siehe globales `reference_iobroker_test_setup_standard`)
+- **`@types/node` an `engines.node`-Min gekoppelt:** `^20.x` weil `engines.node: ">=20"`. Dependabot ignoriert Major-Bumps (siehe `dependabot.yml`).
 
 ## API
 
@@ -64,24 +65,13 @@ Run: `npm test` (mocha auf src/**/*.test.ts via ts-node + @iobroker/testing pack
 
 | Version | Highlights |
 |---------|------------|
-| 0.2.16 | Hotfix für versehentlich falsch gesetzte js-controller-Min in 0.2.15 (`>=7.0.23` war eine Recherche-Synthese, nicht Repochecker-Source). Korrektur auf `>=6.0.11` (Quelle: `ioBroker.repochecker/lib/M1000_IOPackageJson.js` — `recommendedJsControllerVersion`) |
-| 0.2.15 | Process-level `unhandledRejection`/`uncaughtException`-Handler als last-line-of-defence. `manual-review`-release-script-Plugin raus. Audit-driven Konsistenz-Cleanup (`.vscode` json5-Schemas, `tsconfig.test`). README-Footer-Link wieder rein, CHANGELOG_OLD aufgeräumt |
-| 0.2.14 | Latest-repo review round 2: separate `build-test/` from `build/`, `deliveries`+`summary` as instance objects, status labels + estimates in all 11 ioBroker languages via `system.config.language`, fix `summary.todayCount` for non-DE/EN, async-handler hardening with `.catch()` on `onReady`/`onMessage` |
-| 0.2.13 | Latest-repo review round 1 compliance: `common.messagebox=true` |
-| 0.2.12 | API-Drift-Härtung (parcel-client + state-manager): isTrueish, Array/Object-Guards, coerceNumber, typeof-Checks auf allen externen Feldern + 38 Regression-Tests |
-| 0.2.11 | Error-Handling: res.on("error"), per-delivery Poll-Isolation, onMessage/onUnload try/catch, parseStatus DRY |
-| 0.2.10 | Test-Timezone-Fix, unused Deps entfernt, no-floating-promises, CI checkout entfernt |
-| 0.2.9 | Standard-ioBroker-Testsuite, optimierte Test-Build-Konfiguration |
-| 0.2.9 | Standard-ioBroker-Testsuite, optimierte Test-Build-Konfiguration |
-| 0.2.8 | Leere Eltern-Ordner nach State-Cleanup löschen |
-| 0.2.7 | Konsistente UI-Labels über alle Adapter |
-| 0.2.6 | Redundante Scripts entfernt, CLAUDE.md komprimiert |
-| 0.2.5 | Fix toLocaleTimeString Timeout auf Windows |
-| 0.2.4 | Dev-Tooling modernisiert (esbuild, TS 5.9 Pin) |
-| 0.2.3 | Fix Carrier-Cache Retry |
-| 0.2.2 | Adapter-Timer, Windows/macOS CI, MIT-Volltext README |
-| 0.2.1 | Rate Limit Detection, Error-Dedup, Poll-Throttling |
-| 0.2.0 | autoRemoveDelivered, Single Page Admin, summary.json entfernt |
+| 0.2.18 | Audit-Cleanup gegen ioBroker.example/TypeScript-Vollstandard: `@types/node` von `^25.6.0` auf `^20.19.24` zurück (an `engines.node: ">=20"` gekoppelt), dependabot blockt Major-Bumps für `@types/node` + `typescript` + `eslint`, `nyc`-Config + `coverage`-Script ergänzt, `prettier.config.mjs` analog hassemu, verwaiste `auto-merge.yml` gelöscht |
+| 0.2.17 | Test-Setup auf upstream `ioBroker.example/TypeScript`-Standard zurückgeführt: `tsconfig.test.json` + `build-test/` raus, Tests unter `src/**/*.test.ts` direkt mit `ts-node/register`, neue `test/mocharc.custom.json` + `test/mocha.setup.js` + `test/tsconfig.json` + `test/.eslintrc.json` |
+| 0.2.16 | Hotfix js-controller-Min in 0.2.15 versehentlich auf `>=7.0.23` gesetzt (Recherche-Synthese statt Repochecker-Source). Korrigiert auf `>=6.0.11` (`recommendedJsControllerVersion`) |
+| 0.2.15 | Process-level `unhandledRejection`/`uncaughtException`-Handler als last-line-of-defence. `manual-review`-release-script-Plugin raus. Audit-driven Konsistenz-Cleanup |
+| 0.2.14 | Latest-repo review round 2: separate `build-test/` from `build/` (später durch v0.2.17 vollständig ersetzt), `deliveries`+`summary` als instanceObjects, 11 Sprachen via `system.config.language`, async-handler `.catch()`-Hardening |
+| 0.2.13 | Latest-repo review round 1: `common.messagebox=true` |
+| 0.2.12 | API-Drift-Härtung in parcel-client + state-manager: typeof-Guards, Array.isArray, coerceNumber, +38 Regression-Tests |
 
 ## Befehle
 

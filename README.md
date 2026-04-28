@@ -115,6 +115,14 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 ---
 
 ## Changelog
+### **WORK IN PROGRESS**
+- Audit cleanup against the upstream `ioBroker.example/TypeScript` full standard:
+  - `@types/node` rolled back from `^25.6.0` to `^20.19.24` so type defs match `engines.node: ">=20"` (otherwise Node 21+-only APIs would type-check on Node 20 and crash at runtime)
+  - Dependabot now ignores major bumps for `@types/node`, `typescript`, `eslint` so the runtime/toolchain pinning cannot drift via auto-merge
+  - `nyc` config + `coverage` script added (matches upstream template)
+  - `prettier.config.mjs` made explicit with project-style overrides (Spaces 2-wide, double quotes) instead of relying on missing config
+  - Orphan `.github/auto-merge.yml` removed (the active workflow is `automerge-dependabot.yml` using `gh pr merge`, the old yml was never read)
+
 ### 0.2.17 (2026-04-28)
 - Test setup migrated to the upstream `ioBroker.example/TypeScript` standard: tests now live next to source as `src/**/*.test.ts` and run directly via `ts-node/register`, no separate test-build. Removes `tsconfig.test.json` + `build-test/` per latest-repo review feedback.
 

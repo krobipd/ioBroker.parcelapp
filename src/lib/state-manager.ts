@@ -164,10 +164,7 @@ export class StateManager {
   packageId(delivery: ParcelDelivery): string {
     let id = this.sanitize(delivery.tracking_number);
     // API-drift guard: only string values extend the id
-    if (
-      typeof delivery.extra_information === "string" &&
-      delivery.extra_information.length > 0
-    ) {
+    if (typeof delivery.extra_information === "string" && delivery.extra_information.length > 0) {
       id += `_${this.sanitize(delivery.extra_information)}`;
     }
     return id;
@@ -179,23 +176,13 @@ export class StateManager {
    * @param delivery The delivery data from API
    * @param carrierName Resolved carrier display name
    */
-  async updateDelivery(
-    delivery: ParcelDelivery,
-    carrierName: string,
-  ): Promise<void> {
+  async updateDelivery(delivery: ParcelDelivery, carrierName: string): Promise<void> {
     const pkgId = this.packageId(delivery);
     const devicePath = `deliveries.${pkgId}`;
 
-    const description =
-      typeof delivery.description === "string" ? delivery.description : "";
-    const trackingNumber =
-      typeof delivery.tracking_number === "string"
-        ? delivery.tracking_number
-        : "";
-    const extraInfo =
-      typeof delivery.extra_information === "string"
-        ? delivery.extra_information
-        : "";
+    const description = typeof delivery.description === "string" ? delivery.description : "";
+    const trackingNumber = typeof delivery.tracking_number === "string" ? delivery.tracking_number : "";
+    const extraInfo = typeof delivery.extra_information === "string" ? delivery.extra_information : "";
 
     await this.adapter.extendObjectAsync(devicePath, {
       type: "device",
@@ -210,48 +197,12 @@ export class StateManager {
     const statusText = labels[statusCode] || `Unknown (${statusCode})`;
 
     await Promise.all([
-      this.createAndSet(
-        `${devicePath}.carrier`,
-        "Carrier",
-        "string",
-        "text",
-        carrierName,
-      ),
-      this.createAndSet(
-        `${devicePath}.status`,
-        "Status",
-        "string",
-        "text",
-        statusText,
-      ),
-      this.createAndSet(
-        `${devicePath}.statusCode`,
-        "Status Code",
-        "number",
-        "value",
-        statusCode,
-      ),
-      this.createAndSet(
-        `${devicePath}.description`,
-        "Description",
-        "string",
-        "text",
-        description,
-      ),
-      this.createAndSet(
-        `${devicePath}.trackingNumber`,
-        "Tracking Number",
-        "string",
-        "text",
-        trackingNumber,
-      ),
-      this.createAndSet(
-        `${devicePath}.extraInfo`,
-        "Extra Information",
-        "string",
-        "text",
-        extraInfo,
-      ),
+      this.createAndSet(`${devicePath}.carrier`, "Carrier", "string", "text", carrierName),
+      this.createAndSet(`${devicePath}.status`, "Status", "string", "text", statusText),
+      this.createAndSet(`${devicePath}.statusCode`, "Status Code", "number", "value", statusCode),
+      this.createAndSet(`${devicePath}.description`, "Description", "string", "text", description),
+      this.createAndSet(`${devicePath}.trackingNumber`, "Tracking Number", "string", "text", trackingNumber),
+      this.createAndSet(`${devicePath}.extraInfo`, "Extra Information", "string", "text", extraInfo),
       this.createAndSet(
         `${devicePath}.deliveryWindow`,
         "Delivery Window",
@@ -266,13 +217,7 @@ export class StateManager {
         "text",
         this.calculateDeliveryEstimate(delivery, statusCode),
       ),
-      this.createAndSet(
-        `${devicePath}.lastEvent`,
-        "Last Event",
-        "string",
-        "text",
-        this.formatLastEvent(delivery),
-      ),
+      this.createAndSet(`${devicePath}.lastEvent`, "Last Event", "string", "text", this.formatLastEvent(delivery)),
       this.createAndSet(
         `${devicePath}.lastLocation`,
         "Last Location",
@@ -280,13 +225,7 @@ export class StateManager {
         "text",
         this.extractLastLocation(delivery),
       ),
-      this.createAndSet(
-        `${devicePath}.lastUpdated`,
-        "Last Updated",
-        "string",
-        "date",
-        new Date().toISOString(),
-      ),
+      this.createAndSet(`${devicePath}.lastUpdated`, "Last Updated", "string", "date", new Date().toISOString()),
     ]);
   }
 
@@ -297,25 +236,11 @@ export class StateManager {
    * @param activeDeliveries Only active (non-delivered) deliveries
    */
   async updateSummary(activeDeliveries: ParcelDelivery[]): Promise<void> {
-    const todayDeliveries = activeDeliveries.filter((d) =>
-      this.isToday(d, this.parseStatus(d)),
-    );
+    const todayDeliveries = activeDeliveries.filter(d => this.isToday(d, this.parseStatus(d)));
 
     await Promise.all([
-      this.createAndSet(
-        "summary.activeCount",
-        "Active Deliveries",
-        "number",
-        "value",
-        activeDeliveries.length,
-      ),
-      this.createAndSet(
-        "summary.todayCount",
-        "Deliveries Today",
-        "number",
-        "value",
-        todayDeliveries.length,
-      ),
+      this.createAndSet("summary.activeCount", "Active Deliveries", "number", "value", activeDeliveries.length),
+      this.createAndSet("summary.todayCount", "Deliveries Today", "number", "value", todayDeliveries.length),
       this.createAndSet(
         "summary.deliveryWindow",
         "Combined Delivery Window",
@@ -332,7 +257,7 @@ export class StateManager {
    * @param activeIds List of currently active package IDs
    */
   async cleanupDeliveries(activeIds: string[]): Promise<void> {
-    const activeSet = new Set(activeIds.map((id) => `deliveries.${id}`));
+    const activeSet = new Set(activeIds.map(id => `deliveries.${id}`));
 
     const objects = await this.adapter.getObjectViewAsync("system", "device", {
       startkey: `${this.adapter.namespace}.deliveries.`,
@@ -354,10 +279,7 @@ export class StateManager {
    * @param delivery The delivery data
    * @param statusCode Pre-parsed status code
    */
-  private calculateDeliveryWindow(
-    delivery: ParcelDelivery,
-    statusCode: number,
-  ): string {
+  private calculateDeliveryWindow(delivery: ParcelDelivery, statusCode: number): string {
     if (!TRACKABLE_STATUSES.has(statusCode)) {
       return "";
     }
@@ -390,10 +312,7 @@ export class StateManager {
    * @param delivery The delivery data
    * @param statusCode Pre-parsed status code
    */
-  private computeDiffDays(
-    delivery: ParcelDelivery,
-    statusCode: number,
-  ): number | null {
+  private computeDiffDays(delivery: ParcelDelivery, statusCode: number): number | null {
     if (!TRACKABLE_STATUSES.has(statusCode)) {
       return null;
     }
@@ -402,10 +321,7 @@ export class StateManager {
     const ts = coerceNumber(delivery.timestamp_expected);
     if (ts !== null && ts > 0) {
       expectedDate = new Date(ts * 1000);
-    } else if (
-      typeof delivery.date_expected === "string" &&
-      delivery.date_expected.length > 0
-    ) {
+    } else if (typeof delivery.date_expected === "string" && delivery.date_expected.length > 0) {
       expectedDate = new Date(delivery.date_expected);
     }
 
@@ -414,19 +330,9 @@ export class StateManager {
     }
 
     const now = new Date();
-    const todayStart = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-    );
-    const expectedStart = new Date(
-      expectedDate.getFullYear(),
-      expectedDate.getMonth(),
-      expectedDate.getDate(),
-    );
-    return Math.round(
-      (expectedStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24),
-    );
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const expectedStart = new Date(expectedDate.getFullYear(), expectedDate.getMonth(), expectedDate.getDate());
+    return Math.round((expectedStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24));
   }
 
   /**
@@ -435,10 +341,7 @@ export class StateManager {
    * @param delivery The delivery data
    * @param statusCode Pre-parsed status code
    */
-  private calculateDeliveryEstimate(
-    delivery: ParcelDelivery,
-    statusCode: number,
-  ): string {
+  private calculateDeliveryEstimate(delivery: ParcelDelivery, statusCode: number): string {
     const diffDays = this.computeDiffDays(delivery, statusCode);
     if (diffDays === null) {
       return "";
@@ -513,8 +416,8 @@ export class StateManager {
    */
   private calculateCombinedWindow(todayDeliveries: ParcelDelivery[]): string {
     const windows = todayDeliveries
-      .map((d) => this.calculateDeliveryWindow(d, this.parseStatus(d)))
-      .filter((w) => w.length > 0);
+      .map(d => this.calculateDeliveryWindow(d, this.parseStatus(d)))
+      .filter(w => w.length > 0);
 
     if (windows.length === 0) {
       return "";

@@ -39,15 +39,11 @@ class ParcelappAdapter extends utils.Adapter {
     // unhandled promise rejection (which would SIGKILL the adapter and trap
     // js-controller in a restart loop without any stack trace).
     this.on("ready", () => {
-      this.onReady().catch((err) =>
-        this.log.error(`onReady failed: ${errText(err)}`),
-      );
+      this.onReady().catch(err => this.log.error(`onReady failed: ${errText(err)}`));
     });
     this.on("unload", this.onUnload.bind(this));
-    this.on("message", (obj) => {
-      this.onMessage(obj).catch((err) =>
-        this.log.error(`onMessage failed: ${errText(err)}`),
-      );
+    this.on("message", obj => {
+      this.onMessage(obj).catch(err => this.log.error(`onMessage failed: ${errText(err)}`));
     });
     // Last-line-of-defence against unhandled rejections / sync throws from
     // fire-and-forget paths (e.g. `void this.poll()`). The per-handler
@@ -69,17 +65,14 @@ class ParcelappAdapter extends utils.Adapter {
     // Validate config
     const { apiKey } = this.config;
     if (!apiKey || apiKey.trim().length < 10) {
-      this.log.error(
-        "No valid API key configured — please enter your parcel.app API key in the adapter settings",
-      );
+      this.log.error("No valid API key configured — please enter your parcel.app API key in the adapter settings");
       return;
     }
 
     // Pick the label language from the ioBroker system configuration.
     // StateManager falls back to English if the language is unsupported.
     const sysConfig = await this.getForeignObjectAsync("system.config");
-    const language =
-      (sysConfig?.common as { language?: string } | undefined)?.language ?? "";
+    const language = (sysConfig?.common as { language?: string } | undefined)?.language ?? "";
 
     // Initialize
     this.client = new ParcelClient(apiKey.trim());
@@ -94,17 +87,12 @@ class ParcelappAdapter extends utils.Adapter {
     // Set up recurring poll
     const interval = Math.max(
       MIN_POLL_INTERVAL,
-      Math.min(
-        MAX_POLL_INTERVAL,
-        this.config.pollInterval ?? DEFAULT_POLL_INTERVAL,
-      ),
+      Math.min(MAX_POLL_INTERVAL, this.config.pollInterval ?? DEFAULT_POLL_INTERVAL),
     );
     const intervalMs = interval * 60 * 1000;
     this.pollTimer = this.setInterval(() => void this.poll(), intervalMs);
 
-    this.log.info(
-      `Parcel tracking started — polling every ${interval} minutes`,
-    );
+    this.log.info(`Parcel tracking started — polling every ${interval} minutes`);
   }
 
   private onUnload(callback: () => void): void {
@@ -139,12 +127,7 @@ class ParcelappAdapter extends utils.Adapter {
           const msg = obj.message as { apiKey?: string };
           const key = msg?.apiKey?.trim() || "";
           if (!key || key.length < 10) {
-            this.sendTo(
-              obj.from,
-              obj.command,
-              { success: false, message: "API key is too short" },
-              obj.callback,
-            );
+            this.sendTo(obj.from, obj.command, { success: false, message: "API key is too short" }, obj.callback);
             return;
           }
           const testClient = new ParcelClient(key);
@@ -175,21 +158,11 @@ class ParcelappAdapter extends utils.Adapter {
           break;
         }
         default:
-          this.sendTo(
-            obj.from,
-            obj.command,
-            { error: "Unknown command" },
-            obj.callback,
-          );
+          this.sendTo(obj.from, obj.command, { error: "Unknown command" }, obj.callback);
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      this.sendTo(
-        obj.from,
-        obj.command,
-        { success: false, error_message: msg },
-        obj.callback,
-      );
+      this.sendTo(obj.from, obj.command, { success: false, error_message: msg }, obj.callback);
     }
   }
 
@@ -245,9 +218,7 @@ class ParcelappAdapter extends utils.Adapter {
     // Skip if rate limited
     if (now < this.rateLimitedUntil) {
       const waitMin = Math.ceil((this.rateLimitedUntil - now) / 60_000);
-      this.log.debug(
-        `Skipping poll — rate limited for ${waitMin} more minute(s)`,
-      );
+      this.log.debug(`Skipping poll — rate limited for ${waitMin} more minute(s)`);
       return;
     }
 
@@ -262,9 +233,7 @@ class ParcelappAdapter extends utils.Adapter {
     try {
       // When keeping delivered packages, use "recent" to get them from API
       const autoRemove = this.config.autoRemoveDelivered !== false;
-      const deliveries = await this.client.getDeliveries(
-        autoRemove ? "active" : "recent",
-      );
+      const deliveries = await this.client.getDeliveries(autoRemove ? "active" : "recent");
 
       // Reset error state on success
       this.rateLimitedUntil = 0;
@@ -275,31 +244,23 @@ class ParcelappAdapter extends utils.Adapter {
       await this.setStateAsync("info.connection", { val: true, ack: true });
 
       // Split into active (non-delivered) and visible (what gets states)
-      const activeDeliveries = deliveries.filter(
-        (d) => this.stateManager!.parseStatus(d) !== 0,
-      );
+      const activeDeliveries = deliveries.filter(d => this.stateManager!.parseStatus(d) !== 0);
       const visibleDeliveries = autoRemove ? activeDeliveries : deliveries;
 
       // Update each delivery (isolated: one failure must not block others)
       const activeIds: string[] = [];
       for (const delivery of visibleDeliveries) {
         try {
-          const carrierName = await this.client.getCarrierName(
-            delivery.carrier_code,
-          );
+          const carrierName = await this.client.getCarrierName(delivery.carrier_code);
           await this.stateManager.updateDelivery(delivery, carrierName);
           activeIds.push(this.stateManager.packageId(delivery));
           this.failedDeliveries.delete(delivery.tracking_number);
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
           if (this.failedDeliveries.has(delivery.tracking_number)) {
-            this.log.debug(
-              `Failed to update "${delivery.tracking_number}": ${msg}`,
-            );
+            this.log.debug(`Failed to update "${delivery.tracking_number}": ${msg}`);
           } else {
-            this.log.warn(
-              `Failed to update "${delivery.tracking_number}": ${msg}`,
-            );
+            this.log.warn(`Failed to update "${delivery.tracking_number}": ${msg}`);
             this.failedDeliveries.add(delivery.tracking_number);
           }
         }
@@ -311,9 +272,7 @@ class ParcelappAdapter extends utils.Adapter {
       // Update summary (always uses active/non-delivered)
       await this.stateManager.updateSummary(activeDeliveries);
 
-      this.log.debug(
-        `Polled ${visibleDeliveries.length} deliveries (${activeDeliveries.length} active)`,
-      );
+      this.log.debug(`Polled ${visibleDeliveries.length} deliveries (${activeDeliveries.length} active)`);
     } catch (err) {
       const error = err as Error & {
         code?: string;
@@ -328,14 +287,10 @@ class ParcelappAdapter extends utils.Adapter {
       if (error.code === "RATE_LIMITED") {
         const cooldownSec = error.retryAfterSeconds || 5 * 60;
         this.rateLimitedUntil = Date.now() + cooldownSec * 1000;
-        this.log.warn(
-          `Rate limit hit — pausing API requests for ${Math.ceil(cooldownSec / 60)} minute(s)`,
-        );
+        this.log.warn(`Rate limit hit — pausing API requests for ${Math.ceil(cooldownSec / 60)} minute(s)`);
       } else if (error.code === "INVALID_API_KEY") {
         // Always log — user must fix config
-        this.log.error(
-          "Invalid API key — please check your parcel.app API key",
-        );
+        this.log.error("Invalid API key — please check your parcel.app API key");
       } else if (isRepeat) {
         // Same error as last time — don't spam the log
         this.log.debug(`Poll failed (ongoing): ${error.message}`);
@@ -355,8 +310,7 @@ class ParcelappAdapter extends utils.Adapter {
 }
 
 if (require.main !== module) {
-  module.exports = (options: Partial<utils.AdapterOptions> | undefined) =>
-    new ParcelappAdapter(options);
+  module.exports = (options: Partial<utils.AdapterOptions> | undefined) => new ParcelappAdapter(options);
 } else {
   (() => new ParcelappAdapter())();
 }

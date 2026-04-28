@@ -1,11 +1,5 @@
 import * as https from "node:https";
-import type {
-  ParcelApiResponse,
-  ParcelDelivery,
-  AddDeliveryRequest,
-  AddDeliveryResponse,
-  CarrierMap,
-} from "./types";
+import type { ParcelApiResponse, ParcelDelivery, AddDeliveryRequest, AddDeliveryResponse, CarrierMap } from "./types";
 
 const API_BASE = "https://api.parcel.app/external";
 const REQUEST_TIMEOUT = 15_000;
@@ -45,14 +39,8 @@ export class ParcelClient {
    *
    * @param filterMode Filter active or recent deliveries
    */
-  async getDeliveries(
-    filterMode: "active" | "recent" = "active",
-  ): Promise<ParcelDelivery[]> {
-    const response = await this.request<ParcelApiResponse>(
-      "GET",
-      `/deliveries/?filter_mode=${filterMode}`,
-      true,
-    );
+  async getDeliveries(filterMode: "active" | "recent" = "active"): Promise<ParcelDelivery[]> {
+    const response = await this.request<ParcelApiResponse>("GET", `/deliveries/?filter_mode=${filterMode}`, true);
 
     // API-drift guard: response may be null or a non-object
     if (!response || typeof response !== "object") {
@@ -64,18 +52,13 @@ export class ParcelClient {
     }
 
     if (!isTrueish(response.success)) {
-      const rawCode =
-        typeof response.error_code === "string" ? response.error_code : "";
-      const rawMsg =
-        typeof response.error_message === "string"
-          ? response.error_message
-          : "";
+      const rawCode = typeof response.error_code === "string" ? response.error_code : "";
+      const rawMsg = typeof response.error_message === "string" ? response.error_message : "";
       const code = rawCode || rawMsg || "UNKNOWN";
       const err = new Error(`API error: ${rawMsg || code}`) as Error & {
         code: string;
       };
-      err.code =
-        rawCode === "INVALID_API_KEY" ? "INVALID_API_KEY" : "API_ERROR";
+      err.code = rawCode === "INVALID_API_KEY" ? "INVALID_API_KEY" : "API_ERROR";
       throw err;
     }
 
@@ -88,15 +71,8 @@ export class ParcelClient {
    *
    * @param delivery The delivery to add
    */
-  async addDelivery(
-    delivery: AddDeliveryRequest,
-  ): Promise<AddDeliveryResponse> {
-    return this.request<AddDeliveryResponse>(
-      "POST",
-      "/add-delivery/",
-      true,
-      delivery,
-    );
+  async addDelivery(delivery: AddDeliveryRequest): Promise<AddDeliveryResponse> {
+    return this.request<AddDeliveryResponse>("POST", "/add-delivery/", true, delivery);
   }
 
   /** Get carrier names (cached after first call) */
@@ -106,11 +82,7 @@ export class ParcelClient {
     }
 
     try {
-      const raw = await this.request<unknown>(
-        "GET",
-        "/supported_carriers.json",
-        false,
-      );
+      const raw = await this.request<unknown>("GET", "/supported_carriers.json", false);
       // API-drift guard: must be a plain object (not null, array, or primitive)
       if (raw && typeof raw === "object" && !Array.isArray(raw)) {
         this.carrierCache = raw as CarrierMap;
@@ -137,9 +109,7 @@ export class ParcelClient {
     }
     const carriers = await this.getCarrierNames();
     const mapped = carriers[carrierCode];
-    return typeof mapped === "string" && mapped.length > 0
-      ? mapped
-      : carrierCode.toUpperCase();
+    return typeof mapped === "string" && mapped.length > 0 ? mapped : carrierCode.toUpperCase();
   }
 
   /** Test if the API key is valid */
@@ -164,12 +134,7 @@ export class ParcelClient {
    * @param authenticated Whether to send the API key
    * @param body Optional request body
    */
-  private request<T>(
-    method: string,
-    path: string,
-    authenticated: boolean,
-    body?: unknown,
-  ): Promise<T> {
+  private request<T>(method: string, path: string, authenticated: boolean, body?: unknown): Promise<T> {
     return new Promise((resolve, reject) => {
       const url = new URL(`${API_BASE}${path}`);
 
@@ -190,18 +155,15 @@ export class ParcelClient {
         timeout: REQUEST_TIMEOUT,
       };
 
-      const req = https.request(options, (res) => {
+      const req = https.request(options, res => {
         const chunks: Buffer[] = [];
 
-        res.on("error", (err) => reject(err));
+        res.on("error", err => reject(err));
         res.on("data", (chunk: Buffer) => chunks.push(chunk));
         res.on("end", () => {
           const raw = Buffer.concat(chunks).toString("utf-8");
 
-          if (
-            res.statusCode &&
-            (res.statusCode < 200 || res.statusCode >= 300)
-          ) {
+          if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
             if (res.statusCode === 429) {
               const retryAfter = parseInt(res.headers["retry-after"] || "", 10);
               const err = new Error("Rate limit exceeded") as Error & {
@@ -214,13 +176,8 @@ export class ParcelClient {
               reject(err);
               return;
             }
-            const err = new Error(
-              `HTTP ${res.statusCode}: ${res.statusMessage}`,
-            ) as Error & { code: string };
-            err.code =
-              res.statusCode === 401 || res.statusCode === 403
-                ? "INVALID_API_KEY"
-                : "HTTP_ERROR";
+            const err = new Error(`HTTP ${res.statusCode}: ${res.statusMessage}`) as Error & { code: string };
+            err.code = res.statusCode === 401 || res.statusCode === 403 ? "INVALID_API_KEY" : "HTTP_ERROR";
             reject(err);
             return;
           }
@@ -238,7 +195,7 @@ export class ParcelClient {
         reject(new Error("Request timeout"));
       });
 
-      req.on("error", (err) => reject(err));
+      req.on("error", err => reject(err));
 
       if (body) {
         req.write(JSON.stringify(body));

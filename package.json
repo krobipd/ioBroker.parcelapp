@@ -42,7 +42,8 @@
     "@iobroker/testing": "^5.2.2",
     "@tsconfig/node20": "^20.1.9",
     "@types/iobroker": "npm:@iobroker/types@^7.1.1",
-    "@types/node": "^25.6.0",
+    "@types/node": "^20.19.24",
+    "nyc": "^17.1.0",
     "rimraf": "^6.1.3",
     "source-map-support": "^0.5.21",
     "ts-node": "^10.9.2",
@@ -64,10 +65,20 @@
     "test:package": "mocha test/package --exit",
     "test:integration": "mocha test/integration --exit",
     "test": "npm run test:ts && npm run test:package",
+    "coverage": "nyc npm run test:ts",
     "translate": "translate-adapter",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
     "release": "release-script"
+  },
+  "nyc": {
+    "include": ["src/**/*.ts"],
+    "exclude": ["src/**/*.test.ts"],
+    "extension": [".ts"],
+    "require": ["ts-node/register"],
+    "reporter": ["text-summary", "html"],
+    "sourceMap": true,
+    "instrument": true
   },
   "bugs": {
     "url": "https://github.com/krobipd/ioBroker.parcelapp/issues"
