@@ -115,6 +115,9 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 ---
 
 ## Changelog
+### **WORK IN PROGRESS**
+- Test setup migrated to the upstream `ioBroker.example/TypeScript` standard: tests now live next to source as `src/**/*.test.ts` and run directly via `ts-node/register`, no separate test-build. Removes `tsconfig.test.json` + `build-test/` per latest-repo review feedback.
+
 ### 0.2.16 (2026-04-26)
 - Min js-controller correction: was incorrectly bumped to `>=7.0.23` in 0.2.15 (Wert kam aus Recherche-Synthese, nicht aus Repochecker-Source). Repochecker-recommended value is `>=6.0.11` — restored.
 

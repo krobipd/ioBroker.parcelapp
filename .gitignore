@@ -21,7 +21,6 @@ admin/i18n/flat.txt
 # Build & Test
 coverage/
 .nyc_output/
-build-test/
 
 # Environment
 .env

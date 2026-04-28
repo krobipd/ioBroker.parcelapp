@@ -1,13 +1,13 @@
 import { expect } from "chai";
-import { StateManager, resolveLanguage } from "../src/lib/state-manager";
+import { StateManager, resolveLanguage } from "./state-manager";
 import {
     STATUS_LABELS,
     STATUS_LABELS_DE,
     STATUS_LABELS_EN,
     SUPPORTED_LANGUAGES,
     FALLBACK_LANGUAGE,
-} from "../src/lib/types";
-import type { ParcelDelivery } from "../src/lib/types";
+} from "./types";
+import type { ParcelDelivery } from "./types";
 
 interface ObjectDef {
     type: string;

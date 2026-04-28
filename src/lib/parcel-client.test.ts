@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import * as http from "node:http";
 import type { AddressInfo } from "node:net";
-import { ParcelClient } from "../src/lib/parcel-client";
+import { ParcelClient } from "./parcel-client";
 
 /**
  * Helper: start a local HTTP server that returns predefined responses.

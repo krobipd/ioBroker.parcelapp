@@ -11,7 +11,7 @@
 - **npm:** https://www.npmjs.com/package/iobroker.parcelapp
 - **Repository PR:** ioBroker/ioBroker.repositories#5667 (re-review pending bei mcm1957)
 - **Runtime-Deps:** nur `@iobroker/adapter-core` (HTTPS via Node.js built-in)
-- **Build-Layout:** `build/` = Production (esbuild, shipped via npm). `build-test/` = Test-Kompilat (tsc), gitignored.
+- **Test-Setup:** offizieller ioBroker.example/TypeScript-Standard — Tests unter `src/**/*.test.ts` direkt mit `ts-node/register`, kein separater Build (siehe globales `reference_iobroker_test_setup_standard`)
 
 ## API
 
@@ -49,13 +49,16 @@ src/lib/state-manager.ts → State CRUD + Cleanup + Berechnungen
 ## Tests
 
 ```
-test/testParcelClient.ts  → API client, errors, rate limiting, API-drift
-test/testStateManager.ts  → Deliveries, summary, cleanup, formatting, API-drift, multilang, resolveLanguage, isToday-regression
-test/package.js           → @iobroker/testing packageFiles
-test/integration.js       → @iobroker/testing integration
+src/lib/parcel-client.test.ts  → API client, errors, rate limiting, API-drift
+src/lib/state-manager.test.ts  → Deliveries, summary, cleanup, formatting, API-drift, multilang, resolveLanguage, isToday-regression
+test/package.js                → @iobroker/testing packageFiles
+test/integration.js            → @iobroker/testing integration
+test/mocharc.custom.json       → Mocha-Config mit ts-node/register (lädt mocha.setup.js)
+test/mocha.setup.js            → chai/sinon-Setup
+test/tsconfig.json             → für integration.js + package.js JSDoc-Type-Check
 ```
 
-Run: `npm test` (builds prod + test, runs TS specs + @iobroker/testing packageFiles).
+Run: `npm test` (mocha auf src/**/*.test.ts via ts-node + @iobroker/testing packageFiles, kein separater Build).
 
 ## Versionshistorie (letzte 7)
 
@@ -84,7 +87,7 @@ Run: `npm test` (builds prod + test, runs TS specs + @iobroker/testing packageFi
 
 ```bash
 npm run build        # Production (esbuild)
-npm run build:test   # Test build (tsc)
-npm test             # Build + mocha
+npm test             # mocha src/**/*.test.ts (via ts-node) + @iobroker/testing packageFiles
 npm run lint         # ESLint + Prettier
+npm run check        # tsc --noEmit (Type-Check)
 ```

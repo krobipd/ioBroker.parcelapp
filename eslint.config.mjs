@@ -22,11 +22,11 @@ export default [
     ignores: [
       ".dev-server/",
       ".vscode/",
+      "**/*.test.ts",
       "*.test.js",
       "test/**",
       "*.config.mjs",
       "build",
-      "build-test",
       "admin",
       "node_modules",
       "**/adapter-config.d.ts",
