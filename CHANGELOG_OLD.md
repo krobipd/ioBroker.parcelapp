@@ -1,4 +1,8 @@
 # Older Changes
+## 0.2.12 (2026-04-18)
+- Harden API-drift guards in `ParcelClient` and `StateManager` (non-boolean `success`, non-array `deliveries`, non-string `error_code`/`error_message`, non-object carrier map, non-string delivery fields, numeric/string `status_code`, numeric-string `timestamp_expected`, malformed `events`)
+- Add 38 regression tests (128 total) covering the new drift paths
+
 ## 0.2.11 (2026-04-12)
 - Fix: handle response stream errors (prevents unhandled exceptions on connection drop)
 - Fix: isolate per-delivery poll failures (one broken delivery no longer blocks all others)

@@ -115,7 +115,7 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 ---
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 0.2.17 (2026-04-28)
 - Test setup migrated to the upstream `ioBroker.example/TypeScript` standard: tests now live next to source as `src/**/*.test.ts` and run directly via `ts-node/register`, no separate test-build. Removes `tsconfig.test.json` + `build-test/` per latest-repo review feedback.
 
 ### 0.2.16 (2026-04-26)
@@ -136,10 +136,6 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 
 ### 0.2.13 (2026-04-19)
 - Latest-repo review compliance: `common.messagebox=true` added because the admin-UI `Check Connection` and `Add Delivery` buttons route through `onMessage`. Runtime behaviour unchanged.
-
-### 0.2.12 (2026-04-18)
-- Harden API-drift guards in `ParcelClient` and `StateManager` (non-boolean `success`, non-array `deliveries`, non-string `error_code`/`error_message`, non-object carrier map, non-string delivery fields, numeric/string `status_code`, numeric-string `timestamp_expected`, malformed `events`)
-- Add 38 regression tests (128 total) covering the new drift paths
 
 ## Support
 

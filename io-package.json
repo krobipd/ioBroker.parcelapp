@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.2.16",
+    "version": "0.2.17",
     "news": {
+      "0.2.17": {
+        "en": "Test setup migrated to the upstream `ioBroker.example/TypeScript` standard: tests now live next to source as `src/**/*.test.ts` and run directly via `ts-node/register`, no separate test-build. Removes `tsconfig.test.json` + `build-test/` per latest-repo review feedback.",
+        "de": "Test-Setup migriert zum `ioBroker.example/TypeScript` Standard: Tests leben jetzt neben der Quelle als `src/**/*.test.ts` und laufen direkt über `ts-node/register`, kein separater Testaufbau. Entfernt `tsconfig.test.json` + `build-test/` pro neuste Repo-Review-Feedback.",
+        "ru": "Настройка теста перешла на стандарт выше по течению «ioBroker.example/TypeScript»: тесты теперь живут рядом с исходным кодом как «src/**/*.test.ts» и запускаются непосредственно через «ts-узел/регистр» без отдельной сборки теста. Удалить «tsconfig.test.json» + «build-test/» в соответствии с отзывами о последнем репо.",
+        "pt": "A configuração de teste migrou para o padrão upstream `ioBroker.example/TypeScript`: testes agora vivem ao lado do código fonte como `src/**/*.test.ts` e são executados diretamente através de `ts-node/register`, sem construção de teste separada. Remove `tsconfig.test.json` + `build-test/` por feedback de revisão de repo mais recente.",
+        "nl": "Testopstelling is gemigreerd naar de upstream-standaard van de \"ioBroker.\"example/TypeScript Verwijdert .",
+        "fr": "La configuration des tests a migré vers la norme en amont `ioBroker.example/TypeScript`: les tests sont maintenant en direct à côté de la source sous le nom `src/**/*.test.ts` et sont exécutés directement via `ts-node/register`, aucun test-build séparé. Supprime `tsconfig.test.json` + `build-test/` par les commentaires de la dernière révision.",
+        "it": "Configurazione del test migrata allo standard `ioBroker.example/TypeScript` a monte: i test ora vivono accanto alla sorgente come `src/**/*.test.ts` e vengono eseguiti direttamente tramite `ts-node/register`, nessun test-build separato. Rimuove `tsconfig.test.json` + `build-test/` per feedback di ultima recensione.",
+        "es": "Configuración de prueba migrada a la norma de `ioBroker.example/TypeScript` aguas arriba: las pruebas ahora viven al lado de la fuente como `src/**/*.test.ts` y se ejecutan directamente a través de 'ts-node/register', sin prueba separada. Elimina `tsconfig.test.json` + `build-test/` por última respuesta de revisión.",
+        "pl": "Konfiguracja testowa migrowała do standardu 'iBroker.example / TypeScript': testy teraz żyją obok źródła jako 'src / ** /* .test.ts' i działają bezpośrednio przez 'ts- node / register', bez oddzielnego test- build. Usuwa 'tsconfig.test.json' + 'build- test /' per latest- repo review review feeds. ",
+        "uk": "Тест-настроювання, що мігрується на дотик `ioBroker.example/TypeScript`` стандарт: тести тепер живуть біля джерела, як `src/*/**/*.test.ts` і запустити безпосередньо через `ts-node/register`, не окремий тест-будівельник. Вилучає `tsconfig.test.json` + `build-test/`/` за останні відгуки.",
+        "zh-cn": "测试设置迁移到上游`ioBroker.example/TypeScript ' 标准:测试现在作为`src/**/*.test.ts ' 存在于源旁,直接通过`ts-node/register ' 运行,没有单独的测试建设。 删除`tsconfig.test.json ' +`building-test/ ' 每一次最新检索审查反馈."
+      },
       "0.2.16": {
         "en": "Min js-controller correction: was incorrectly bumped to `>=7.0.23` in 0.2.15 (Wert kam aus Recherche-Synthese, nicht aus Repochecker-Source). Repochecker-recommended value is `>=6.0.11` — restored.",
         "de": "Min js-Controller-Korrektur: wurde falsch auf `>=7.0.23` in 0.2.15 (Wert kam aus Recherche-Synthese, nicht aus Repochecker-Source) gesprungen. Repochecker-recommended Wert ist `>=6.0.11` — restauriert.",
@@ -80,19 +93,6 @@
         "pl": "Błędy response-stream obsłużone. Per-delivery poll-failures odizolowane (jedna zepsuta paczka nie blokuje już pozostałych). onMessage i onUnload wzmocnione przez try/catch + callback-guard. parseStatus DRY-helper.",
         "uk": "Помилки response-stream оброблено. Per-delivery poll-failures ізольовано (одне зламане відправлення більше не блокує інші). onMessage та onUnload посилено через try/catch + callback-guard. parseStatus DRY-helper.",
         "zh-cn": "处理 response-stream 错误。隔离 per-delivery poll-failures（一个坏掉的包裹不再阻塞其他）。通过 try/catch + callback-guard 强化 onMessage 和 onUnload。parseStatus DRY-helper。"
-      },
-      "0.2.10": {
-        "en": "Fix test timezone bug, remove unused devDependencies, add no-floating-promises lint rule. Remove redundant actions/checkout from CI workflow.",
-        "de": "Test-Timezone-Bug behoben, ungenutzte devDependencies entfernt, no-floating-promises Lint-Regel hinzugefügt. Redundantes actions/checkout aus CI-Workflow entfernt.",
-        "ru": "Test-timezone-баг виправлено, невикористані devDependencies видалено, додано no-floating-promises lint-правило. Redundant actions/checkout видалено з CI-workflow.",
-        "pt": "Bug de test-timezone corrigido, devDependencies não usadas removidas, regra no-floating-promises adicionada. actions/checkout redundante removido do CI-workflow.",
-        "nl": "Test-timezone bug opgelost, ongebruikte devDependencies verwijderd, no-floating-promises lint-regel toegevoegd. Overbodige actions/checkout uit CI-workflow verwijderd.",
-        "fr": "Bug test-timezone corrigé, devDependencies inutilisées retirées, règle no-floating-promises ajoutée. actions/checkout redondant retiré du workflow CI.",
-        "it": "Bug test-timezone corretto, devDependencies inutilizzate rimosse, regola no-floating-promises aggiunta. actions/checkout ridondante rimosso dal workflow CI.",
-        "es": "Bug de test-timezone arreglado, devDependencies sin uso eliminadas, regla no-floating-promises añadida. actions/checkout redundante eliminado del workflow CI.",
-        "pl": "Bug test-timezone naprawiony, nieużywane devDependencies usunięte, dodano regułę no-floating-promises. Zbędne actions/checkout usunięte z CI-workflow.",
-        "uk": "Test-timezone-баг виправлено, невикористані devDependencies видалено, додано lint-правило no-floating-promises. Зайве actions/checkout видалено з CI-workflow.",
-        "zh-cn": "修复 test-timezone bug，移除未使用的 devDependencies，添加 no-floating-promises lint 规则。从 CI workflow 中移除多余的 actions/checkout。"
       }
     },
     "titleLang": {
