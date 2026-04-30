@@ -4,25 +4,25 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
+  for (var name in all) __defProp(target, name, { get: all[name], enumerable: true });
 };
 var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
+  if ((from && typeof from === "object") || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
       if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+        __defProp(to, key, {
+          get: () => from[key],
+          enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable,
+        });
   }
   return to;
 };
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var __toCommonJS = mod => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var types_exports = {};
 __export(types_exports, {
   FALLBACK_LANGUAGE: () => FALLBACK_LANGUAGE,
   STATUS_LABELS: () => STATUS_LABELS,
-  STATUS_LABELS_DE: () => STATUS_LABELS_DE,
-  STATUS_LABELS_EN: () => STATUS_LABELS_EN,
-  SUPPORTED_LANGUAGES: () => SUPPORTED_LANGUAGES
+  SUPPORTED_LANGUAGES: () => SUPPORTED_LANGUAGES,
 });
 module.exports = __toCommonJS(types_exports);
 const STATUS_LABELS = {
@@ -35,7 +35,7 @@ const STATUS_LABELS = {
     5: "Nicht gefunden",
     6: "Zustellversuch gescheitert",
     7: "Ausnahme",
-    8: "Registriert"
+    8: "Registriert",
   },
   en: {
     0: "Delivered",
@@ -46,7 +46,7 @@ const STATUS_LABELS = {
     5: "Not Found",
     6: "Delivery Attempt Failed",
     7: "Exception",
-    8: "Info Received"
+    8: "Info Received",
   },
   ru: {
     0: "\u0414\u043E\u0441\u0442\u0430\u0432\u043B\u0435\u043D\u043E",
@@ -57,7 +57,7 @@ const STATUS_LABELS = {
     5: "\u041D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E",
     6: "\u041D\u0435\u0443\u0434\u0430\u0447\u043D\u0430\u044F \u0434\u043E\u0441\u0442\u0430\u0432\u043A\u0430",
     7: "\u0418\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435",
-    8: "\u0417\u0430\u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u043E\u0432\u0430\u043D\u043E"
+    8: "\u0417\u0430\u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u043E\u0432\u0430\u043D\u043E",
   },
   pt: {
     0: "Entregue",
@@ -68,7 +68,7 @@ const STATUS_LABELS = {
     5: "N\xE3o encontrado",
     6: "Tentativa de entrega falhou",
     7: "Exce\xE7\xE3o",
-    8: "Registado"
+    8: "Registado",
   },
   nl: {
     0: "Bezorgd",
@@ -79,7 +79,7 @@ const STATUS_LABELS = {
     5: "Niet gevonden",
     6: "Bezorgpoging mislukt",
     7: "Uitzondering",
-    8: "Geregistreerd"
+    8: "Geregistreerd",
   },
   fr: {
     0: "Livr\xE9",
@@ -90,7 +90,7 @@ const STATUS_LABELS = {
     5: "Introuvable",
     6: "\xC9chec de la livraison",
     7: "Exception",
-    8: "Enregistr\xE9"
+    8: "Enregistr\xE9",
   },
   it: {
     0: "Consegnato",
@@ -101,7 +101,7 @@ const STATUS_LABELS = {
     5: "Non trovato",
     6: "Consegna fallita",
     7: "Eccezione",
-    8: "Registrato"
+    8: "Registrato",
   },
   es: {
     0: "Entregado",
@@ -112,7 +112,7 @@ const STATUS_LABELS = {
     5: "No encontrado",
     6: "Intento de entrega fallido",
     7: "Excepci\xF3n",
-    8: "Registrado"
+    8: "Registrado",
   },
   pl: {
     0: "Dostarczone",
@@ -123,7 +123,7 @@ const STATUS_LABELS = {
     5: "Nie znaleziono",
     6: "Nieudana pr\xF3ba dor\u0119czenia",
     7: "Wyj\u0105tek",
-    8: "Zarejestrowane"
+    8: "Zarejestrowane",
   },
   uk: {
     0: "\u0414\u043E\u0441\u0442\u0430\u0432\u043B\u0435\u043D\u043E",
@@ -134,7 +134,7 @@ const STATUS_LABELS = {
     5: "\u041D\u0435 \u0437\u043D\u0430\u0439\u0434\u0435\u043D\u043E",
     6: "\u041D\u0435\u0432\u0434\u0430\u043B\u0430 \u0441\u043F\u0440\u043E\u0431\u0430 \u0434\u043E\u0441\u0442\u0430\u0432\u043A\u0438",
     7: "\u0412\u0438\u043D\u044F\u0442\u043E\u043A",
-    8: "\u0417\u0430\u0440\u0435\u0454\u0441\u0442\u0440\u043E\u0432\u0430\u043D\u043E"
+    8: "\u0417\u0430\u0440\u0435\u0454\u0441\u0442\u0440\u043E\u0432\u0430\u043D\u043E",
   },
   "zh-cn": {
     0: "\u5DF2\u9001\u8FBE",
@@ -145,19 +145,16 @@ const STATUS_LABELS = {
     5: "\u672A\u627E\u5230",
     6: "\u6D3E\u9001\u5931\u8D25",
     7: "\u5F02\u5E38",
-    8: "\u5DF2\u767B\u8BB0"
-  }
+    8: "\u5DF2\u767B\u8BB0",
+  },
 };
-const STATUS_LABELS_DE = STATUS_LABELS.de;
-const STATUS_LABELS_EN = STATUS_LABELS.en;
 const SUPPORTED_LANGUAGES = Object.keys(STATUS_LABELS);
 const FALLBACK_LANGUAGE = "en";
 // Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {
-  FALLBACK_LANGUAGE,
-  STATUS_LABELS,
-  STATUS_LABELS_DE,
-  STATUS_LABELS_EN,
-  SUPPORTED_LANGUAGES
-});
+0 &&
+  (module.exports = {
+    FALLBACK_LANGUAGE,
+    STATUS_LABELS,
+    SUPPORTED_LANGUAGES,
+  });
 //# sourceMappingURL=types.js.map

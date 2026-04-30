@@ -196,10 +196,6 @@ export const STATUS_LABELS: Record<string, Record<number, string>> = {
   },
 };
 
-/** Backward-compatible aliases (used by tests and legacy imports) */
-export const STATUS_LABELS_DE = STATUS_LABELS.de;
-export const STATUS_LABELS_EN = STATUS_LABELS.en;
-
 /** Language codes the adapter generates state labels for */
 export const SUPPORTED_LANGUAGES = Object.keys(STATUS_LABELS);
 

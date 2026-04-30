@@ -4,7 +4,7 @@
 // macht den faktischen Stil explizit statt ihn aus implizit fehlender Config zu
 // ziehen. Pattern wie ioBroker.example/TypeScript (das ebenfalls overridet, mit
 // anderen Werten).
-import prettierConfig from '@iobroker/eslint-config/prettier.config.mjs';
+import prettierConfig from "@iobroker/eslint-config/prettier.config.mjs";
 
 export default {
   ...prettierConfig,

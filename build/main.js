@@ -6,21 +6,27 @@ var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
+  if ((from && typeof from === "object") || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
       if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+        __defProp(to, key, {
+          get: () => from[key],
+          enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable,
+        });
   }
   return to;
 };
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
+var __toESM = (mod, isNodeMode, target) => (
+  (target = mod != null ? __create(__getProtoOf(mod)) : {}),
+  __copyProps(
+    // If the importer is in node compatibility mode or this is not an ESM
+    // file that has been converted to a CommonJS file using a Babel-
+    // compatible transform (i.e. "__esModule" has not been set), then set
+    // "default" to the CommonJS "module.exports" for node compatibility.
+    isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+    mod,
+  )
+);
 var utils = __toESM(require("@iobroker/adapter-core"));
 var import_parcel_client = require("./lib/parcel-client");
 var import_state_manager = require("./lib/state-manager");
@@ -46,19 +52,19 @@ class ParcelappAdapter extends utils.Adapter {
   constructor(options = {}) {
     super({
       ...options,
-      name: "parcelapp"
+      name: "parcelapp",
     });
     this.on("ready", () => {
-      this.onReady().catch((err) => this.log.error(`onReady failed: ${errText(err)}`));
+      this.onReady().catch(err => this.log.error(`onReady failed: ${errText(err)}`));
     });
     this.on("unload", this.onUnload.bind(this));
-    this.on("message", (obj) => {
-      this.onMessage(obj).catch((err) => this.log.error(`onMessage failed: ${errText(err)}`));
+    this.on("message", obj => {
+      this.onMessage(obj).catch(err => this.log.error(`onMessage failed: ${errText(err)}`));
     });
-    this.unhandledRejectionHandler = (reason) => {
+    this.unhandledRejectionHandler = reason => {
       this.log.error(`Unhandled rejection: ${errText(reason)}`);
     };
-    this.uncaughtExceptionHandler = (err) => {
+    this.uncaughtExceptionHandler = err => {
       this.log.error(`Uncaught exception: ${errText(err)}`);
     };
     process.on("unhandledRejection", this.unhandledRejectionHandler);
@@ -73,14 +79,15 @@ class ParcelappAdapter extends utils.Adapter {
       return;
     }
     const sysConfig = await this.getForeignObjectAsync("system.config");
-    const language = (_b = (_a = sysConfig == null ? void 0 : sysConfig.common) == null ? void 0 : _a.language) != null ? _b : "";
+    const language =
+      (_b = (_a = sysConfig == null ? void 0 : sysConfig.common) == null ? void 0 : _a.language) != null ? _b : "";
     this.client = new import_parcel_client.ParcelClient(apiKey.trim());
     this.stateManager = new import_state_manager.StateManager(this, language);
     await this.cleanupObsoleteStates();
     await this.poll();
     const interval = Math.max(
       MIN_POLL_INTERVAL,
-      Math.min(MAX_POLL_INTERVAL, (_c = this.config.pollInterval) != null ? _c : DEFAULT_POLL_INTERVAL)
+      Math.min(MAX_POLL_INTERVAL, (_c = this.config.pollInterval) != null ? _c : DEFAULT_POLL_INTERVAL),
     );
     const intervalMs = interval * 60 * 1e3;
     this.pollTimer = this.setInterval(() => void this.poll(), intervalMs);
@@ -101,8 +108,7 @@ class ParcelappAdapter extends utils.Adapter {
         this.uncaughtExceptionHandler = null;
       }
       void this.setState("info.connection", { val: false, ack: true });
-    } catch {
-    }
+    } catch {}
     callback();
   }
   async onMessage(obj) {
@@ -130,7 +136,7 @@ class ParcelappAdapter extends utils.Adapter {
               obj.from,
               obj.command,
               { success: false, error_message: "Adapter not initialized" },
-              obj.callback
+              obj.callback,
             );
             return;
           }
@@ -152,7 +158,7 @@ class ParcelappAdapter extends utils.Adapter {
   }
   async cleanupObsoleteStates() {
     const obsoleteStates = [
-      "summary.json"
+      "summary.json",
       // removed in 0.2.0
     ];
     for (const stateId of obsoleteStates) {
@@ -175,7 +181,14 @@ class ParcelappAdapter extends utils.Adapter {
     if (error.code === "INVALID_API_KEY") {
       return "INVALID_API_KEY";
     }
-    if (error.code === "ENOTFOUND" || error.code === "ECONNREFUSED" || error.code === "ECONNRESET" || error.code === "ENETUNREACH" || error.code === "EHOSTUNREACH" || error.code === "EAI_AGAIN") {
+    if (
+      error.code === "ENOTFOUND" ||
+      error.code === "ECONNREFUSED" ||
+      error.code === "ECONNRESET" ||
+      error.code === "ENETUNREACH" ||
+      error.code === "EHOSTUNREACH" ||
+      error.code === "EAI_AGAIN"
+    ) {
       return "NETWORK";
     }
     if (error.message.includes("timeout") || error.code === "ETIMEDOUT") {
@@ -208,7 +221,7 @@ class ParcelappAdapter extends utils.Adapter {
         this.lastErrorCode = "";
       }
       await this.setStateAsync("info.connection", { val: true, ack: true });
-      const activeDeliveries = deliveries.filter((d) => this.stateManager.parseStatus(d) !== 0);
+      const activeDeliveries = deliveries.filter(d => this.stateManager.parseStatus(d) !== 0);
       const visibleDeliveries = autoRemove ? activeDeliveries : deliveries;
       const activeIds = [];
       for (const delivery of visibleDeliveries) {
@@ -257,7 +270,7 @@ class ParcelappAdapter extends utils.Adapter {
   }
 }
 if (require.main !== module) {
-  module.exports = (options) => new ParcelappAdapter(options);
+  module.exports = options => new ParcelappAdapter(options);
 } else {
   (() => new ParcelappAdapter())();
 }

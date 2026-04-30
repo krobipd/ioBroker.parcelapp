@@ -10,7 +10,11 @@
     "apiKeyInfo": {
       "type": "staticText",
       "text": "apiKeyInfo",
-      "xs": 12, "sm": 12, "md": 12, "lg": 12, "xl": 12,
+      "xs": 12,
+      "sm": 12,
+      "md": 12,
+      "lg": 12,
+      "xl": 12,
       "style": {
         "fontSize": 14,
         "color": "#666",
@@ -20,7 +24,11 @@
     "apiKey": {
       "type": "password",
       "label": "label_apiKey",
-      "xs": 12, "sm": 12, "md": 8, "lg": 8, "xl": 8
+      "xs": 12,
+      "sm": 12,
+      "md": 8,
+      "lg": 8,
+      "xl": 8
     },
     "checkConnection": {
       "newLine": true,
@@ -32,7 +40,11 @@
         "okText": "msg_connectionOk",
         "errorText": "msg_connectionFailed"
       },
-      "xs": 12, "sm": 12, "md": 4, "lg": 4, "xl": 4
+      "xs": 12,
+      "sm": 12,
+      "md": 4,
+      "lg": 4,
+      "xl": 4
     },
     "pollingHeader": {
       "newLine": true,
@@ -47,7 +59,11 @@
       "min": 5,
       "max": 60,
       "default": 10,
-      "xs": 12, "sm": 12, "md": 6, "lg": 6, "xl": 6
+      "xs": 12,
+      "sm": 12,
+      "md": 6,
+      "lg": 6,
+      "xl": 6
     },
     "deliveryHeader": {
       "newLine": true,
@@ -60,7 +76,11 @@
       "label": "label_autoRemoveDelivered",
       "tooltip": "tooltip_autoRemoveDelivered",
       "default": true,
-      "xs": 12, "sm": 12, "md": 12, "lg": 12, "xl": 12
+      "xs": 12,
+      "sm": 12,
+      "md": 12,
+      "lg": 12,
+      "xl": 12
     },
     "_supportHeader": {
       "newLine": true,
@@ -71,7 +91,11 @@
     "_aboutInfo": {
       "type": "staticText",
       "text": "aboutInfo",
-      "xs": 12, "sm": 12, "md": 12, "lg": 12, "xl": 12,
+      "xs": 12,
+      "sm": 12,
+      "md": 12,
+      "lg": 12,
+      "xl": 12,
       "style": {
         "fontSize": 14,
         "marginBottom": 16
@@ -84,7 +108,11 @@
       "button": true,
       "variant": "outlined",
       "color": "primary",
-      "xs": 12, "sm": 6, "md": 4, "lg": 4, "xl": 4
+      "xs": 12,
+      "sm": 6,
+      "md": 4,
+      "lg": 4,
+      "xl": 4
     },
     "_paypalLink": {
       "type": "staticLink",
@@ -93,7 +121,11 @@
       "button": true,
       "variant": "outlined",
       "color": "primary",
-      "xs": 12, "sm": 6, "md": 4, "lg": 4, "xl": 4
+      "xs": 12,
+      "sm": 6,
+      "md": 4,
+      "lg": 4,
+      "xl": 4
     }
   }
 }

@@ -40,11 +40,11 @@ ioBroker adapter that connects to the [parcel.app](https://parcelapp.net) API an
 
 ## Configuration
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| **API Key** | Your parcel.app API key (get it at [web.parcelapp.net](https://web.parcelapp.net)) | — |
-| **Poll Interval** | How often to fetch updates (minutes) | 10 |
-| **Auto-remove delivered** | Remove delivered packages from states automatically. When disabled, they stay until deleted in parcel.app. | Yes |
+| Option                    | Description                                                                                                | Default |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------- | ------- |
+| **API Key**               | Your parcel.app API key (get it at [web.parcelapp.net](https://web.parcelapp.net))                         | —       |
+| **Poll Interval**         | How often to fetch updates (minutes)                                                                       | 10      |
+| **Auto-remove delivered** | Remove delivered packages from states automatically. When disabled, they stay until deleted in parcel.app. | Yes     |
 
 Status labels (`Delivered`, `In Transit`, …) and delivery estimates (`today`, `tomorrow`, `in X days`) are rendered in the ioBroker system language.
 
@@ -81,16 +81,17 @@ parcelapp.0.
 You can add new deliveries from JavaScript/Blockly scripts:
 
 ```javascript
-sendTo('parcelapp.0', 'addDelivery', {
-    tracking_number: '1234567890',
-    carrier_code: 'dhl',
-    description: 'My package'
+sendTo("parcelapp.0", "addDelivery", {
+  tracking_number: "1234567890",
+  carrier_code: "dhl",
+  description: "My package",
 });
 ```
 
 The delivery is added to your parcel.app account and immediately appears in ioBroker after an automatic poll.
 
 **Notes:**
+
 - **POST rate limit: 20 deliveries per day** — failed attempts (e.g. wrong `carrier_code`) also count against this limit.
 - Fresh deliveries usually have no tracking events for **45–90 minutes** after they are added. That's a parcel.app-side delay, not an adapter issue.
 - **Deleting packages is only possible in the parcel.app app/web UI** — the API has no delete endpoint. With `autoRemoveDelivered` enabled, the adapter still drops delivered packages from ioBroker states automatically.
@@ -100,22 +101,33 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 ## Troubleshooting
 
 ### Connection test fails
+
 - Verify your API key at [web.parcelapp.net](https://web.parcelapp.net)
 - Ensure you have an active Premium subscription
 - Check if your ioBroker instance has internet access
 
 ### No deliveries shown
+
 - The API returns cached data — new deliveries may take a few minutes to appear
 - Check if you have active deliveries in the parcel.app
 
 ### Rate limit
+
 - GET (polling): **20 requests per hour** — the minimum poll interval is 5 minutes to stay within this limit
 - POST (adding deliveries): **20 requests per day**, failed attempts count too
 
 ---
 
 ## Changelog
+
+### **WORK IN PROGRESS**
+
+- DRY: dead `STATUS_LABELS_DE` + `STATUS_LABELS_EN` aliases removed from `types.ts`; tests rewritten to use `STATUS_LABELS.de` / `STATUS_LABELS.en` directly.
+- New `format` + `format:check` npm-scripts (run prettier — matches the other krobi adapters).
+- Master-sync against `.consistency-master/`: `.github/dependabot.yml` ignore-block for `actions/checkout` + `actions/setup-node` major bumps, and the `repochecker-version-gate` workflow job moved from the legacy M1000 check to the sources-dist-stable check (now identical to hassemu).
+
 ### 0.2.18 (2026-04-28)
+
 - Audit cleanup against the upstream `ioBroker.example/TypeScript` full standard:
   - `@types/node` rolled back from `^25.6.0` to `^20.19.24` so type defs match `engines.node: ">=20"` (otherwise Node 21+-only APIs would type-check on Node 20 and crash at runtime)
   - Dependabot now ignores major bumps for `@types/node`, `typescript`, `eslint` so the runtime/toolchain pinning cannot drift via auto-merge
@@ -124,12 +136,15 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
   - Orphan `.github/auto-merge.yml` removed (the active workflow is `automerge-dependabot.yml` using `gh pr merge`, the old yml was never read)
 
 ### 0.2.17 (2026-04-28)
+
 - Test setup migrated to the upstream `ioBroker.example/TypeScript` standard: tests now live next to source as `src/**/*.test.ts` and run directly via `ts-node/register`, no separate test-build. Removes `tsconfig.test.json` + `build-test/` per latest-repo review feedback.
 
 ### 0.2.16 (2026-04-26)
+
 - Min js-controller correction: was incorrectly bumped to `>=7.0.23` in 0.2.15 (Wert kam aus Recherche-Synthese, nicht aus Repochecker-Source). Repochecker-recommended value is `>=6.0.11` — restored.
 
 ### 0.2.15 (2026-04-26)
+
 - Process-level `unhandledRejection` / `uncaughtException` handlers added as last-line-of-defence against fire-and-forget rejections.
 - Stop shipping the `manual-review` release-script plugin — adapter-only consequence.
 - Bump min js-controller to `>=7.0.23` (matches latest-repo recommendation).
@@ -137,6 +152,7 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 - README footer-link to `CHANGELOG_OLD.md` restored, `CHANGELOG_OLD.md` cleaned up to consistent compact style.
 
 ### 0.2.14 (2026-04-23)
+
 - Separate test-build output (`build-test/`) from production `build/`, no more duplicated `build/src` + `build/test` tree in published packages.
 - Declare `deliveries` folder and `summary` channel as instance objects so their parent exists before per-package states appear.
 - Localize status labels and delivery estimates to all 11 ioBroker languages via `system.config.language`; the per-instance `Status Language` option is removed.

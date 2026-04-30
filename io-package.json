@@ -67,32 +67,6 @@
         "pl": "Odpowiedź na latest-repo review round 2. Wyjście test-build (build-test/) oddzielone od produkcji build/. Folder deliveries i kanał summary zadeklarowane jako instance objects. Etykiety statusu i szacunki dostawy zlokalizowane we wszystkich 11 językach ioBroker przez system.config.language; opcja Status Language per-instance została usunięta. summary.todayCount naprawione dla języków innych niż DE/EN.",
         "uk": "Відповідь на latest-repo review round 2. Test-build output (build-test/) відокремлено від production build/. Folder deliveries та channel summary оголошено як instance objects. Status-мітки та оцінки доставки локалізовано в усіх 11 мовах ioBroker через system.config.language; опцію Status Language per-instance видалено. summary.todayCount виправлено для мов крім DE/EN.",
         "zh-cn": "Latest-repo review round 2 的回应。测试构建输出（build-test/）从生产 build/ 分离。deliveries 文件夹和 summary 通道声明为 instance objects。状态标签和到达时间预估通过 system.config.language 本地化为全部 11 种 ioBroker 语言；移除 per-instance Status Language 选项。修复非 DE/EN 语言下的 summary.todayCount。"
-      },
-      "0.2.13": {
-        "en": "Latest-repo review round 1 compliance: common.messagebox=true added because the admin-UI Check Connection and Add Delivery buttons route through onMessage. Runtime behaviour unchanged.",
-        "de": "Latest-Repo Review Round 1 Compliance: common.messagebox=true gesetzt, weil die Admin-UI-Buttons Check Connection und Add Delivery über onMessage laufen. Runtime-Verhalten unverändert.",
-        "ru": "Latest-repo review round 1 compliance: common.messagebox=true додано, оскільки кнопки Check Connection та Add Delivery в admin-UI проходять через onMessage. Runtime-поведінка незмінна.",
-        "pt": "Compliance do latest-repo review round 1: common.messagebox=true adicionado porque os botões Check Connection e Add Delivery do admin-UI passam pelo onMessage. Comportamento em runtime inalterado.",
-        "nl": "Latest-repo review round 1 compliance: common.messagebox=true toegevoegd omdat de admin-UI Check Connection en Add Delivery knoppen via onMessage lopen. Runtime-gedrag ongewijzigd.",
-        "fr": "Latest-repo review round 1 compliance: common.messagebox=true ajouté car les boutons Check Connection et Add Delivery de l'admin-UI passent par onMessage. Comportement runtime inchangé.",
-        "it": "Latest-repo review round 1 compliance: common.messagebox=true aggiunto perché i pulsanti Check Connection e Add Delivery dell'admin-UI passano da onMessage. Comportamento runtime invariato.",
-        "es": "Latest-repo review round 1 compliance: common.messagebox=true añadido porque los botones Check Connection y Add Delivery de admin-UI pasan por onMessage. Comportamiento en runtime sin cambios.",
-        "pl": "Latest-repo review round 1 compliance: common.messagebox=true dodane, ponieważ przyciski Check Connection i Add Delivery admin-UI przechodzą przez onMessage. Zachowanie runtime bez zmian.",
-        "uk": "Latest-repo review round 1 compliance: common.messagebox=true додано, оскільки кнопки Check Connection та Add Delivery в admin-UI проходять через onMessage. Runtime поведінка незмінна.",
-        "zh-cn": "Latest-repo review round 1 compliance：因 admin-UI 的 Check Connection 与 Add Delivery 按钮经由 onMessage 路由，故添加 common.messagebox=true。运行时行为不变。"
-      },
-      "0.2.12": {
-        "en": "Harden API-drift guards in ParcelClient and StateManager (non-boolean success, non-array deliveries, non-string error_code/error_message, non-object carrier map, non-string delivery fields). 38 new regression tests (128 total).",
-        "de": "API-Drift-Guards in ParcelClient und StateManager gehärtet (non-boolean success, non-array deliveries, non-string error_code/error_message, non-object carrier map, non-string delivery fields). 38 neue Regression-Tests (128 total).",
-        "ru": "API-drift guards в ParcelClient та StateManager посилено (non-boolean success, non-array deliveries, non-string error_code/error_message, non-object carrier map, non-string delivery fields). 38 нових regression-тестів (128 всього).",
-        "pt": "API-drift guards reforçados em ParcelClient e StateManager (success non-boolean, deliveries non-array, error_code/error_message non-string, carrier map non-object, campos non-string). 38 novos regression-tests (128 no total).",
-        "nl": "API-drift guards in ParcelClient en StateManager versterkt (non-boolean success, non-array deliveries, non-string error_code/error_message, non-object carrier map, non-string delivery fields). 38 nieuwe regressietests (128 totaal).",
-        "fr": "API-drift guards renforcés dans ParcelClient et StateManager (success non-boolean, deliveries non-array, error_code/error_message non-string, carrier map non-object, champs non-string). 38 nouveaux regression-tests (128 au total).",
-        "it": "API-drift guards rafforzati in ParcelClient e StateManager (success non-boolean, deliveries non-array, error_code/error_message non-string, carrier map non-object, campi non-string). 38 nuovi regression-test (128 totali).",
-        "es": "API-drift guards reforzados en ParcelClient y StateManager (success non-boolean, deliveries non-array, error_code/error_message non-string, carrier map non-object, campos non-string). 38 nuevos tests de regresión (128 en total).",
-        "pl": "API-drift guards wzmocnione w ParcelClient i StateManager (success non-boolean, deliveries non-array, error_code/error_message non-string, carrier map non-object, pola non-string). 38 nowych testów regresji (128 łącznie).",
-        "uk": "API-drift guards посилено в ParcelClient і StateManager (non-boolean success, non-array deliveries, non-string error_code/error_message, non-object carrier map, non-string delivery fields). 38 нових regression-тестів (128 загалом).",
-        "zh-cn": "强化 ParcelClient 和 StateManager 的 API-drift guards（非布尔 success、非数组 deliveries、非字符串 error_code/error_message、非对象 carrier map、非字符串 delivery 字段）。新增 38 个 regression 测试（共 128 个）。"
       }
     },
     "titleLang": {
@@ -121,17 +95,8 @@
       "uk": "Адаптер ioBroker для parcel.app — відстеження посилок як стани ioBroker",
       "zh-cn": "parcel.app 的 ioBroker 适配器 — 将包裹追踪数据作为 ioBroker 状态"
     },
-    "authors": [
-      "krobi <krobi@power-dreams.com>"
-    ],
-    "keywords": [
-      "parcel",
-      "tracking",
-      "delivery",
-      "package",
-      "shipment",
-      "carrier"
-    ],
+    "authors": ["krobi <krobi@power-dreams.com>"],
+    "keywords": ["parcel", "tracking", "delivery", "package", "shipment", "carrier"],
     "licenseInformation": {
       "license": "MIT",
       "type": "free"
@@ -166,12 +131,8 @@
       }
     ]
   },
-  "encryptedNative": [
-    "apiKey"
-  ],
-  "protectedNative": [
-    "apiKey"
-  ],
+  "encryptedNative": ["apiKey"],
+  "protectedNative": ["apiKey"],
   "native": {
     "apiKey": "",
     "pollInterval": 10,
