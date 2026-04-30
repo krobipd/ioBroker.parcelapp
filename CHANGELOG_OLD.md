@@ -1,4 +1,10 @@
 # Older Changes
+## 0.2.14 (2026-04-23)
+
+- Separate test-build output (`build-test/`) from production `build/`, no more duplicated `build/src` + `build/test` tree in published packages.
+- Declare `deliveries` folder and `summary` channel as instance objects so their parent exists before per-package states appear.
+- Localize status labels and delivery estimates to all 11 ioBroker languages via `system.config.language`; the per-instance `Status Language` option is removed.
+- Fix `summary.todayCount` for non-DE/EN languages (filter compared estimate strings against `heute`/`today`, so it always returned zero elsewhere).
 
 ## 0.2.13 (2026-04-19)
 

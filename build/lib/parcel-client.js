@@ -6,34 +6,29 @@ var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __export = (target, all) => {
-  for (var name in all) __defProp(target, name, { get: all[name], enumerable: true });
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
 };
 var __copyProps = (to, from, except, desc) => {
-  if ((from && typeof from === "object") || typeof from === "function") {
+  if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
       if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, {
-          get: () => from[key],
-          enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable,
-        });
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
   }
   return to;
 };
-var __toESM = (mod, isNodeMode, target) => (
-  (target = mod != null ? __create(__getProtoOf(mod)) : {}),
-  __copyProps(
-    // If the importer is in node compatibility mode or this is not an ESM
-    // file that has been converted to a CommonJS file using a Babel-
-    // compatible transform (i.e. "__esModule" has not been set), then set
-    // "default" to the CommonJS "module.exports" for node compatibility.
-    isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-    mod,
-  )
-);
-var __toCommonJS = mod => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var parcel_client_exports = {};
 __export(parcel_client_exports, {
-  ParcelClient: () => ParcelClient,
+  ParcelClient: () => ParcelClient
 });
 module.exports = __toCommonJS(parcel_client_exports);
 var https = __toESM(require("node:https"));
@@ -156,12 +151,12 @@ class ParcelClient {
         path: url.pathname + url.search,
         method,
         headers,
-        timeout: REQUEST_TIMEOUT,
+        timeout: REQUEST_TIMEOUT
       };
-      const req = https.request(options, res => {
+      const req = https.request(options, (res) => {
         const chunks = [];
-        res.on("error", err => reject(err));
-        res.on("data", chunk => chunks.push(chunk));
+        res.on("error", (err) => reject(err));
+        res.on("data", (chunk) => chunks.push(chunk));
         res.on("end", () => {
           const raw = Buffer.concat(chunks).toString("utf-8");
           if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
@@ -189,7 +184,7 @@ class ParcelClient {
         req.destroy();
         reject(new Error("Request timeout"));
       });
-      req.on("error", err => reject(err));
+      req.on("error", (err) => reject(err));
       if (body) {
         req.write(JSON.stringify(body));
       }
@@ -198,8 +193,7 @@ class ParcelClient {
   }
 }
 // Annotate the CommonJS export names for ESM import in node:
-0 &&
-  (module.exports = {
-    ParcelClient,
-  });
+0 && (module.exports = {
+  ParcelClient
+});
 //# sourceMappingURL=parcel-client.js.map

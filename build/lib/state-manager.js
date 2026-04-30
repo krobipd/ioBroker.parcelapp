@@ -4,24 +4,22 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __export = (target, all) => {
-  for (var name in all) __defProp(target, name, { get: all[name], enumerable: true });
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
 };
 var __copyProps = (to, from, except, desc) => {
-  if ((from && typeof from === "object") || typeof from === "function") {
+  if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
       if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, {
-          get: () => from[key],
-          enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable,
-        });
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
   }
   return to;
 };
-var __toCommonJS = mod => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var state_manager_exports = {};
 __export(state_manager_exports, {
   StateManager: () => StateManager,
-  resolveLanguage: () => resolveLanguage,
+  resolveLanguage: () => resolveLanguage
 });
 module.exports = __toCommonJS(state_manager_exports);
 var import_types = require("./types");
@@ -41,68 +39,68 @@ const ESTIMATE_LABELS = {
     overdue: "\xFCberf\xE4llig",
     today: "heute",
     tomorrow: "morgen",
-    days: "in %d Tagen",
+    days: "in %d Tagen"
   },
   en: {
     overdue: "overdue",
     today: "today",
     tomorrow: "tomorrow",
-    days: "in %d days",
+    days: "in %d days"
   },
   ru: {
     overdue: "\u043F\u0440\u043E\u0441\u0440\u043E\u0447\u0435\u043D\u043E",
     today: "\u0441\u0435\u0433\u043E\u0434\u043D\u044F",
     tomorrow: "\u0437\u0430\u0432\u0442\u0440\u0430",
-    days: "\u0447\u0435\u0440\u0435\u0437 %d \u0434\u043D.",
+    days: "\u0447\u0435\u0440\u0435\u0437 %d \u0434\u043D."
   },
   pt: {
     overdue: "atrasado",
     today: "hoje",
     tomorrow: "amanh\xE3",
-    days: "em %d dias",
+    days: "em %d dias"
   },
   nl: {
     overdue: "te laat",
     today: "vandaag",
     tomorrow: "morgen",
-    days: "over %d dagen",
+    days: "over %d dagen"
   },
   fr: {
     overdue: "en retard",
     today: "aujourd'hui",
     tomorrow: "demain",
-    days: "dans %d jours",
+    days: "dans %d jours"
   },
   it: {
     overdue: "in ritardo",
     today: "oggi",
     tomorrow: "domani",
-    days: "tra %d giorni",
+    days: "tra %d giorni"
   },
   es: {
     overdue: "atrasado",
     today: "hoy",
     tomorrow: "ma\xF1ana",
-    days: "en %d d\xEDas",
+    days: "en %d d\xEDas"
   },
   pl: {
     overdue: "zaleg\u0142e",
     today: "dzisiaj",
     tomorrow: "jutro",
-    days: "za %d dni",
+    days: "za %d dni"
   },
   uk: {
     overdue: "\u043F\u0440\u043E\u0441\u0442\u0440\u043E\u0447\u0435\u043D\u043E",
     today: "\u0441\u044C\u043E\u0433\u043E\u0434\u043D\u0456",
     tomorrow: "\u0437\u0430\u0432\u0442\u0440\u0430",
-    days: "\u0447\u0435\u0440\u0435\u0437 %d \u0434\u043D.",
+    days: "\u0447\u0435\u0440\u0435\u0437 %d \u0434\u043D."
   },
   "zh-cn": {
     overdue: "\u5DF2\u903E\u671F",
     today: "\u4ECA\u5929",
     tomorrow: "\u660E\u5929",
-    days: "%d \u5929\u540E",
-  },
+    days: "%d \u5929\u540E"
+  }
 };
 function resolveLanguage(language) {
   if (typeof language === "string" && import_types.SUPPORTED_LANGUAGES.includes(language)) {
@@ -131,13 +129,7 @@ class StateManager {
     if (typeof name !== "string") {
       return "unknown";
     }
-    return (
-      name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "_")
-        .replace(/^_+|_+$/g, "")
-        .slice(0, 50) || "unknown"
-    );
+    return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 50) || "unknown";
   }
   /**
    * Parse the status code from a delivery. API documents `status_code` as
@@ -183,9 +175,9 @@ class StateManager {
     await this.adapter.extendObjectAsync(devicePath, {
       type: "device",
       common: {
-        name: description || `Package ${trackingNumber || pkgId}`,
+        name: description || `Package ${trackingNumber || pkgId}`
       },
-      native: {},
+      native: {}
     });
     const statusCode = this.parseStatus(delivery);
     const labels = import_types.STATUS_LABELS[this.language];
@@ -202,14 +194,14 @@ class StateManager {
         "Delivery Window",
         "string",
         "text",
-        this.calculateDeliveryWindow(delivery, statusCode),
+        this.calculateDeliveryWindow(delivery, statusCode)
       ),
       this.createAndSet(
         `${devicePath}.deliveryEstimate`,
         "Delivery Estimate",
         "string",
         "text",
-        this.calculateDeliveryEstimate(delivery, statusCode),
+        this.calculateDeliveryEstimate(delivery, statusCode)
       ),
       this.createAndSet(`${devicePath}.lastEvent`, "Last Event", "string", "text", this.formatLastEvent(delivery)),
       this.createAndSet(
@@ -217,15 +209,9 @@ class StateManager {
         "Last Location",
         "string",
         "text",
-        this.extractLastLocation(delivery),
+        this.extractLastLocation(delivery)
       ),
-      this.createAndSet(
-        `${devicePath}.lastUpdated`,
-        "Last Updated",
-        "string",
-        "date",
-        /* @__PURE__ */ new Date().toISOString(),
-      ),
+      this.createAndSet(`${devicePath}.lastUpdated`, "Last Updated", "string", "date", (/* @__PURE__ */ new Date()).toISOString())
     ]);
   }
   /**
@@ -235,7 +221,7 @@ class StateManager {
    * @param activeDeliveries Only active (non-delivered) deliveries
    */
   async updateSummary(activeDeliveries) {
-    const todayDeliveries = activeDeliveries.filter(d => this.isToday(d, this.parseStatus(d)));
+    const todayDeliveries = activeDeliveries.filter((d) => this.isToday(d, this.parseStatus(d)));
     await Promise.all([
       this.createAndSet("summary.activeCount", "Active Deliveries", "number", "value", activeDeliveries.length),
       this.createAndSet("summary.todayCount", "Deliveries Today", "number", "value", todayDeliveries.length),
@@ -244,8 +230,8 @@ class StateManager {
         "Combined Delivery Window",
         "string",
         "text",
-        this.calculateCombinedWindow(todayDeliveries),
-      ),
+        this.calculateCombinedWindow(todayDeliveries)
+      )
     ]);
   }
   /**
@@ -254,10 +240,10 @@ class StateManager {
    * @param activeIds List of currently active package IDs
    */
   async cleanupDeliveries(activeIds) {
-    const activeSet = new Set(activeIds.map(id => `deliveries.${id}`));
+    const activeSet = new Set(activeIds.map((id) => `deliveries.${id}`));
     const objects = await this.adapter.getObjectViewAsync("system", "device", {
       startkey: `${this.adapter.namespace}.deliveries.`,
-      endkey: `${this.adapter.namespace}.deliveries.\u9999`,
+      endkey: `${this.adapter.namespace}.deliveries.\u9999`
     });
     for (const row of objects.rows) {
       const relativeId = row.id.replace(`${this.adapter.namespace}.`, "");
@@ -277,7 +263,7 @@ class StateManager {
     if (!TRACKABLE_STATUSES.has(statusCode)) {
       return "";
     }
-    const formatTime = timestamp => {
+    const formatTime = (timestamp) => {
       const ts = coerceNumber(timestamp);
       if (ts === null || ts <= 0) {
         return null;
@@ -397,9 +383,7 @@ class StateManager {
    * @param todayDeliveries Deliveries expected today
    */
   calculateCombinedWindow(todayDeliveries) {
-    const windows = todayDeliveries
-      .map(d => this.calculateDeliveryWindow(d, this.parseStatus(d)))
-      .filter(w => w.length > 0);
+    const windows = todayDeliveries.map((d) => this.calculateDeliveryWindow(d, this.parseStatus(d))).filter((w) => w.length > 0);
     if (windows.length === 0) {
       return "";
     }
@@ -432,15 +416,14 @@ class StateManager {
     await this.adapter.setObjectNotExistsAsync(id, {
       type: "state",
       common: { name, type, role, read: true, write: false },
-      native: {},
+      native: {}
     });
     await this.adapter.setStateAsync(id, { val, ack: true });
   }
 }
 // Annotate the CommonJS export names for ESM import in node:
-0 &&
-  (module.exports = {
-    StateManager,
-    resolveLanguage,
-  });
+0 && (module.exports = {
+  StateManager,
+  resolveLanguage
+});
 //# sourceMappingURL=state-manager.js.map

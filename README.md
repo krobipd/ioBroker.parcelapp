@@ -32,8 +32,8 @@ ioBroker adapter that connects to the [parcel.app](https://parcelapp.net) API an
 ## Requirements
 
 - **Node.js >= 20**
-- **ioBroker js-controller >= 6.0.11**
-- **ioBroker Admin >= 7.6.20**
+- **ioBroker js-controller >= 7.0.7**
+- **ioBroker Admin >= 7.7.22**
 - **parcel.app Premium subscription** — required for API access
 
 ---
@@ -119,8 +119,7 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 ---
 
 ## Changelog
-
-### **WORK IN PROGRESS**
+### 0.3.0 (2026-04-30)
 
 - DRY: dead `STATUS_LABELS_DE` + `STATUS_LABELS_EN` aliases removed from `types.ts`; tests rewritten to use `STATUS_LABELS.de` / `STATUS_LABELS.en` directly.
 - New `format` + `format:check` npm-scripts (run prettier — matches the other krobi adapters).
@@ -150,13 +149,6 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 - Bump min js-controller to `>=7.0.23` (matches latest-repo recommendation).
 - Audit-driven boilerplate sync with the other krobi adapters (`.vscode` json5 schemas, `tsconfig.test` looser test rules).
 - README footer-link to `CHANGELOG_OLD.md` restored, `CHANGELOG_OLD.md` cleaned up to consistent compact style.
-
-### 0.2.14 (2026-04-23)
-
-- Separate test-build output (`build-test/`) from production `build/`, no more duplicated `build/src` + `build/test` tree in published packages.
-- Declare `deliveries` folder and `summary` channel as instance objects so their parent exists before per-package states appear.
-- Localize status labels and delivery estimates to all 11 ioBroker languages via `system.config.language`; the per-instance `Status Language` option is removed.
-- Fix `summary.todayCount` for non-DE/EN languages (filter compared estimate strings against `heute`/`today`, so it always returned zero elsewhere).
 
 ## Support
 
