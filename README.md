@@ -119,7 +119,7 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 ---
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 0.3.2 (2026-05-01)
 - Documentation: rewrote release notes for v0.2.14–v0.3.1 in user-friendly style across all languages.
 
 ### 0.3.1 (2026-05-01)
@@ -133,9 +133,6 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 
 ### 0.2.17 (2026-04-28)
 - Internal cleanup. No user-facing changes.
-
-### 0.2.16 (2026-04-26)
-- Min `js-controller` restored to `>=6.0.11` (was incorrectly bumped to `>=7.0.23` in 0.2.15).
 
 Older entries are in [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
 

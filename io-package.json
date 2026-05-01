@@ -1,9 +1,9 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.3.1",
+    "version": "0.3.2",
     "news": {
-      "NEXT": {
+      "0.3.2": {
         "en": "Documentation: rewrote release notes in user-friendly style across all languages.",
         "de": "Dokumentation: Release-Notes in alle Sprachen User-orientiert neu geschrieben.",
         "ru": "Документация: примечания к релизу переписаны в дружественном к пользователю стиле на всех языках.",
@@ -93,19 +93,6 @@
         "pl": "Ochrona przed crashem: handlery błędów process-level.",
         "uk": "Захист від збоїв: process-level обробники помилок.",
         "zh-cn": "崩溃防护：process-level 错误处理器。"
-      },
-      "0.2.14": {
-        "en": "Status labels and delivery estimates now follow the ioBroker system language (11 languages). Fix: today-count for non-DE/EN.",
-        "de": "Status-Labels und Liefer-Schätzungen folgen jetzt der ioBroker-Systemsprache (11 Sprachen). Fix: Heute-Zähler für nicht-DE/EN.",
-        "ru": "Метки статуса и оценки доставки теперь следуют системному языку ioBroker (11 языков). Fix: счётчик «сегодня» для не-DE/EN.",
-        "pt": "Rótulos de status e estimativas de entrega agora seguem o idioma do sistema ioBroker (11 idiomas). Fix: contagem de hoje para não-DE/EN.",
-        "nl": "Statuslabels en bezorgschattingen volgen nu de ioBroker-systeemtaal (11 talen). Fix: vandaag-teller voor niet-DE/EN.",
-        "fr": "Les libellés de statut et estimations de livraison suivent désormais la langue système ioBroker (11 langues). Fix : compteur d'aujourd'hui pour non-DE/EN.",
-        "it": "Etichette di stato e stime di consegna ora seguono la lingua di sistema ioBroker (11 lingue). Fix: contatore oggi per non-DE/EN.",
-        "es": "Las etiquetas de estado y las estimaciones de entrega ahora siguen el idioma del sistema ioBroker (11 idiomas). Fix: contador de hoy para no-DE/EN.",
-        "pl": "Etykiety statusu i szacunki dostaw teraz korzystają z języka systemowego ioBroker (11 języków). Fix: licznik dzisiaj dla nie-DE/EN.",
-        "uk": "Мітки статусу та оцінки доставки тепер слідують системній мові ioBroker (11 мов). Fix: лічильник «сьогодні» для не-DE/EN.",
-        "zh-cn": "状态标签和送达预估现在遵循 ioBroker 系统语言（11 种语言）。修复：非 DE/EN 的今日计数。"
       }
     },
     "titleLang": {

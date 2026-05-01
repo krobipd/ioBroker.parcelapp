@@ -1,4 +1,7 @@
 # Older Changes
+## 0.2.16 (2026-04-26)
+- Min `js-controller` restored to `>=6.0.11` (was incorrectly bumped to `>=7.0.23` in 0.2.15).
+
 ## 0.2.15 (2026-04-26)
 - Crash defense: process-level `unhandledRejection`/`uncaughtException` handlers.
 
