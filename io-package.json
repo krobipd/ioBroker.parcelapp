@@ -1,9 +1,9 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "news": {
-      "NEXT": {
+      "0.3.1": {
         "en": "Documentation cleanup: shortened older changelog entries.",
         "de": "Dokumentation: ältere Changelog-Einträge gekürzt.",
         "ru": "Документация: сокращены старые записи changelog.",

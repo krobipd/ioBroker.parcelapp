@@ -1,4 +1,7 @@
 # Older Changes
+## 0.2.15 (2026-04-26)
+- Crash defense: process-level `unhandledRejection`/`uncaughtException` handlers.
+
 ## 0.2.14 (2026-04-23)
 - Status labels localized via `system.config.language` (11 languages). Fix: `summary.todayCount` for non-DE/EN.
 
