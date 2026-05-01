@@ -119,36 +119,25 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 ---
 
 ## Changelog
-### 0.3.0 (2026-04-30)
+### **WORK IN PROGRESS**
+- Documentation cleanup: shortened older changelog entries.
 
-- DRY: dead `STATUS_LABELS_DE` + `STATUS_LABELS_EN` aliases removed from `types.ts`; tests rewritten to use `STATUS_LABELS.de` / `STATUS_LABELS.en` directly.
-- New `format` + `format:check` npm-scripts (run prettier — matches the other krobi adapters).
-- Master-sync against `.consistency-master/`: `.github/dependabot.yml` ignore-block for `actions/checkout` + `actions/setup-node` major bumps, and the `repochecker-version-gate` workflow job moved from the legacy M1000 check to the sources-dist-stable check (now identical to hassemu).
+### 0.3.0 (2026-04-30)
+- Internal cleanup: removed dead `STATUS_LABELS_*` aliases, added `format`/`format:check` scripts, master-sync.
 
 ### 0.2.18 (2026-04-28)
-
-- Audit cleanup against the upstream `ioBroker.example/TypeScript` full standard:
-  - `@types/node` rolled back from `^25.6.0` to `^20.19.24` so type defs match `engines.node: ">=20"` (otherwise Node 21+-only APIs would type-check on Node 20 and crash at runtime)
-  - Dependabot now ignores major bumps for `@types/node`, `typescript`, `eslint` so the runtime/toolchain pinning cannot drift via auto-merge
-  - `nyc` config + `coverage` script added (matches upstream template)
-  - `prettier.config.mjs` made explicit with project-style overrides (Spaces 2-wide, double quotes) instead of relying on missing config
-  - Orphan `.github/auto-merge.yml` removed (the active workflow is `automerge-dependabot.yml` using `gh pr merge`, the old yml was never read)
+- Internal cleanup against ioBroker.example/TypeScript standard.
 
 ### 0.2.17 (2026-04-28)
-
-- Test setup migrated to the upstream `ioBroker.example/TypeScript` standard: tests now live next to source as `src/**/*.test.ts` and run directly via `ts-node/register`, no separate test-build. Removes `tsconfig.test.json` + `build-test/` per latest-repo review feedback.
+- Internal: test setup migrated to `src/**/*.test.ts` standard.
 
 ### 0.2.16 (2026-04-26)
-
-- Min js-controller correction: was incorrectly bumped to `>=7.0.23` in 0.2.15 (Wert kam aus Recherche-Synthese, nicht aus Repochecker-Source). Repochecker-recommended value is `>=6.0.11` — restored.
+- Min js-controller corrected back to `>=6.0.11` (was incorrectly bumped to `>=7.0.23` in 0.2.15).
 
 ### 0.2.15 (2026-04-26)
+- Crash defense: process-level `unhandledRejection`/`uncaughtException` handlers.
 
-- Process-level `unhandledRejection` / `uncaughtException` handlers added as last-line-of-defence against fire-and-forget rejections.
-- Stop shipping the `manual-review` release-script plugin — adapter-only consequence.
-- Bump min js-controller to `>=7.0.23` (matches latest-repo recommendation).
-- Audit-driven boilerplate sync with the other krobi adapters (`.vscode` json5 schemas, `tsconfig.test` looser test rules).
-- README footer-link to `CHANGELOG_OLD.md` restored, `CHANGELOG_OLD.md` cleaned up to consistent compact style.
+Older entries are in [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
 
 ## Support
 

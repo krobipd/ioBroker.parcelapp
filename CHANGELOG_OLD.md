@@ -1,116 +1,63 @@
 # Older Changes
 ## 0.2.14 (2026-04-23)
-
-- Separate test-build output (`build-test/`) from production `build/`, no more duplicated `build/src` + `build/test` tree in published packages.
-- Declare `deliveries` folder and `summary` channel as instance objects so their parent exists before per-package states appear.
-- Localize status labels and delivery estimates to all 11 ioBroker languages via `system.config.language`; the per-instance `Status Language` option is removed.
-- Fix `summary.todayCount` for non-DE/EN languages (filter compared estimate strings against `heute`/`today`, so it always returned zero elsewhere).
+- Status labels localized via `system.config.language` (11 languages). Fix: `summary.todayCount` for non-DE/EN.
 
 ## 0.2.13 (2026-04-19)
-
-- Latest-repo review compliance: `common.messagebox=true` added because the admin-UI `Check Connection` and `Add Delivery` buttons route through `onMessage`. Runtime behaviour unchanged.
+- Internal: `common.messagebox=true` (admin-UI button routing).
 
 ## 0.2.12 (2026-04-18)
-
-- Harden API-drift guards in `ParcelClient` and `StateManager` (non-boolean `success`, non-array `deliveries`, non-string `error_code`/`error_message`, non-object carrier map, non-string delivery fields, numeric/string `status_code`, numeric-string `timestamp_expected`, malformed `events`)
-- Add 38 regression tests (128 total) covering the new drift paths
+- API-drift hardening in `ParcelClient` and `StateManager`. +38 regression tests.
 
 ## 0.2.11 (2026-04-12)
-
-- Fix: handle response stream errors (prevents unhandled exceptions on connection drop)
-- Fix: isolate per-delivery poll failures (one broken delivery no longer blocks all others)
-- Fix: harden onMessage with try/catch and callback guard
-- Fix: onUnload try/catch prevents adapter hang on shutdown
-- DRY: parseStatus helper eliminates repeated parseInt calls
-- Simplify obsolete state cleanup, use setObjectNotExistsAsync for states
+- Fix: response-stream errors handled, per-delivery poll failures isolated, safer `onMessage`/`onUnload`.
 
 ## 0.2.10 (2026-04-12)
-
-- Fix test timezone bug, remove unused devDependencies, add `no-floating-promises` lint rule.
-- Remove redundant `actions/checkout` from CI workflow.
+- Internal cleanup.
 
 ## 0.2.9 (2026-04-08)
-
-- Standard ioBroker test suite added, test-build config optimised.
-
-Older entries have been moved to [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
+- Standard ioBroker test suite added.
 
 ## 0.2.8 (2026-04-05)
-
-- Empty parent folders cleaned up after removing obsolete states.
+- Empty parent folders cleaned after obsolete-state removal.
 
 ## 0.2.7 (2026-04-05)
-
-- Consistent UI labels across all adapters.
+- Internal: consistent UI labels.
 
 ## 0.2.6 (2026-04-05)
-
-- Redundant scripts removed, documentation compressed.
+- Internal cleanup.
 
 ## 0.2.5 (2026-04-04)
-
-- Delivery window timeout on Windows fixed (deterministic time formatting).
+- Fix: delivery-window timeout on Windows.
 
 ## 0.2.4 (2026-04-03)
-
-- Dev tooling modernised — esbuild, TypeScript 5.9 pin, testing-action-check v2.
+- Internal dev-tooling modernization.
 
 ## 0.2.3 (2026-03-28)
-
-- Carrier-name cache no longer fails forever after the initial fetch error — retries on next call.
+- Fix: carrier-name cache retries after initial error.
 
 ## 0.2.2 (2026-03-28)
-
-- Adapter-managed timers (`this.setInterval` / `this.clearInterval`).
-- Windows and macOS added to CI test matrix.
-- Consistent admin UI i18n keys (`supportHeader`).
-- Full MIT license text in README.
+- Adapter-managed timers; Windows + macOS in CI.
 
 ## 0.2.1 (2026-03-25)
-
-- API rate-limit detection (HTTP 429) with automatic cooldown.
-- Connection-error deduplication to prevent log spam during outages.
-- Poll throttling (minimum 60 s between requests).
-- Error classification improved for network, timeout, and API errors.
+- API rate-limit detection (HTTP 429) with cooldown. Connection-error deduplication. Poll throttling (60 s minimum).
 
 ## 0.2.0 (2026-03-25)
-
-- Option to keep delivered packages in states instead of auto-removing.
-- Admin UI simplified from tabs to single-page layout.
-- Redundant `summary.json` state removed.
-- Filter-mode setting removed (now automatic based on delivery behaviour).
+- Optional keep-delivered packages. Admin UI simplified to single page.
 
 ## 0.1.5 (2026-03-24)
-
-- `auto-merge.yml` config added.
-- Dependabot schedule changed from monthly to weekly.
-- `actions/checkout` updated to v6.
+- Internal: dependabot schedule + actions update.
 
 ## 0.1.4 (2026-03-24)
-
-- README clarified — ioBroker adapter framing and feature descriptions.
+- README clarified.
 
 ## 0.1.3 (2026-03-24)
-
 - Auto-merge workflow for Dependabot PRs.
-- Dependabot schedule time randomised for load distribution.
 
 ## 0.1.2 (2026-03-23)
-
-- devDependencies updated (`@iobroker/build-tools` 3.x, `@types/node` 25.x).
+- devDependencies update.
 
 ## 0.1.1 (2026-03-23)
-
-- Adapter logo redesigned (cardboard package with tracking pin).
-- Repochecker issues fixed (dependabot config, test artefacts, mocha dependency).
+- Adapter logo redesigned. Repochecker fixes.
 
 ## 0.1.0 (2026-03-23)
-
-- Initial release.
-- Tracks packages from 300+ carriers via the parcel.app API.
-- Admin UI with connection test, polling settings, donation tab.
-- Automatic cleanup of delivered packages.
-- Combined delivery window for today's deliveries.
-- Summary states (active count, today count, delivery window, JSON).
-- Multilingual status labels (German/English).
-- Add-delivery support via `sendTo` message.
+- Initial release. Package tracking via parcel.app API.
