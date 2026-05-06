@@ -1,9 +1,9 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.3.2",
+    "version": "0.4.0",
     "news": {
-      "NEXT": {
+      "0.4.0": {
         "en": "State names now follow your ioBroker system language across 11 languages. User-visible info/warn/error logs are localized too. Min Node 22, Admin 7.8.23.",
         "de": "Datenpunkt-Namen folgen jetzt der ioBroker-Systemsprache in 11 Sprachen. User-sichtbare info/warn/error-Logs ebenfalls lokalisiert. Min Node 22, Admin 7.8.23.",
         "ru": "Имена датчиков теперь следуют системному языку ioBroker на 11 языках. Пользовательские info/warn/error логи также локализованы. Мин. Node 22, Admin 7.8.23.",
@@ -93,19 +93,6 @@
         "pl": "Min. js-controller przywrócony do >=6.0.11 (w 0.2.15 błędnie ustawiony na >=7.0.23).",
         "uk": "Мін. js-controller повернено на >=6.0.11 (у 0.2.15 помилково було >=7.0.23).",
         "zh-cn": "最低 js-controller 恢复为 >=6.0.11（0.2.15 中错误地设置为 >=7.0.23）。"
-      },
-      "0.2.15": {
-        "en": "Crash defense: process-level error handlers.",
-        "de": "Crash-Schutz: process-level Error-Handler.",
-        "ru": "Защита от сбоев: process-level обработчики ошибок.",
-        "pt": "Proteção contra falhas: handlers de erro process-level.",
-        "nl": "Crashbescherming: process-level error-handlers.",
-        "fr": "Défense contre les crashs : handlers d'erreur process-level.",
-        "it": "Difesa anti-crash: handler di errore process-level.",
-        "es": "Defensa contra fallos: handlers de error process-level.",
-        "pl": "Ochrona przed crashem: handlery błędów process-level.",
-        "uk": "Захист від збоїв: process-level обробники помилок.",
-        "zh-cn": "崩溃防护：process-level 错误处理器。"
       }
     },
     "titleLang": {

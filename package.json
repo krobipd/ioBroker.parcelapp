@@ -1,6 +1,6 @@
 {
   "name": "iobroker.parcelapp",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "ioBroker adapter for the parcel.app API",
   "author": {
     "name": "krobi",
