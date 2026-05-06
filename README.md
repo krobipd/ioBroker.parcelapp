@@ -135,7 +135,9 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 ### 0.2.18 (2026-04-28)
 - Internal cleanup. No user-facing changes.
 
-Older entries are in [CHANGELOG_OLD.md](CHANGELOG_OLD.md).## Support
+Older entries are in [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
+
+## Support
 
 - [ioBroker Forum](https://forum.iobroker.net/)
 - [GitHub Issues](https://github.com/krobipd/ioBroker.parcelapp/issues)
