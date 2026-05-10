@@ -182,6 +182,41 @@ describe("StateManager", () => {
       delete delivery.extra_information;
       expect(manager.packageId(delivery)).to.equal("abc123");
     });
+
+    // S3 v0.4.2 — collision-suffix
+    it("collision: first occurrence keeps bare id, second gets hash suffix (S3 v0.4.2)", () => {
+      manager.resetPollState();
+      // Two trackings differ only in chars that strip to the same id.
+      const a = makeDelivery({ tracking_number: "ABC-123" });
+      const b = makeDelivery({ tracking_number: "ABC.123" });
+      const idA = manager.packageId(a);
+      const idB = manager.packageId(b);
+      expect(idA).to.equal("abc_123");
+      expect(idB).to.match(/^abc_123__[0-9a-f]{6}$/);
+      expect(idA).to.not.equal(idB);
+    });
+
+    it("same delivery gets the same id within a poll (no double-suffix)", () => {
+      manager.resetPollState();
+      const a = makeDelivery({ tracking_number: "ABC-123" });
+      const id1 = manager.packageId(a);
+      const id2 = manager.packageId(a);
+      expect(id1).to.equal(id2);
+      expect(id1).to.equal("abc_123");
+    });
+
+    it("resetPollState lets the bare-id win again next poll", () => {
+      const a = makeDelivery({ tracking_number: "ABC-123" });
+      const b = makeDelivery({ tracking_number: "ABC.123" });
+
+      manager.resetPollState();
+      manager.packageId(a);
+      expect(manager.packageId(b)).to.match(/^abc_123__/); // suffixed in this poll
+
+      manager.resetPollState();
+      // Fresh poll — `b` alone should now get the bare id.
+      expect(manager.packageId(b)).to.equal("abc_123");
+    });
   });
 
   describe("updateDelivery", () => {

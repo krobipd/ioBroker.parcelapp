@@ -3,6 +3,19 @@
     "name": "parcelapp",
     "version": "0.4.1",
     "news": {
+      "NEXT": {
+        "en": "Adapter shuts down cleanly when parcel.app is slow, 403 Forbidden gives a 'check Premium' hint instead of reauth-loop, two trackings with the same sanitized id no longer overwrite.",
+        "de": "Adapter beendet sauber wenn parcel.app langsam ist, 403-Fehler liefert 'Premium prüfen'-Hinweis statt Reauth-Loop, und zwei Trackings mit identischer Sanitize-ID überschreiben sich nicht mehr.",
+        "ru": "Адаптер корректно завершается при медленной parcel.app, 403 даёт подсказку 'проверьте Premium' вместо цикла переавторизации, два трекинга с одинаковым ID больше не перезаписываются.",
+        "pt": "O adaptador encerra de forma limpa quando o parcel.app está lento, 403 mostra dica 'verificar Premium' em vez de re-autenticar em loop, dois rastreios com o mesmo ID já não se sobrescrevem.",
+        "nl": "Adapter sluit netjes af als parcel.app traag is, 403 geeft 'Premium controleren'-hint in plaats van reauth-loop, en twee trackings met dezelfde id overschrijven elkaar niet meer.",
+        "fr": "L'adaptateur s'arrête proprement quand parcel.app est lent, un 403 donne 'vérifier Premium' au lieu de boucler la réauth, et deux suivis avec le même id ne s'écrasent plus.",
+        "it": "L'adapter si arresta correttamente quando parcel.app è lento, un 403 mostra 'controlla Premium' invece di un loop di reauth, due tracciamenti con lo stesso id non si sovrascrivono più.",
+        "es": "El adaptador se cierra limpiamente cuando parcel.app va lento, 403 muestra 'verificar Premium' en vez de bucle de reauth, y dos seguimientos con el mismo id ya no se sobrescriben.",
+        "pl": "Adapter zamyka się czysto, gdy parcel.app jest powolny, 403 daje wskazówkę 'sprawdź Premium' zamiast pętli reauth, dwa śledzenia z tym samym id już się nie nadpisują.",
+        "uk": "Адаптер коректно вимикається при повільному parcel.app, 403 дає підказку 'перевірте Premium' замість циклу входу, два трекінги з однаковим id більше не перезаписуються.",
+        "zh-cn": "当 parcel.app 响应缓慢时，适配器现在能干净退出（终止进行中的请求）。403 错误会提示检查 Premium 订阅，而不是反复重新认证。两个清洗后 ID 相同的快递不再互相覆盖。"
+      },
       "0.4.1": {
         "en": "Adapter log messages are now English only, in line with the ioBroker community standard. Localized state names (11 languages) remain unchanged.",
         "de": "Adapter-Logs sind jetzt nur noch auf Englisch, gemäß ioBroker-Community-Standard. Lokalisierte Datenpunkt-Namen (11 Sprachen) bleiben erhalten.",
@@ -69,19 +82,6 @@
         "zh-cn": "内部清理。对用户无可见变化。"
       },
       "0.2.18": {
-        "en": "Internal cleanup. No user-facing changes.",
-        "de": "Interne Bereinigung. Keine User-sichtbaren Änderungen.",
-        "ru": "Внутренняя очистка. Без видимых изменений для пользователя.",
-        "pt": "Limpeza interna. Sem alterações visíveis para o usuário.",
-        "nl": "Interne opschoning. Geen wijzigingen voor de gebruiker.",
-        "fr": "Nettoyage interne. Aucune modification visible pour l'utilisateur.",
-        "it": "Pulizia interna. Nessuna modifica visibile all'utente.",
-        "es": "Limpieza interna. Sin cambios visibles para el usuario.",
-        "pl": "Wewnętrzne porządki. Brak zmian widocznych dla użytkownika.",
-        "uk": "Внутрішнє прибирання. Без помітних для користувача змін.",
-        "zh-cn": "内部清理。对用户无可见变化。"
-      },
-      "0.2.17": {
         "en": "Internal cleanup. No user-facing changes.",
         "de": "Interne Bereinigung. Keine User-sichtbaren Änderungen.",
         "ru": "Внутренняя очистка. Без видимых изменений для пользователя.",

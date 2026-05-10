@@ -19,6 +19,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var coerce_exports = {};
 __export(coerce_exports, {
   coerceBoolean: () => coerceBoolean,
+  coerceClampedInt: () => coerceClampedInt,
   coerceFiniteNumber: () => coerceFiniteNumber,
   coerceString: () => coerceString,
   errText: () => errText,
@@ -87,9 +88,17 @@ function errText(err) {
     return Object.prototype.toString.call(err);
   }
 }
+function coerceClampedInt(raw, min, max, defaultValue) {
+  const n = typeof raw === "number" ? raw : typeof raw === "string" ? parseFloat(raw) : NaN;
+  if (!Number.isFinite(n)) {
+    return defaultValue;
+  }
+  return Math.max(min, Math.min(max, Math.floor(n)));
+}
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   coerceBoolean,
+  coerceClampedInt,
   coerceFiniteNumber,
   coerceString,
   errText,

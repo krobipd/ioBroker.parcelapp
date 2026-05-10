@@ -35,12 +35,28 @@ var https = __toESM(require("node:https"));
 var import_coerce = require("./coerce");
 const API_BASE = "https://api.parcel.app/external";
 const REQUEST_TIMEOUT = 15e3;
+const MAX_BODY_BYTES = 1 << 20;
 class ParcelClient {
   apiKey;
   carrierCache = null;
+  /**
+   * v0.4.2 (P1): per-request AbortController. `cancelAll()` aborts every
+   * pending HTTPS request — called from the adapter's `onUnload` so a slow
+   * parcel.app endpoint can't keep the adapter alive past js-controller's
+   * 4-second kill deadline.
+   */
+  inflight = /* @__PURE__ */ new Set();
   /** @param apiKey The parcel.app API key */
   constructor(apiKey) {
     this.apiKey = apiKey;
+  }
+  /**
+   * v0.4.2 (P1): abort every in-flight HTTPS request. Idempotent.
+   */
+  cancelAll() {
+    for (const ctrl of this.inflight) {
+      ctrl.abort();
+    }
   }
   /**
    * Fetch deliveries from parcel.app.
@@ -125,7 +141,15 @@ class ParcelClient {
    */
   request(method, path, authenticated, body) {
     return new Promise((resolve, reject) => {
-      const url = new URL(`${API_BASE}${path}`);
+      let url;
+      try {
+        url = new URL(`${API_BASE}${path}`);
+      } catch {
+        const err = new Error(`Invalid URL: ${API_BASE}${path}`);
+        err.code = "INVALID_URL";
+        reject(err);
+        return;
+      }
       const headers = {};
       if (authenticated) {
         headers["api-key"] = this.apiKey;
@@ -141,23 +165,57 @@ class ParcelClient {
         headers,
         timeout: REQUEST_TIMEOUT
       };
+      const ctrl = new AbortController();
+      this.inflight.add(ctrl);
+      const cleanup = () => {
+        this.inflight.delete(ctrl);
+      };
       const req = https.request(options, (res) => {
         const chunks = [];
-        res.on("error", (err) => reject(err));
-        res.on("data", (chunk) => chunks.push(chunk));
+        let bodyBytes = 0;
+        let oversized = false;
+        res.on("error", (err) => {
+          cleanup();
+          reject(err);
+        });
+        res.on("data", (chunk) => {
+          if (oversized) {
+            return;
+          }
+          bodyBytes += chunk.length;
+          if (bodyBytes > MAX_BODY_BYTES) {
+            oversized = true;
+            req.destroy(new Error(`Response body exceeds ${MAX_BODY_BYTES} bytes`));
+            return;
+          }
+          chunks.push(chunk);
+        });
         res.on("end", () => {
+          cleanup();
+          if (oversized) {
+            const err = new Error("Response body too large");
+            err.code = "BODY_TOO_LARGE";
+            reject(err);
+            return;
+          }
           const raw = Buffer.concat(chunks).toString("utf-8");
           if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
             if (res.statusCode === 429) {
               const retryAfter = parseInt(res.headers["retry-after"] || "", 10);
               const err2 = new Error("Rate limit exceeded");
               err2.code = "RATE_LIMITED";
-              err2.retryAfterSeconds = retryAfter > 0 ? retryAfter : 5 * 60;
+              err2.retryAfterSeconds = Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(24 * 3600, retryAfter) : 5 * 60;
               reject(err2);
               return;
             }
             const err = new Error(`HTTP ${res.statusCode}: ${res.statusMessage}`);
-            err.code = res.statusCode === 401 || res.statusCode === 403 ? "INVALID_API_KEY" : "HTTP_ERROR";
+            if (res.statusCode === 401) {
+              err.code = "INVALID_API_KEY";
+            } else if (res.statusCode === 403) {
+              err.code = "FORBIDDEN";
+            } else {
+              err.code = "HTTP_ERROR";
+            }
             reject(err);
             return;
           }
@@ -168,11 +226,18 @@ class ParcelClient {
           }
         });
       });
+      ctrl.signal.addEventListener("abort", () => {
+        req.destroy(new Error("Request aborted"));
+      });
       req.on("timeout", () => {
         req.destroy();
+        cleanup();
         reject(new Error("Request timeout"));
       });
-      req.on("error", (err) => reject(err));
+      req.on("error", (err) => {
+        cleanup();
+        reject(err);
+      });
       if (body) {
         req.write(JSON.stringify(body));
       }

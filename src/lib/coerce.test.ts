@@ -1,5 +1,13 @@
 import { expect } from "chai";
-import { coerceBoolean, coerceFiniteNumber, coerceString, errText, isPlainObject, isTrueish } from "./coerce";
+import {
+  coerceBoolean,
+  coerceClampedInt,
+  coerceFiniteNumber,
+  coerceString,
+  errText,
+  isPlainObject,
+  isTrueish,
+} from "./coerce";
 
 describe("coerceFiniteNumber", () => {
   it("returns finite numbers as-is", () => {
@@ -154,5 +162,40 @@ describe("errText", () => {
       }
     }
     expect(errText(new MyErr())).to.equal("custom");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// coerceClampedInt (X5 v0.4.2)
+// ---------------------------------------------------------------------------
+
+describe("coerceClampedInt (X5 v0.4.2)", () => {
+  it("returns numbers in range as-is (floored)", () => {
+    expect(coerceClampedInt(15, 5, 60, 10)).to.equal(15);
+    expect(coerceClampedInt(15.7, 5, 60, 10)).to.equal(15);
+  });
+
+  it("clamps below min", () => {
+    expect(coerceClampedInt(2, 5, 60, 10)).to.equal(5);
+    expect(coerceClampedInt(-100, 5, 60, 10)).to.equal(5);
+  });
+
+  it("clamps above max", () => {
+    expect(coerceClampedInt(120, 5, 60, 10)).to.equal(60);
+  });
+
+  it("parses numeric strings (admin can store config as string)", () => {
+    expect(coerceClampedInt("15", 5, 60, 10)).to.equal(15);
+    expect(coerceClampedInt("3", 5, 60, 10)).to.equal(5);
+  });
+
+  it("returns default for non-finite / unparseable inputs (NaN-trap fix)", () => {
+    expect(coerceClampedInt(undefined, 5, 60, 10)).to.equal(10);
+    expect(coerceClampedInt(null, 5, 60, 10)).to.equal(10);
+    expect(coerceClampedInt(NaN, 5, 60, 10)).to.equal(10);
+    expect(coerceClampedInt(Infinity, 5, 60, 10)).to.equal(10);
+    expect(coerceClampedInt("", 5, 60, 10)).to.equal(10);
+    expect(coerceClampedInt("abc", 5, 60, 10)).to.equal(10);
+    expect(coerceClampedInt({}, 5, 60, 10)).to.equal(10);
   });
 });

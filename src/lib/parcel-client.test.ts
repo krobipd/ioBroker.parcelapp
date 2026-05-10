@@ -79,7 +79,16 @@ function createTestClient(apiKey: string, port: number): ParcelClient {
             const err = new Error(`HTTP ${res.statusCode}: ${res.statusMessage}`) as Error & {
               code: string;
             };
-            err.code = res.statusCode === 401 || res.statusCode === 403 ? "INVALID_API_KEY" : "HTTP_ERROR";
+            // v0.4.2 (P3): mirror the production split — 401 = invalid key,
+            // 403 = forbidden (e.g. Premium expired). The earlier mock
+            // collapsed both into INVALID_API_KEY.
+            if (res.statusCode === 401) {
+              err.code = "INVALID_API_KEY";
+            } else if (res.statusCode === 403) {
+              err.code = "FORBIDDEN";
+            } else {
+              err.code = "HTTP_ERROR";
+            }
             reject(err);
             return;
           }
@@ -312,7 +321,10 @@ describe("ParcelClient", () => {
       }
     });
 
-    it("should detect invalid API key on 403", async () => {
+    it("should set FORBIDDEN code on 403 (P3 v0.4.2)", async () => {
+      // v0.4.2 (P3): 403 is a permission issue (e.g. Premium expired);
+      // distinct from INVALID_API_KEY (401) so the adapter can show a
+      // helpful "check your account" hint instead of looping reauth.
       const { server, port } = await startMockServer((_req, res) => {
         res.writeHead(403, { "Content-Type": "text/plain" });
         res.end("Forbidden");
@@ -324,7 +336,7 @@ describe("ParcelClient", () => {
         expect.fail("Should have thrown");
       } catch (err) {
         const error = err as Error & { code: string };
-        expect(error.code).to.equal("INVALID_API_KEY");
+        expect(error.code).to.equal("FORBIDDEN");
       } finally {
         await stopServer(server);
       }
@@ -812,6 +824,22 @@ describe("ParcelClient", () => {
       } finally {
         await stopServer(server);
       }
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // v0.4.2 hardening — cancelAll
+  // -----------------------------------------------------------------------
+
+  describe("cancelAll (P1 v0.4.2)", () => {
+    it("is idempotent and safe on an empty in-flight set", () => {
+      // ParcelClient cannot easily be pointed at a hanging mock here (the
+      // production `request` uses node:https against api.parcel.app), but
+      // the key invariant — `cancelAll()` never throws even when nothing
+      // is pending — must hold.
+      const client = createTestClient("key", 0);
+      client.cancelAll();
+      client.cancelAll();
     });
   });
 });

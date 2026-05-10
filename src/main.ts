@@ -1,5 +1,5 @@
 import * as utils from "@iobroker/adapter-core";
-import { errText } from "./lib/coerce";
+import { coerceClampedInt, errText } from "./lib/coerce";
 import { ParcelClient } from "./lib/parcel-client";
 import { StateManager } from "./lib/state-manager";
 
@@ -7,6 +7,8 @@ const MIN_POLL_INTERVAL = 5;
 const MAX_POLL_INTERVAL = 60;
 const DEFAULT_POLL_INTERVAL = 10;
 const MIN_POLL_GAP_MS = 60_000; // Minimum 60s between polls
+/** v0.4.2 (M6): minimum length for an apiKey value to even be considered valid. */
+const MIN_API_KEY_LENGTH = 10;
 
 /** ioBroker adapter for parcel.app package tracking */
 class ParcelappAdapter extends utils.Adapter {
@@ -43,11 +45,16 @@ class ParcelappAdapter extends utils.Adapter {
     // fire-and-forget paths (e.g. `void this.poll()`). The per-handler
     // .catch() wrappers cover the documented async paths; this catches
     // anything that slips past during refactors.
+    // v0.4.2 (M1): log + terminate(11) instead of leaving the process alive
+    // in an undefined state. The per-handler wrappers cover expected paths;
+    // anything reaching here is by definition unexpected.
     this.unhandledRejectionHandler = (reason: unknown) => {
       this.log.error(`Unhandled rejection: ${errText(reason)}`);
+      this.terminate?.(11);
     };
     this.uncaughtExceptionHandler = (err: Error) => {
       this.log.error(`Uncaught exception: ${errText(err)}`);
+      this.terminate?.(11);
     };
     process.on("unhandledRejection", this.unhandledRejectionHandler);
     process.on("uncaughtException", this.uncaughtExceptionHandler);
@@ -66,7 +73,7 @@ class ParcelappAdapter extends utils.Adapter {
 
     // Validate config
     const { apiKey } = this.config;
-    if (!apiKey || apiKey.trim().length < 10) {
+    if (!apiKey || apiKey.trim().length < MIN_API_KEY_LENGTH) {
       this.log.error("No valid API key configured — please enter your parcel.app API key in the adapter settings");
       return;
     }
@@ -81,15 +88,24 @@ class ParcelappAdapter extends utils.Adapter {
     // Initial poll
     await this.poll();
 
-    // Set up recurring poll
-    const interval = Math.max(
-      MIN_POLL_INTERVAL,
-      Math.min(MAX_POLL_INTERVAL, this.config.pollInterval ?? DEFAULT_POLL_INTERVAL),
-    );
+    // v0.4.2 (M5): coerce explicitly. Admin can store `pollInterval` as a
+    // string; `Math.min(60, "10")` happens to coerce, but `Math.max(5,
+    // undefined)` returns NaN, and `setInterval(fn, NaN)` becomes
+    // `setInterval(fn, 0)` — a tight loop that hammers the API.
+    const interval = ParcelappAdapter.coercePollInterval(this.config.pollInterval);
     const intervalMs = interval * 60 * 1000;
     this.pollTimer = this.setInterval(() => void this.poll(), intervalMs);
 
     this.log.info(`Parcel tracking started — polling every ${interval} minutes`);
+  }
+
+  /**
+   * v0.4.2 (M5+X5): delegate to the shared `coerceClampedInt` helper.
+   *
+   * @param raw Raw `pollInterval` from admin config (number or numeric string).
+   */
+  private static coercePollInterval(raw: unknown): number {
+    return coerceClampedInt(raw, MIN_POLL_INTERVAL, MAX_POLL_INTERVAL, DEFAULT_POLL_INTERVAL);
   }
 
   private onUnload(callback: () => void): void {
@@ -98,6 +114,10 @@ class ParcelappAdapter extends utils.Adapter {
         this.clearInterval(this.pollTimer);
         this.pollTimer = undefined;
       }
+      // v0.4.2 (M11+P1): cancel every in-flight HTTPS request so a slow
+      // parcel.app endpoint doesn't keep the adapter alive past
+      // js-controller's 4-second kill deadline.
+      this.client?.cancelAll();
       if (this.unhandledRejectionHandler) {
         process.off("unhandledRejection", this.unhandledRejectionHandler);
         this.unhandledRejectionHandler = null;
@@ -106,7 +126,11 @@ class ParcelappAdapter extends utils.Adapter {
         process.off("uncaughtException", this.uncaughtExceptionHandler);
         this.uncaughtExceptionHandler = null;
       }
-      void this.setState("info.connection", { val: false, ack: true });
+      // v0.4.2 (M10): explicit `.catch(() => {})` on the fire-and-forget so
+      // a broker-already-down doesn't leak as an unhandled rejection.
+      void this.setState("info.connection", { val: false, ack: true }).catch(() => {
+        /* broker is shutting down — ignore */
+      });
     } catch {
       // ignore
     }
@@ -123,7 +147,7 @@ class ParcelappAdapter extends utils.Adapter {
         case "checkConnection": {
           const msg = obj.message as { apiKey?: string };
           const key = msg?.apiKey?.trim() || "";
-          if (!key || key.length < 10) {
+          if (!key || key.length < MIN_API_KEY_LENGTH) {
             this.sendTo(obj.from, obj.command, { success: false, message: "API key is too short" }, obj.callback);
             return;
           }
@@ -187,6 +211,10 @@ class ParcelappAdapter extends utils.Adapter {
     if (error.code === "INVALID_API_KEY") {
       return "INVALID_API_KEY";
     }
+    // v0.4.2 (P3): 403 is a permission issue, distinct from invalid api-key.
+    if (error.code === "FORBIDDEN") {
+      return "FORBIDDEN";
+    }
     // Network errors: DNS, connection refused, no internet
     if (
       error.code === "ENOTFOUND" ||
@@ -243,24 +271,32 @@ class ParcelappAdapter extends utils.Adapter {
       const activeDeliveries = deliveries.filter(d => this.stateManager!.parseStatus(d) !== 0);
       const visibleDeliveries = autoRemove ? activeDeliveries : deliveries;
 
-      // Update each delivery (isolated: one failure must not block others)
-      const activeIds: string[] = [];
-      for (const delivery of visibleDeliveries) {
-        try {
-          const carrierName = await this.client.getCarrierName(delivery.carrier_code);
-          await this.stateManager.updateDelivery(delivery, carrierName);
-          activeIds.push(this.stateManager.packageId(delivery));
-          this.failedDeliveries.delete(delivery.tracking_number);
-        } catch (err) {
-          const msg = errText(err);
-          if (this.failedDeliveries.has(delivery.tracking_number)) {
-            this.log.debug(`Failed to update "${delivery.tracking_number}": ${msg}`);
-          } else {
-            this.log.warn(`Failed to update '${delivery.tracking_number}': ${msg}`);
-            this.failedDeliveries.add(delivery.tracking_number);
+      // v0.4.2 (S3): reset per-poll collision tracker so the bare-id wins
+      // for the first occurrence in this poll (deterministic, back-compat).
+      this.stateManager.resetPollState();
+
+      // v0.4.2 (M4): per-delivery updates run in parallel, each wrapped in
+      // try/catch so one bad delivery doesn't poison the others.
+      const idResults = await Promise.all(
+        visibleDeliveries.map(async delivery => {
+          try {
+            const carrierName = await this.client!.getCarrierName(delivery.carrier_code);
+            await this.stateManager!.updateDelivery(delivery, carrierName);
+            this.failedDeliveries.delete(delivery.tracking_number);
+            return this.stateManager!.packageId(delivery);
+          } catch (err) {
+            const msg = errText(err);
+            if (this.failedDeliveries.has(delivery.tracking_number)) {
+              this.log.debug(`Failed to update "${delivery.tracking_number}": ${msg}`);
+            } else {
+              this.log.warn(`Failed to update '${delivery.tracking_number}': ${msg}`);
+              this.failedDeliveries.add(delivery.tracking_number);
+            }
+            return null;
           }
-        }
-      }
+        }),
+      );
+      const activeIds = idResults.filter((id): id is string => id !== null);
 
       // Cleanup stale deliveries
       await this.stateManager.cleanupDeliveries(activeIds);
@@ -281,9 +317,23 @@ class ParcelappAdapter extends utils.Adapter {
       this.lastErrorCode = errorCode;
 
       if (error.code === "RATE_LIMITED") {
-        const cooldownSec = error.retryAfterSeconds || 5 * 60;
+        // v0.4.2 (M9): clamp Retry-After value into [60s, 24h]. A bogus 0,
+        // negative, or fractional value used to either wipe the cooldown
+        // (set rateLimitedUntil to past) or set it for fractions of a
+        // second — neither is the intended behavior.
+        const rawCooldown = error.retryAfterSeconds ?? 0;
+        const cooldownSec =
+          Number.isFinite(rawCooldown) && rawCooldown > 0
+            ? Math.min(24 * 3600, Math.max(60, Math.floor(rawCooldown)))
+            : 5 * 60;
         this.rateLimitedUntil = Date.now() + cooldownSec * 1000;
         this.log.warn(`Rate limit hit — pausing API requests for ${Math.ceil(cooldownSec / 60)} minute(s)`);
+      } else if (error.code === "FORBIDDEN") {
+        // v0.4.2 (P3): 403 is a permission issue (e.g. Premium subscription
+        // expired). Reauth wouldn't help — surface a clear hint.
+        this.log.error(
+          "parcel.app returned 403 Forbidden — your account may not have an active Premium subscription, or the API key was revoked. Check your account on parcelapp.net.",
+        );
       } else if (error.code === "INVALID_API_KEY") {
         // Always log — user must fix config
         this.log.error("Invalid API key — please check your parcel.app API key");

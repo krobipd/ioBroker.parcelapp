@@ -29,6 +29,7 @@ const MIN_POLL_INTERVAL = 5;
 const MAX_POLL_INTERVAL = 60;
 const DEFAULT_POLL_INTERVAL = 10;
 const MIN_POLL_GAP_MS = 6e4;
+const MIN_API_KEY_LENGTH = 10;
 class ParcelappAdapter extends utils.Adapter {
   client = null;
   stateManager = null;
@@ -56,16 +57,20 @@ class ParcelappAdapter extends utils.Adapter {
       this.onMessage(obj).catch((err) => this.log.error(`onMessage failed: ${(0, import_coerce.errText)(err)}`));
     });
     this.unhandledRejectionHandler = (reason) => {
+      var _a;
       this.log.error(`Unhandled rejection: ${(0, import_coerce.errText)(reason)}`);
+      (_a = this.terminate) == null ? void 0 : _a.call(this, 11);
     };
     this.uncaughtExceptionHandler = (err) => {
+      var _a;
       this.log.error(`Uncaught exception: ${(0, import_coerce.errText)(err)}`);
+      (_a = this.terminate) == null ? void 0 : _a.call(this, 11);
     };
     process.on("unhandledRejection", this.unhandledRejectionHandler);
     process.on("uncaughtException", this.uncaughtExceptionHandler);
   }
   async onReady() {
-    var _a, _b, _c;
+    var _a, _b;
     const sysConfig = await this.getForeignObjectAsync("system.config");
     const language = (_b = (_a = sysConfig == null ? void 0 : sysConfig.common) == null ? void 0 : _a.language) != null ? _b : "";
     if (typeof language === "string" && language.length > 0) {
@@ -73,7 +78,7 @@ class ParcelappAdapter extends utils.Adapter {
     }
     await this.setStateAsync("info.connection", { val: false, ack: true });
     const { apiKey } = this.config;
-    if (!apiKey || apiKey.trim().length < 10) {
+    if (!apiKey || apiKey.trim().length < MIN_API_KEY_LENGTH) {
       this.log.error("No valid API key configured \u2014 please enter your parcel.app API key in the adapter settings");
       return;
     }
@@ -81,20 +86,27 @@ class ParcelappAdapter extends utils.Adapter {
     this.stateManager = new import_state_manager.StateManager(this, language);
     await this.cleanupObsoleteStates();
     await this.poll();
-    const interval = Math.max(
-      MIN_POLL_INTERVAL,
-      Math.min(MAX_POLL_INTERVAL, (_c = this.config.pollInterval) != null ? _c : DEFAULT_POLL_INTERVAL)
-    );
+    const interval = ParcelappAdapter.coercePollInterval(this.config.pollInterval);
     const intervalMs = interval * 60 * 1e3;
     this.pollTimer = this.setInterval(() => void this.poll(), intervalMs);
     this.log.info(`Parcel tracking started \u2014 polling every ${interval} minutes`);
   }
+  /**
+   * v0.4.2 (M5+X5): delegate to the shared `coerceClampedInt` helper.
+   *
+   * @param raw Raw `pollInterval` from admin config (number or numeric string).
+   */
+  static coercePollInterval(raw) {
+    return (0, import_coerce.coerceClampedInt)(raw, MIN_POLL_INTERVAL, MAX_POLL_INTERVAL, DEFAULT_POLL_INTERVAL);
+  }
   onUnload(callback) {
+    var _a;
     try {
       if (this.pollTimer) {
         this.clearInterval(this.pollTimer);
         this.pollTimer = void 0;
       }
+      (_a = this.client) == null ? void 0 : _a.cancelAll();
       if (this.unhandledRejectionHandler) {
         process.off("unhandledRejection", this.unhandledRejectionHandler);
         this.unhandledRejectionHandler = null;
@@ -103,7 +115,8 @@ class ParcelappAdapter extends utils.Adapter {
         process.off("uncaughtException", this.uncaughtExceptionHandler);
         this.uncaughtExceptionHandler = null;
       }
-      void this.setState("info.connection", { val: false, ack: true });
+      void this.setState("info.connection", { val: false, ack: true }).catch(() => {
+      });
     } catch {
     }
     callback();
@@ -118,7 +131,7 @@ class ParcelappAdapter extends utils.Adapter {
         case "checkConnection": {
           const msg = obj.message;
           const key = ((_a = msg == null ? void 0 : msg.apiKey) == null ? void 0 : _a.trim()) || "";
-          if (!key || key.length < 10) {
+          if (!key || key.length < MIN_API_KEY_LENGTH) {
             this.sendTo(obj.from, obj.command, { success: false, message: "API key is too short" }, obj.callback);
             return;
           }
@@ -177,6 +190,9 @@ class ParcelappAdapter extends utils.Adapter {
     if (error.code === "INVALID_API_KEY") {
       return "INVALID_API_KEY";
     }
+    if (error.code === "FORBIDDEN") {
+      return "FORBIDDEN";
+    }
     if (error.code === "ENOTFOUND" || error.code === "ECONNREFUSED" || error.code === "ECONNRESET" || error.code === "ENETUNREACH" || error.code === "EHOSTUNREACH" || error.code === "EAI_AGAIN") {
       return "NETWORK";
     }
@@ -186,6 +202,7 @@ class ParcelappAdapter extends utils.Adapter {
     return error.code || "UNKNOWN";
   }
   async poll() {
+    var _a;
     if (this.isPolling || !this.client || !this.stateManager) {
       return;
     }
@@ -212,23 +229,27 @@ class ParcelappAdapter extends utils.Adapter {
       await this.setStateAsync("info.connection", { val: true, ack: true });
       const activeDeliveries = deliveries.filter((d) => this.stateManager.parseStatus(d) !== 0);
       const visibleDeliveries = autoRemove ? activeDeliveries : deliveries;
-      const activeIds = [];
-      for (const delivery of visibleDeliveries) {
-        try {
-          const carrierName = await this.client.getCarrierName(delivery.carrier_code);
-          await this.stateManager.updateDelivery(delivery, carrierName);
-          activeIds.push(this.stateManager.packageId(delivery));
-          this.failedDeliveries.delete(delivery.tracking_number);
-        } catch (err) {
-          const msg = (0, import_coerce.errText)(err);
-          if (this.failedDeliveries.has(delivery.tracking_number)) {
-            this.log.debug(`Failed to update "${delivery.tracking_number}": ${msg}`);
-          } else {
-            this.log.warn(`Failed to update '${delivery.tracking_number}': ${msg}`);
-            this.failedDeliveries.add(delivery.tracking_number);
+      this.stateManager.resetPollState();
+      const idResults = await Promise.all(
+        visibleDeliveries.map(async (delivery) => {
+          try {
+            const carrierName = await this.client.getCarrierName(delivery.carrier_code);
+            await this.stateManager.updateDelivery(delivery, carrierName);
+            this.failedDeliveries.delete(delivery.tracking_number);
+            return this.stateManager.packageId(delivery);
+          } catch (err) {
+            const msg = (0, import_coerce.errText)(err);
+            if (this.failedDeliveries.has(delivery.tracking_number)) {
+              this.log.debug(`Failed to update "${delivery.tracking_number}": ${msg}`);
+            } else {
+              this.log.warn(`Failed to update '${delivery.tracking_number}': ${msg}`);
+              this.failedDeliveries.add(delivery.tracking_number);
+            }
+            return null;
           }
-        }
-      }
+        })
+      );
+      const activeIds = idResults.filter((id) => id !== null);
       await this.stateManager.cleanupDeliveries(activeIds);
       await this.stateManager.updateSummary(activeDeliveries);
       this.log.debug(`Polled ${visibleDeliveries.length} deliveries (${activeDeliveries.length} active)`);
@@ -238,9 +259,14 @@ class ParcelappAdapter extends utils.Adapter {
       const isRepeat = errorCode === this.lastErrorCode;
       this.lastErrorCode = errorCode;
       if (error.code === "RATE_LIMITED") {
-        const cooldownSec = error.retryAfterSeconds || 5 * 60;
+        const rawCooldown = (_a = error.retryAfterSeconds) != null ? _a : 0;
+        const cooldownSec = Number.isFinite(rawCooldown) && rawCooldown > 0 ? Math.min(24 * 3600, Math.max(60, Math.floor(rawCooldown))) : 5 * 60;
         this.rateLimitedUntil = Date.now() + cooldownSec * 1e3;
         this.log.warn(`Rate limit hit \u2014 pausing API requests for ${Math.ceil(cooldownSec / 60)} minute(s)`);
+      } else if (error.code === "FORBIDDEN") {
+        this.log.error(
+          "parcel.app returned 403 Forbidden \u2014 your account may not have an active Premium subscription, or the API key was revoked. Check your account on parcelapp.net."
+        );
       } else if (error.code === "INVALID_API_KEY") {
         this.log.error("Invalid API key \u2014 please check your parcel.app API key");
       } else if (isRepeat) {

@@ -154,6 +154,11 @@ class StateManager {
   /**
    * Build a unique package ID from a delivery.
    *
+   * v0.4.2 (S3): when the bare `sanitize(tracking_number)` collides with
+   * another active package (e.g. two trackings differ only in special
+   * chars that strip down to the same id), append a stable hash of the
+   * full tracking number so both end up at distinct state IDs.
+   *
    * @param delivery The delivery to build an ID for
    */
   packageId(delivery) {
@@ -161,7 +166,44 @@ class StateManager {
     if (typeof delivery.extra_information === "string" && delivery.extra_information.length > 0) {
       id += `_${this.sanitize(delivery.extra_information)}`;
     }
+    const owner = this.idOwner.get(id);
+    const rawKey = StateManager.rawIdKey(delivery);
+    if (owner !== void 0 && owner !== rawKey) {
+      const suffixed = `${id}__${StateManager.shortHash(rawKey)}`;
+      this.idOwner.set(suffixed, rawKey);
+      return suffixed;
+    }
+    this.idOwner.set(id, rawKey);
     return id;
+  }
+  /** v0.4.2 (S3): build a stable raw-key for collision tracking. */
+  static rawIdKey(delivery) {
+    const t = typeof delivery.tracking_number === "string" ? delivery.tracking_number : "";
+    const e = typeof delivery.extra_information === "string" ? delivery.extra_information : "";
+    return `${t}\0${e}`;
+  }
+  /** v0.4.2 (S3): FNV-1a 32-bit short hash → 6 hex chars. */
+  static shortHash(s) {
+    let h = 2166136261;
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return (h >>> 0).toString(16).padStart(8, "0").slice(0, 6);
+  }
+  /**
+   * v0.4.2 (S3): which raw-tracking-key currently "owns" each sanitized id
+   * within the running poll. Cleared via `resetIdOwners()` between polls so
+   * the same delivery keeps its bare id as long as it's unique.
+   */
+  idOwner = /* @__PURE__ */ new Map();
+  /**
+   * v0.4.2 (S3): reset the per-poll collision tracker. Call from main.ts
+   * before iterating deliveries so the bare id always wins for the first
+   * occurrence in each poll.
+   */
+  resetPollState() {
+    this.idOwner.clear();
   }
   /**
    * Update or create all states for a delivery.
@@ -272,18 +314,27 @@ class StateManager {
       startkey: `${this.adapter.namespace}.deliveries.`,
       endkey: `${this.adapter.namespace}.deliveries.\u9999`
     });
+    if (!(objects == null ? void 0 : objects.rows)) {
+      return;
+    }
+    const toDelete = [];
     for (const row of objects.rows) {
       const relativeId = row.id.replace(`${this.adapter.namespace}.`, "");
       if (relativeId.startsWith("deliveries.") && !activeSet.has(relativeId)) {
+        toDelete.push(relativeId);
+      }
+    }
+    await Promise.all(
+      toDelete.map(async (relativeId) => {
         await this.adapter.delObjectAsync(relativeId, { recursive: true });
         this.adapter.log.debug(`Removed stale delivery: ${relativeId}`);
-        for (const id of this.createdIds) {
+        for (const id of [...this.createdIds]) {
           if (id === relativeId || id.startsWith(`${relativeId}.`)) {
             this.createdIds.delete(id);
           }
         }
-      }
-    }
+      })
+    );
   }
   /**
    * Calculate delivery time window — only from Unix timestamps.

@@ -117,3 +117,22 @@ export function errText(err: unknown): string {
     return Object.prototype.toString.call(err);
   }
 }
+
+/**
+ * v0.4.2 (X5): coerce an admin-config integer setting (number-or-string)
+ * to a finite, clamped integer. Returns `defaultValue` for non-finite
+ * input — guards against `setInterval(fn, NaN)` tight-loops when the
+ * config field happens to come back as a string from the admin UI.
+ *
+ * @param raw Raw value from `this.config.<field>`.
+ * @param min Inclusive lower bound.
+ * @param max Inclusive upper bound.
+ * @param defaultValue Fallback when raw is missing or unparseable.
+ */
+export function coerceClampedInt(raw: unknown, min: number, max: number, defaultValue: number): number {
+  const n = typeof raw === "number" ? raw : typeof raw === "string" ? parseFloat(raw) : NaN;
+  if (!Number.isFinite(n)) {
+    return defaultValue;
+  }
+  return Math.max(min, Math.min(max, Math.floor(n)));
+}

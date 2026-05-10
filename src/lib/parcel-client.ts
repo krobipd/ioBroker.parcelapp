@@ -4,15 +4,37 @@ import type { ParcelApiResponse, ParcelDelivery, AddDeliveryRequest, AddDelivery
 
 const API_BASE = "https://api.parcel.app/external";
 const REQUEST_TIMEOUT = 15_000;
+/**
+ * v0.4.2 (P9): hard cap on response body size. parcel.app deliveries lists
+ * are tiny (~1 kB per package, max ~50 packages = 50 kB), so a 1 MiB cap is
+ * 20× the realistic max while still defending against a runaway response.
+ */
+const MAX_BODY_BYTES = 1 << 20; // 1 MiB
 
 /** HTTP client for the parcel.app API */
 export class ParcelClient {
   private apiKey: string;
   private carrierCache: CarrierMap | null = null;
+  /**
+   * v0.4.2 (P1): per-request AbortController. `cancelAll()` aborts every
+   * pending HTTPS request — called from the adapter's `onUnload` so a slow
+   * parcel.app endpoint can't keep the adapter alive past js-controller's
+   * 4-second kill deadline.
+   */
+  private readonly inflight = new Set<AbortController>();
 
   /** @param apiKey The parcel.app API key */
   constructor(apiKey: string) {
     this.apiKey = apiKey;
+  }
+
+  /**
+   * v0.4.2 (P1): abort every in-flight HTTPS request. Idempotent.
+   */
+  cancelAll(): void {
+    for (const ctrl of this.inflight) {
+      ctrl.abort();
+    }
   }
 
   /**
@@ -117,7 +139,18 @@ export class ParcelClient {
    */
   private request<T>(method: string, path: string, authenticated: boolean, body?: unknown): Promise<T> {
     return new Promise((resolve, reject) => {
-      const url = new URL(`${API_BASE}${path}`);
+      // v0.4.2 (E3): URL-shape validation defensive — paths are hardcoded
+      // upstream but a future caller could pass garbage; surface a clear
+      // error class instead of a TypeError thrown sync from the executor.
+      let url: URL;
+      try {
+        url = new URL(`${API_BASE}${path}`);
+      } catch {
+        const err = new Error(`Invalid URL: ${API_BASE}${path}`) as Error & { code: string };
+        err.code = "INVALID_URL";
+        reject(err);
+        return;
+      }
 
       const headers: Record<string, string> = {};
       if (authenticated) {
@@ -136,29 +169,75 @@ export class ParcelClient {
         timeout: REQUEST_TIMEOUT,
       };
 
+      // v0.4.2 (P1): per-request AbortController. `cancelAll()` (called
+      // from `onUnload`) aborts everything pending without waiting for
+      // the configured timeout.
+      const ctrl = new AbortController();
+      this.inflight.add(ctrl);
+      const cleanup = (): void => {
+        this.inflight.delete(ctrl);
+      };
+
       const req = https.request(options, res => {
         const chunks: Buffer[] = [];
+        let bodyBytes = 0;
+        let oversized = false;
 
-        res.on("error", err => reject(err));
-        res.on("data", (chunk: Buffer) => chunks.push(chunk));
+        res.on("error", err => {
+          cleanup();
+          reject(err);
+        });
+        res.on("data", (chunk: Buffer) => {
+          if (oversized) {
+            return;
+          }
+          bodyBytes += chunk.length;
+          // v0.4.2 (P9): drop the connection on oversized responses so a
+          // compromised or misconfigured endpoint can't OOM the adapter.
+          if (bodyBytes > MAX_BODY_BYTES) {
+            oversized = true;
+            req.destroy(new Error(`Response body exceeds ${MAX_BODY_BYTES} bytes`));
+            return;
+          }
+          chunks.push(chunk);
+        });
         res.on("end", () => {
+          cleanup();
+          if (oversized) {
+            const err = new Error("Response body too large") as Error & { code: string };
+            err.code = "BODY_TOO_LARGE";
+            reject(err);
+            return;
+          }
           const raw = Buffer.concat(chunks).toString("utf-8");
 
           if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
             if (res.statusCode === 429) {
+              // v0.4.2 (P6): clamp Retry-After parser. Bogus values (0,
+              // negative, NaN) used to fall through `>0` and default to
+              // 5 min — keep that, but also reject infinity/extreme.
               const retryAfter = parseInt(res.headers["retry-after"] || "", 10);
               const err = new Error("Rate limit exceeded") as Error & {
                 code: string;
                 retryAfterSeconds: number;
               };
               err.code = "RATE_LIMITED";
-              // Use Retry-After header or default to 5 minutes
-              err.retryAfterSeconds = retryAfter > 0 ? retryAfter : 5 * 60;
+              err.retryAfterSeconds =
+                Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(24 * 3600, retryAfter) : 5 * 60;
               reject(err);
               return;
             }
+            // v0.4.2 (P3): split 401 (invalid key) from 403 (permission /
+            // no premium). Adapter treats them differently — INVALID_API_KEY
+            // says "fix the key", FORBIDDEN says "fix the account".
             const err = new Error(`HTTP ${res.statusCode}: ${res.statusMessage}`) as Error & { code: string };
-            err.code = res.statusCode === 401 || res.statusCode === 403 ? "INVALID_API_KEY" : "HTTP_ERROR";
+            if (res.statusCode === 401) {
+              err.code = "INVALID_API_KEY";
+            } else if (res.statusCode === 403) {
+              err.code = "FORBIDDEN";
+            } else {
+              err.code = "HTTP_ERROR";
+            }
             reject(err);
             return;
           }
@@ -171,12 +250,20 @@ export class ParcelClient {
         });
       });
 
+      ctrl.signal.addEventListener("abort", () => {
+        req.destroy(new Error("Request aborted"));
+      });
+
       req.on("timeout", () => {
         req.destroy();
+        cleanup();
         reject(new Error("Request timeout"));
       });
 
-      req.on("error", err => reject(err));
+      req.on("error", err => {
+        cleanup();
+        reject(err);
+      });
 
       if (body) {
         req.write(JSON.stringify(body));
