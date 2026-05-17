@@ -122,7 +122,7 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
-### **WORK IN PROGRESS**
+### 0.4.7 (2026-05-17)
 * Internal cleanup. No user-facing changes.
 
 ### 0.4.6 (2026-05-17)
@@ -137,13 +137,6 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 
 ### 0.4.3 (2026-05-13)
 - Debug log now traces previously silent paths: HTTPS request lifecycle, carrier-list fetch outcome, per-delivery updates, admin-message handling and lifecycle anchors. Default log unchanged.
-
-### 0.4.2 (2026-05-10)
-
-- Adapter shuts down cleanly even if parcel.app is slow — pending requests are aborted instead of hanging until kill.
-- "Forbidden" responses (e.g. when the Premium subscription is no longer active) now log a clear hint pointing to your parcel.app account, instead of looping reauth as if the API key were just wrong.
-- Two parcels whose tracking numbers differ only in special characters no longer overwrite each other in the state tree — the second one gets a hash suffix.
-- Defensive: bogus poll-interval values can no longer turn into a tight loop hammering the API; rate-limit cooldowns can no longer get stuck near zero.
 
 Older entries are in [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
 

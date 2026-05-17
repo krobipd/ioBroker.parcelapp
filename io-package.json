@@ -1,9 +1,9 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.4.6",
+    "version": "0.4.7",
     "news": {
-      "NEXT": {
+      "0.4.7": {
         "en": "Internal cleanup. No user-facing changes.",
         "de": "Interne Bereinigung. Keine sichtbaren Änderungen.",
         "ru": "Внутренняя очистка. Нет видимых изменений для пользователей.",
