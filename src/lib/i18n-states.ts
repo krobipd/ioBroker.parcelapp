@@ -17,6 +17,60 @@ export type StateName = Record<Lang, string>;
 
 /** State / channel display names (`common.name`). */
 export const STATE_NAMES: Record<string, StateName> = {
+  // ──────── instanceObjects (synced to io-package.json) ────────
+  info: {
+    en: "Adapter Information",
+    de: "Adapter-Informationen",
+    ru: "Информация об адаптере",
+    pt: "Informações do adaptador",
+    nl: "Adapterinformatie",
+    fr: "Informations sur l'adaptateur",
+    it: "Informazioni sull'adattatore",
+    es: "Información del adaptador",
+    pl: "Informacje o adapterze",
+    uk: "Інформація про адаптер",
+    "zh-cn": "适配器信息",
+  },
+  infoConnection: {
+    en: "Connection status",
+    de: "Verbindungsstatus",
+    ru: "Статус подключения",
+    pt: "Estado da ligação",
+    nl: "Verbindingsstatus",
+    fr: "État de la connexion",
+    it: "Stato della connessione",
+    es: "Estado de la conexión",
+    pl: "Status połączenia",
+    uk: "Стан з'єднання",
+    "zh-cn": "连接状态",
+  },
+  deliveries: {
+    en: "Deliveries",
+    de: "Sendungen",
+    ru: "Доставки",
+    pt: "Entregas",
+    nl: "Zendingen",
+    fr: "Livraisons",
+    it: "Consegne",
+    es: "Envíos",
+    pl: "Przesyłki",
+    uk: "Доставки",
+    "zh-cn": "包裹",
+  },
+  summary: {
+    en: "Summary",
+    de: "Zusammenfassung",
+    ru: "Сводка",
+    pt: "Resumo",
+    nl: "Samenvatting",
+    fr: "Résumé",
+    it: "Riepilogo",
+    es: "Resumen",
+    pl: "Podsumowanie",
+    uk: "Підсумок",
+    "zh-cn": "汇总",
+  },
+
   // ──────── Per-delivery states ────────
   carrier: {
     en: "Carrier",

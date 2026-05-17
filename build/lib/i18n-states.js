@@ -24,6 +24,59 @@ __export(i18n_states_exports, {
 });
 module.exports = __toCommonJS(i18n_states_exports);
 const STATE_NAMES = {
+  // ──────── instanceObjects (synced to io-package.json) ────────
+  info: {
+    en: "Adapter Information",
+    de: "Adapter-Informationen",
+    ru: "\u0418\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0438\u044F \u043E\u0431 \u0430\u0434\u0430\u043F\u0442\u0435\u0440\u0435",
+    pt: "Informa\xE7\xF5es do adaptador",
+    nl: "Adapterinformatie",
+    fr: "Informations sur l'adaptateur",
+    it: "Informazioni sull'adattatore",
+    es: "Informaci\xF3n del adaptador",
+    pl: "Informacje o adapterze",
+    uk: "\u0406\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0456\u044F \u043F\u0440\u043E \u0430\u0434\u0430\u043F\u0442\u0435\u0440",
+    "zh-cn": "\u9002\u914D\u5668\u4FE1\u606F"
+  },
+  infoConnection: {
+    en: "Connection status",
+    de: "Verbindungsstatus",
+    ru: "\u0421\u0442\u0430\u0442\u0443\u0441 \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F",
+    pt: "Estado da liga\xE7\xE3o",
+    nl: "Verbindingsstatus",
+    fr: "\xC9tat de la connexion",
+    it: "Stato della connessione",
+    es: "Estado de la conexi\xF3n",
+    pl: "Status po\u0142\u0105czenia",
+    uk: "\u0421\u0442\u0430\u043D \u0437'\u0454\u0434\u043D\u0430\u043D\u043D\u044F",
+    "zh-cn": "\u8FDE\u63A5\u72B6\u6001"
+  },
+  deliveries: {
+    en: "Deliveries",
+    de: "Sendungen",
+    ru: "\u0414\u043E\u0441\u0442\u0430\u0432\u043A\u0438",
+    pt: "Entregas",
+    nl: "Zendingen",
+    fr: "Livraisons",
+    it: "Consegne",
+    es: "Env\xEDos",
+    pl: "Przesy\u0142ki",
+    uk: "\u0414\u043E\u0441\u0442\u0430\u0432\u043A\u0438",
+    "zh-cn": "\u5305\u88F9"
+  },
+  summary: {
+    en: "Summary",
+    de: "Zusammenfassung",
+    ru: "\u0421\u0432\u043E\u0434\u043A\u0430",
+    pt: "Resumo",
+    nl: "Samenvatting",
+    fr: "R\xE9sum\xE9",
+    it: "Riepilogo",
+    es: "Resumen",
+    pl: "Podsumowanie",
+    uk: "\u041F\u0456\u0434\u0441\u0443\u043C\u043E\u043A",
+    "zh-cn": "\u6C47\u603B"
+  },
   // ──────── Per-delivery states ────────
   carrier: {
     en: "Carrier",

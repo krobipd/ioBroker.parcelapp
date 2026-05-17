@@ -3,6 +3,19 @@
     "name": "parcelapp",
     "version": "0.4.5",
     "news": {
+      "NEXT": {
+        "en": "Localized adapter info and connection status labels into 11 languages.",
+        "de": "Adapter-Info und Verbindungsstatus-Labels in 11 Sprachen lokalisiert.",
+        "ru": "Локализованы метки информации адаптера и статуса подключения на 11 языков.",
+        "pt": "Etiquetas de informação do adaptador e estado de ligação localizadas em 11 idiomas.",
+        "nl": "Adapterinformatie- en verbindingsstatuslabels gelokaliseerd in 11 talen.",
+        "fr": "Libellés d'information adaptateur et état de connexion localisés en 11 langues.",
+        "it": "Etichette informazioni adattatore e stato connessione localizzate in 11 lingue.",
+        "es": "Etiquetas de información del adaptador y estado de conexión localizadas en 11 idiomas.",
+        "pl": "Zlokalizowano etykiety informacji adaptera i statusu połączenia w 11 językach.",
+        "uk": "Локалізовано мітки інформації адаптера та стану з'єднання 11 мовами.",
+        "zh-cn": "将适配器信息和连接状态标签本地化为11种语言。"
+      },
       "0.4.5": {
         "en": "Fixed adapter icon not displaying in some admin environments (Content Security Policy).",
         "de": "Adapter-Icon wird jetzt auch in Admin-Umgebungen mit Content Security Policy korrekt angezeigt.",
@@ -80,19 +93,6 @@
         "pl": "Nazwy datapointów podążają teraz za językiem systemu ioBroker w 11 językach. Widoczne dla użytkownika logi info/warn/error również zlokalizowane. Min Node 22, Admin 7.8.23.",
         "uk": "Імена датапоінтів тепер слідують системній мові ioBroker 11 мовами. Користувачу видимі info/warn/error логи також локалізовані. Мін. Node 22, Admin 7.8.23.",
         "zh-cn": "数据点名称现在遵循 ioBroker 系统语言（11 种语言）。用户可见的 info/warn/error 日志也已本地化。最低 Node 22、Admin 7.8.23。"
-      },
-      "0.3.2": {
-        "en": "Documentation: rewrote release notes in user-friendly style across all languages.",
-        "de": "Dokumentation: Release-Notes in alle Sprachen User-orientiert neu geschrieben.",
-        "ru": "Документация: примечания к релизу переписаны в дружественном к пользователю стиле на всех языках.",
-        "pt": "Documentação: notas de release reescritas em estilo amigável ao usuário em todos os idiomas.",
-        "nl": "Documentatie: release-notes herschreven in gebruikersvriendelijke stijl in alle talen.",
-        "fr": "Documentation : notes de version réécrites dans un style adapté à l'utilisateur dans toutes les langues.",
-        "it": "Documentazione: note di release riscritte in stile user-friendly in tutte le lingue.",
-        "es": "Documentación: notas de versión reescritas en estilo amigable para el usuario en todos los idiomas.",
-        "pl": "Dokumentacja: notatki wydania przepisane w przyjaznym dla użytkownika stylu we wszystkich językach.",
-        "uk": "Документація: нотатки до релізу переписано у дружньому до користувача стилі усіма мовами.",
-        "zh-cn": "文档：所有语言的发布说明已重写为用户友好的风格。"
       }
     },
     "titleLang": {
@@ -182,7 +182,19 @@
       "_id": "info",
       "type": "channel",
       "common": {
-        "name": "Adapter Information"
+        "name": {
+          "en": "Adapter Information",
+          "de": "Adapter-Informationen",
+          "ru": "Информация об адаптере",
+          "pt": "Informações do adaptador",
+          "nl": "Adapterinformatie",
+          "fr": "Informations sur l'adaptateur",
+          "it": "Informazioni sull'adattatore",
+          "es": "Información del adaptador",
+          "pl": "Informacje o adapterze",
+          "uk": "Інформація про адаптер",
+          "zh-cn": "适配器信息"
+        }
       },
       "native": {}
     },
@@ -190,7 +202,19 @@
       "_id": "info.connection",
       "type": "state",
       "common": {
-        "name": "Connection status",
+        "name": {
+          "en": "Connection status",
+          "de": "Verbindungsstatus",
+          "ru": "Статус подключения",
+          "pt": "Estado da ligação",
+          "nl": "Verbindingsstatus",
+          "fr": "État de la connexion",
+          "it": "Stato della connessione",
+          "es": "Estado de la conexión",
+          "pl": "Status połączenia",
+          "uk": "Стан з'єднання",
+          "zh-cn": "连接状态"
+        },
         "type": "boolean",
         "role": "indicator.connected",
         "read": true,

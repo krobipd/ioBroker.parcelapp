@@ -122,6 +122,10 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+
+- Localized "Adapter Information" and "Connection status" labels into 11 languages — previously English only.
+
 ### 0.4.5 (2026-05-17)
 - Fixed adapter icon not displaying in some admin environments (Content Security Policy).
 

@@ -6,7 +6,8 @@
 
 **ioBroker Parcel Tracking Adapter** — Paketverfolgung über [parcel.app](https://parcelapp.net) API. Alle Carrier die parcel.app unterstützt, ein API-Key (Premium).
 
-- **Version:** 0.4.5 (2026-05-17, npm latest) — Toolchain-Parity: TypeScript ~5.9→~6.0.3, mocha+chai→vitest, eslint-config 2.2→2.3.4, release-script 5.2.0. Code-Cleanup: `asName()` no-op wrapper entfernt (14 callsites), `ESTIMATE_LABELS` nach `i18n-states.ts` verschoben, `getLatestEvent()` DRY-Helper. `io-package.json` extIcon raw→jsdelivr (CSP-Fix). `pre-release.py --audit-current` Hook. v0.4.4 (2026-05-14) testClient cancelAll-Latency-Fix. v0.4.3 (2026-05-14) Debug-Coverage-Welle. v0.4.2 (2026-05-10) 17-Finding Hardening. v0.4.1 (2026-05-09) Logs revert to English. v0.4.0 (2026-05-06) Multi-Language + lib/coerce.ts + state-creation cache.- **GitHub:** https://github.com/krobipd/ioBroker.parcelapp
+- **Version:** 0.4.6 (WIP) — `scripts/sync-iopackage-from-i18n.py` (hassemu/beszel-Linie). `info` + `info.connection` instanceObjects jetzt mit 11-Sprachen-Translations (vorher nur English). Vorgänger v0.4.5 (2026-05-17) Toolchain-Parity: TS ~6.0.3, vitest, eslint-config 2.3.4, release-script 5.2.0. Code-Cleanup: `asName()` entfernt (14 callsites), `ESTIMATE_LABELS`→i18n-states.ts, `getLatestEvent()` DRY-Helper. extIcon CSP-Fix. v0.4.4 testClient cancelAll-Latency-Fix. v0.4.3 Debug-Coverage-Welle. v0.4.2 17-Finding Hardening.
+- **GitHub:** https://github.com/krobipd/ioBroker.parcelapp
 - **npm:** https://www.npmjs.com/package/iobroker.parcelapp
 - **Repository PR:** ioBroker/ioBroker.repositories#5667 (re-review pending bei mcm1957)
 - **Runtime-Deps:** nur `@iobroker/adapter-core` (HTTPS via Node.js built-in)
@@ -29,7 +30,8 @@ src/lib/types.ts         → Interfaces, Status-Labels (11 Sprachen)
 src/lib/coerce.ts        → errText, coerceFiniteNumber strict, coerceString, coerceBoolean, isPlainObject, isTrueish
 src/lib/parcel-client.ts → HTTPS-Client (Node.js built-in)
 src/lib/state-manager.ts → State CRUD + Cleanup + Berechnungen + createdIds-Cache
-src/lib/i18n-states.ts   → 14 STATE_NAMES × 11 Sprachen + ESTIMATE_LABELS + tName(key) für common.name
+src/lib/i18n-states.ts   → 18 STATE_NAMES × 11 Sprachen + ESTIMATE_LABELS + tName(key) für common.name
+scripts/sync-iopackage-from-i18n.py → hält io-package.json:instanceObjects synchron mit i18n-states.ts
 ```
 
 ## Design-Entscheidungen
@@ -66,6 +68,7 @@ Run: `npm test` (vitest unit + mocha @iobroker/testing packageFiles).
 
 | Version | Highlights |
 | ------- | ---------- |
+| 0.4.6   | `scripts/sync-iopackage-from-i18n.py` (hassemu/beszel-Linie). `info` + `info.connection` instanceObjects jetzt mit 11-Sprachen-Translations. |
 | 0.4.5   | **Toolchain-Parity:** TypeScript ~5.9→~6.0.3, mocha+chai→vitest (175 unit tests), eslint-config 2.2→2.3.4, release-script 5.2.0. Code-Cleanup: `asName()` no-op wrapper entfernt (14 callsites), `ESTIMATE_LABELS` nach `i18n-states.ts` verschoben, `getLatestEvent()` DRY-Helper. `io-package.json` extIcon raw→jsdelivr (CSP-Fix). `pre-release.py --audit-current` Hook. nyc/source-map-support/ts-node aus devDeps raus. |
 | 0.4.4   | **testClient cancelAll-Latency-Fix:** short-lived `testClient` aus `checkConnection` admin-message wird in `this.testClients = new Set<ParcelClient>()` getrackt + im `onUnload` mit aborted. Cross-Adapter parallel zu beszel v0.4.5. |
 | 0.4.3   | **Debug-Coverage-Welle** nach 8-Klassen-Audit (1786 LOC + 21 Sites). Score 4.6→9.0, 7/8 Klassen auf 9/10. Reine `log.debug`-Inserts + optionaler `ParcelClientLogger`-Param. README header-icon raw→jsdelivr (CSP-sandbox-Fix), CHANGELOG_OLD konsolidiert. |
