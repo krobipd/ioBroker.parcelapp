@@ -26,77 +26,6 @@ var import_coerce = require("./coerce");
 var import_i18n_states = require("./i18n-states");
 var import_types = require("./types");
 const TRACKABLE_STATUSES = /* @__PURE__ */ new Set([2, 4, 8]);
-function asName(name) {
-  return name;
-}
-const ESTIMATE_LABELS = {
-  de: {
-    overdue: "\xFCberf\xE4llig",
-    today: "heute",
-    tomorrow: "morgen",
-    days: "in %d Tagen"
-  },
-  en: {
-    overdue: "overdue",
-    today: "today",
-    tomorrow: "tomorrow",
-    days: "in %d days"
-  },
-  ru: {
-    overdue: "\u043F\u0440\u043E\u0441\u0440\u043E\u0447\u0435\u043D\u043E",
-    today: "\u0441\u0435\u0433\u043E\u0434\u043D\u044F",
-    tomorrow: "\u0437\u0430\u0432\u0442\u0440\u0430",
-    days: "\u0447\u0435\u0440\u0435\u0437 %d \u0434\u043D."
-  },
-  pt: {
-    overdue: "atrasado",
-    today: "hoje",
-    tomorrow: "amanh\xE3",
-    days: "em %d dias"
-  },
-  nl: {
-    overdue: "te laat",
-    today: "vandaag",
-    tomorrow: "morgen",
-    days: "over %d dagen"
-  },
-  fr: {
-    overdue: "en retard",
-    today: "aujourd'hui",
-    tomorrow: "demain",
-    days: "dans %d jours"
-  },
-  it: {
-    overdue: "in ritardo",
-    today: "oggi",
-    tomorrow: "domani",
-    days: "tra %d giorni"
-  },
-  es: {
-    overdue: "atrasado",
-    today: "hoy",
-    tomorrow: "ma\xF1ana",
-    days: "en %d d\xEDas"
-  },
-  pl: {
-    overdue: "zaleg\u0142e",
-    today: "dzisiaj",
-    tomorrow: "jutro",
-    days: "za %d dni"
-  },
-  uk: {
-    overdue: "\u043F\u0440\u043E\u0441\u0442\u0440\u043E\u0447\u0435\u043D\u043E",
-    today: "\u0441\u044C\u043E\u0433\u043E\u0434\u043D\u0456",
-    tomorrow: "\u0437\u0430\u0432\u0442\u0440\u0430",
-    days: "\u0447\u0435\u0440\u0435\u0437 %d \u0434\u043D."
-  },
-  "zh-cn": {
-    overdue: "\u5DF2\u903E\u671F",
-    today: "\u4ECA\u5929",
-    tomorrow: "\u660E\u5929",
-    days: "%d \u5929\u540E"
-  }
-};
 function resolveLanguage(language) {
   if (typeof language === "string" && import_types.SUPPORTED_LANGUAGES.includes(language)) {
     return language;
@@ -244,53 +173,41 @@ class StateManager {
       statusText = `Unknown (${statusCode})`;
     }
     await Promise.all([
-      this.createAndSet(`${devicePath}.carrier`, asName((0, import_i18n_states.tName)("carrier")), "string", "text", carrierName),
-      this.createAndSet(`${devicePath}.status`, asName((0, import_i18n_states.tName)("status")), "string", "text", statusText),
-      this.createAndSet(`${devicePath}.statusCode`, asName((0, import_i18n_states.tName)("statusCode")), "number", "value", statusCode),
-      this.createAndSet(`${devicePath}.description`, asName((0, import_i18n_states.tName)("description")), "string", "text", description),
-      this.createAndSet(
-        `${devicePath}.trackingNumber`,
-        asName((0, import_i18n_states.tName)("trackingNumber")),
-        "string",
-        "text",
-        trackingNumber
-      ),
-      this.createAndSet(`${devicePath}.extraInfo`, asName((0, import_i18n_states.tName)("extraInfo")), "string", "text", extraInfo),
+      this.createAndSet(`${devicePath}.carrier`, (0, import_i18n_states.tName)("carrier"), "string", "text", carrierName),
+      this.createAndSet(`${devicePath}.status`, (0, import_i18n_states.tName)("status"), "string", "text", statusText),
+      this.createAndSet(`${devicePath}.statusCode`, (0, import_i18n_states.tName)("statusCode"), "number", "value", statusCode),
+      this.createAndSet(`${devicePath}.description`, (0, import_i18n_states.tName)("description"), "string", "text", description),
+      this.createAndSet(`${devicePath}.trackingNumber`, (0, import_i18n_states.tName)("trackingNumber"), "string", "text", trackingNumber),
+      this.createAndSet(`${devicePath}.extraInfo`, (0, import_i18n_states.tName)("extraInfo"), "string", "text", extraInfo),
       this.createAndSet(
         `${devicePath}.deliveryWindow`,
-        asName((0, import_i18n_states.tName)("deliveryWindow")),
+        (0, import_i18n_states.tName)("deliveryWindow"),
         "string",
         "text",
         this.calculateDeliveryWindow(delivery, statusCode)
       ),
       this.createAndSet(
         `${devicePath}.deliveryEstimate`,
-        asName((0, import_i18n_states.tName)("deliveryEstimate")),
+        (0, import_i18n_states.tName)("deliveryEstimate"),
         "string",
         "text",
         this.calculateDeliveryEstimate(delivery, statusCode)
       ),
       this.createAndSet(
         `${devicePath}.lastEvent`,
-        asName((0, import_i18n_states.tName)("lastEvent")),
+        (0, import_i18n_states.tName)("lastEvent"),
         "string",
         "text",
         this.formatLastEvent(delivery)
       ),
       this.createAndSet(
         `${devicePath}.lastLocation`,
-        asName((0, import_i18n_states.tName)("lastLocation")),
+        (0, import_i18n_states.tName)("lastLocation"),
         "string",
         "text",
         this.extractLastLocation(delivery)
       ),
-      this.createAndSet(
-        `${devicePath}.lastUpdated`,
-        asName((0, import_i18n_states.tName)("lastUpdated")),
-        "string",
-        "date",
-        (/* @__PURE__ */ new Date()).toISOString()
-      )
+      this.createAndSet(`${devicePath}.lastUpdated`, (0, import_i18n_states.tName)("lastUpdated"), "string", "date", (/* @__PURE__ */ new Date()).toISOString())
     ]);
   }
   /**
@@ -305,17 +222,11 @@ class StateManager {
       `updateSummary: ${activeDeliveries.length} active, ${todayDeliveries.length} expected today`
     );
     await Promise.all([
-      this.createAndSet(
-        "summary.activeCount",
-        asName((0, import_i18n_states.tName)("activeCount")),
-        "number",
-        "value",
-        activeDeliveries.length
-      ),
-      this.createAndSet("summary.todayCount", asName((0, import_i18n_states.tName)("todayCount")), "number", "value", todayDeliveries.length),
+      this.createAndSet("summary.activeCount", (0, import_i18n_states.tName)("activeCount"), "number", "value", activeDeliveries.length),
+      this.createAndSet("summary.todayCount", (0, import_i18n_states.tName)("todayCount"), "number", "value", todayDeliveries.length),
       this.createAndSet(
         "summary.deliveryWindow",
-        asName((0, import_i18n_states.tName)("summaryDeliveryWindow")),
+        (0, import_i18n_states.tName)("summaryDeliveryWindow"),
         "string",
         "text",
         this.calculateCombinedWindow(todayDeliveries)
@@ -421,7 +332,7 @@ class StateManager {
     if (diffDays === null) {
       return "";
     }
-    const l = ESTIMATE_LABELS[this.language];
+    const l = import_i18n_states.ESTIMATE_LABELS[this.language];
     if (diffDays < 0) {
       return l.overdue;
     }
@@ -443,17 +354,19 @@ class StateManager {
   isToday(delivery, statusCode) {
     return this.computeDiffDays(delivery, statusCode) === 0;
   }
-  /**
-   * Format the latest tracking event.
-   *
-   * @param delivery The delivery data
-   */
-  formatLastEvent(delivery) {
+  getLatestEvent(delivery) {
     if (!Array.isArray(delivery.events) || delivery.events.length === 0) {
-      return "";
+      return null;
     }
     const latest = delivery.events[0];
     if (!latest || typeof latest !== "object") {
+      return null;
+    }
+    return latest;
+  }
+  formatLastEvent(delivery) {
+    const latest = this.getLatestEvent(delivery);
+    if (!latest) {
       return "";
     }
     const parts = [];
@@ -465,17 +378,9 @@ class StateManager {
     }
     return parts.join(" - ");
   }
-  /**
-   * Extract location from latest event.
-   *
-   * @param delivery The delivery data
-   */
   extractLastLocation(delivery) {
-    if (!Array.isArray(delivery.events) || delivery.events.length === 0) {
-      return "";
-    }
-    const latest = delivery.events[0];
-    if (!latest || typeof latest !== "object") {
+    const latest = this.getLatestEvent(delivery);
+    if (!latest) {
       return "";
     }
     return typeof latest.location === "string" ? latest.location : "";

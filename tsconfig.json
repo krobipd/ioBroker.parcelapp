@@ -4,6 +4,7 @@
   // https://github.com/tsconfig/bases#node-20-tsconfigjson
   "extends": "@tsconfig/node22/tsconfig.json",
   "compilerOptions": {
+    "types": ["vitest/globals", "node"],
     // do not compile anything, this file is just to configure type checking
     // the compilation is configured in tsconfig.build.json
     "noEmit": true,
@@ -34,6 +35,6 @@
     "sourceMap": true,
     "inlineSourceMap": false
   },
-  "include": ["src/**/*.ts", "test/**/*.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": ["build/**", "node_modules/**", "widgets/**"]
 }

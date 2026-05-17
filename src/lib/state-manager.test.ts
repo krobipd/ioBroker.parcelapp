@@ -1,4 +1,3 @@
-import { expect } from "chai";
 import { StateManager, resolveLanguage } from "./state-manager";
 import { STATUS_LABELS, SUPPORTED_LANGUAGES, FALLBACK_LANGUAGE } from "./types";
 import type { ParcelDelivery } from "./types";
@@ -125,40 +124,40 @@ describe("StateManager", () => {
 
   describe("sanitize", () => {
     it("should lowercase and replace non-alphanumeric chars", () => {
-      expect(manager.sanitize("DHL-Express_2024")).to.equal("dhl_express_2024");
+      expect(manager.sanitize("DHL-Express_2024")).toBe("dhl_express_2024");
     });
 
     it("should strip leading and trailing underscores", () => {
-      expect(manager.sanitize("__hello__")).to.equal("hello");
+      expect(manager.sanitize("__hello__")).toBe("hello");
     });
 
     it("should collapse multiple non-alphanumeric chars into one underscore", () => {
-      expect(manager.sanitize("a---b...c")).to.equal("a_b_c");
+      expect(manager.sanitize("a---b...c")).toBe("a_b_c");
     });
 
     it("should truncate to 50 characters", () => {
       const long = "a".repeat(60);
-      expect(manager.sanitize(long)).to.have.lengthOf(50);
+      expect(manager.sanitize(long)).toHaveLength(50);
     });
 
     it("should return 'unknown' for empty result", () => {
-      expect(manager.sanitize("___")).to.equal("unknown");
-      expect(manager.sanitize("")).to.equal("unknown");
+      expect(manager.sanitize("___")).toBe("unknown");
+      expect(manager.sanitize("")).toBe("unknown");
     });
 
     it("should handle special characters", () => {
-      expect(manager.sanitize("PKG#2024/01@DE")).to.equal("pkg_2024_01_de");
+      expect(manager.sanitize("PKG#2024/01@DE")).toBe("pkg_2024_01_de");
     });
 
     it("should handle unicode characters", () => {
-      expect(manager.sanitize("Paket-Munch")).to.equal("paket_munch");
+      expect(manager.sanitize("Paket-Munch")).toBe("paket_munch");
     });
   });
 
   describe("packageId", () => {
     it("should use sanitized tracking number", () => {
       const delivery = makeDelivery({ tracking_number: "DHL-123456" });
-      expect(manager.packageId(delivery)).to.equal("dhl_123456");
+      expect(manager.packageId(delivery)).toBe("dhl_123456");
     });
 
     it("should append extra_information if present", () => {
@@ -166,7 +165,7 @@ describe("StateManager", () => {
         tracking_number: "ABC123",
         extra_information: "12345",
       });
-      expect(manager.packageId(delivery)).to.equal("abc123_12345");
+      expect(manager.packageId(delivery)).toBe("abc123_12345");
     });
 
     it("should not append extra info if empty", () => {
@@ -174,13 +173,13 @@ describe("StateManager", () => {
         tracking_number: "ABC123",
         extra_information: "",
       });
-      expect(manager.packageId(delivery)).to.equal("abc123");
+      expect(manager.packageId(delivery)).toBe("abc123");
     });
 
     it("should not append extra info if undefined", () => {
       const delivery = makeDelivery({ tracking_number: "ABC123" });
       delete delivery.extra_information;
-      expect(manager.packageId(delivery)).to.equal("abc123");
+      expect(manager.packageId(delivery)).toBe("abc123");
     });
 
     // S3 v0.4.2 — collision-suffix
@@ -191,9 +190,9 @@ describe("StateManager", () => {
       const b = makeDelivery({ tracking_number: "ABC.123" });
       const idA = manager.packageId(a);
       const idB = manager.packageId(b);
-      expect(idA).to.equal("abc_123");
-      expect(idB).to.match(/^abc_123__[0-9a-f]{6}$/);
-      expect(idA).to.not.equal(idB);
+      expect(idA).toBe("abc_123");
+      expect(idB).toMatch(/^abc_123__[0-9a-f]{6}$/);
+      expect(idA).not.toBe(idB);
     });
 
     it("same delivery gets the same id within a poll (no double-suffix)", () => {
@@ -201,8 +200,8 @@ describe("StateManager", () => {
       const a = makeDelivery({ tracking_number: "ABC-123" });
       const id1 = manager.packageId(a);
       const id2 = manager.packageId(a);
-      expect(id1).to.equal(id2);
-      expect(id1).to.equal("abc_123");
+      expect(id1).toBe(id2);
+      expect(id1).toBe("abc_123");
     });
 
     it("resetPollState lets the bare-id win again next poll", () => {
@@ -211,11 +210,11 @@ describe("StateManager", () => {
 
       manager.resetPollState();
       manager.packageId(a);
-      expect(manager.packageId(b)).to.match(/^abc_123__/); // suffixed in this poll
+      expect(manager.packageId(b)).toMatch(/^abc_123__/); // suffixed in this poll
 
       manager.resetPollState();
       // Fresh poll — `b` alone should now get the bare id.
-      expect(manager.packageId(b)).to.equal("abc_123");
+      expect(manager.packageId(b)).toBe("abc_123");
     });
   });
 
@@ -226,9 +225,9 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const device = adapter.objects.get(`deliveries.${pkgId}`);
-      expect(device).to.not.be.undefined;
-      expect(device!.type).to.equal("device");
-      expect(device!.common.name).to.equal("My DHL Package");
+      expect(device).toBeDefined();
+      expect(device!.type).toBe("device");
+      expect(device!.common.name).toBe("My DHL Package");
     });
 
     it("should use tracking number as fallback name when description is empty", async () => {
@@ -237,7 +236,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const device = adapter.objects.get(`deliveries.${pkgId}`);
-      expect(device!.common.name).to.equal("Package TRK99");
+      expect(device!.common.name).toBe("Package TRK99");
     });
 
     it("should create carrier state with correct value", async () => {
@@ -246,8 +245,8 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.carrier`);
-      expect(state?.val).to.equal("DHL Express");
-      expect(state?.ack).to.be.true;
+      expect(state?.val).toBe("DHL Express");
+      expect(state?.ack).toBe(true);
     });
 
     it("should set status label in German when language is de", async () => {
@@ -256,7 +255,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.status`);
-      expect(state?.val).to.equal("Unterwegs");
+      expect(state?.val).toBe("Unterwegs");
     });
 
     it("should set status label in English when language is en", async () => {
@@ -268,7 +267,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.status`);
-      expect(state?.val).to.equal("Out for Delivery");
+      expect(state?.val).toBe("Out for Delivery");
     });
 
     it("should set statusCode as number", async () => {
@@ -277,7 +276,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.statusCode`);
-      expect(state?.val).to.equal(8);
+      expect(state?.val).toBe(8);
     });
 
     it("should handle unknown status code", async () => {
@@ -286,7 +285,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.status`);
-      expect(state?.val).to.equal("Unknown (99)");
+      expect(state?.val).toBe("Unknown (99)");
     });
 
     it("should handle non-numeric status code", async () => {
@@ -295,9 +294,9 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const statusCode = adapter.states.get(`deliveries.${pkgId}.statusCode`);
-      expect(statusCode?.val).to.equal(0);
+      expect(statusCode?.val).toBe(0);
       const status = adapter.states.get(`deliveries.${pkgId}.status`);
-      expect(status?.val).to.equal("Zugestellt"); // status code 0 = Delivered
+      expect(status?.val).toBe("Zugestellt"); // status code 0 = Delivered
     });
 
     it("should set trackingNumber as original string", async () => {
@@ -306,7 +305,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.trackingNumber`);
-      expect(state?.val).to.equal("DHL-ABC-123");
+      expect(state?.val).toBe("DHL-ABC-123");
     });
 
     it("should set extraInfo or empty string", async () => {
@@ -315,7 +314,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.extraInfo`);
-      expect(state?.val).to.equal("PLZ12345");
+      expect(state?.val).toBe("PLZ12345");
     });
 
     it("should set empty extraInfo when undefined", async () => {
@@ -325,7 +324,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.extraInfo`);
-      expect(state?.val).to.equal("");
+      expect(state?.val).toBe("");
     });
 
     it("should set lastUpdated as ISO string", async () => {
@@ -334,10 +333,10 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.lastUpdated`);
-      expect(state?.val).to.be.a("string");
+      expect(state?.val).toBeTypeOf("string");
       // Verify it's a valid ISO date
       const date = new Date(state?.val as string);
-      expect(date.getTime()).to.not.be.NaN;
+      expect(date.getTime()).not.toBeNaN();
     });
 
     it("should create all expected states", async () => {
@@ -359,7 +358,7 @@ describe("StateManager", () => {
         "lastUpdated",
       ];
       for (const state of expectedStates) {
-        expect(adapter.states.has(`deliveries.${pkgId}.${state}`), `Missing state: ${state}`).to.be.true;
+        expect(adapter.states.has(`deliveries.${pkgId}.${state}`), `Missing state: ${state}`).toBe(true);
       }
     });
 
@@ -369,36 +368,36 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const carrierObj = adapter.objects.get(`deliveries.${pkgId}.carrier`);
-      expect(carrierObj?.common.type).to.equal("string");
-      expect(carrierObj?.common.role).to.equal("text");
-      expect(carrierObj?.common.read).to.be.true;
-      expect(carrierObj?.common.write).to.be.false;
+      expect(carrierObj?.common.type).toBe("string");
+      expect(carrierObj?.common.role).toBe("text");
+      expect(carrierObj?.common.read).toBe(true);
+      expect(carrierObj?.common.write).toBe(false);
 
       const codeObj = adapter.objects.get(`deliveries.${pkgId}.statusCode`);
-      expect(codeObj?.common.type).to.equal("number");
-      expect(codeObj?.common.role).to.equal("value");
+      expect(codeObj?.common.type).toBe("number");
+      expect(codeObj?.common.role).toBe("value");
     });
   });
 
   describe("status labels", () => {
     it("should have all status codes 0-8 in German", () => {
       for (let i = 0; i <= 8; i++) {
-        expect(STATUS_LABELS.de[i], `Missing DE label for code ${i}`).to.be.a("string");
-        expect(STATUS_LABELS.de[i].length).to.be.greaterThan(0);
+        expect(STATUS_LABELS.de[i], `Missing DE label for code ${i}`).toBeTypeOf("string");
+        expect(STATUS_LABELS.de[i].length).toBeGreaterThan(0);
       }
     });
 
     it("should have all status codes 0-8 in English", () => {
       for (let i = 0; i <= 8; i++) {
-        expect(STATUS_LABELS.en[i], `Missing EN label for code ${i}`).to.be.a("string");
-        expect(STATUS_LABELS.en[i].length).to.be.greaterThan(0);
+        expect(STATUS_LABELS.en[i], `Missing EN label for code ${i}`).toBeTypeOf("string");
+        expect(STATUS_LABELS.en[i].length).toBeGreaterThan(0);
       }
     });
 
     it("should have matching key sets for DE and EN", () => {
       const deKeys = Object.keys(STATUS_LABELS.de).sort();
       const enKeys = Object.keys(STATUS_LABELS.en).sort();
-      expect(deKeys).to.deep.equal(enKeys);
+      expect(deKeys).toEqual(enKeys);
     });
 
     it("should map all codes through updateDelivery in DE", async () => {
@@ -410,7 +409,7 @@ describe("StateManager", () => {
 
         const pkgId = manager.packageId(delivery);
         const status = adapter.states.get(`deliveries.${pkgId}.status`);
-        expect(status?.val, `Status for code ${code}`).to.equal(STATUS_LABELS.de[code]);
+        expect(status?.val, `Status for code ${code}`).toBe(STATUS_LABELS.de[code]);
       }
     });
 
@@ -423,7 +422,7 @@ describe("StateManager", () => {
 
         const pkgId = manager.packageId(delivery);
         const status = adapter.states.get(`deliveries.${pkgId}.status`);
-        expect(status?.val, `Status for code ${code}`).to.equal(STATUS_LABELS.en[code]);
+        expect(status?.val, `Status for code ${code}`).toBe(STATUS_LABELS.en[code]);
       }
     });
   });
@@ -438,7 +437,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
-      expect(state?.val).to.equal("");
+      expect(state?.val).toBe("");
     });
 
     it("should return empty string for non-trackable status (frozen)", async () => {
@@ -450,7 +449,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
-      expect(state?.val).to.equal("");
+      expect(state?.val).toBe("");
     });
 
     it("should return time window for in-transit status", async () => {
@@ -469,7 +468,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
-      expect(state?.val).to.equal("14:00 - 16:00");
+      expect(state?.val).toBe("14:00 - 16:00");
     });
 
     it("should return single time when no end timestamp", async () => {
@@ -484,7 +483,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
-      expect(state?.val).to.equal("10:30");
+      expect(state?.val).toBe("10:30");
     });
 
     it("should return empty string when no timestamps", async () => {
@@ -493,7 +492,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
-      expect(state?.val).to.equal("");
+      expect(state?.val).toBe("");
     });
 
     it("should work for status code 8 (Info Received)", async () => {
@@ -508,7 +507,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
-      expect(state?.val).to.equal("09:00");
+      expect(state?.val).toBe("09:00");
     });
   });
 
@@ -522,7 +521,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
-      expect(state?.val).to.equal("");
+      expect(state?.val).toBe("");
     });
 
     it("should return 'heute' for today delivery in German", async () => {
@@ -537,7 +536,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
-      expect(state?.val).to.equal("heute");
+      expect(state?.val).toBe("heute");
     });
 
     it("should return 'today' for today delivery in English", async () => {
@@ -555,7 +554,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
-      expect(state?.val).to.equal("today");
+      expect(state?.val).toBe("today");
     });
 
     it("should return 'morgen' for tomorrow delivery in German", async () => {
@@ -571,7 +570,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
-      expect(state?.val).to.equal("morgen");
+      expect(state?.val).toBe("morgen");
     });
 
     it("should return 'tomorrow' for tomorrow delivery in English", async () => {
@@ -590,7 +589,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
-      expect(state?.val).to.equal("tomorrow");
+      expect(state?.val).toBe("tomorrow");
     });
 
     it("should return 'in X Tagen' for future delivery in German", async () => {
@@ -606,7 +605,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
-      expect(state?.val).to.equal("in 3 Tagen");
+      expect(state?.val).toBe("in 3 Tagen");
     });
 
     it("should return 'in %d days' for future delivery in English", async () => {
@@ -625,7 +624,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
-      expect(state?.val).to.equal("in 5 days");
+      expect(state?.val).toBe("in 5 days");
     });
 
     it("should return 'ueberfaellig' for overdue delivery in German", async () => {
@@ -642,7 +641,7 @@ describe("StateManager", () => {
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
       // German: "ueberfaellig" is stored as Unicode
-      expect(state?.val).to.equal("\u00fcberfällig");
+      expect(state?.val).toBe("\u00fcberfällig");
     });
 
     it("should return 'overdue' for overdue delivery in English", async () => {
@@ -661,7 +660,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
-      expect(state?.val).to.equal("overdue");
+      expect(state?.val).toBe("overdue");
     });
 
     it("should use date_expected as fallback when no timestamp", async () => {
@@ -677,7 +676,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
-      expect(state?.val).to.equal("morgen");
+      expect(state?.val).toBe("morgen");
     });
 
     it("should return empty string when no expected date at all", async () => {
@@ -686,7 +685,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
-      expect(state?.val).to.equal("");
+      expect(state?.val).toBe("");
     });
 
     it("should return empty string for invalid date", async () => {
@@ -698,7 +697,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
-      expect(state?.val).to.equal("");
+      expect(state?.val).toBe("");
     });
   });
 
@@ -711,7 +710,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.lastEvent`);
-      expect(state?.val).to.equal("Arrived at sort facility - 2026-04-04 10:30");
+      expect(state?.val).toBe("Arrived at sort facility - 2026-04-04 10:30");
     });
 
     it("should return only event when no date", async () => {
@@ -722,7 +721,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.lastEvent`);
-      expect(state?.val).to.equal("Package picked up");
+      expect(state?.val).toBe("Package picked up");
     });
 
     it("should return empty string when no events", async () => {
@@ -731,7 +730,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.lastEvent`);
-      expect(state?.val).to.equal("");
+      expect(state?.val).toBe("");
     });
 
     it("should return empty string when events is undefined", async () => {
@@ -741,7 +740,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.lastEvent`);
-      expect(state?.val).to.equal("");
+      expect(state?.val).toBe("");
     });
 
     it("should use the first event (newest)", async () => {
@@ -756,7 +755,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.lastEvent`);
-      expect(state?.val).to.equal("Delivered - 2026-04-04");
+      expect(state?.val).toBe("Delivered - 2026-04-04");
     });
   });
 
@@ -769,7 +768,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.lastLocation`);
-      expect(state?.val).to.equal("Berlin Hub");
+      expect(state?.val).toBe("Berlin Hub");
     });
 
     it("should return empty string when location is undefined", async () => {
@@ -780,7 +779,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.lastLocation`);
-      expect(state?.val).to.equal("");
+      expect(state?.val).toBe("");
     });
 
     it("should return empty string when no events", async () => {
@@ -790,7 +789,7 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.lastLocation`);
-      expect(state?.val).to.equal("");
+      expect(state?.val).toBe("");
     });
   });
 
@@ -800,17 +799,17 @@ describe("StateManager", () => {
 
       // The `summary` channel itself is declared via io-package.json instanceObjects;
       // StateManager only creates the states below it.
-      expect(adapter.objects.has("summary.activeCount")).to.be.true;
-      expect(adapter.objects.has("summary.todayCount")).to.be.true;
-      expect(adapter.objects.has("summary.deliveryWindow")).to.be.true;
+      expect(adapter.objects.has("summary.activeCount")).toBe(true);
+      expect(adapter.objects.has("summary.todayCount")).toBe(true);
+      expect(adapter.objects.has("summary.deliveryWindow")).toBe(true);
     });
 
     it("should set activeCount to 0 for empty deliveries", async () => {
       await manager.updateSummary([]);
 
       const state = adapter.states.get("summary.activeCount");
-      expect(state?.val).to.equal(0);
-      expect(state?.ack).to.be.true;
+      expect(state?.val).toBe(0);
+      expect(state?.ack).toBe(true);
     });
 
     it("should count active deliveries", async () => {
@@ -822,7 +821,7 @@ describe("StateManager", () => {
       await manager.updateSummary(deliveries);
 
       const state = adapter.states.get("summary.activeCount");
-      expect(state?.val).to.equal(3);
+      expect(state?.val).toBe(3);
     });
 
     it("should count today deliveries", async () => {
@@ -846,7 +845,7 @@ describe("StateManager", () => {
       await manager.updateSummary(deliveries);
 
       const state = adapter.states.get("summary.todayCount");
-      expect(state?.val).to.equal(1);
+      expect(state?.val).toBe(1);
     });
 
     it("should set todayCount to 0 when no deliveries today", async () => {
@@ -863,7 +862,7 @@ describe("StateManager", () => {
       await manager.updateSummary(deliveries);
 
       const state = adapter.states.get("summary.todayCount");
-      expect(state?.val).to.equal(0);
+      expect(state?.val).toBe(0);
     });
 
     it("should calculate combined delivery window", async () => {
@@ -894,37 +893,37 @@ describe("StateManager", () => {
       await manager.updateSummary(deliveries);
 
       const state = adapter.states.get("summary.deliveryWindow");
-      expect(state?.val).to.equal("10:00 - 16:00");
+      expect(state?.val).toBe("10:00 - 16:00");
     });
 
     it("should return empty delivery window when no today deliveries", async () => {
       await manager.updateSummary([]);
 
       const state = adapter.states.get("summary.deliveryWindow");
-      expect(state?.val).to.equal("");
+      expect(state?.val).toBe("");
     });
   });
 
   describe("API-drift guards", () => {
     describe("sanitize", () => {
       it("should return 'unknown' for null", () => {
-        expect(manager.sanitize(null as unknown as string)).to.equal("unknown");
+        expect(manager.sanitize(null as unknown as string)).toBe("unknown");
       });
 
       it("should return 'unknown' for undefined", () => {
-        expect(manager.sanitize(undefined as unknown as string)).to.equal("unknown");
+        expect(manager.sanitize(undefined as unknown as string)).toBe("unknown");
       });
 
       it("should return 'unknown' for number", () => {
-        expect(manager.sanitize(42 as unknown as string)).to.equal("unknown");
+        expect(manager.sanitize(42 as unknown as string)).toBe("unknown");
       });
 
       it("should return 'unknown' for object", () => {
-        expect(manager.sanitize({} as unknown as string)).to.equal("unknown");
+        expect(manager.sanitize({} as unknown as string)).toBe("unknown");
       });
 
       it("should return 'unknown' for array", () => {
-        expect(manager.sanitize([] as unknown as string)).to.equal("unknown");
+        expect(manager.sanitize([] as unknown as string)).toBe("unknown");
       });
     });
 
@@ -933,47 +932,47 @@ describe("StateManager", () => {
         const delivery = makeDelivery({
           status_code: 2 as unknown as string,
         });
-        expect(manager.parseStatus(delivery)).to.equal(2);
+        expect(manager.parseStatus(delivery)).toBe(2);
       });
 
       it("should truncate fractional numbers", () => {
         const delivery = makeDelivery({
           status_code: 2.7 as unknown as string,
         });
-        expect(manager.parseStatus(delivery)).to.equal(2);
+        expect(manager.parseStatus(delivery)).toBe(2);
       });
 
       it("should return 0 for NaN number", () => {
         const delivery = makeDelivery({
           status_code: NaN as unknown as string,
         });
-        expect(manager.parseStatus(delivery)).to.equal(0);
+        expect(manager.parseStatus(delivery)).toBe(0);
       });
 
       it("should return 0 for Infinity", () => {
         const delivery = makeDelivery({
           status_code: Infinity as unknown as string,
         });
-        expect(manager.parseStatus(delivery)).to.equal(0);
+        expect(manager.parseStatus(delivery)).toBe(0);
       });
 
       it("should return 0 for null", () => {
         const delivery = makeDelivery({
           status_code: null as unknown as string,
         });
-        expect(manager.parseStatus(delivery)).to.equal(0);
+        expect(manager.parseStatus(delivery)).toBe(0);
       });
 
       it("should return 0 for object", () => {
         const delivery = makeDelivery({
           status_code: {} as unknown as string,
         });
-        expect(manager.parseStatus(delivery)).to.equal(0);
+        expect(manager.parseStatus(delivery)).toBe(0);
       });
 
       it("should return 0 for non-numeric string", () => {
         const delivery = makeDelivery({ status_code: "abc" });
-        expect(manager.parseStatus(delivery)).to.equal(0);
+        expect(manager.parseStatus(delivery)).toBe(0);
       });
     });
 
@@ -983,7 +982,7 @@ describe("StateManager", () => {
           tracking_number: "ABC",
           extra_information: 12345 as unknown as string,
         });
-        expect(manager.packageId(delivery)).to.equal("abc");
+        expect(manager.packageId(delivery)).toBe("abc");
       });
 
       it("should ignore non-string extra_information (object)", () => {
@@ -991,14 +990,14 @@ describe("StateManager", () => {
           tracking_number: "ABC",
           extra_information: { foo: "bar" } as unknown as string,
         });
-        expect(manager.packageId(delivery)).to.equal("abc");
+        expect(manager.packageId(delivery)).toBe("abc");
       });
 
       it("should handle non-string tracking_number", () => {
         const delivery = makeDelivery({
           tracking_number: null as unknown as string,
         });
-        expect(manager.packageId(delivery)).to.equal("unknown");
+        expect(manager.packageId(delivery)).toBe("unknown");
       });
     });
 
@@ -1012,9 +1011,9 @@ describe("StateManager", () => {
 
         const pkgId = manager.packageId(delivery);
         const state = adapter.states.get(`deliveries.${pkgId}.description`);
-        expect(state?.val).to.equal("");
+        expect(state?.val).toBe("");
         const device = adapter.objects.get(`deliveries.${pkgId}`);
-        expect(device!.common.name).to.equal("Package TRK1");
+        expect(device!.common.name).toBe("Package TRK1");
       });
 
       it("should handle non-string tracking_number", async () => {
@@ -1026,7 +1025,7 @@ describe("StateManager", () => {
 
         const pkgId = manager.packageId(delivery);
         const state = adapter.states.get(`deliveries.${pkgId}.trackingNumber`);
-        expect(state?.val).to.equal("");
+        expect(state?.val).toBe("");
       });
 
       it("should handle non-string extra_information", async () => {
@@ -1037,7 +1036,7 @@ describe("StateManager", () => {
 
         const pkgId = manager.packageId(delivery);
         const state = adapter.states.get(`deliveries.${pkgId}.extraInfo`);
-        expect(state?.val).to.equal("");
+        expect(state?.val).toBe("");
       });
 
       it("should handle events as non-array (object)", async () => {
@@ -1047,8 +1046,8 @@ describe("StateManager", () => {
         await manager.updateDelivery(delivery, "DHL");
 
         const pkgId = manager.packageId(delivery);
-        expect(adapter.states.get(`deliveries.${pkgId}.lastEvent`)?.val).to.equal("");
-        expect(adapter.states.get(`deliveries.${pkgId}.lastLocation`)?.val).to.equal("");
+        expect(adapter.states.get(`deliveries.${pkgId}.lastEvent`)?.val).toBe("");
+        expect(adapter.states.get(`deliveries.${pkgId}.lastLocation`)?.val).toBe("");
       });
 
       it("should handle events with null first entry", async () => {
@@ -1058,8 +1057,8 @@ describe("StateManager", () => {
         await manager.updateDelivery(delivery, "DHL");
 
         const pkgId = manager.packageId(delivery);
-        expect(adapter.states.get(`deliveries.${pkgId}.lastEvent`)?.val).to.equal("");
-        expect(adapter.states.get(`deliveries.${pkgId}.lastLocation`)?.val).to.equal("");
+        expect(adapter.states.get(`deliveries.${pkgId}.lastEvent`)?.val).toBe("");
+        expect(adapter.states.get(`deliveries.${pkgId}.lastLocation`)?.val).toBe("");
       });
 
       it("should handle event with non-string fields", async () => {
@@ -1075,8 +1074,8 @@ describe("StateManager", () => {
         await manager.updateDelivery(delivery, "DHL");
 
         const pkgId = manager.packageId(delivery);
-        expect(adapter.states.get(`deliveries.${pkgId}.lastEvent`)?.val).to.equal("");
-        expect(adapter.states.get(`deliveries.${pkgId}.lastLocation`)?.val).to.equal("");
+        expect(adapter.states.get(`deliveries.${pkgId}.lastEvent`)?.val).toBe("");
+        expect(adapter.states.get(`deliveries.${pkgId}.lastLocation`)?.val).toBe("");
       });
 
       it("should handle timestamp_expected as numeric string (API drift)", async () => {
@@ -1092,7 +1091,7 @@ describe("StateManager", () => {
 
         const pkgId = manager.packageId(delivery);
         const window = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
-        expect(window?.val).to.equal("11:15");
+        expect(window?.val).toBe("11:15");
       });
 
       it("should handle timestamp_expected as non-finite value", async () => {
@@ -1104,7 +1103,7 @@ describe("StateManager", () => {
 
         const pkgId = manager.packageId(delivery);
         const window = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
-        expect(window?.val).to.equal("");
+        expect(window?.val).toBe("");
       });
 
       it("should handle date_expected as non-string (null)", async () => {
@@ -1116,7 +1115,7 @@ describe("StateManager", () => {
 
         const pkgId = manager.packageId(delivery);
         const estimate = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
-        expect(estimate?.val).to.equal("");
+        expect(estimate?.val).toBe("");
       });
 
       it("should handle timestamp_expected_end as garbage", async () => {
@@ -1132,7 +1131,7 @@ describe("StateManager", () => {
 
         const pkgId = manager.packageId(delivery);
         const window = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
-        expect(window?.val).to.equal("09:00");
+        expect(window?.val).toBe("09:00");
       });
 
       it("should handle numeric status_code (API drift)", async () => {
@@ -1142,8 +1141,8 @@ describe("StateManager", () => {
         await manager.updateDelivery(delivery, "DHL");
 
         const pkgId = manager.packageId(delivery);
-        expect(adapter.states.get(`deliveries.${pkgId}.statusCode`)?.val).to.equal(4);
-        expect(adapter.states.get(`deliveries.${pkgId}.status`)?.val).to.equal("In Zustellung");
+        expect(adapter.states.get(`deliveries.${pkgId}.statusCode`)?.val).toBe(4);
+        expect(adapter.states.get(`deliveries.${pkgId}.status`)?.val).toBe("In Zustellung");
       });
     });
   });
@@ -1163,11 +1162,11 @@ describe("StateManager", () => {
       await manager.cleanupDeliveries([keepId]);
 
       // The kept delivery should still exist
-      expect(adapter.objects.has(`deliveries.${keepId}`)).to.be.true;
-      expect(adapter.states.has(`deliveries.${keepId}.carrier`)).to.be.true;
+      expect(adapter.objects.has(`deliveries.${keepId}`)).toBe(true);
+      expect(adapter.states.has(`deliveries.${keepId}.carrier`)).toBe(true);
 
       // The removed delivery should be gone
-      expect(adapter.objects.has(`deliveries.${removeId}`)).to.be.false;
+      expect(adapter.objects.has(`deliveries.${removeId}`)).toBe(false);
     });
 
     it("should not remove anything when all IDs are active", async () => {
@@ -1181,7 +1180,7 @@ describe("StateManager", () => {
 
       const objectsBefore = adapter.objects.size;
       await manager.cleanupDeliveries([id1, id2]);
-      expect(adapter.objects.size).to.equal(objectsBefore);
+      expect(adapter.objects.size).toBe(objectsBefore);
     });
 
     it("should handle empty active IDs", async () => {
@@ -1191,7 +1190,7 @@ describe("StateManager", () => {
       await manager.cleanupDeliveries([]);
 
       // Everything should be removed
-      expect(adapter.objects.has(`deliveries.${manager.packageId(d1)}`)).to.be.false;
+      expect(adapter.objects.has(`deliveries.${manager.packageId(d1)}`)).toBe(false);
     });
   });
 
@@ -1199,16 +1198,16 @@ describe("StateManager", () => {
     const EXPECTED_LANGUAGES = ["de", "en", "ru", "pt", "nl", "fr", "it", "es", "pl", "uk", "zh-cn"];
 
     it("should cover all 11 ioBroker languages", () => {
-      expect(SUPPORTED_LANGUAGES.sort()).to.deep.equal([...EXPECTED_LANGUAGES].sort());
+      expect(SUPPORTED_LANGUAGES.sort()).toEqual([...EXPECTED_LANGUAGES].sort());
     });
 
     it("should define status codes 0-8 for every language", () => {
       for (const lang of EXPECTED_LANGUAGES) {
         const labels = STATUS_LABELS[lang];
-        expect(labels, `Missing STATUS_LABELS.${lang}`).to.be.an("object");
+        expect(labels, `Missing STATUS_LABELS.${lang}`).toBeTypeOf("object");
         for (let code = 0; code <= 8; code++) {
-          expect(labels[code], `${lang} missing code ${code}`).to.be.a("string");
-          expect(labels[code].length).to.be.greaterThan(0);
+          expect(labels[code], `${lang} missing code ${code}`).toBeTypeOf("string");
+          expect(labels[code].length).toBeGreaterThan(0);
         }
       }
     });
@@ -1220,7 +1219,7 @@ describe("StateManager", () => {
       await manager.updateDelivery(delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
-      expect(adapter.states.get(`deliveries.${pkgId}.status`)?.val).to.equal("En transit");
+      expect(adapter.states.get(`deliveries.${pkgId}.status`)?.val).toBe("En transit");
     });
 
     it("should localize the today estimate in every language", async () => {
@@ -1240,8 +1239,8 @@ describe("StateManager", () => {
 
         const pkgId = manager.packageId(delivery);
         const estimate = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`)?.val;
-        expect(estimate, `today label in ${lang}`).to.be.a("string");
-        expect((estimate as string).length, `today label in ${lang}`).to.be.greaterThan(0);
+        expect(estimate, `today label in ${lang}`).toBeTypeOf("string");
+        expect((estimate as string).length, `today label in ${lang}`).toBeGreaterThan(0);
       }
     });
   });
@@ -1249,25 +1248,25 @@ describe("StateManager", () => {
   describe("resolveLanguage", () => {
     it("should pass through all supported languages", () => {
       for (const lang of SUPPORTED_LANGUAGES) {
-        expect(resolveLanguage(lang)).to.equal(lang);
+        expect(resolveLanguage(lang)).toBe(lang);
       }
     });
 
     it("should fall back to English for unknown language codes", () => {
-      expect(resolveLanguage("jp")).to.equal(FALLBACK_LANGUAGE);
-      expect(resolveLanguage("xx")).to.equal(FALLBACK_LANGUAGE);
-      expect(resolveLanguage("")).to.equal(FALLBACK_LANGUAGE);
+      expect(resolveLanguage("jp")).toBe(FALLBACK_LANGUAGE);
+      expect(resolveLanguage("xx")).toBe(FALLBACK_LANGUAGE);
+      expect(resolveLanguage("")).toBe(FALLBACK_LANGUAGE);
     });
 
     it("should fall back to English for non-string inputs", () => {
-      expect(resolveLanguage(undefined)).to.equal(FALLBACK_LANGUAGE);
-      expect(resolveLanguage(null)).to.equal(FALLBACK_LANGUAGE);
-      expect(resolveLanguage(42)).to.equal(FALLBACK_LANGUAGE);
-      expect(resolveLanguage({})).to.equal(FALLBACK_LANGUAGE);
+      expect(resolveLanguage(undefined)).toBe(FALLBACK_LANGUAGE);
+      expect(resolveLanguage(null)).toBe(FALLBACK_LANGUAGE);
+      expect(resolveLanguage(42)).toBe(FALLBACK_LANGUAGE);
+      expect(resolveLanguage({})).toBe(FALLBACK_LANGUAGE);
     });
 
     it("FALLBACK_LANGUAGE must itself be a supported language", () => {
-      expect(SUPPORTED_LANGUAGES).to.include(FALLBACK_LANGUAGE);
+      expect(SUPPORTED_LANGUAGES).toContain(FALLBACK_LANGUAGE);
     });
   });
 
@@ -1300,7 +1299,7 @@ describe("StateManager", () => {
         await manager.updateSummary(deliveries);
 
         const count = adapter.states.get("summary.todayCount")?.val;
-        expect(count, `todayCount in ${lang}`).to.equal(1);
+        expect(count, `todayCount in ${lang}`).toBe(1);
       }
     });
   });
@@ -1320,8 +1319,8 @@ describe("StateManager", () => {
       const pkgId = manager.packageId(delivery);
       const carrier = adapter.objects.get(`deliveries.${pkgId}.carrier`);
       const name = carrier!.common.name as CommonNameTranslated;
-      expect(name.en).to.equal("Carrier");
-      expect(name.de).to.equal("Versanddienst");
+      expect(name.en).toBe("Carrier");
+      expect(name.de).toBe("Versanddienst");
     });
 
     it("summary state common.name is a translation object", async () => {
@@ -1330,8 +1329,8 @@ describe("StateManager", () => {
       await manager.updateSummary([]);
       const active = adapter.objects.get("summary.activeCount");
       const name = active!.common.name as CommonNameTranslated;
-      expect(name.en).to.equal("Active Deliveries");
-      expect(name.de).to.equal("Aktive Sendungen");
+      expect(name.en).toBe("Active Deliveries");
+      expect(name.de).toBe("Aktive Sendungen");
     });
 
     it("statusCode common.name is translated", async () => {
@@ -1342,8 +1341,8 @@ describe("StateManager", () => {
       const pkgId = manager.packageId(delivery);
       const obj = adapter.objects.get(`deliveries.${pkgId}.statusCode`);
       const name = obj!.common.name as CommonNameTranslated;
-      expect(name.en).to.equal("Status Code");
-      expect(name.de).to.equal("Status-Code");
+      expect(name.en).toBe("Status Code");
+      expect(name.de).toBe("Status-Code");
     });
   });
 
@@ -1356,10 +1355,10 @@ describe("StateManager", () => {
       const firstPass = adapter.metrics.setObjectNotExistsCalls;
       // Same delivery, second poll cycle — values may change, schema doesn't.
       await manager.updateDelivery({ ...delivery, status_code: "4" }, "DHL");
-      expect(adapter.metrics.setObjectNotExistsCalls).to.equal(firstPass);
+      expect(adapter.metrics.setObjectNotExistsCalls).toBe(firstPass);
       // Value updated:
       const pkgId = manager.packageId(delivery);
-      expect(adapter.states.get(`deliveries.${pkgId}.statusCode`)?.val).to.equal(4);
+      expect(adapter.states.get(`deliveries.${pkgId}.statusCode`)?.val).toBe(4);
     });
 
     it("summary states cache: two updateSummary calls hit setObjectNotExistsAsync only on the first", async () => {
@@ -1368,7 +1367,7 @@ describe("StateManager", () => {
       await manager.updateSummary([]);
       const firstPass = adapter.metrics.setObjectNotExistsCalls;
       await manager.updateSummary([]);
-      expect(adapter.metrics.setObjectNotExistsCalls).to.equal(firstPass);
+      expect(adapter.metrics.setObjectNotExistsCalls).toBe(firstPass);
     });
 
     it("cleanupDeliveries clears the cache for removed packages so re-add re-creates states", async () => {
@@ -1382,9 +1381,9 @@ describe("StateManager", () => {
       await manager.cleanupDeliveries([]);
       // Re-add: must hit setObjectNotExists again because the cache was cleared.
       await manager.updateDelivery(delivery, "DHL");
-      expect(adapter.metrics.setObjectNotExistsCalls).to.be.greaterThan(before);
+      expect(adapter.metrics.setObjectNotExistsCalls).toBeGreaterThan(before);
       // And the states are back.
-      expect(adapter.states.get(`deliveries.${pkgId}.carrier`)?.val).to.equal("DHL");
+      expect(adapter.states.get(`deliveries.${pkgId}.carrier`)?.val).toBe("DHL");
     });
   });
 });

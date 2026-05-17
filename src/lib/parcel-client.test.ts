@@ -1,4 +1,3 @@
-import { expect } from "chai";
 import * as http from "node:http";
 import type { AddressInfo } from "node:net";
 import { ParcelClient } from "./parcel-client";
@@ -137,7 +136,7 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("test-key", port);
         const result = await client.getDeliveries("active");
-        expect(result).to.deep.equal(deliveries);
+        expect(result).toEqual(deliveries);
       } finally {
         await stopServer(server);
       }
@@ -152,7 +151,7 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("test-key", port);
         const result = await client.getDeliveries("active");
-        expect(result).to.deep.equal([]);
+        expect(result).toEqual([]);
       } finally {
         await stopServer(server);
       }
@@ -173,11 +172,11 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("bad-key", port);
         await client.getDeliveries("active");
-        expect.fail("Should have thrown");
+        throw new Error("Should have thrown");
       } catch (err) {
         const error = err as Error & { code: string };
-        expect(error.code).to.equal("INVALID_API_KEY");
-        expect(error.message).to.include("Invalid API key");
+        expect(error.code).toBe("INVALID_API_KEY");
+        expect(error.message).toContain("Invalid API key");
       } finally {
         await stopServer(server);
       }
@@ -198,11 +197,11 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("key", port);
         await client.getDeliveries("active");
-        expect.fail("Should have thrown");
+        throw new Error("Should have thrown");
       } catch (err) {
         const error = err as Error & { code: string };
-        expect(error.code).to.equal("API_ERROR");
-        expect(error.message).to.include("Something went wrong");
+        expect(error.code).toBe("API_ERROR");
+        expect(error.message).toContain("Something went wrong");
       } finally {
         await stopServer(server);
       }
@@ -220,7 +219,7 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("my-secret-key", port);
         await client.getDeliveries("active");
-        expect(receivedApiKey).to.equal("my-secret-key");
+        expect(receivedApiKey).toBe("my-secret-key");
       } finally {
         await stopServer(server);
       }
@@ -238,7 +237,7 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("key", port);
         await client.getDeliveries("recent");
-        expect(receivedPath).to.include("filter_mode=recent");
+        expect(receivedPath).toContain("filter_mode=recent");
       } finally {
         await stopServer(server);
       }
@@ -256,7 +255,7 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("key", port);
         await client.getDeliveries();
-        expect(receivedPath).to.include("filter_mode=active");
+        expect(receivedPath).toContain("filter_mode=active");
       } finally {
         await stopServer(server);
       }
@@ -273,12 +272,12 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("key", port);
         await client.getDeliveries("active");
-        expect.fail("Should have thrown");
+        throw new Error("Should have thrown");
       } catch (err) {
         const error = err as Error & { code: string; retryAfterSeconds: number };
-        expect(error.code).to.equal("RATE_LIMITED");
-        expect(error.retryAfterSeconds).to.equal(120);
-        expect(error.message).to.include("Rate limit");
+        expect(error.code).toBe("RATE_LIMITED");
+        expect(error.retryAfterSeconds).toBe(120);
+        expect(error.message).toContain("Rate limit");
       } finally {
         await stopServer(server);
       }
@@ -293,11 +292,11 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("key", port);
         await client.getDeliveries("active");
-        expect.fail("Should have thrown");
+        throw new Error("Should have thrown");
       } catch (err) {
         const error = err as Error & { code: string; retryAfterSeconds: number };
-        expect(error.code).to.equal("RATE_LIMITED");
-        expect(error.retryAfterSeconds).to.equal(300); // 5 * 60
+        expect(error.code).toBe("RATE_LIMITED");
+        expect(error.retryAfterSeconds).toBe(300); // 5 * 60
       } finally {
         await stopServer(server);
       }
@@ -312,10 +311,10 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("key", port);
         await client.getDeliveries("active");
-        expect.fail("Should have thrown");
+        throw new Error("Should have thrown");
       } catch (err) {
         const error = err as Error & { code: string };
-        expect(error.code).to.equal("INVALID_API_KEY");
+        expect(error.code).toBe("INVALID_API_KEY");
       } finally {
         await stopServer(server);
       }
@@ -333,10 +332,10 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("key", port);
         await client.getDeliveries("active");
-        expect.fail("Should have thrown");
+        throw new Error("Should have thrown");
       } catch (err) {
         const error = err as Error & { code: string };
-        expect(error.code).to.equal("FORBIDDEN");
+        expect(error.code).toBe("FORBIDDEN");
       } finally {
         await stopServer(server);
       }
@@ -351,11 +350,11 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("key", port);
         await client.getDeliveries("active");
-        expect.fail("Should have thrown");
+        throw new Error("Should have thrown");
       } catch (err) {
         const error = err as Error & { code: string };
-        expect(error.code).to.equal("HTTP_ERROR");
-        expect(error.message).to.include("500");
+        expect(error.code).toBe("HTTP_ERROR");
+        expect(error.message).toContain("500");
       } finally {
         await stopServer(server);
       }
@@ -370,10 +369,10 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("key", port);
         await client.getDeliveries("active");
-        expect.fail("Should have thrown");
+        throw new Error("Should have thrown");
       } catch (err) {
         const error = err as Error;
-        expect(error.message).to.include("JSON parse error");
+        expect(error.message).toContain("JSON parse error");
       } finally {
         await stopServer(server);
       }
@@ -392,7 +391,7 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("key", port);
         const result = await client.getCarrierNames();
-        expect(result).to.deep.equal(carriers);
+        expect(result).toEqual(carriers);
       } finally {
         await stopServer(server);
       }
@@ -413,7 +412,7 @@ describe("ParcelClient", () => {
         await client.getCarrierNames();
         await client.getCarrierNames();
         await client.getCarrierNames();
-        expect(callCount).to.equal(1);
+        expect(callCount).toBe(1);
       } finally {
         await stopServer(server);
       }
@@ -437,12 +436,12 @@ describe("ParcelClient", () => {
 
         // First call fails — should return empty map
         const result1 = await client.getCarrierNames();
-        expect(result1).to.deep.equal({});
+        expect(result1).toEqual({});
 
         // Second call succeeds — not cached from failure
         const result2 = await client.getCarrierNames();
-        expect(result2).to.deep.equal({ dhl: "DHL" });
-        expect(callCount).to.equal(2);
+        expect(result2).toEqual({ dhl: "DHL" });
+        expect(callCount).toBe(2);
       } finally {
         await stopServer(server);
       }
@@ -460,7 +459,7 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("secret", port);
         await client.getCarrierNames();
-        expect(receivedApiKey).to.be.undefined;
+        expect(receivedApiKey).toBeUndefined();
       } finally {
         await stopServer(server);
       }
@@ -477,7 +476,7 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("key", port);
         const name = await client.getCarrierName("dhl");
-        expect(name).to.equal("DHL Express");
+        expect(name).toBe("DHL Express");
       } finally {
         await stopServer(server);
       }
@@ -492,7 +491,7 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("key", port);
         const name = await client.getCarrierName("unknown_carrier");
-        expect(name).to.equal("UNKNOWN_CARRIER");
+        expect(name).toBe("UNKNOWN_CARRIER");
       } finally {
         await stopServer(server);
       }
@@ -523,12 +522,12 @@ describe("ParcelClient", () => {
           description: "Test",
         });
 
-        expect(receivedMethod).to.equal("POST");
-        expect(result.success).to.be.true;
+        expect(receivedMethod).toBe("POST");
+        expect(result.success).toBe(true);
         const body = JSON.parse(receivedBody);
-        expect(body.tracking_number).to.equal("123");
-        expect(body.carrier_code).to.equal("dhl");
-        expect(body.description).to.equal("Test");
+        expect(body.tracking_number).toBe("123");
+        expect(body.carrier_code).toBe("dhl");
+        expect(body.description).toBe("Test");
       } finally {
         await stopServer(server);
       }
@@ -551,8 +550,8 @@ describe("ParcelClient", () => {
           carrier_code: "dhl",
           description: "Test",
         });
-        expect(result.success).to.be.false;
-        expect(result.error_message).to.equal("Duplicate");
+        expect(result.success).toBe(false);
+        expect(result.error_message).toBe("Duplicate");
       } finally {
         await stopServer(server);
       }
@@ -569,7 +568,7 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("key", port);
         const result = await client.getDeliveries("active");
-        expect(result).to.deep.equal([]);
+        expect(result).toEqual([]);
       } finally {
         await stopServer(server);
       }
@@ -584,7 +583,7 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("key", port);
         const result = await client.getDeliveries("active");
-        expect(result).to.deep.equal([]);
+        expect(result).toEqual([]);
       } finally {
         await stopServer(server);
       }
@@ -599,11 +598,11 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("key", port);
         await client.getDeliveries("active");
-        expect.fail("Should have thrown");
+        throw new Error("Should have thrown");
       } catch (err) {
         const error = err as Error & { code: string };
-        expect(error.code).to.equal("API_ERROR");
-        expect(error.message).to.include("malformed");
+        expect(error.code).toBe("API_ERROR");
+        expect(error.message).toContain("malformed");
       } finally {
         await stopServer(server);
       }
@@ -618,10 +617,10 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("key", port);
         await client.getDeliveries("active");
-        expect.fail("Should have thrown");
+        throw new Error("Should have thrown");
       } catch (err) {
         const error = err as Error & { code: string };
-        expect(error.code).to.equal("API_ERROR");
+        expect(error.code).toBe("API_ERROR");
       } finally {
         await stopServer(server);
       }
@@ -636,7 +635,7 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("key", port);
         const result = await client.getDeliveries("active");
-        expect(result).to.deep.equal([]);
+        expect(result).toEqual([]);
       } finally {
         await stopServer(server);
       }
@@ -651,7 +650,7 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("key", port);
         const result = await client.getDeliveries("active");
-        expect(result).to.deep.equal([]);
+        expect(result).toEqual([]);
       } finally {
         await stopServer(server);
       }
@@ -666,10 +665,10 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("key", port);
         await client.getDeliveries("active");
-        expect.fail("Should have thrown");
+        throw new Error("Should have thrown");
       } catch (err) {
         const error = err as Error & { code: string };
-        expect(error.code).to.equal("API_ERROR");
+        expect(error.code).toBe("API_ERROR");
       } finally {
         await stopServer(server);
       }
@@ -690,11 +689,11 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("key", port);
         await client.getDeliveries("active");
-        expect.fail("Should have thrown");
+        throw new Error("Should have thrown");
       } catch (err) {
         const error = err as Error & { code: string };
-        expect(error.code).to.equal("API_ERROR");
-        expect(error.message).to.include("UNKNOWN");
+        expect(error.code).toBe("API_ERROR");
+        expect(error.message).toContain("UNKNOWN");
       } finally {
         await stopServer(server);
       }
@@ -709,7 +708,7 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("key", port);
         const result = await client.getCarrierNames();
-        expect(result).to.deep.equal({});
+        expect(result).toEqual({});
       } finally {
         await stopServer(server);
       }
@@ -724,7 +723,7 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("key", port);
         const result = await client.getCarrierNames();
-        expect(result).to.deep.equal({});
+        expect(result).toEqual({});
       } finally {
         await stopServer(server);
       }
@@ -742,10 +741,10 @@ describe("ParcelClient", () => {
         const name2 = await client.getCarrierName(42);
         const name3 = await client.getCarrierName(undefined);
         const name4 = await client.getCarrierName("");
-        expect(name1).to.equal("UNKNOWN");
-        expect(name2).to.equal("UNKNOWN");
-        expect(name3).to.equal("UNKNOWN");
-        expect(name4).to.equal("UNKNOWN");
+        expect(name1).toBe("UNKNOWN");
+        expect(name2).toBe("UNKNOWN");
+        expect(name3).toBe("UNKNOWN");
+        expect(name4).toBe("UNKNOWN");
       } finally {
         await stopServer(server);
       }
@@ -762,9 +761,9 @@ describe("ParcelClient", () => {
         const dhl = await client.getCarrierName("dhl");
         const ups = await client.getCarrierName("ups");
         const fedex = await client.getCarrierName("fedex");
-        expect(dhl).to.equal("DHL");
-        expect(ups).to.equal("UPS");
-        expect(fedex).to.equal("FedEx");
+        expect(dhl).toBe("DHL");
+        expect(ups).toBe("UPS");
+        expect(fedex).toBe("FedEx");
       } finally {
         await stopServer(server);
       }
@@ -781,8 +780,8 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("valid-key", port);
         const result = await client.testConnection();
-        expect(result.success).to.be.true;
-        expect(result.message).to.equal("Connection successful");
+        expect(result.success).toBe(true);
+        expect(result.message).toBe("Connection successful");
       } finally {
         await stopServer(server);
       }
@@ -803,8 +802,8 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("bad-key", port);
         const result = await client.testConnection();
-        expect(result.success).to.be.false;
-        expect(result.message).to.equal("Invalid API key");
+        expect(result.success).toBe(false);
+        expect(result.message).toBe("Invalid API key");
       } finally {
         await stopServer(server);
       }
@@ -819,8 +818,8 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("key", port);
         const result = await client.testConnection();
-        expect(result.success).to.be.false;
-        expect(result.message).to.include("500");
+        expect(result.success).toBe(false);
+        expect(result.message).toContain("500");
       } finally {
         await stopServer(server);
       }

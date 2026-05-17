@@ -6,7 +6,7 @@ export default [
     languageOptions: {
       parserOptions: {
         projectService: {
-          allowDefaultProject: ["*.mjs"],
+          allowDefaultProject: ["*.mjs", "vitest.config.ts"],
         },
         tsconfigRootDir: import.meta.dirname,
       },
@@ -14,7 +14,6 @@ export default [
   },
   {
     rules: {
-      "@typescript-eslint/no-require-imports": "off",
       "@typescript-eslint/no-floating-promises": "error",
     },
   },

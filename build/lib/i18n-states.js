@@ -18,6 +18,7 @@ var __copyProps = (to, from, except, desc) => {
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var i18n_states_exports = {};
 __export(i18n_states_exports, {
+  ESTIMATE_LABELS: () => ESTIMATE_LABELS,
   STATE_NAMES: () => STATE_NAMES,
   tName: () => tName
 });
@@ -208,11 +209,80 @@ const STATE_NAMES = {
     "zh-cn": "\u5408\u5E76\u6D3E\u9001\u65F6\u6BB5"
   }
 };
+const ESTIMATE_LABELS = {
+  de: {
+    overdue: "\xFCberf\xE4llig",
+    today: "heute",
+    tomorrow: "morgen",
+    days: "in %d Tagen"
+  },
+  en: {
+    overdue: "overdue",
+    today: "today",
+    tomorrow: "tomorrow",
+    days: "in %d days"
+  },
+  ru: {
+    overdue: "\u043F\u0440\u043E\u0441\u0440\u043E\u0447\u0435\u043D\u043E",
+    today: "\u0441\u0435\u0433\u043E\u0434\u043D\u044F",
+    tomorrow: "\u0437\u0430\u0432\u0442\u0440\u0430",
+    days: "\u0447\u0435\u0440\u0435\u0437 %d \u0434\u043D."
+  },
+  pt: {
+    overdue: "atrasado",
+    today: "hoje",
+    tomorrow: "amanh\xE3",
+    days: "em %d dias"
+  },
+  nl: {
+    overdue: "te laat",
+    today: "vandaag",
+    tomorrow: "morgen",
+    days: "over %d dagen"
+  },
+  fr: {
+    overdue: "en retard",
+    today: "aujourd'hui",
+    tomorrow: "demain",
+    days: "dans %d jours"
+  },
+  it: {
+    overdue: "in ritardo",
+    today: "oggi",
+    tomorrow: "domani",
+    days: "tra %d giorni"
+  },
+  es: {
+    overdue: "atrasado",
+    today: "hoy",
+    tomorrow: "ma\xF1ana",
+    days: "en %d d\xEDas"
+  },
+  pl: {
+    overdue: "zaleg\u0142e",
+    today: "dzisiaj",
+    tomorrow: "jutro",
+    days: "za %d dni"
+  },
+  uk: {
+    overdue: "\u043F\u0440\u043E\u0441\u0442\u0440\u043E\u0447\u0435\u043D\u043E",
+    today: "\u0441\u044C\u043E\u0433\u043E\u0434\u043D\u0456",
+    tomorrow: "\u0437\u0430\u0432\u0442\u0440\u0430",
+    days: "\u0447\u0435\u0440\u0435\u0437 %d \u0434\u043D."
+  },
+  "zh-cn": {
+    overdue: "\u5DF2\u903E\u671F",
+    today: "\u4ECA\u5929",
+    tomorrow: "\u660E\u5929",
+    days: "%d \u5929\u540E"
+  }
+};
 function tName(key) {
   return STATE_NAMES[key];
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  ESTIMATE_LABELS,
   STATE_NAMES,
   tName
 });

@@ -204,6 +204,76 @@ export const STATE_NAMES: Record<string, StateName> = {
   },
 };
 
+/** Delivery-estimate labels keyed by language code. */
+export const ESTIMATE_LABELS: Record<string, Record<string, string>> = {
+  de: {
+    overdue: "überfällig",
+    today: "heute",
+    tomorrow: "morgen",
+    days: "in %d Tagen",
+  },
+  en: {
+    overdue: "overdue",
+    today: "today",
+    tomorrow: "tomorrow",
+    days: "in %d days",
+  },
+  ru: {
+    overdue: "просрочено",
+    today: "сегодня",
+    tomorrow: "завтра",
+    days: "через %d дн.",
+  },
+  pt: {
+    overdue: "atrasado",
+    today: "hoje",
+    tomorrow: "amanhã",
+    days: "em %d dias",
+  },
+  nl: {
+    overdue: "te laat",
+    today: "vandaag",
+    tomorrow: "morgen",
+    days: "over %d dagen",
+  },
+  fr: {
+    overdue: "en retard",
+    today: "aujourd'hui",
+    tomorrow: "demain",
+    days: "dans %d jours",
+  },
+  it: {
+    overdue: "in ritardo",
+    today: "oggi",
+    tomorrow: "domani",
+    days: "tra %d giorni",
+  },
+  es: {
+    overdue: "atrasado",
+    today: "hoy",
+    tomorrow: "mañana",
+    days: "en %d días",
+  },
+  pl: {
+    overdue: "zaległe",
+    today: "dzisiaj",
+    tomorrow: "jutro",
+    days: "za %d dni",
+  },
+  uk: {
+    overdue: "прострочено",
+    today: "сьогодні",
+    tomorrow: "завтра",
+    days: "через %d дн.",
+  },
+  "zh-cn": {
+    overdue: "已逾期",
+    today: "今天",
+    tomorrow: "明天",
+    days: "%d 天后",
+  },
+};
+
 /**
  * Translation object for a state name. Pass into `common.name`; ioBroker
  * Admin/vis/Object-Browser localizes automatically.

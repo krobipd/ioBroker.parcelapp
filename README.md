@@ -122,6 +122,9 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+- Fixed adapter icon not displaying in some admin environments (Content Security Policy).
+
 ### 0.4.4 (2026-05-13)
 - Adapter shuts down cleanly even if the "Test Connection" button was still running — the test request is now aborted at unload along with regular polling.
 

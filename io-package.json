@@ -3,6 +3,19 @@
     "name": "parcelapp",
     "version": "0.4.4",
     "news": {
+      "NEXT": {
+        "en": "Fixed adapter icon not displaying in some admin environments (Content Security Policy).",
+        "de": "Adapter-Icon wird jetzt auch in Admin-Umgebungen mit Content Security Policy korrekt angezeigt.",
+        "ru": "Исправлено отображение иконки адаптера в средах администрирования с Content Security Policy.",
+        "pt": "Corrigido o ícone do adaptador que não era exibido em alguns ambientes de administração (Content Security Policy).",
+        "nl": "Adapter-icoon wordt nu correct weergegeven in admin-omgevingen met Content Security Policy.",
+        "fr": "Correction de l'icône de l'adaptateur qui ne s'affichait pas dans certains environnements d'administration (Content Security Policy).",
+        "it": "Corretta l'icona dell'adattatore che non veniva visualizzata in alcuni ambienti di amministrazione (Content Security Policy).",
+        "es": "Corregido el icono del adaptador que no se mostraba en algunos entornos de administración (Content Security Policy).",
+        "pl": "Naprawiono wyświetlanie ikony adaptera w niektórych środowiskach administracyjnych (Content Security Policy).",
+        "uk": "Виправлено відображення іконки адаптера в деяких середовищах адміністрування (Content Security Policy).",
+        "zh-cn": "修复了在某些管理环境中适配器图标因内容安全策略而无法显示的问题。"
+      },
       "0.4.4": {
         "en": "Adapter shuts down cleanly even if Test Connection was still running — the test request is now aborted at unload.",
         "de": "Adapter fährt sauber herunter, auch wenn Test Connection noch lief — die Test-Anfrage wird jetzt beim Unload abgebrochen.",
@@ -80,19 +93,6 @@
         "pl": "Dokumentacja: notatki wydania przepisane w przyjaznym dla użytkownika stylu we wszystkich językach.",
         "uk": "Документація: нотатки до релізу переписано у дружньому до користувача стилі усіма мовами.",
         "zh-cn": "文档：所有语言的发布说明已重写为用户友好的风格。"
-      },
-      "0.3.1": {
-        "en": "Documentation cleanup. No code changes.",
-        "de": "Dokumentations-Bereinigung. Keine Code-Änderungen.",
-        "ru": "Очистка документации. Без изменений в коде.",
-        "pt": "Limpeza da documentação. Sem alterações de código.",
-        "nl": "Documentatie-opschoning. Geen code-wijzigingen.",
-        "fr": "Nettoyage de la documentation. Aucune modification de code.",
-        "it": "Pulizia della documentazione. Nessuna modifica al codice.",
-        "es": "Limpieza de documentación. Sin cambios de código.",
-        "pl": "Czyszczenie dokumentacji. Bez zmian w kodzie.",
-        "uk": "Очищення документації. Без змін у коді.",
-        "zh-cn": "文档清理。代码无变化。"
       }
     },
     "titleLang": {
@@ -138,7 +138,7 @@
     },
     "platform": "Javascript/Node.js",
     "icon": "parcelapp.svg",
-    "extIcon": "https://raw.githubusercontent.com/krobipd/ioBroker.parcelapp/main/admin/parcelapp.svg",
+    "extIcon": "https://cdn.jsdelivr.net/gh/krobipd/ioBroker.parcelapp@main/admin/parcelapp.svg",
     "readme": "https://github.com/krobipd/ioBroker.parcelapp/blob/main/README.md",
     "enabled": true,
     "tier": 3,
