@@ -122,7 +122,7 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
-### **WORK IN PROGRESS**
+### 0.4.5 (2026-05-17)
 - Fixed adapter icon not displaying in some admin environments (Content Security Policy).
 
 ### 0.4.4 (2026-05-13)
@@ -141,11 +141,6 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 ### 0.4.1 (2026-05-09)
 
 - Adapter log messages are now English only, in line with the ioBroker community standard. Localized state names (11 languages) are unchanged.
-
-### 0.4.0 (2026-05-06)
-
-- State names now follow your ioBroker system language (11 languages).
-- Minimum requirements: Node.js 22 and ioBroker Admin 7.8.23.
 
 Older entries are in [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
 

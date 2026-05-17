@@ -1,9 +1,9 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.4.4",
+    "version": "0.4.5",
     "news": {
-      "NEXT": {
+      "0.4.5": {
         "en": "Fixed adapter icon not displaying in some admin environments (Content Security Policy).",
         "de": "Adapter-Icon wird jetzt auch in Admin-Umgebungen mit Content Security Policy korrekt angezeigt.",
         "ru": "Исправлено отображение иконки адаптера в средах администрирования с Content Security Policy.",

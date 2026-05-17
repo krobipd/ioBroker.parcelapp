@@ -1,4 +1,9 @@
 # Older Changes
+## 0.4.0 (2026-05-06)
+
+- State names now follow your ioBroker system language (11 languages).
+- Minimum requirements: Node.js 22 and ioBroker Admin 7.8.23.
+
 ## 0.3.2 (2026-05-01)
 - Documentation polish across all languages.
 
