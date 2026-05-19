@@ -6,6 +6,6 @@ export default defineConfig({
     include: ["src/**/*.test.ts"],
     watch: false,
     pool: "forks",
-    forks: { singleFork: true },
+    forks: { singleFork: false },
   },
 });

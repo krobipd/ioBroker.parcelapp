@@ -118,24 +118,34 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 ---
 
 ## Changelog
+
 <!--
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+
+### **WORK IN PROGRESS**
+
+- Code quality enforced with standard formatting.
+
 ### 0.4.7 (2026-05-17)
-* Internal cleanup. No user-facing changes.
+
+- Internal cleanup. No user-facing changes.
 
 ### 0.4.6 (2026-05-17)
 
 - Localized "Adapter Information" and "Connection status" labels into 11 languages — previously English only.
 
 ### 0.4.5 (2026-05-17)
+
 - Fixed adapter icon not displaying in some admin environments (Content Security Policy).
 
 ### 0.4.4 (2026-05-13)
+
 - Adapter shuts down cleanly even if the "Test Connection" button was still running — the test request is now aborted at unload along with regular polling.
 
 ### 0.4.3 (2026-05-13)
+
 - Debug log now traces previously silent paths: HTTPS request lifecycle, carrier-list fetch outcome, per-delivery updates, admin-message handling and lifecycle anchors. Default log unchanged.
 
 Older entries are in [CHANGELOG_OLD.md](CHANGELOG_OLD.md).

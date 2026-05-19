@@ -3,6 +3,19 @@
     "name": "parcelapp",
     "version": "0.4.7",
     "news": {
+      "NEXT": {
+        "en": "Code quality enforced with standard formatting.",
+        "de": "Codequalität mit standardisierter Formatierung durchgesetzt.",
+        "ru": "Обеспечено качество кода со стандартным форматированием.",
+        "pt": "Qualidade do código reforçada com formatação padrão.",
+        "nl": "Codekwaliteit afgedwongen met standaardopmaak.",
+        "fr": "Qualité du code appliquée avec un formatage standard.",
+        "it": "Qualità del codice applicata con formattazione standard.",
+        "es": "Calidad del código aplicada con formato estándar.",
+        "pl": "Jakość kodu wymuszona ze standardowym formatowaniem.",
+        "uk": "Якість коду забезпечена стандартним форматуванням.",
+        "zh-cn": "通过标准格式强制执行代码质量。"
+      },
       "0.4.7": {
         "en": "Internal cleanup. No user-facing changes.",
         "de": "Interne Bereinigung. Keine sichtbaren Änderungen.",
@@ -80,19 +93,6 @@
         "pl": "Adapter zamyka się czysto, gdy parcel.app jest powolny, 403 daje wskazówkę 'sprawdź Premium' zamiast pętli reauth, dwa śledzenia z tym samym id już się nie nadpisują.",
         "uk": "Адаптер коректно вимикається при повільному parcel.app, 403 дає підказку 'перевірте Premium' замість циклу входу, два трекінги з однаковим id більше не перезаписуються.",
         "zh-cn": "当 parcel.app 响应缓慢时，适配器现在能干净退出（终止进行中的请求）。403 错误会提示检查 Premium 订阅，而不是反复重新认证。两个清洗后 ID 相同的快递不再互相覆盖。"
-      },
-      "0.4.1": {
-        "en": "Adapter log messages are now English only, in line with the ioBroker community standard. Localized state names (11 languages) remain unchanged.",
-        "de": "Adapter-Logs sind jetzt nur noch auf Englisch, gemäß ioBroker-Community-Standard. Lokalisierte Datenpunkt-Namen (11 Sprachen) bleiben erhalten.",
-        "ru": "Сообщения журнала теперь только на английском, согласно стандарту сообщества ioBroker. Локализованные имена состояний (11 языков) сохраняются.",
-        "pt": "As mensagens de log do adaptador agora são apenas em inglês, conforme o padrão da comunidade ioBroker. Os nomes de estados localizados (11 idiomas) permanecem inalterados.",
-        "nl": "Adapter-logberichten zijn nu alleen Engels, conform de ioBroker-communitystandaard. Gelokaliseerde statusnamen (11 talen) blijven ongewijzigd.",
-        "fr": "Les messages de log de l'adaptateur sont désormais uniquement en anglais, conformément au standard de la communauté ioBroker. Les noms d'états localisés (11 langues) restent inchangés.",
-        "it": "I messaggi di log dell'adattatore sono ora solo in inglese, secondo lo standard della community ioBroker. I nomi degli stati localizzati (11 lingue) rimangono invariati.",
-        "es": "Los mensajes de registro del adaptador ahora son solo en inglés, conforme al estándar de la comunidad ioBroker. Los nombres de estados localizados (11 idiomas) permanecen sin cambios.",
-        "pl": "Komunikaty dziennika adaptera są teraz wyłącznie po angielsku, zgodnie ze standardem społeczności ioBroker. Zlokalizowane nazwy stanów (11 języków) pozostają bez zmian.",
-        "uk": "Повідомлення журналу адаптера тепер лише англійською, відповідно до стандарту спільноти ioBroker. Локалізовані назви станів (11 мов) залишаються без змін.",
-        "zh-cn": "适配器日志消息现在仅为英文，符合 ioBroker 社区标准。本地化的数据点名称（11 种语言）保持不变。"
       }
     },
     "titleLang": {
