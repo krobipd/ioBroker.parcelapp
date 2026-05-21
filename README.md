@@ -123,6 +123,10 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+### 0.4.9 (2026-05-21)
+
+- Use community-standard event handler pattern
+
 ### 0.4.8 (2026-05-19)
 
 - Code quality enforced with standard formatting.
@@ -138,10 +142,6 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 ### 0.4.5 (2026-05-17)
 
 - Fixed adapter icon not displaying in some admin environments (Content Security Policy).
-
-### 0.4.4 (2026-05-13)
-
-- Adapter shuts down cleanly even if the "Test Connection" button was still running — the test request is now aborted at unload along with regular polling.
 
 Older entries are in [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
 

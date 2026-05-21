@@ -1,4 +1,8 @@
 # Older Changes
+## 0.4.4 (2026-05-13)
+
+- Adapter shuts down cleanly even if the "Test Connection" button was still running — the test request is now aborted at unload along with regular polling.
+
 ## 0.4.3 (2026-05-13)
 
 - Debug log now traces previously silent paths: HTTPS request lifecycle, carrier-list fetch outcome, per-delivery updates, admin-message handling and lifecycle anchors. Default log unchanged.

@@ -57,13 +57,9 @@ class ParcelappAdapter extends utils.Adapter {
       ...options,
       name: "parcelapp"
     });
-    this.on("ready", () => {
-      this.onReady().catch((err) => this.log.error(`onReady failed: ${(0, import_coerce.errText)(err)}`));
-    });
+    this.on("ready", this.onReady.bind(this));
     this.on("unload", this.onUnload.bind(this));
-    this.on("message", (obj) => {
-      this.onMessage(obj).catch((err) => this.log.error(`onMessage failed: ${(0, import_coerce.errText)(err)}`));
-    });
+    this.on("message", this.onMessage.bind(this));
     this.unhandledRejectionHandler = (reason) => {
       var _a;
       this.log.error(`Unhandled rejection: ${(0, import_coerce.errText)(reason)}`);
@@ -79,30 +75,34 @@ class ParcelappAdapter extends utils.Adapter {
   }
   async onReady() {
     var _a, _b;
-    this.log.debug(
-      `onReady: starting (pollInterval=${JSON.stringify(this.config.pollInterval)}, autoRemoveDelivered=${this.config.autoRemoveDelivered})`
-    );
-    const sysConfig = await this.getForeignObjectAsync("system.config");
-    const language = (_b = (_a = sysConfig == null ? void 0 : sysConfig.common) == null ? void 0 : _a.language) != null ? _b : "";
-    if (typeof language === "string" && language.length > 0) {
-      this.systemLang = language;
+    try {
+      this.log.debug(
+        `onReady: starting (pollInterval=${JSON.stringify(this.config.pollInterval)}, autoRemoveDelivered=${this.config.autoRemoveDelivered})`
+      );
+      const sysConfig = await this.getForeignObjectAsync("system.config");
+      const language = (_b = (_a = sysConfig == null ? void 0 : sysConfig.common) == null ? void 0 : _a.language) != null ? _b : "";
+      if (typeof language === "string" && language.length > 0) {
+        this.systemLang = language;
+      }
+      this.log.debug(`system language: '${language}' \u2192 using '${this.systemLang}'`);
+      await this.setStateAsync("info.connection", { val: false, ack: true });
+      const { apiKey } = this.config;
+      if (!apiKey || apiKey.trim().length < MIN_API_KEY_LENGTH) {
+        this.log.error("No valid API key configured \u2014 please enter your parcel.app API key in the adapter settings");
+        return;
+      }
+      this.client = new import_parcel_client.ParcelClient(apiKey.trim(), { debug: (m) => this.log.debug(m) });
+      this.stateManager = new import_state_manager.StateManager(this, language);
+      await this.cleanupObsoleteStates();
+      await this.poll();
+      const interval = ParcelappAdapter.coercePollInterval(this.config.pollInterval);
+      this.log.debug(`pollInterval: raw=${JSON.stringify(this.config.pollInterval)} resolved=${interval}min`);
+      const intervalMs = interval * 60 * 1e3;
+      this.pollTimer = this.setInterval(() => void this.poll(), intervalMs);
+      this.log.info(`Parcel tracking started \u2014 polling every ${interval} minutes`);
+    } catch (err) {
+      this.log.error(`onReady failed: ${(0, import_coerce.errText)(err)}`);
     }
-    this.log.debug(`system language: '${language}' \u2192 using '${this.systemLang}'`);
-    await this.setStateAsync("info.connection", { val: false, ack: true });
-    const { apiKey } = this.config;
-    if (!apiKey || apiKey.trim().length < MIN_API_KEY_LENGTH) {
-      this.log.error("No valid API key configured \u2014 please enter your parcel.app API key in the adapter settings");
-      return;
-    }
-    this.client = new import_parcel_client.ParcelClient(apiKey.trim(), { debug: (m) => this.log.debug(m) });
-    this.stateManager = new import_state_manager.StateManager(this, language);
-    await this.cleanupObsoleteStates();
-    await this.poll();
-    const interval = ParcelappAdapter.coercePollInterval(this.config.pollInterval);
-    this.log.debug(`pollInterval: raw=${JSON.stringify(this.config.pollInterval)} resolved=${interval}min`);
-    const intervalMs = interval * 60 * 1e3;
-    this.pollTimer = this.setInterval(() => void this.poll(), intervalMs);
-    this.log.info(`Parcel tracking started \u2014 polling every ${interval} minutes`);
   }
   /**
    * v0.4.2 (M5+X5): delegate to the shared `coerceClampedInt` helper.
