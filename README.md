@@ -123,7 +123,7 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
-### **WORK IN PROGRESS**
+### 0.5.0 (2026-05-22)
 
 - User-modified state names are no longer overwritten on adapter restart
 - State name translations migrated to standard ioBroker i18n framework
@@ -143,10 +143,6 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 ### 0.4.6 (2026-05-17)
 
 - Localized "Adapter Information" and "Connection status" labels into 11 languages — previously English only.
-
-### 0.4.5 (2026-05-17)
-
-- Fixed adapter icon not displaying in some admin environments (Content Security Policy).
 
 Older entries are in [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
 

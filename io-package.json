@@ -1,9 +1,9 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.4.9",
+    "version": "0.5.0",
     "news": {
-      "NEXT": {
+      "0.5.0": {
         "en": "Preserve user-modified state names; state translations use standard ioBroker i18n",
         "de": "Vom Benutzer geänderte Datenpunktnamen bleiben erhalten; Übersetzungen nutzen Standard-ioBroker-i18n",
         "ru": "Пользовательские имена точек данных сохраняются; переводы используют стандартный i18n ioBroker",

@@ -1,4 +1,7 @@
 # Older Changes
+## 0.4.5 (2026-05-17)
+
+- Fixed adapter icon not displaying in some admin environments (Content Security Policy).
 
 ## 0.4.4 (2026-05-13)
 
