@@ -1,4 +1,5 @@
 # Older Changes
+
 ## 0.4.4 (2026-05-13)
 
 - Adapter shuts down cleanly even if the "Test Connection" button was still running — the test request is now aborted at unload along with regular polling.

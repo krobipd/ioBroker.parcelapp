@@ -22,8 +22,9 @@ __export(state_manager_exports, {
   resolveLanguage: () => resolveLanguage
 });
 module.exports = __toCommonJS(state_manager_exports);
+var import_adapter_core = require("@iobroker/adapter-core");
 var import_coerce = require("./coerce");
-var import_i18n_states = require("./i18n-states");
+var import_i18n = require("./i18n");
 var import_types = require("./types");
 const TRACKABLE_STATUSES = /* @__PURE__ */ new Set([2, 4, 8]);
 function resolveLanguage(language) {
@@ -158,13 +159,17 @@ class StateManager {
     const description = typeof delivery.description === "string" ? delivery.description : "";
     const trackingNumber = typeof delivery.tracking_number === "string" ? delivery.tracking_number : "";
     const extraInfo = typeof delivery.extra_information === "string" ? delivery.extra_information : "";
-    await this.adapter.extendObjectAsync(devicePath, {
-      type: "device",
-      common: {
-        name: description || `Package ${trackingNumber || pkgId}`
+    await this.adapter.extendObjectAsync(
+      devicePath,
+      {
+        type: "device",
+        common: {
+          name: description || `Package ${trackingNumber || pkgId}`
+        },
+        native: {}
       },
-      native: {}
-    });
+      { preserve: { common: ["name"] } }
+    );
     const statusCode = this.parseStatus(delivery);
     const labels = import_types.STATUS_LABELS[this.language];
     let statusText = labels[statusCode];
@@ -173,41 +178,41 @@ class StateManager {
       statusText = `Unknown (${statusCode})`;
     }
     await Promise.all([
-      this.createAndSet(`${devicePath}.carrier`, (0, import_i18n_states.tName)("carrier"), "string", "text", carrierName),
-      this.createAndSet(`${devicePath}.status`, (0, import_i18n_states.tName)("status"), "string", "text", statusText),
-      this.createAndSet(`${devicePath}.statusCode`, (0, import_i18n_states.tName)("statusCode"), "number", "value", statusCode),
-      this.createAndSet(`${devicePath}.description`, (0, import_i18n_states.tName)("description"), "string", "text", description),
-      this.createAndSet(`${devicePath}.trackingNumber`, (0, import_i18n_states.tName)("trackingNumber"), "string", "text", trackingNumber),
-      this.createAndSet(`${devicePath}.extraInfo`, (0, import_i18n_states.tName)("extraInfo"), "string", "text", extraInfo),
+      this.createAndSet(`${devicePath}.carrier`, (0, import_i18n.tName)("carrier"), "string", "text", carrierName),
+      this.createAndSet(`${devicePath}.status`, (0, import_i18n.tName)("status"), "string", "text", statusText),
+      this.createAndSet(`${devicePath}.statusCode`, (0, import_i18n.tName)("statusCode"), "number", "value", statusCode),
+      this.createAndSet(`${devicePath}.description`, (0, import_i18n.tName)("description"), "string", "text", description),
+      this.createAndSet(`${devicePath}.trackingNumber`, (0, import_i18n.tName)("trackingNumber"), "string", "text", trackingNumber),
+      this.createAndSet(`${devicePath}.extraInfo`, (0, import_i18n.tName)("extraInfo"), "string", "text", extraInfo),
       this.createAndSet(
         `${devicePath}.deliveryWindow`,
-        (0, import_i18n_states.tName)("deliveryWindow"),
+        (0, import_i18n.tName)("deliveryWindow"),
         "string",
         "text",
         this.calculateDeliveryWindow(delivery, statusCode)
       ),
       this.createAndSet(
         `${devicePath}.deliveryEstimate`,
-        (0, import_i18n_states.tName)("deliveryEstimate"),
+        (0, import_i18n.tName)("deliveryEstimate"),
         "string",
         "text",
         this.calculateDeliveryEstimate(delivery, statusCode)
       ),
       this.createAndSet(
         `${devicePath}.lastEvent`,
-        (0, import_i18n_states.tName)("lastEvent"),
+        (0, import_i18n.tName)("lastEvent"),
         "string",
         "text",
         this.formatLastEvent(delivery)
       ),
       this.createAndSet(
         `${devicePath}.lastLocation`,
-        (0, import_i18n_states.tName)("lastLocation"),
+        (0, import_i18n.tName)("lastLocation"),
         "string",
         "text",
         this.extractLastLocation(delivery)
       ),
-      this.createAndSet(`${devicePath}.lastUpdated`, (0, import_i18n_states.tName)("lastUpdated"), "string", "date", (/* @__PURE__ */ new Date()).toISOString())
+      this.createAndSet(`${devicePath}.lastUpdated`, (0, import_i18n.tName)("lastUpdated"), "string", "date", (/* @__PURE__ */ new Date()).toISOString())
     ]);
   }
   /**
@@ -222,11 +227,11 @@ class StateManager {
       `updateSummary: ${activeDeliveries.length} active, ${todayDeliveries.length} expected today`
     );
     await Promise.all([
-      this.createAndSet("summary.activeCount", (0, import_i18n_states.tName)("activeCount"), "number", "value", activeDeliveries.length),
-      this.createAndSet("summary.todayCount", (0, import_i18n_states.tName)("todayCount"), "number", "value", todayDeliveries.length),
+      this.createAndSet("summary.activeCount", (0, import_i18n.tName)("activeCount"), "number", "value", activeDeliveries.length),
+      this.createAndSet("summary.todayCount", (0, import_i18n.tName)("todayCount"), "number", "value", todayDeliveries.length),
       this.createAndSet(
         "summary.deliveryWindow",
-        (0, import_i18n_states.tName)("summaryDeliveryWindow"),
+        (0, import_i18n.tName)("summaryDeliveryWindow"),
         "string",
         "text",
         this.calculateCombinedWindow(todayDeliveries)
@@ -332,17 +337,16 @@ class StateManager {
     if (diffDays === null) {
       return "";
     }
-    const l = import_i18n_states.ESTIMATE_LABELS[this.language];
     if (diffDays < 0) {
-      return l.overdue;
+      return import_adapter_core.I18n.translate("estimateOverdue");
     }
     if (diffDays === 0) {
-      return l.today;
+      return import_adapter_core.I18n.translate("estimateToday");
     }
     if (diffDays === 1) {
-      return l.tomorrow;
+      return import_adapter_core.I18n.translate("estimateTomorrow");
     }
-    return l.days.replace("%d", String(diffDays));
+    return import_adapter_core.I18n.translate("estimateDays").replace("%d", String(diffDays));
   }
   /**
    * Whether the delivery is expected today. Language-agnostic, used by the

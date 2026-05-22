@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../src/lib/i18n.ts"],
+  "sourcesContent": ["import { I18n } from \"@iobroker/adapter-core\";\nimport type translations from \"../../admin/i18n/en.json\";\n\ntype I18nKey = keyof typeof translations;\n\n/**\n * @param key Translation key from admin/i18n/en.json\n */\nexport function tName(key: I18nKey): ioBroker.StringOrTranslated {\n  return I18n.getTranslatedObject(key);\n}\n"],
+  "mappings": ";;;;;;;;;;;;;;;;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA,0BAAqB;AAQd,SAAS,MAAM,KAA2C;AAC/D,SAAO,yBAAK,oBAAoB,GAAG;AACrC;",
+  "names": []
+}
