@@ -190,4 +190,4 @@ SOFTWARE.
 
 ---
 
-_Developed with assistance from Claude.ai_
+*Developed with assistance from Claude.ai*
