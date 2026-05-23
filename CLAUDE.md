@@ -6,7 +6,7 @@
 
 **ioBroker Parcel Tracking Adapter** — Paketverfolgung über [parcel.app](https://parcelapp.net) API. Alle Carrier die parcel.app unterstützt, ein API-Key (Premium).
 
-- **Version:** 0.5.0 (released 2026-05-22, Preserve + i18n migration). Vorgänger **0.4.9** community-standard handler. v0.4.8 NUT-Konsistenz. v0.4.7 Internal cleanup. v0.4.6 instanceObjects i18n. v0.4.5 Toolchain-Parity. v0.4.4 testClient cancelAll-Latency-Fix. v0.4.3 Debug-Coverage-Welle. v0.4.2 17-Finding Hardening.
+- **Version:** 0.5.1 (released 2026-05-23, CI check-and-lint updated to Node.js 24). Vorgänger **0.5.0** Preserve + i18n migration. v0.4.9 community-standard handler. v0.4.8 NUT-Konsistenz. v0.4.7 Internal cleanup. v0.4.6 instanceObjects i18n. v0.4.5 Toolchain-Parity. v0.4.4 testClient cancelAll-Latency-Fix. v0.4.3 Debug-Coverage-Welle. v0.4.2 17-Finding Hardening.
 - **GitHub:** https://github.com/krobipd/ioBroker.parcelapp
 - **npm:** https://www.npmjs.com/package/iobroker.parcelapp
 - **Repository PR:** ioBroker/ioBroker.repositories#5667 (MERGED 2026-05-10, im Latest-Repo)
@@ -52,6 +52,7 @@ src/lib/i18n.ts          → tName: type-safe I18n.getTranslatedObject wrapper (
 
 ## Tests (180 unit + 57 package + 1 integration = 238)
 
+
 ```
 src/lib/coerce.test.ts         → errText, coerceFiniteNumber strict (HEX/Exp rejected), coerceString, coerceBoolean, isPlainObject, isTrueish (~25)
 src/lib/parcel-client.test.ts  → API client gegen lokalen HTTP-Mock-Server, errors, rate limiting, API-drift (36)
@@ -68,6 +69,7 @@ Run: `npm test` (vitest unit + mocha @iobroker/testing packageFiles).
 
 | Version | Highlights                                                                                                                                                                                              |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0.5.1   | CI check-and-lint updated to Node.js 24 (repochecker S3021). |
 | 0.5.0   | **Preserve + i18n (mcm-Feedback)**: `extendObjectAsync` with `{ preserve: { common: ["name"] } }`. Private `i18n-states.ts` replaced by adapter-core `I18n.getTranslatedObject()` + `I18n.translate()`. `admin/i18n` migrated from Pattern A (subdirs) to flat files (38 keys × 11 langs). ESTIMATE_LABELS migrated to `I18n.translate()`. Tests 175→180 unit. |
 | 0.4.9   | Community-standard event handler pattern (.bind + try/catch). |
 | 0.4.8   | **NUT-Konsistenz:** prettier ioBroker-Standard, dependabot double-quotes + TS-6-Kommentar, CI `fail_level: error`, `.releaseconfig.json` 2-Space, vitest `singleFork: false`, README Claude-footer-Fix. |
