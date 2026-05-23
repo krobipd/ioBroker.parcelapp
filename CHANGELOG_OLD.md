@@ -1,4 +1,8 @@
 # Older Changes
+## 0.4.6 (2026-05-17)
+
+- Localized "Adapter Information" and "Connection status" labels into 11 languages — previously English only.
+
 ## 0.4.5 (2026-05-17)
 
 - Fixed adapter icon not displaying in some admin environments (Content Security Policy).
