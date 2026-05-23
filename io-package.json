@@ -3,6 +3,19 @@
     "name": "parcelapp",
     "version": "0.5.0",
     "news": {
+      "NEXT": {
+        "en": "CI check-and-lint updated to Node.js 24",
+        "de": "CI check-and-lint auf Node.js 24 aktualisiert",
+        "ru": "CI check-and-lint обновлён до Node.js 24",
+        "pt": "CI check-and-lint atualizado para Node.js 24",
+        "nl": "CI check-and-lint bijgewerkt naar Node.js 24",
+        "fr": "CI check-and-lint mis à jour vers Node.js 24",
+        "it": "CI check-and-lint aggiornato a Node.js 24",
+        "es": "CI check-and-lint actualizado a Node.js 24",
+        "pl": "CI check-and-lint zaktualizowano do Node.js 24",
+        "uk": "CI check-and-lint оновлено до Node.js 24",
+        "zh-cn": "CI check-and-lint 更新至 Node.js 24"
+      },
       "0.5.0": {
         "en": "Preserve user-modified state names; state translations use standard ioBroker i18n",
         "de": "Vom Benutzer geänderte Datenpunktnamen bleiben erhalten; Übersetzungen nutzen Standard-ioBroker-i18n",
@@ -80,19 +93,6 @@
         "pl": "Naprawiono wyświetlanie ikony adaptera w niektórych środowiskach administracyjnych (Content Security Policy).",
         "uk": "Виправлено відображення іконки адаптера в деяких середовищах адміністрування (Content Security Policy).",
         "zh-cn": "修复了在某些管理环境中适配器图标因内容安全策略而无法显示的问题。"
-      },
-      "0.4.4": {
-        "en": "Adapter shuts down cleanly even if Test Connection was still running — the test request is now aborted at unload.",
-        "de": "Adapter fährt sauber herunter, auch wenn Test Connection noch lief — die Test-Anfrage wird jetzt beim Unload abgebrochen.",
-        "ru": "Адаптер чисто завершает работу даже если кнопка Test Connection ещё выполнялась — тестовый запрос теперь прерывается при выгрузке.",
-        "pt": "O adaptador encerra corretamente mesmo se o botão Test Connection ainda estava em execução — o pedido de teste é agora abortado no unload.",
-        "nl": "De adapter sluit netjes af, ook als Test Connection nog liep — het testverzoek wordt nu bij unload afgebroken.",
-        "fr": "L'adaptateur s'arrête proprement même si Test Connection était encore en cours — la requête de test est maintenant interrompue au déchargement.",
-        "it": "L'adattatore si arresta correttamente anche se Test Connection era ancora in esecuzione — la richiesta di test viene ora interrotta allo scarico.",
-        "es": "El adaptador se cierra correctamente incluso si Test Connection seguía ejecutándose — la solicitud de prueba se aborta ahora al descargar.",
-        "pl": "Adapter zamyka się poprawnie nawet jeśli przycisk Test Connection wciąż działał — żądanie testowe jest teraz przerywane przy zwolnieniu.",
-        "uk": "Адаптер коректно завершує роботу навіть якщо Test Connection ще виконувався — тестовий запит тепер скасовується під час вивантаження.",
-        "zh-cn": "即使测试连接按钮仍在运行，适配器也能干净地关闭——测试请求现在会在卸载时中止。"
       }
     },
     "titleLang": {
