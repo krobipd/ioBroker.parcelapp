@@ -6,7 +6,7 @@
 
 **ioBroker Parcel Tracking Adapter** — Paketverfolgung über [parcel.app](https://parcelapp.net) API. Alle Carrier die parcel.app unterstützt, ein API-Key (Premium).
 
-- **Version:** 0.5.3 (released 2026-05-24, memory/perf audit: setStateAsync→setStateChangedAsync in state-manager createAndSet + main.ts info.connection). Vorgänger **0.5.2** changelog user-centric rewrite. **0.5.1** CI Node 24. **0.5.0** Preserve + i18n migration. v0.4.9 community-standard handler. v0.4.8 NUT-Konsistenz. v0.4.7 Internal cleanup. v0.4.6 instanceObjects i18n. v0.4.5 Toolchain-Parity. v0.4.4 testClient cancelAll-Latency-Fix. v0.4.3 Debug-Coverage-Welle. v0.4.2 17-Finding Hardening.
+- **Version:** 0.6.0 (released 2026-05-31, in-depth audit — combined-window max-end fix, status-drift kept visible (`-1`/Unknown), addDelivery `force`-poll, process-handler removal + local poll guard, dead coerce exports removed, `apiError` helper, deterministic packageId pre-pass, parcel-client tests exercise the real `request()` + fix latent BODY_TOO_LARGE, repochecker action pin `@v2`). Vorgänger **0.5.3** memory/perf audit (setStateChangedAsync). **0.5.2** changelog rewrite. **0.5.1** CI Node 24. **0.5.0** Preserve + i18n migration. v0.4.9 community-standard handler. v0.4.8 NUT-Konsistenz. v0.4.7 cleanup. v0.4.6 instanceObjects i18n. v0.4.5 Toolchain-Parity.
 - **GitHub:** https://github.com/krobipd/ioBroker.parcelapp
 - **npm:** https://www.npmjs.com/package/iobroker.parcelapp
 - **Repository PR:** ioBroker/ioBroker.repositories#5667 (MERGED 2026-05-10, im Latest-Repo)
@@ -27,8 +27,8 @@
 ```
 src/main.ts              → Adapter (Polling, Lifecycle, sendTo, systemLang)
 src/lib/types.ts         → Interfaces, Status-Labels (11 Sprachen)
-src/lib/coerce.ts        → errText, coerceFiniteNumber strict, coerceString, coerceBoolean, isPlainObject, isTrueish
-src/lib/parcel-client.ts → HTTPS-Client (Node.js built-in)
+src/lib/coerce.ts        → errText, coerceFiniteNumber strict, coerceClampedInt, isTrueish
+src/lib/parcel-client.ts → HTTPS-Client (Node.js built-in); baseUrl-Seam (Tests), apiError-Helper
 src/lib/state-manager.ts → State CRUD + Cleanup + Berechnungen + createdIds-Cache
 src/lib/i18n.ts          → tName: type-safe I18n.getTranslatedObject wrapper (keys from admin/i18n/en.json)
 ../scripts/sync-iopackage-from-i18n.py → hält io-package.json:instanceObjects synchron mit admin/i18n (zentral, source: admin-i18n)
@@ -71,6 +71,7 @@ Run: `npm test` (vitest unit + mocha @iobroker/testing packageFiles).
 
 | Version | Highlights                                                                                                                                                                                              |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0.6.0   | **In-depth audit**: combined-window max-end fix (+nested-window test); status-drift kept visible (`-1`/Unknown) instead of hidden as delivered; addDelivery `force`-poll bypasses the 60s throttle; process-level handlers removed + local poll guard; `apiError` helper + deterministic packageId pre-pass; parcel-client tests exercise the real `request()` (fixed latent BODY_TOO_LARGE); dead coerce exports + unused interface fields removed; repochecker action pin `@v2`. |
 | 0.5.3   | Memory/Perf-Audit: `setStateAsync`→`setStateChangedAsync` in state-manager `createAndSet` + main.ts `info.connection`. |
 | 0.5.2   | Changelog user-centric rewrite (README + CHANGELOG_OLD + io-package.json news audited against Hard-Negativ-Liste). |
 | 0.5.1   | CI check-and-lint updated to Node.js 24 (repochecker S3021). |
@@ -80,7 +81,6 @@ Run: `npm test` (vitest unit + mocha @iobroker/testing packageFiles).
 | 0.4.7   | Internal cleanup: dead tsconfig settings entfernt. |
 | 0.4.6   | `scripts/sync-iopackage-from-i18n.py`. instanceObjects mit 11-Sprachen-Translations. |
 | 0.4.5   | **Toolchain-Parity:** TS ~6.0.3, vitest, eslint-config 2.3.4, release-script 5.2.0. Code-Cleanup. extIcon CSP-Fix. |
-| 0.4.4   | testClient cancelAll-Latency-Fix. |
 
 ## Befehle
 
