@@ -43,6 +43,7 @@ interface ObjectViewRow {
 
 interface MockAdapterMetrics {
   setObjectNotExistsCalls: number;
+  setStateChangedWrites: number;
 }
 
 interface MockAdapter {
@@ -72,7 +73,7 @@ function createMockAdapter(): MockAdapter {
   const objects = new Map<string, ObjectDef>();
   const states = new Map<string, StateValue>();
   const debugMessages: string[] = [];
-  const metrics: MockAdapterMetrics = { setObjectNotExistsCalls: 0 };
+  const metrics: MockAdapterMetrics = { setObjectNotExistsCalls: 0, setStateChangedWrites: 0 };
 
   return {
     namespace: "parcelapp.0",
@@ -107,6 +108,12 @@ function createMockAdapter(): MockAdapter {
       states.set(id, state);
     },
     setStateChangedAsync: async (id: string, state: StateValue): Promise<void> => {
+      // Mirror js-controller: only write (and count) when the value changed.
+      const existing = states.get(id);
+      if (existing && existing.val === state.val) {
+        return;
+      }
+      metrics.setStateChangedWrites++;
       states.set(id, state);
     },
     delObjectAsync: async (id: string, _opts?: { recursive: boolean }): Promise<void> => {
@@ -127,10 +134,12 @@ function createMockAdapter(): MockAdapter {
       params: { startkey: string; endkey: string },
     ): Promise<{ rows: ObjectViewRow[] }> => {
       const rows: ObjectViewRow[] = [];
-      const prefix = params.startkey.replace("parcelapp.0.", "");
+      // Honor the startkey/endkey string range (like the real getObjectView)
+      // so the endkey upper bound (ID_RANGE_END) is actually exercised.
       for (const [key, value] of objects.entries()) {
-        if (value.type === "device" && key.startsWith(prefix)) {
-          rows.push({ id: `parcelapp.0.${key}`, value });
+        const fullId = `parcelapp.0.${key}`;
+        if (value.type === "device" && fullId >= params.startkey && fullId <= params.endkey) {
+          rows.push({ id: fullId, value });
         }
       }
       return { rows };
@@ -324,15 +333,15 @@ describe("StateManager", () => {
       expect(state?.val).toBe("Unknown (99)");
     });
 
-    it("should handle non-numeric status code", async () => {
+    it("should handle non-numeric status code as unknown (kept visible)", async () => {
       const delivery = makeDelivery({ status_code: "abc" });
       await manager.updateDelivery(delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const statusCode = adapter.states.get(`deliveries.${pkgId}.statusCode`);
-      expect(statusCode?.val).toBe(0);
+      expect(statusCode?.val).toBe(-1); // drift → unknown sentinel, NOT 0 (Delivered)
       const status = adapter.states.get(`deliveries.${pkgId}.status`);
-      expect(status?.val).toBe("Zugestellt"); // status code 0 = Delivered
+      expect(status?.val).toBe("Unknown (-1)");
     });
 
     it("should set trackingNumber as original string", async () => {
@@ -936,6 +945,37 @@ describe("StateManager", () => {
       expect(state?.val).toBe("10:00 - 16:00");
     });
 
+    it("combines nested windows using the latest end, not the latest start's end", async () => {
+      const today = new Date();
+      const wideStart = new Date(today);
+      wideStart.setHours(8, 0, 0, 0);
+      const wideEnd = new Date(today);
+      wideEnd.setHours(18, 0, 0, 0);
+      const narrowStart = new Date(today);
+      narrowStart.setHours(9, 0, 0, 0);
+      const narrowEnd = new Date(today);
+      narrowEnd.setHours(10, 0, 0, 0);
+
+      const deliveries = [
+        makeDelivery({
+          status_code: "2",
+          tracking_number: "WIDE",
+          timestamp_expected: Math.floor(wideStart.getTime() / 1000),
+          timestamp_expected_end: Math.floor(wideEnd.getTime() / 1000),
+        }),
+        makeDelivery({
+          status_code: "4",
+          tracking_number: "NARROW",
+          timestamp_expected: Math.floor(narrowStart.getTime() / 1000),
+          timestamp_expected_end: Math.floor(narrowEnd.getTime() / 1000),
+        }),
+      ];
+      await manager.updateSummary(deliveries);
+
+      const state = adapter.states.get("summary.deliveryWindow");
+      expect(state?.val).toBe("08:00 - 18:00");
+    });
+
     it("should return empty delivery window when no today deliveries", async () => {
       await manager.updateSummary([]);
 
@@ -982,37 +1022,37 @@ describe("StateManager", () => {
         expect(manager.parseStatus(delivery)).toBe(2);
       });
 
-      it("should return 0 for NaN number", () => {
+      it("should return -1 (unknown) for NaN number", () => {
         const delivery = makeDelivery({
           status_code: NaN as unknown as string,
         });
-        expect(manager.parseStatus(delivery)).toBe(0);
+        expect(manager.parseStatus(delivery)).toBe(-1);
       });
 
-      it("should return 0 for Infinity", () => {
+      it("should return -1 (unknown) for Infinity", () => {
         const delivery = makeDelivery({
           status_code: Infinity as unknown as string,
         });
-        expect(manager.parseStatus(delivery)).toBe(0);
+        expect(manager.parseStatus(delivery)).toBe(-1);
       });
 
-      it("should return 0 for null", () => {
+      it("should return -1 (unknown) for null", () => {
         const delivery = makeDelivery({
           status_code: null as unknown as string,
         });
-        expect(manager.parseStatus(delivery)).toBe(0);
+        expect(manager.parseStatus(delivery)).toBe(-1);
       });
 
-      it("should return 0 for object", () => {
+      it("should return -1 (unknown) for object", () => {
         const delivery = makeDelivery({
           status_code: {} as unknown as string,
         });
-        expect(manager.parseStatus(delivery)).toBe(0);
+        expect(manager.parseStatus(delivery)).toBe(-1);
       });
 
-      it("should return 0 for non-numeric string", () => {
+      it("should return -1 (unknown) for non-numeric string", () => {
         const delivery = makeDelivery({ status_code: "abc" });
-        expect(manager.parseStatus(delivery)).toBe(0);
+        expect(manager.parseStatus(delivery)).toBe(-1);
       });
     });
 
@@ -1425,6 +1465,24 @@ describe("StateManager", () => {
       expect(adapter.metrics.setObjectNotExistsCalls).toBeGreaterThan(before);
       // And the states are back.
       expect(adapter.states.get(`deliveries.${pkgId}.carrier`)?.val).toBe("DHL");
+    });
+  });
+
+  describe("setStateChanged skips unchanged values (v0.5.3)", () => {
+    it("re-polling identical data does not re-write unchanged states", async () => {
+      const adapter = createMockAdapter();
+      const manager = new StateManager(adapter as never, "en");
+      const delivery = makeDelivery({
+        status_code: "2",
+        timestamp_expected: Math.floor(Date.now() / 1000) + 3600,
+      });
+      await manager.updateDelivery(delivery, "DHL");
+      const firstWrites = adapter.metrics.setStateChangedWrites;
+      // Second identical poll: only `lastUpdated` (a fresh ISO timestamp) may
+      // change; every other state is identical and must be skipped.
+      await manager.updateDelivery(delivery, "DHL");
+      const secondPassWrites = adapter.metrics.setStateChangedWrites - firstWrites;
+      expect(secondPassWrites).toBeLessThanOrEqual(1);
     });
   });
 

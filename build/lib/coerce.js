@@ -18,12 +18,9 @@ var __copyProps = (to, from, except, desc) => {
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var coerce_exports = {};
 __export(coerce_exports, {
-  coerceBoolean: () => coerceBoolean,
   coerceClampedInt: () => coerceClampedInt,
   coerceFiniteNumber: () => coerceFiniteNumber,
-  coerceString: () => coerceString,
   errText: () => errText,
-  isPlainObject: () => isPlainObject,
   isTrueish: () => isTrueish
 });
 module.exports = __toCommonJS(coerce_exports);
@@ -37,21 +34,6 @@ function coerceFiniteNumber(value) {
     return Number.isFinite(n) ? n : null;
   }
   return null;
-}
-function coerceString(value) {
-  if (typeof value === "string" && value.length > 0) {
-    return value;
-  }
-  return null;
-}
-function coerceBoolean(value) {
-  if (typeof value === "boolean") {
-    return value;
-  }
-  return null;
-}
-function isPlainObject(value) {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 function isTrueish(v) {
   if (typeof v === "boolean") {
@@ -97,12 +79,9 @@ function coerceClampedInt(raw, min, max, defaultValue) {
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  coerceBoolean,
   coerceClampedInt,
   coerceFiniteNumber,
-  coerceString,
   errText,
-  isPlainObject,
   isTrueish
 });
 //# sourceMappingURL=coerce.js.map

@@ -123,6 +123,12 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+
+- The summary delivery window now covers the full time range when several packages are expected the same day — previously an overlapping window could be cut short.
+- Packages reported with an unrecognized status are no longer mistaken for delivered and removed; they stay visible as "Unknown".
+- A delivery added via the admin button now appears immediately instead of only after the next polling cycle.
+
 ### 0.5.3 (2026-05-23)
 
 - Reduced unnecessary state-change events by skipping writes when the value has not changed.

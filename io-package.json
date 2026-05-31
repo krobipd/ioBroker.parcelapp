@@ -3,6 +3,19 @@
     "name": "parcelapp",
     "version": "0.5.3",
     "news": {
+      "NEXT": {
+        "en": "Bug fixes: correct combined delivery window, packages with an unknown status stay visible, and newly added deliveries appear immediately.",
+        "de": "Fehlerbehebungen: korrektes kombiniertes Lieferfenster, Pakete mit unbekanntem Status bleiben sichtbar, und neue Sendungen erscheinen sofort.",
+        "ru": "Исправления: корректное объединённое окно доставки, посылки с неизвестным статусом остаются видимыми, новые посылки появляются сразу.",
+        "pt": "Correções: janela de entrega combinada correta, encomendas com estado desconhecido permanecem visíveis e novas encomendas aparecem de imediato.",
+        "nl": "Bugfixes: correct gecombineerd bezorgvenster, pakketten met onbekende status blijven zichtbaar en nieuwe zendingen verschijnen direct.",
+        "fr": "Corrections : fenêtre de livraison combinée correcte, les colis au statut inconnu restent visibles et les nouvelles livraisons apparaissent immédiatement.",
+        "it": "Correzioni: finestra di consegna combinata corretta, i pacchi con stato sconosciuto restano visibili e le nuove spedizioni compaiono subito.",
+        "es": "Correcciones: ventana de entrega combinada correcta, los paquetes con estado desconocido siguen visibles y los envíos nuevos aparecen al instante.",
+        "pl": "Poprawki: poprawne łączone okno dostawy, paczki o nieznanym statusie pozostają widoczne, a nowe przesyłki pojawiają się natychmiast.",
+        "uk": "Виправлення: коректне об'єднане вікно доставки, посилки з невідомим статусом залишаються видимими, нові посилки з'являються одразу.",
+        "zh-cn": "错误修复：合并送达窗口计算正确，状态未知的包裹保持可见，新添加的包裹立即显示。"
+      },
       "0.5.3": {
         "en": "Reduced unnecessary state-change events by skipping writes when the value has not changed.",
         "de": "Unnötige State-Change-Events reduziert, indem Schreibvorgänge bei unverändertem Wert übersprungen werden.",
@@ -79,19 +92,6 @@
         "es": "Limpieza interna. Sin cambios para el usuario.",
         "pl": "Wewnętrzne porządki. Brak zmian dla użytkownika.",
         "uk": "Внутрішнє очищення. Без змін для користувачів.",
-        "zh-cn": "内部清理。无用户可见的更改。"
-      },
-      "0.4.7": {
-        "en": "Internal cleanup. No user-facing changes.",
-        "de": "Interne Bereinigung. Keine sichtbaren Änderungen.",
-        "ru": "Внутренняя очистка. Нет видимых изменений для пользователей.",
-        "pt": "Limpeza interna. Sem alterações visíveis para o utilizador.",
-        "nl": "Interne opruiming. Geen zichtbare wijzigingen voor gebruikers.",
-        "fr": "Nettoyage interne. Aucun changement visible pour l'utilisateur.",
-        "it": "Pulizia interna. Nessuna modifica visibile per l'utente.",
-        "es": "Limpieza interna. Sin cambios visibles para el usuario.",
-        "pl": "Wewnętrzne porządki. Brak widocznych zmian dla użytkownika.",
-        "uk": "Внутрішнє прибирання. Без видимих змін для користувача.",
         "zh-cn": "内部清理。无用户可见的更改。"
       }
     },

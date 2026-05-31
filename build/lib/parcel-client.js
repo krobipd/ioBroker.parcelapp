@@ -31,11 +31,20 @@ __export(parcel_client_exports, {
   ParcelClient: () => ParcelClient
 });
 module.exports = __toCommonJS(parcel_client_exports);
+var http = __toESM(require("node:http"));
 var https = __toESM(require("node:https"));
 var import_coerce = require("./coerce");
 const API_BASE = "https://api.parcel.app/external";
 const REQUEST_TIMEOUT = 15e3;
 const MAX_BODY_BYTES = 1 << 20;
+function apiError(message, code, extra) {
+  const err = new Error(message);
+  err.code = code;
+  if (extra) {
+    Object.assign(err, extra);
+  }
+  return err;
+}
 class ParcelClient {
   apiKey;
   carrierCache = null;
@@ -48,13 +57,17 @@ class ParcelClient {
   inflight = /* @__PURE__ */ new Set();
   /** v0.4.3: optional logger for the HTTPS-layer trace. See {@link ParcelClientLogger}. */
   log;
+  /** API base URL. Overridable so tests can run the real `request()` against a local mock server. */
+  baseUrl;
   /**
    * @param apiKey The parcel.app API key
    * @param log Optional adapter logger for HTTPS-layer trace (v0.4.3)
+   * @param baseUrl API base URL — defaults to the production endpoint; overridden in tests
    */
-  constructor(apiKey, log) {
+  constructor(apiKey, log, baseUrl = API_BASE) {
     this.apiKey = apiKey;
     this.log = log;
+    this.baseUrl = baseUrl;
   }
   /**
    * v0.4.2 (P1): abort every in-flight HTTPS request. Idempotent.
@@ -76,18 +89,14 @@ class ParcelClient {
     const response = await this.request("GET", `/deliveries/?filter_mode=${filterMode}`, true);
     if (!response || typeof response !== "object") {
       (_a = this.log) == null ? void 0 : _a.debug(`API drift: malformed response (got ${typeof response})`);
-      const err = new Error("API error: malformed response");
-      err.code = "API_ERROR";
-      throw err;
+      throw apiError("API error: malformed response", "API_ERROR");
     }
     if (!(0, import_coerce.isTrueish)(response.success)) {
       const rawCode = typeof response.error_code === "string" ? response.error_code : "";
       const rawMsg = typeof response.error_message === "string" ? response.error_message : "";
       const code = rawCode || rawMsg || "UNKNOWN";
       (_b = this.log) == null ? void 0 : _b.debug(`API drift: success=false, code='${code}', msg='${rawMsg}'`);
-      const err = new Error(`API error: ${rawMsg || code}`);
-      err.code = rawCode === "INVALID_API_KEY" ? "INVALID_API_KEY" : "API_ERROR";
-      throw err;
+      throw apiError(`API error: ${rawMsg || code}`, rawCode === "INVALID_API_KEY" ? "INVALID_API_KEY" : "API_ERROR");
     }
     return Array.isArray(response.deliveries) ? response.deliveries : [];
   }
@@ -167,12 +176,10 @@ class ParcelClient {
       var _a2;
       let url;
       try {
-        url = new URL(`${API_BASE}${path}`);
+        url = new URL(`${this.baseUrl}${path}`);
       } catch {
-        (_a2 = this.log) == null ? void 0 : _a2.debug(`HTTP invalid URL: ${API_BASE}${path}`);
-        const err = new Error(`Invalid URL: ${API_BASE}${path}`);
-        err.code = "INVALID_URL";
-        reject(err);
+        (_a2 = this.log) == null ? void 0 : _a2.debug(`HTTP invalid URL: ${this.baseUrl}${path}`);
+        reject(apiError(`Invalid URL: ${this.baseUrl}${path}`, "INVALID_URL"));
         return;
       }
       const headers = {};
@@ -195,7 +202,8 @@ class ParcelClient {
       const cleanup = () => {
         this.inflight.delete(ctrl);
       };
-      const req = https.request(options, (res) => {
+      const transportRequest = url.protocol === "http:" ? http.request : https.request;
+      const req = transportRequest(options, (res) => {
         const chunks = [];
         let bodyBytes = 0;
         let oversized = false;
@@ -212,41 +220,31 @@ class ParcelClient {
           if (bodyBytes > MAX_BODY_BYTES) {
             oversized = true;
             (_a3 = this.log) == null ? void 0 : _a3.debug(`HTTP body oversized ${path}: dropping at ${bodyBytes}B`);
-            req.destroy(new Error(`Response body exceeds ${MAX_BODY_BYTES} bytes`));
+            cleanup();
+            reject(apiError("Response body too large", "BODY_TOO_LARGE"));
+            req.destroy();
             return;
           }
           chunks.push(chunk);
         });
         res.on("end", () => {
           var _a3, _b, _c, _d;
-          cleanup();
           if (oversized) {
-            const err = new Error("Response body too large");
-            err.code = "BODY_TOO_LARGE";
-            reject(err);
             return;
           }
+          cleanup();
           const raw = Buffer.concat(chunks).toString("utf-8");
           if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
             if (res.statusCode === 429) {
               const retryAfter = parseInt(res.headers["retry-after"] || "", 10);
-              const err2 = new Error("Rate limit exceeded");
-              err2.code = "RATE_LIMITED";
-              err2.retryAfterSeconds = Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(24 * 3600, retryAfter) : 5 * 60;
-              (_a3 = this.log) == null ? void 0 : _a3.debug(`HTTP 429 ${path} \u2192 retry-after=${err2.retryAfterSeconds}s`);
-              reject(err2);
+              const retryAfterSeconds = Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(24 * 3600, retryAfter) : 5 * 60;
+              (_a3 = this.log) == null ? void 0 : _a3.debug(`HTTP 429 ${path} \u2192 retry-after=${retryAfterSeconds}s`);
+              reject(apiError("Rate limit exceeded", "RATE_LIMITED", { retryAfterSeconds }));
               return;
             }
-            const err = new Error(`HTTP ${res.statusCode}: ${res.statusMessage}`);
-            if (res.statusCode === 401) {
-              err.code = "INVALID_API_KEY";
-            } else if (res.statusCode === 403) {
-              err.code = "FORBIDDEN";
-            } else {
-              err.code = "HTTP_ERROR";
-            }
-            (_b = this.log) == null ? void 0 : _b.debug(`HTTP ${method} ${path} \u2192 ${res.statusCode} ${err.code} (body=${raw.substring(0, 200)})`);
-            reject(err);
+            const code = res.statusCode === 401 ? "INVALID_API_KEY" : res.statusCode === 403 ? "FORBIDDEN" : "HTTP_ERROR";
+            (_b = this.log) == null ? void 0 : _b.debug(`HTTP ${method} ${path} \u2192 ${res.statusCode} ${code} (body=${raw.substring(0, 200)})`);
+            reject(apiError(`HTTP ${res.statusCode}: ${res.statusMessage}`, code));
             return;
           }
           try {

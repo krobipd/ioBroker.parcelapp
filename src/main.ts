@@ -30,8 +30,6 @@ class ParcelappAdapter extends utils.Adapter {
    * the process alive past js-controller's 4-second kill deadline.
    */
   private testClients = new Set<ParcelClient>();
-  private unhandledRejectionHandler: ((reason: unknown) => void) | null = null;
-  private uncaughtExceptionHandler: ((err: Error) => void) | null = null;
   /** ioBroker system language — read once in `onReady` from `system.config`. EN fallback. */
   private systemLang: string = "en";
 
@@ -44,17 +42,6 @@ class ParcelappAdapter extends utils.Adapter {
     this.on("ready", this.onReady.bind(this));
     this.on("unload", this.onUnload.bind(this));
     this.on("message", this.onMessage.bind(this));
-    // Safety net for fire-and-forget paths (e.g. `void this.poll()`).
-    this.unhandledRejectionHandler = (reason: unknown) => {
-      this.log.error(`Unhandled rejection: ${errText(reason)}`);
-      this.terminate?.(11);
-    };
-    this.uncaughtExceptionHandler = (err: Error) => {
-      this.log.error(`Uncaught exception: ${errText(err)}`);
-      this.terminate?.(11);
-    };
-    process.on("unhandledRejection", this.unhandledRejectionHandler);
-    process.on("uncaughtException", this.uncaughtExceptionHandler);
   }
 
   private async onReady(): Promise<void> {
@@ -89,7 +76,9 @@ class ParcelappAdapter extends utils.Adapter {
       const interval = ParcelappAdapter.coercePollInterval(this.config.pollInterval);
       this.log.debug(`pollInterval: raw=${JSON.stringify(this.config.pollInterval)} resolved=${interval}min`);
       const intervalMs = interval * 60 * 1000;
-      this.pollTimer = this.setInterval(() => void this.poll(), intervalMs);
+      this.pollTimer = this.setInterval(() => {
+        void this.poll().catch(err => this.log.error(`Scheduled poll failed: ${errText(err)}`));
+      }, intervalMs);
 
       this.log.info(`Parcel tracking started — polling every ${interval} minutes`);
     } catch (err: unknown) {
@@ -123,14 +112,6 @@ class ParcelappAdapter extends utils.Adapter {
         tc.cancelAll();
       }
       this.testClients.clear();
-      if (this.unhandledRejectionHandler) {
-        process.off("unhandledRejection", this.unhandledRejectionHandler);
-        this.unhandledRejectionHandler = null;
-      }
-      if (this.uncaughtExceptionHandler) {
-        process.off("uncaughtException", this.uncaughtExceptionHandler);
-        this.uncaughtExceptionHandler = null;
-      }
       // v0.4.2 (M10): explicit `.catch(() => {})` on the fire-and-forget so
       // a broker-already-down doesn't leak as an unhandled rejection.
       void this.setState("info.connection", { val: false, ack: true }).catch(() => {
@@ -203,7 +184,11 @@ class ParcelappAdapter extends utils.Adapter {
           this.log.debug(`addDelivery: '${request?.tracking_number}' result=${addResult.success ? "ok" : "fail"}`);
           this.sendTo(obj.from, obj.command, addResult, obj.callback);
           if (addResult.success) {
-            void this.poll();
+            // C5: force bypasses the 60s throttle so the freshly added package
+            // shows up immediately; the rate-limit cooldown still applies.
+            void this.poll({ force: true }).catch(err =>
+              this.log.error(`Poll after addDelivery failed: ${errText(err)}`),
+            );
           }
           break;
         }
@@ -266,7 +251,7 @@ class ParcelappAdapter extends utils.Adapter {
     return error.code || "UNKNOWN";
   }
 
-  private async poll(): Promise<void> {
+  private async poll(options: { force?: boolean } = {}): Promise<void> {
     if (this.isPolling || !this.client || !this.stateManager) {
       return;
     }
@@ -285,8 +270,11 @@ class ParcelappAdapter extends utils.Adapter {
       return;
     }
 
-    // Throttle: minimum gap between polls
-    if (now - this.lastPollTime < MIN_POLL_GAP_MS) {
+    // Throttle: minimum gap between polls. A forced poll (e.g. from
+    // addDelivery) bypasses this so a freshly added package shows up
+    // immediately; the rate-limit cooldown above still applies to protect
+    // the API.
+    if (!options.force && now - this.lastPollTime < MIN_POLL_GAP_MS) {
       this.log.debug("Skipping poll — too soon after last poll");
       return;
     }
@@ -309,14 +297,18 @@ class ParcelappAdapter extends utils.Adapter {
       const activeDeliveries = deliveries.filter(d => this.stateManager!.parseStatus(d) !== 0);
       const visibleDeliveries = autoRemoveMode ? activeDeliveries : deliveries;
 
-      // v0.4.2 (S3): reset per-poll collision tracker so the bare-id wins
-      // for the first occurrence in this poll (deterministic, back-compat).
+      // v0.4.2 (S3): reset the per-poll collision tracker, then compute every
+      // package id in a deterministic sequential pre-pass (stable array order)
+      // BEFORE the parallel updates — collision-suffixing is then deterministic
+      // and packageId runs exactly once per delivery instead of twice.
       this.stateManager.resetPollState();
+      const pkgIds = visibleDeliveries.map(d => this.stateManager!.packageId(d));
 
       // v0.4.2 (M4): per-delivery updates run in parallel, each wrapped in
       // try/catch so one bad delivery doesn't poison the others.
       const idResults = await Promise.all(
-        visibleDeliveries.map(async delivery => {
+        visibleDeliveries.map(async (delivery, index) => {
+          const pkgId = pkgIds[index];
           try {
             // v0.4.3 (C1): per-delivery entry. ~10 packages × 144 polls/day
             // = ~1440 debug lines/day — acceptable at debug-level. Line stays
@@ -325,9 +317,9 @@ class ParcelappAdapter extends utils.Adapter {
               `updateDelivery: '${delivery.tracking_number}' carrier=${delivery.carrier_code} status=${delivery.status_code}`,
             );
             const carrierName = await this.client!.getCarrierName(delivery.carrier_code);
-            await this.stateManager!.updateDelivery(delivery, carrierName);
+            await this.stateManager!.updateDelivery(delivery, carrierName, pkgId);
             this.failedDeliveries.delete(delivery.tracking_number);
-            return this.stateManager!.packageId(delivery);
+            return pkgId;
           } catch (err) {
             const msg = errText(err);
             if (this.failedDeliveries.has(delivery.tracking_number)) {
@@ -347,6 +339,15 @@ class ParcelappAdapter extends utils.Adapter {
 
       // Update summary (always uses active/non-delivered)
       await this.stateManager.updateSummary(activeDeliveries);
+
+      // Keep failedDeliveries bounded: drop entries for trackings no longer
+      // present, so packages that vanish from the API don't linger forever.
+      const seenTracking = new Set(visibleDeliveries.map(d => d.tracking_number));
+      for (const tracking of [...this.failedDeliveries]) {
+        if (!seenTracking.has(tracking)) {
+          this.failedDeliveries.delete(tracking);
+        }
+      }
 
       this.log.debug(`Polled ${visibleDeliveries.length} deliveries (${activeDeliveries.length} active)`);
     } catch (err) {
@@ -392,7 +393,13 @@ class ParcelappAdapter extends utils.Adapter {
         this.log.error(`Poll failed: ${error.message}`);
       }
 
-      await this.setStateAsync("info.connection", { val: false, ack: true });
+      // C2: setStateChangedAsync avoids redundant `false` writes on sustained
+      // failure. The `.catch` keeps poll() from rejecting when the broker is
+      // already down, so the fire-and-forget callers never see an unhandled
+      // rejection (no global process handler needed).
+      await this.setStateChangedAsync("info.connection", { val: false, ack: true }).catch(() => {
+        /* broker shutting down — ignore */
+      });
     } finally {
       this.isPolling = false;
     }

@@ -41,7 +41,7 @@ src/lib/i18n.ts          → tName: type-safe I18n.getTranslatedObject wrapper (
 3. **Carrier-Cache** — Geladen beim ersten `getCarrierName()`, bei Fehler leere Map (Retry nächster Aufruf)
 4. **Error-Dedup** — `classifyError()` + `lastErrorCode` (RATE_LIMITED, INVALID_API_KEY, NETWORK, TIMEOUT)
 5. **Rate Limit** — Retry-After Header, Cooldown-Timer, Polls übersprungen
-6. **sendTo** — `checkConnection` (Admin-UI Button), `addDelivery` (triggert sofortigen Poll)
+6. **sendTo** — `checkConnection` (Admin-UI Button), `addDelivery` (triggert via `poll({ force: true })` einen sofortigen Poll, der den 60s-Throttle umgeht; die Rate-Limit-Sperre bleibt aktiv)
 7. **pkgId** — `sanitize(tracking_number)` + optional `_sanitize(extra_information)`
 8. **Sprache** — `system.config.language` einmalig in `onReady` gelesen und an `StateManager` übergeben. Unbekannte Codes fallen via `resolveLanguage()` auf `en` zurück. Kein per-Instanz Language-Setting.
 9. **Intermediate Objects** — `deliveries` (folder) + `summary` (channel) sind in io-package.json `instanceObjects` deklariert; `StateManager` legt nur die States darunter an.
@@ -50,13 +50,15 @@ src/lib/i18n.ts          → tName: type-safe I18n.getTranslatedObject wrapper (
 
 0=Zugestellt, 1=Eingefroren, 2=Unterwegs, 3=Abholung, 4=In Zustellung, 5=Nicht gefunden, 6=Zustellversuch, 7=Ausnahme, 8=Registriert
 
+Unparsebarer/driftender `status_code` → `-1` (`UNKNOWN_STATUS_CODE`): bleibt sichtbar (Aktiv-Filter ist `status !== 0`), rendert als „Unknown (-1)" — wird NICHT fälschlich als „zugestellt" versteckt und im autoRemove-Modus gelöscht.
+
 ## Tests (180 unit + 57 package + 1 integration = 238)
 
 
 ```
-src/lib/coerce.test.ts         → errText, coerceFiniteNumber strict (HEX/Exp rejected), coerceString, coerceBoolean, isPlainObject, isTrueish (~25)
-src/lib/parcel-client.test.ts  → API client gegen lokalen HTTP-Mock-Server, errors, rate limiting, API-drift (36)
-src/lib/state-manager.test.ts  → Deliveries, summary, cleanup, formatting, API-drift, multilang, translation-objects (T1), createdIds cache (T4) (105)
+src/lib/coerce.test.ts         → errText, coerceFiniteNumber strict (HEX/Exp rejected), coerceClampedInt, isTrueish (~19)
+src/lib/parcel-client.test.ts  → echte request() gegen lokalen HTTP-Mock-Server (Transport-Härtung: abort/cancelAll, retry-after clamp, oversize→BODY_TOO_LARGE, URL-Validierung), errors, rate limiting, API-drift (40)
+src/lib/state-manager.test.ts  → Deliveries, summary (inkl. nested-window), cleanup, formatting, API-drift (drift→unknown), multilang, translation-objects (T1), createdIds cache (T4), setStateChanged skip-unchanged (107)
 vitest.config.ts               → globals: true, pool: forks, include src/**/*.test.ts
 test/package.js                → @iobroker/testing packageFiles (mocha)
 test/integration.js            → @iobroker/testing integration (mocha)

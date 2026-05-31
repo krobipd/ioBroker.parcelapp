@@ -25,95 +25,14 @@ function stopServer(server: http.Server): Promise<void> {
 }
 
 /**
- * Create a ParcelClient that talks to a local HTTP mock server instead of
- * the real parcel.app API. We achieve this by monkey-patching the private
- * `request` method to use `http` instead of `https` and point to localhost.
+ * Create a ParcelClient pointed at a local HTTP mock server. Uses the REAL
+ * `request()` (transport is selected from the baseUrl protocol), so the
+ * production transport hardening — AbortController/cancelAll, body-size cap,
+ * retry-after clamp, status→code mapping, URL validation — is what these
+ * tests exercise. No reimplementation, no monkey-patch.
  */
 function createTestClient(apiKey: string, port: number): ParcelClient {
-  const client = new ParcelClient(apiKey);
-
-  // Override the private request method to use our local HTTP server
-  (client as unknown as Record<string, unknown>)["request"] = function <T>(
-    method: string,
-    path: string,
-    authenticated: boolean,
-    body?: unknown,
-  ): Promise<T> {
-    return new Promise((resolve, reject) => {
-      const headers: Record<string, string> = {};
-      if (authenticated) {
-        headers["api-key"] = apiKey;
-      }
-      if (body) {
-        headers["Content-Type"] = "application/json";
-      }
-
-      const options: http.RequestOptions = {
-        hostname: "127.0.0.1",
-        port,
-        path: `/external${path}`,
-        method,
-        headers,
-        timeout: 5000,
-      };
-
-      const req = http.request(options, res => {
-        const chunks: Buffer[] = [];
-        res.on("data", (chunk: Buffer) => chunks.push(chunk));
-        res.on("end", () => {
-          const raw = Buffer.concat(chunks).toString("utf-8");
-
-          if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
-            if (res.statusCode === 429) {
-              const retryAfter = parseInt(res.headers["retry-after"] || "", 10);
-              const err = new Error("Rate limit exceeded") as Error & {
-                code: string;
-                retryAfterSeconds: number;
-              };
-              err.code = "RATE_LIMITED";
-              err.retryAfterSeconds = retryAfter > 0 ? retryAfter : 5 * 60;
-              reject(err);
-              return;
-            }
-            const err = new Error(`HTTP ${res.statusCode}: ${res.statusMessage}`) as Error & {
-              code: string;
-            };
-            // v0.4.2 (P3): mirror the production split — 401 = invalid key,
-            // 403 = forbidden (e.g. Premium expired). The earlier mock
-            // collapsed both into INVALID_API_KEY.
-            if (res.statusCode === 401) {
-              err.code = "INVALID_API_KEY";
-            } else if (res.statusCode === 403) {
-              err.code = "FORBIDDEN";
-            } else {
-              err.code = "HTTP_ERROR";
-            }
-            reject(err);
-            return;
-          }
-
-          try {
-            resolve(JSON.parse(raw) as T);
-          } catch {
-            reject(new Error(`JSON parse error: ${raw.substring(0, 200)}`));
-          }
-        });
-      });
-
-      req.on("timeout", () => {
-        req.destroy();
-        reject(new Error("Request timeout"));
-      });
-      req.on("error", err => reject(err));
-
-      if (body) {
-        req.write(JSON.stringify(body));
-      }
-      req.end();
-    });
-  };
-
-  return client;
+  return new ParcelClient(apiKey, undefined, `http://127.0.0.1:${port}/external`);
 }
 
 describe("ParcelClient", () => {
@@ -832,13 +751,73 @@ describe("ParcelClient", () => {
 
   describe("cancelAll (P1 v0.4.2)", () => {
     it("is idempotent and safe on an empty in-flight set", () => {
-      // ParcelClient cannot easily be pointed at a hanging mock here (the
-      // production `request` uses node:https against api.parcel.app), but
-      // the key invariant — `cancelAll()` never throws even when nothing
-      // is pending — must hold.
       const client = createTestClient("key", 0);
       client.cancelAll();
       client.cancelAll();
+    });
+
+    it("aborts an in-flight request", async () => {
+      // Hanging mock: never responds, so the request stays in-flight until aborted.
+      const { server, port } = await startMockServer(() => {
+        /* intentionally no response */
+      });
+      try {
+        const client = createTestClient("key", port);
+        const pending = client.getDeliveries("active");
+        client.cancelAll();
+        await expect(pending).rejects.toThrow();
+      } finally {
+        await stopServer(server);
+      }
+    });
+  });
+
+  // T1: these exercise the real request() transport hardening (retry-after
+  // clamp, body-size cap, URL validation) that the old monkey-patch left
+  // untested — and where the patch had even drifted from production.
+  describe("transport hardening (T1)", () => {
+    it("clamps an absurd Retry-After down to 24h (P6)", async () => {
+      const { server, port } = await startMockServer((_req, res) => {
+        res.writeHead(429, { "Content-Type": "text/plain", "Retry-After": "999999999" });
+        res.end("Too many requests");
+      });
+      try {
+        const client = createTestClient("key", port);
+        await client.getDeliveries("active");
+        throw new Error("Should have thrown");
+      } catch (err) {
+        const error = err as Error & { code: string; retryAfterSeconds: number };
+        expect(error.code).toBe("RATE_LIMITED");
+        expect(error.retryAfterSeconds).toBe(24 * 3600);
+      } finally {
+        await stopServer(server);
+      }
+    });
+
+    it("rejects an oversized response body with BODY_TOO_LARGE (P9)", async () => {
+      const { server, port } = await startMockServer((_req, res) => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end("x".repeat((1 << 20) + 16)); // > MAX_BODY_BYTES (1 MiB)
+      });
+      try {
+        const client = createTestClient("key", port);
+        await client.getDeliveries("active");
+        throw new Error("Should have thrown");
+      } catch (err) {
+        expect((err as Error & { code: string }).code).toBe("BODY_TOO_LARGE");
+      } finally {
+        await stopServer(server);
+      }
+    });
+
+    it("rejects a malformed base URL with INVALID_URL (E3)", async () => {
+      const client = new ParcelClient("key", undefined, "not-a-valid-url");
+      try {
+        await client.getDeliveries("active");
+        throw new Error("Should have thrown");
+      } catch (err) {
+        expect((err as Error & { code: string }).code).toBe("INVALID_URL");
+      }
     });
   });
 });

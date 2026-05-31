@@ -27,6 +27,7 @@ var import_coerce = require("./coerce");
 var import_i18n = require("./i18n");
 var import_types = require("./types");
 const TRACKABLE_STATUSES = /* @__PURE__ */ new Set([2, 4, 8]);
+const ID_RANGE_END = "\uFFFF";
 function resolveLanguage(language) {
   if (typeof language === "string" && import_types.SUPPORTED_LANGUAGES.includes(language)) {
     return language;
@@ -77,10 +78,14 @@ class StateManager {
     }
     if (typeof raw === "string") {
       const n = parseInt(raw, 10);
-      return Number.isFinite(n) ? n : 0;
+      if (Number.isFinite(n)) {
+        return n;
+      }
     }
-    this.adapter.log.debug(`parseStatus drift: ${JSON.stringify(raw)} (type ${typeof raw}) \u2192 0 (delivered fallback)`);
-    return 0;
+    this.adapter.log.debug(
+      `parseStatus drift: ${JSON.stringify(raw)} (type ${typeof raw}) \u2192 ${import_types.UNKNOWN_STATUS_CODE} (unknown, kept visible)`
+    );
+    return import_types.UNKNOWN_STATUS_CODE;
   }
   /**
    * Build a unique package ID from a delivery.
@@ -152,9 +157,11 @@ class StateManager {
    *
    * @param delivery The delivery data from API
    * @param carrierName Resolved carrier display name
+   * @param precomputedId Optional package id from the caller's deterministic
+   *   pre-pass. Falls back to computing it here when called directly (tests).
    */
-  async updateDelivery(delivery, carrierName) {
-    const pkgId = this.packageId(delivery);
+  async updateDelivery(delivery, carrierName, precomputedId) {
+    const pkgId = precomputedId != null ? precomputedId : this.packageId(delivery);
     const devicePath = `deliveries.${pkgId}`;
     const description = typeof delivery.description === "string" ? delivery.description : "";
     const trackingNumber = typeof delivery.tracking_number === "string" ? delivery.tracking_number : "";
@@ -247,7 +254,7 @@ class StateManager {
     const activeSet = new Set(activeIds.map((id) => `deliveries.${id}`));
     const objects = await this.adapter.getObjectViewAsync("system", "device", {
       startkey: `${this.adapter.namespace}.deliveries.`,
-      endkey: `${this.adapter.namespace}.deliveries.\u9999`
+      endkey: `${this.adapter.namespace}.deliveries.${ID_RANGE_END}`
     });
     if (!(objects == null ? void 0 : objects.rows)) {
       this.adapter.log.debug("cleanupDeliveries: no objects view available, skipping");
@@ -273,32 +280,53 @@ class StateManager {
     );
   }
   /**
-   * Calculate delivery time window — only from Unix timestamps.
+   * Resolve a delivery's expected window to epoch-millis bounds. Returns null
+   * for non-trackable status or when there is no usable start timestamp.
+   * `end` is null when only a single expected time is known.
+   *
+   * @param delivery The delivery data
+   * @param statusCode Pre-parsed status code
+   */
+  windowBoundsMs(delivery, statusCode) {
+    if (!TRACKABLE_STATUSES.has(statusCode)) {
+      return null;
+    }
+    const toMs = (timestamp) => {
+      const ts = (0, import_coerce.coerceFiniteNumber)(timestamp);
+      if (ts === null || ts <= 0) {
+        return null;
+      }
+      const ms = ts * 1e3;
+      return Number.isNaN(new Date(ms).getTime()) ? null : ms;
+    };
+    const start = toMs(delivery.timestamp_expected);
+    if (start === null) {
+      return null;
+    }
+    return { start, end: toMs(delivery.timestamp_expected_end) };
+  }
+  /**
+   * Format epoch-millis as local HH:MM.
+   *
+   * @param ms Epoch milliseconds
+   */
+  static formatHHMM(ms) {
+    const d = new Date(ms);
+    return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+  }
+  /**
+   * Calculate a delivery time-window string — only from Unix timestamps.
    *
    * @param delivery The delivery data
    * @param statusCode Pre-parsed status code
    */
   calculateDeliveryWindow(delivery, statusCode) {
-    if (!TRACKABLE_STATUSES.has(statusCode)) {
+    const bounds = this.windowBoundsMs(delivery, statusCode);
+    if (!bounds) {
       return "";
     }
-    const formatTime = (timestamp) => {
-      const ts = (0, import_coerce.coerceFiniteNumber)(timestamp);
-      if (ts === null || ts <= 0) {
-        return null;
-      }
-      const d = new Date(ts * 1e3);
-      if (Number.isNaN(d.getTime())) {
-        return null;
-      }
-      return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
-    };
-    const start = formatTime(delivery.timestamp_expected);
-    const end = formatTime(delivery.timestamp_expected_end);
-    if (!start) {
-      return "";
-    }
-    return end ? `${start} - ${end}` : start;
+    const start = StateManager.formatHHMM(bounds.start);
+    return bounds.end !== null ? `${start} - ${StateManager.formatHHMM(bounds.end)}` : start;
   }
   /**
    * Days from today to the expected delivery date. Returns null when the
@@ -390,30 +418,25 @@ class StateManager {
     return typeof latest.location === "string" ? latest.location : "";
   }
   /**
-   * Calculate combined delivery window for today's packages.
+   * Combined delivery window for today's packages: earliest start to latest
+   * end across all windows. Computed from the raw millis (not the formatted
+   * strings) so the latest end always wins — fixes the earlier bug where the
+   * end of the latest-*starting* window was used instead of the maximum end.
    *
    * @param todayDeliveries Deliveries expected today
    */
   calculateCombinedWindow(todayDeliveries) {
-    const windows = todayDeliveries.map((d) => this.calculateDeliveryWindow(d, this.parseStatus(d))).filter((w) => w.length > 0);
-    if (windows.length === 0) {
+    const bounds = todayDeliveries.map((d) => this.windowBoundsMs(d, this.parseStatus(d))).filter((b) => b !== null);
+    if (bounds.length === 0) {
       return "";
     }
-    if (windows.length === 1) {
-      return windows[0];
-    }
-    const times = [];
-    for (const w of windows) {
-      const match = w.match(/(\d{2}:\d{2})(?:\s*-\s*(\d{2}:\d{2}))?/);
-      if (match) {
-        times.push({ start: match[1], end: match[2] || match[1] });
-      }
-    }
-    if (times.length === 0) {
-      return "";
-    }
-    times.sort((a, b) => a.start.localeCompare(b.start));
-    return `${times[0].start} - ${times[times.length - 1].end}`;
+    const minStart = Math.min(...bounds.map((b) => b.start));
+    const maxEnd = Math.max(...bounds.map((b) => {
+      var _a;
+      return (_a = b.end) != null ? _a : b.start;
+    }));
+    const startStr = StateManager.formatHHMM(minStart);
+    return maxEnd > minStart ? `${startStr} - ${StateManager.formatHHMM(maxEnd)}` : startStr;
   }
   /**
    * Create/extend a read-only state and set its value. Skips the

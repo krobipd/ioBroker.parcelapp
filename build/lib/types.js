@@ -20,7 +20,8 @@ var types_exports = {};
 __export(types_exports, {
   FALLBACK_LANGUAGE: () => FALLBACK_LANGUAGE,
   STATUS_LABELS: () => STATUS_LABELS,
-  SUPPORTED_LANGUAGES: () => SUPPORTED_LANGUAGES
+  SUPPORTED_LANGUAGES: () => SUPPORTED_LANGUAGES,
+  UNKNOWN_STATUS_CODE: () => UNKNOWN_STATUS_CODE
 });
 module.exports = __toCommonJS(types_exports);
 const STATUS_LABELS = {
@@ -148,10 +149,12 @@ const STATUS_LABELS = {
 };
 const SUPPORTED_LANGUAGES = Object.keys(STATUS_LABELS);
 const FALLBACK_LANGUAGE = "en";
+const UNKNOWN_STATUS_CODE = -1;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   FALLBACK_LANGUAGE,
   STATUS_LABELS,
-  SUPPORTED_LANGUAGES
+  SUPPORTED_LANGUAGES,
+  UNKNOWN_STATUS_CODE
 });
 //# sourceMappingURL=types.js.map

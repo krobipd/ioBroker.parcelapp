@@ -1,12 +1,4 @@
-import {
-  coerceBoolean,
-  coerceClampedInt,
-  coerceFiniteNumber,
-  coerceString,
-  errText,
-  isPlainObject,
-  isTrueish,
-} from "./coerce";
+import { coerceClampedInt, coerceFiniteNumber, errText, isTrueish } from "./coerce";
 
 describe("coerceFiniteNumber", () => {
   it("returns finite numbers as-is", () => {
@@ -51,50 +43,6 @@ describe("coerceFiniteNumber", () => {
     expect(coerceFiniteNumber("+42")).toBeNull();
     expect(coerceFiniteNumber(".5")).toBeNull();
     expect(coerceFiniteNumber("5.")).toBeNull();
-  });
-});
-
-describe("coerceString", () => {
-  it("returns non-empty strings", () => {
-    expect(coerceString("hello")).toBe("hello");
-  });
-
-  it("rejects empty string and non-string", () => {
-    expect(coerceString("")).toBeNull();
-    expect(coerceString(42)).toBeNull();
-    expect(coerceString(null)).toBeNull();
-    expect(coerceString(undefined)).toBeNull();
-    expect(coerceString({})).toBeNull();
-  });
-});
-
-describe("coerceBoolean", () => {
-  it("returns booleans as-is", () => {
-    expect(coerceBoolean(true)).toBe(true);
-    expect(coerceBoolean(false)).toBe(false);
-  });
-
-  it("rejects truthy/falsy non-booleans", () => {
-    expect(coerceBoolean(1)).toBeNull();
-    expect(coerceBoolean(0)).toBeNull();
-    expect(coerceBoolean("true")).toBeNull();
-    expect(coerceBoolean(null)).toBeNull();
-    expect(coerceBoolean(undefined)).toBeNull();
-  });
-});
-
-describe("isPlainObject", () => {
-  it("accepts plain objects", () => {
-    expect(isPlainObject({})).toBe(true);
-    expect(isPlainObject({ a: 1 })).toBe(true);
-  });
-
-  it("rejects arrays, null, primitives", () => {
-    expect(isPlainObject([])).toBe(false);
-    expect(isPlainObject(null)).toBe(false);
-    expect(isPlainObject("x")).toBe(false);
-    expect(isPlainObject(42)).toBe(false);
-    expect(isPlainObject(undefined)).toBe(false);
   });
 });
 

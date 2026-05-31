@@ -32,39 +32,6 @@ export function coerceFiniteNumber(value: unknown): number | null {
 }
 
 /**
- * Coerce to a non-empty string, or null.
- *
- * @param value Unknown external value
- */
-export function coerceString(value: unknown): string | null {
-  if (typeof value === "string" && value.length > 0) {
-    return value;
-  }
-  return null;
-}
-
-/**
- * Coerce to a boolean (only `true`/`false` accepted — no truthy/falsy JS rules).
- *
- * @param value Unknown external value
- */
-export function coerceBoolean(value: unknown): boolean | null {
-  if (typeof value === "boolean") {
-    return value;
-  }
-  return null;
-}
-
-/**
- * Guard for plain objects (not arrays, not null).
- *
- * @param value Unknown external value
- */
-export function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-/**
  * Coerce a parcel.app `success` flag. The API returns a real boolean in normal
  * operation, but the guard accepts common string/number encodings (`1`, `"true"`,
  * `"1"`) so a one-off drift doesn't break the entire poll cycle.

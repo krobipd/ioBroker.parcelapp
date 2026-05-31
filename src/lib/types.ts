@@ -24,8 +24,6 @@ export interface ParcelDelivery {
   extra_information?: string;
   /** Expected delivery date */
   date_expected?: string;
-  /** Expected delivery date end */
-  date_expected_end?: string;
   /** Expected delivery Unix timestamp */
   timestamp_expected?: number;
   /** Expected delivery end Unix timestamp */
@@ -42,8 +40,6 @@ export interface ParcelEvent {
   date: string;
   /** Event location */
   location?: string;
-  /** Additional details */
-  additional?: string;
 }
 
 /** Request body for adding a delivery */
@@ -201,6 +197,13 @@ export const SUPPORTED_LANGUAGES = Object.keys(STATUS_LABELS);
 
 /** Fallback language used when system.config.language is outside SUPPORTED_LANGUAGES */
 export const FALLBACK_LANGUAGE = "en";
+
+/**
+ * Sentinel status code for unparseable API drift. Distinct from 0 (Delivered)
+ * so a garbage `status_code` keeps the package visible (the active filter is
+ * `status !== 0`) and renders as "Unknown" instead of silently dropping it.
+ */
+export const UNKNOWN_STATUS_CODE = -1;
 
 // Augment the ioBroker global namespace
 declare global {

@@ -49,8 +49,6 @@ class ParcelappAdapter extends utils.Adapter {
    * the process alive past js-controller's 4-second kill deadline.
    */
   testClients = /* @__PURE__ */ new Set();
-  unhandledRejectionHandler = null;
-  uncaughtExceptionHandler = null;
   /** ioBroker system language — read once in `onReady` from `system.config`. EN fallback. */
   systemLang = "en";
   /** @param options Adapter options */
@@ -62,18 +60,6 @@ class ParcelappAdapter extends utils.Adapter {
     this.on("ready", this.onReady.bind(this));
     this.on("unload", this.onUnload.bind(this));
     this.on("message", this.onMessage.bind(this));
-    this.unhandledRejectionHandler = (reason) => {
-      var _a;
-      this.log.error(`Unhandled rejection: ${(0, import_coerce.errText)(reason)}`);
-      (_a = this.terminate) == null ? void 0 : _a.call(this, 11);
-    };
-    this.uncaughtExceptionHandler = (err) => {
-      var _a;
-      this.log.error(`Uncaught exception: ${(0, import_coerce.errText)(err)}`);
-      (_a = this.terminate) == null ? void 0 : _a.call(this, 11);
-    };
-    process.on("unhandledRejection", this.unhandledRejectionHandler);
-    process.on("uncaughtException", this.uncaughtExceptionHandler);
   }
   async onReady() {
     var _a, _b;
@@ -101,7 +87,9 @@ class ParcelappAdapter extends utils.Adapter {
       const interval = ParcelappAdapter.coercePollInterval(this.config.pollInterval);
       this.log.debug(`pollInterval: raw=${JSON.stringify(this.config.pollInterval)} resolved=${interval}min`);
       const intervalMs = interval * 60 * 1e3;
-      this.pollTimer = this.setInterval(() => void this.poll(), intervalMs);
+      this.pollTimer = this.setInterval(() => {
+        void this.poll().catch((err) => this.log.error(`Scheduled poll failed: ${(0, import_coerce.errText)(err)}`));
+      }, intervalMs);
       this.log.info(`Parcel tracking started \u2014 polling every ${interval} minutes`);
     } catch (err) {
       this.log.error(`onReady failed: ${(0, import_coerce.errText)(err)}`);
@@ -127,14 +115,6 @@ class ParcelappAdapter extends utils.Adapter {
         tc.cancelAll();
       }
       this.testClients.clear();
-      if (this.unhandledRejectionHandler) {
-        process.off("unhandledRejection", this.unhandledRejectionHandler);
-        this.unhandledRejectionHandler = null;
-      }
-      if (this.uncaughtExceptionHandler) {
-        process.off("uncaughtException", this.uncaughtExceptionHandler);
-        this.uncaughtExceptionHandler = null;
-      }
       void this.setState("info.connection", { val: false, ack: true }).catch(() => {
       });
     } catch (err) {
@@ -185,7 +165,9 @@ class ParcelappAdapter extends utils.Adapter {
           this.log.debug(`addDelivery: '${request == null ? void 0 : request.tracking_number}' result=${addResult.success ? "ok" : "fail"}`);
           this.sendTo(obj.from, obj.command, addResult, obj.callback);
           if (addResult.success) {
-            void this.poll();
+            void this.poll({ force: true }).catch(
+              (err) => this.log.error(`Poll after addDelivery failed: ${(0, import_coerce.errText)(err)}`)
+            );
           }
           break;
         }
@@ -234,7 +216,7 @@ class ParcelappAdapter extends utils.Adapter {
     }
     return error.code || "UNKNOWN";
   }
-  async poll() {
+  async poll(options = {}) {
     var _a;
     if (this.isPolling || !this.client || !this.stateManager) {
       return;
@@ -247,7 +229,7 @@ class ParcelappAdapter extends utils.Adapter {
       this.log.debug(`Skipping poll \u2014 rate limited for ${waitMin} more minute(s)`);
       return;
     }
-    if (now - this.lastPollTime < MIN_POLL_GAP_MS) {
+    if (!options.force && now - this.lastPollTime < MIN_POLL_GAP_MS) {
       this.log.debug("Skipping poll \u2014 too soon after last poll");
       return;
     }
@@ -264,16 +246,18 @@ class ParcelappAdapter extends utils.Adapter {
       const activeDeliveries = deliveries.filter((d) => this.stateManager.parseStatus(d) !== 0);
       const visibleDeliveries = autoRemoveMode ? activeDeliveries : deliveries;
       this.stateManager.resetPollState();
+      const pkgIds = visibleDeliveries.map((d) => this.stateManager.packageId(d));
       const idResults = await Promise.all(
-        visibleDeliveries.map(async (delivery) => {
+        visibleDeliveries.map(async (delivery, index) => {
+          const pkgId = pkgIds[index];
           try {
             this.log.debug(
               `updateDelivery: '${delivery.tracking_number}' carrier=${delivery.carrier_code} status=${delivery.status_code}`
             );
             const carrierName = await this.client.getCarrierName(delivery.carrier_code);
-            await this.stateManager.updateDelivery(delivery, carrierName);
+            await this.stateManager.updateDelivery(delivery, carrierName, pkgId);
             this.failedDeliveries.delete(delivery.tracking_number);
-            return this.stateManager.packageId(delivery);
+            return pkgId;
           } catch (err) {
             const msg = (0, import_coerce.errText)(err);
             if (this.failedDeliveries.has(delivery.tracking_number)) {
@@ -289,6 +273,12 @@ class ParcelappAdapter extends utils.Adapter {
       const activeIds = idResults.filter((id) => id !== null);
       await this.stateManager.cleanupDeliveries(activeIds);
       await this.stateManager.updateSummary(activeDeliveries);
+      const seenTracking = new Set(visibleDeliveries.map((d) => d.tracking_number));
+      for (const tracking of [...this.failedDeliveries]) {
+        if (!seenTracking.has(tracking)) {
+          this.failedDeliveries.delete(tracking);
+        }
+      }
       this.log.debug(`Polled ${visibleDeliveries.length} deliveries (${activeDeliveries.length} active)`);
     } catch (err) {
       const error = err;
@@ -315,7 +305,8 @@ class ParcelappAdapter extends utils.Adapter {
       } else {
         this.log.error(`Poll failed: ${error.message}`);
       }
-      await this.setStateAsync("info.connection", { val: false, ack: true });
+      await this.setStateChangedAsync("info.connection", { val: false, ack: true }).catch(() => {
+      });
     } finally {
       this.isPolling = false;
     }
