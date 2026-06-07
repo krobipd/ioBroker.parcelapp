@@ -6,7 +6,7 @@
 
 **ioBroker Parcel Tracking Adapter** — Paketverfolgung über [parcel.app](https://parcelapp.net) API. Alle Carrier die parcel.app unterstützt, ein API-Key (Premium).
 
-- **Version:** 0.6.0 (released 2026-05-31, in-depth audit — combined-window max-end fix, status-drift kept visible (`-1`/Unknown), addDelivery `force`-poll, process-handler removal + local poll guard, dead coerce exports removed, `apiError` helper, deterministic packageId pre-pass, parcel-client tests exercise the real `request()` + fix latent BODY_TOO_LARGE, repochecker action pin `@v2`). Vorgänger **0.5.3** memory/perf audit (setStateChangedAsync). **0.5.2** changelog rewrite. **0.5.1** CI Node 24. **0.5.0** Preserve + i18n migration. v0.4.9 community-standard handler. v0.4.8 NUT-Konsistenz. v0.4.7 cleanup. v0.4.6 instanceObjects i18n. v0.4.5 Toolchain-Parity.
+- **Version:** 0.7.0 (optional Sentry → power-dreams; Vorgänger 0.6.0) (released 2026-05-31, in-depth audit — combined-window max-end fix, status-drift kept visible (`-1`/Unknown), addDelivery `force`-poll, process-handler removal + local poll guard, dead coerce exports removed, `apiError` helper, deterministic packageId pre-pass, parcel-client tests exercise the real `request()` + fix latent BODY_TOO_LARGE, repochecker action pin `@v2`). Vorgänger **0.5.3** memory/perf audit (setStateChangedAsync). **0.5.2** changelog rewrite. **0.5.1** CI Node 24. **0.5.0** Preserve + i18n migration. v0.4.9 community-standard handler. v0.4.8 NUT-Konsistenz. v0.4.7 cleanup. v0.4.6 instanceObjects i18n. v0.4.5 Toolchain-Parity.
 - **GitHub:** https://github.com/krobipd/ioBroker.parcelapp
 - **npm:** https://www.npmjs.com/package/iobroker.parcelapp
 - **Repository PR:** ioBroker/ioBroker.repositories#5667 (MERGED 2026-05-10, im Latest-Repo)
@@ -71,6 +71,7 @@ Run: `npm test` (vitest unit + mocha @iobroker/testing packageFiles).
 
 | Version | Highlights                                                                                                                                                                                              |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0.7.0 | Optional Sentry error reporting (`common.plugins.sentry` → eigener power-dreams-Sentry; README-Badge + `## Sentry`-Abschnitt). |
 | 0.6.0   | **In-depth audit**: combined-window max-end fix (+nested-window test); status-drift kept visible (`-1`/Unknown) instead of hidden as delivered; addDelivery `force`-poll bypasses the 60s throttle; process-level handlers removed + local poll guard; `apiError` helper + deterministic packageId pre-pass; parcel-client tests exercise the real `request()` (fixed latent BODY_TOO_LARGE); dead coerce exports + unused interface fields removed; repochecker action pin `@v2`. |
 | 0.5.3   | Memory/Perf-Audit: `setStateAsync`→`setStateChangedAsync` in state-manager `createAndSet` + main.ts `info.connection`. |
 | 0.5.2   | Changelog user-centric rewrite (README + CHANGELOG_OLD + io-package.json news audited against Hard-Negativ-Liste). |
