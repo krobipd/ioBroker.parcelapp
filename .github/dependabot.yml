@@ -9,6 +9,7 @@ updates:
     schedule:
       interval: "weekly"
       day: "friday"
+      timezone: "Europe/Berlin"
     open-pull-requests-limit: 15
     assignees:
       - "krobipd"
@@ -34,6 +35,7 @@ updates:
     schedule:
       interval: "weekly"
       day: "friday"
+      timezone: "Europe/Berlin"
     open-pull-requests-limit: 15
     assignees:
       - "krobipd"

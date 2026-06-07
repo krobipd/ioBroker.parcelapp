@@ -145,7 +145,7 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 
 - User-modified state names are no longer overwritten on adapter restart
 
-Older entries are in [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
+[Older changelogs can be found there](CHANGELOG_OLD.md)
 
 ## Support
 
