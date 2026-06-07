@@ -124,7 +124,7 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 - Packages reported with an unrecognized status are no longer mistaken for delivered and removed; they stay visible as "Unknown".
 - A delivery added via the admin button now appears immediately instead of only after the next polling cycle.
 
-### 0.5.3 (2026-05-23)
+### 0.5.3 (2026-05-23) — stable
 
 - Reduced unnecessary state-change events by skipping writes when the value has not changed.
 
