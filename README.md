@@ -1,15 +1,10 @@
-# ioBroker.parcelapp
+# <img src="https://cdn.jsdelivr.net/gh/krobipd/ioBroker.parcelapp@main/admin/parcelapp.svg" width="48" align="top" /> ioBroker.parcelapp
 
-[![npm version](https://img.shields.io/npm/v/iobroker.parcelapp)](https://www.npmjs.com/package/iobroker.parcelapp)
-![Node](https://img.shields.io/badge/node-%3E%3D22-brightgreen)
-![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![npm downloads](https://img.shields.io/npm/dt/iobroker.parcelapp)](https://www.npmjs.com/package/iobroker.parcelapp)
-![Installations](https://iobroker.live/badges/parcelapp-installed.svg)
-[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-ff5e5b?logo=ko-fi)](https://ko-fi.com/krobipd)
-[![PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://paypal.me/krobipd)
+**Release:** [![npm version](https://img.shields.io/npm/v/iobroker.parcelapp)](https://www.npmjs.com/package/iobroker.parcelapp) ![stable](https://iobroker.live/badges/parcelapp-stable.svg) ![Installations](https://iobroker.live/badges/parcelapp-installed.svg) [![npm downloads](https://img.shields.io/npm/dt/iobroker.parcelapp)](https://www.npmjs.com/package/iobroker.parcelapp)
 
-<img src="https://cdn.jsdelivr.net/gh/krobipd/ioBroker.parcelapp@main/admin/parcelapp.svg" width="100" />
+**Build:** [![Test and Release](https://github.com/krobipd/ioBroker.parcelapp/actions/workflows/test-and-release.yml/badge.svg)](https://github.com/krobipd/ioBroker.parcelapp/actions/workflows/test-and-release.yml) ![Node](https://img.shields.io/badge/node-%3E%3D22-brightgreen) ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue) [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
+**Support:** [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-ff5e5b?logo=ko-fi)](https://ko-fi.com/krobipd) [![PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://paypal.me/krobipd)
 
 ioBroker adapter for the [parcel.app](https://parcelapp.net) API. Supports all carriers that parcel.app tracks.
 
