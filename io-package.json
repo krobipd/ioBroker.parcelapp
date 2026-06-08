@@ -162,7 +162,7 @@
     },
     "dependencies": [
       {
-        "js-controller": ">=7.0.7"
+        "js-controller": ">=7.1.2"
       }
     ],
     "globalDependencies": [
