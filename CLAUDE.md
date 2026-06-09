@@ -6,7 +6,7 @@
 
 **ioBroker Parcel Tracking Adapter** — Paketverfolgung über [parcel.app](https://parcelapp.net) API. Alle Carrier die parcel.app unterstützt, ein API-Key (Premium).
 
-- **Version:** 0.7.0 (optional Sentry → power-dreams; Vorgänger 0.6.0) (released 2026-05-31, in-depth audit — combined-window max-end fix, status-drift kept visible (`-1`/Unknown), addDelivery `force`-poll, process-handler removal + local poll guard, dead coerce exports removed, `apiError` helper, deterministic packageId pre-pass, parcel-client tests exercise the real `request()` + fix latent BODY_TOO_LARGE, repochecker action pin `@v2`). Vorgänger **0.5.3** memory/perf audit (setStateChangedAsync). **0.5.2** changelog rewrite. **0.5.1** CI Node 24. **0.5.0** Preserve + i18n migration. v0.4.9 community-standard handler. v0.4.8 NUT-Konsistenz. v0.4.7 cleanup. v0.4.6 instanceObjects i18n. v0.4.5 Toolchain-Parity.
+- **Version:** 0.7.1 — date-only `date_expected` wird als LOKALE Mitternacht geparst (timezone-stabiler `deliveryEstimate`/`todayCount`; vorher via `new Date("YYYY-MM-DD")` = UTC-Mitternacht, kombiniert mit dem lokalen Tages-Diff → Off-by-one-Tag im Fallback-Pfad bei UTC-negativen Zeitzonen). Reachability unverifiziert (primärer `timestamp_expected`-Epoch-Pfad war immer TZ-sicher), Fix deckt zugleich den vorher TZ-fragilen Today-Boundary-Test ab. Vorgänger **0.7.0** (released 2026-06-07) optional Sentry → power-dreams. Vorgänger **0.6.0** (released 2026-05-31, in-depth audit — combined-window max-end fix, status-drift kept visible (`-1`/Unknown), addDelivery `force`-poll, process-handler removal + local poll guard, dead coerce exports removed, `apiError` helper, deterministic packageId pre-pass, parcel-client tests exercise the real `request()` + fix latent BODY_TOO_LARGE, repochecker action pin `@v2`). Vorgänger **0.5.3** memory/perf audit (setStateChangedAsync). **0.5.2** changelog rewrite. **0.5.1** CI Node 24. **0.5.0** Preserve + i18n migration. v0.4.9 community-standard handler. v0.4.8 NUT-Konsistenz. v0.4.7 cleanup. v0.4.6 instanceObjects i18n. v0.4.5 Toolchain-Parity.
 - **GitHub:** https://github.com/krobipd/ioBroker.parcelapp
 - **npm:** https://www.npmjs.com/package/iobroker.parcelapp
 - **Repository PR:** ioBroker/ioBroker.repositories#5667 (MERGED 2026-05-10, im Latest-Repo)
@@ -52,7 +52,7 @@ src/lib/i18n.ts          → tName: type-safe I18n.getTranslatedObject wrapper (
 
 Unparsebarer/driftender `status_code` → `-1` (`UNKNOWN_STATUS_CODE`): bleibt sichtbar (Aktiv-Filter ist `status !== 0`), rendert als „Unknown (-1)" — wird NICHT fälschlich als „zugestellt" versteckt und im autoRemove-Modus gelöscht.
 
-## Tests (180 unit + 57 package + 1 integration = 238)
+## Tests (181 unit + 57 package + 1 integration = 239)
 
 
 ```
@@ -71,23 +71,19 @@ Run: `npm test` (vitest unit + mocha @iobroker/testing packageFiles).
 
 | Version | Highlights                                                                                                                                                                                              |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0.7.1 | Timezone-stable delivery estimates: a calendar-date-only `date_expected` is now read as a local day, fixing a one-day-early estimate in UTC-negative zones (fallback path; the primary timestamp path was always safe). |
 | 0.7.0 | Optional Sentry error reporting (`common.plugins.sentry` → eigener power-dreams-Sentry; README-Badge + `## Sentry`-Abschnitt). |
 | 0.6.0   | **In-depth audit**: combined-window max-end fix (+nested-window test); status-drift kept visible (`-1`/Unknown) instead of hidden as delivered; addDelivery `force`-poll bypasses the 60s throttle; process-level handlers removed + local poll guard; `apiError` helper + deterministic packageId pre-pass; parcel-client tests exercise the real `request()` (fixed latent BODY_TOO_LARGE); dead coerce exports + unused interface fields removed; repochecker action pin `@v2`. |
 | 0.5.3   | Memory/Perf-Audit: `setStateAsync`→`setStateChangedAsync` in state-manager `createAndSet` + main.ts `info.connection`. |
 | 0.5.2   | Changelog user-centric rewrite (README + CHANGELOG_OLD + io-package.json news audited against Hard-Negativ-Liste). |
 | 0.5.1   | CI check-and-lint updated to Node.js 24 (repochecker S3021). |
 | 0.5.0   | **Preserve + i18n (mcm-Feedback)**: `extendObjectAsync` with `{ preserve: { common: ["name"] } }`. Private `i18n-states.ts` replaced by adapter-core `I18n.getTranslatedObject()` + `I18n.translate()`. `admin/i18n` migrated from Pattern A (subdirs) to flat files (38 keys × 11 langs). ESTIMATE_LABELS migrated to `I18n.translate()`. Tests 175→180 unit. |
-| 0.4.9   | Community-standard event handler pattern (.bind + try/catch). |
-| 0.4.8   | **NUT-Konsistenz:** prettier ioBroker-Standard, dependabot double-quotes + TS-6-Kommentar, CI `fail_level: error`, `.releaseconfig.json` 2-Space, vitest `singleFork: false`, README Claude-footer-Fix. |
-| 0.4.7   | Internal cleanup: dead tsconfig settings entfernt. |
-| 0.4.6   | `scripts/sync-iopackage-from-i18n.py`. instanceObjects mit 11-Sprachen-Translations. |
-| 0.4.5   | **Toolchain-Parity:** TS ~6.0.3, vitest, eslint-config 2.3.4, release-script 5.2.0. Code-Cleanup. extIcon CSP-Fix. |
 
 ## Befehle
 
 ```bash
 npm run build        # Production (esbuild)
-npm test             # vitest run (180 unit) + mocha (57 package)
+npm test             # vitest run (181 unit) + mocha (57 package)
 npm run lint         # ESLint + Prettier
 npm run check        # tsc --noEmit (TS 6)
 npm run coverage     # vitest coverage report
