@@ -126,6 +126,9 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+### 0.7.1 (2026-06-09)
+
+- Fixed a timezone edge case in delivery estimates: when the API reports only a calendar date, the estimate could be off by a day in time zones west of UTC — now stable everywhere.
 
 ### 0.7.0 (2026-06-07)
 
@@ -144,10 +147,6 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 ### 0.5.2 (2026-05-23)
 
 - Changelog rewritten in user-centric style across all versions.
-
-### 0.5.1 (2026-05-23)
-
-- Internal cleanup. No user-facing changes.
 
 [Older changelogs can be found there](CHANGELOG_OLD.md)
 

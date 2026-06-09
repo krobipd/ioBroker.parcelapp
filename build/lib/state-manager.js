@@ -344,7 +344,8 @@ class StateManager {
     if (ts !== null && ts > 0) {
       expectedDate = new Date(ts * 1e3);
     } else if (typeof delivery.date_expected === "string" && delivery.date_expected.length > 0) {
-      expectedDate = new Date(delivery.date_expected);
+      const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(delivery.date_expected);
+      expectedDate = dateOnly ? new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3])) : new Date(delivery.date_expected);
     }
     if (!expectedDate || isNaN(expectedDate.getTime())) {
       return null;

@@ -728,6 +728,22 @@ describe("StateManager", () => {
       expect(state?.val).toBe("morgen");
     });
 
+    it("treats a date-only date_expected as a LOCAL calendar day (timezone-stable)", async () => {
+      // Regression guard: a bare "YYYY-MM-DD" parses as UTC midnight via the
+      // native Date parser, which — combined with the LOCAL today/tomorrow diff —
+      // shifts the day one early in UTC-negative timezones. Today's local date
+      // must read as "today" in every timezone, not "overdue" west of UTC.
+      const today = new Date();
+      const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+      const delivery = makeDelivery({ status_code: "2", date_expected: dateStr });
+      await manager.updateDelivery(delivery, "DHL");
+
+      const pkgId = manager.packageId(delivery);
+      const state = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
+      expect(state?.val).toBe("heute");
+    });
+
     it("should return empty string when no expected date at all", async () => {
       const delivery = makeDelivery({ status_code: "2" });
       await manager.updateDelivery(delivery, "DHL");

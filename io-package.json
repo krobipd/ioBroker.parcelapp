@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.7.0",
+    "version": "0.7.1",
     "news": {
+      "0.7.1": {
+        "en": "Fixed a timezone edge case in delivery estimates: when the API reports only a calendar date, the estimate could be off by a day in time zones west of UTC — now stable.",
+        "de": "Zeitzonen-Randfall bei Lieferschätzungen behoben: Wenn die API nur ein Kalenderdatum liefert, konnte die Schätzung in Zeitzonen westlich von UTC einen Tag danebenliegen — jetzt stabil.",
+        "ru": "Исправлен пограничный случай с часовым поясом в оценках доставки: если API возвращает только дату, оценка могла отличаться на день в зонах западнее UTC — теперь стабильно.",
+        "pt": "Corrigido um caso-limite de fuso horário nas estimativas de entrega: quando a API fornece apenas uma data, a estimativa podia falhar por um dia em fusos a oeste de UTC — agora estável.",
+        "nl": "Tijdzone-randgeval in bezorgschattingen opgelost: als de API alleen een kalenderdatum geeft, kon de schatting in tijdzones ten westen van UTC een dag afwijken — nu stabiel.",
+        "fr": "Correction d'un cas limite de fuseau horaire dans les estimations de livraison : quand l'API ne fournit qu'une date, l'estimation pouvait décaler d'un jour à l'ouest d'UTC — désormais stable.",
+        "it": "Corretto un caso limite di fuso orario nelle stime di consegna: quando l'API fornisce solo una data, la stima poteva sbagliare di un giorno nei fusi a ovest di UTC — ora stabile.",
+        "es": "Corregido un caso límite de zona horaria en las estimaciones de entrega: cuando la API solo da una fecha, la estimación podía fallar por un día en zonas al oeste de UTC — ahora estable.",
+        "pl": "Naprawiono przypadek brzegowy strefy czasowej w szacowanym czasie dostawy: gdy API podaje tylko datę, szacunek mógł różnić się o dzień w strefach na zachód od UTC — teraz stabilny.",
+        "uk": "Виправлено граничний випадок часового поясу в оцінках доставки: коли API повертає лише дату, оцінка могла відрізнятися на день у зонах на захід від UTC — тепер стабільно.",
+        "zh-cn": "修复了配送预计时间的时区边界问题：当 API 仅提供日期时，在 UTC 以西时区的预计可能相差一天，现在已稳定。"
+      },
       "0.7.0": {
         "en": "Added optional Sentry error reporting: crashes are sent to the developer so issues get fixed faster. Active only with ioBroker diagnostics enabled; anonymous.",
         "de": "Optionale Fehlermeldung über Sentry hinzugefügt: Abstürze werden an den Entwickler gesendet, damit Probleme schneller behoben werden. Nur aktiv bei eingeschalteter ioBroker-Diagnose; anonym.",
@@ -80,19 +93,6 @@
         "pl": "Nazwy stanów zmienione przez użytkownika nie są już nadpisywane przy restarcie adaptera",
         "uk": "Назви станів, змінені користувачем, більше не перезаписуються при перезапуску адаптера",
         "zh-cn": "用户修改的状态名称在适配器重启时不再被覆盖"
-      },
-      "0.4.9": {
-        "en": "Improved error handling and stability.",
-        "de": "Verbesserte Fehlerbehandlung und Stabilität.",
-        "ru": "Улучшена обработка ошибок и стабильность.",
-        "pt": "Melhor tratamento de erros e estabilidade.",
-        "nl": "Verbeterde foutafhandeling en stabiliteit.",
-        "fr": "Amélioration de la gestion des erreurs et de la stabilité.",
-        "it": "Migliorata la gestione degli errori e la stabilità.",
-        "es": "Mejora del manejo de errores y la estabilidad.",
-        "pl": "Poprawiona obsługa błędów i stabilność.",
-        "uk": "Покращено обробку помилок та стабільність.",
-        "zh-cn": "改进了错误处理和稳定性。"
       }
     },
     "plugins": {
