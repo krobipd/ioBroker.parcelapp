@@ -1,9 +1,9 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.7.1",
+    "version": "0.7.2",
     "news": {
-      "NEXT": {
+      "0.7.2": {
         "en": "Much quieter state updates: a package's last-updated timestamp only changes when its tracking data actually changed, and device entries are no longer rewritten on every poll.",
         "de": "Deutlich ruhigere State-Updates: der Zuletzt-aktualisiert-Zeitstempel eines Pakets ändert sich nur noch bei echten Datenänderungen, Geräte-Einträge werden nicht mehr jeden Poll neu geschrieben.",
         "ru": "Обновления стали спокойнее: метка последнего обновления посылки меняется только при реальном изменении данных, записи устройств не перезаписываются при каждом опросе.",

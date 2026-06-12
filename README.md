@@ -126,7 +126,7 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
-### **WORK IN PROGRESS**
+### 0.7.2 (2026-06-12)
 
 - Much quieter state updates: a package's last-updated timestamp now only changes when its tracking data actually changed, and device entries are no longer rewritten on every poll
 - Adding a delivery with a malformed request now returns a clear error message instead of failing cryptically
@@ -148,10 +148,6 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 ### 0.5.3 (2026-05-23) — stable
 
 - Reduced unnecessary state-change events by skipping writes when the value has not changed.
-
-### 0.5.2 (2026-05-23)
-
-- Changelog rewritten in user-centric style across all versions.
 
 [Older changelogs can be found there](CHANGELOG_OLD.md)
 
