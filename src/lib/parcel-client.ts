@@ -46,6 +46,14 @@ export class ParcelClient {
   private apiKey: string;
   private carrierCache: CarrierMap | null = null;
   /**
+   * v0.7.2: in-flight fetch for the carrier list. The per-delivery updates run
+   * in parallel (Promise.all) and each resolves carrier names — without this
+   * mutex the first poll with N packages fired N identical concurrent fetches
+   * of the static 447-entry file (and a persistently failing endpoint was
+   * retried N times per poll). Same pattern as beszel's auth mutex (B1).
+   */
+  private carrierFetchInFlight: Promise<CarrierMap> | null = null;
+  /**
    * v0.4.2 (P1): per-request AbortController. `cancelAll()` aborts every
    * pending HTTPS request — called from the adapter's `onUnload` so a slow
    * parcel.app endpoint can't keep the adapter alive past js-controller's
@@ -117,12 +125,23 @@ export class ParcelClient {
     return this.request<AddDeliveryResponse>("POST", "/add-delivery/", true, delivery);
   }
 
-  /** Get carrier names (cached after first call) */
+  /** Get carrier names (cached after first call; concurrent callers share one fetch) */
   async getCarrierNames(): Promise<CarrierMap> {
     if (this.carrierCache) {
       return this.carrierCache;
     }
+    // v0.7.2: share one in-flight fetch between the parallel per-delivery
+    // updates instead of firing N identical requests on the first poll.
+    if (!this.carrierFetchInFlight) {
+      this.carrierFetchInFlight = this.fetchCarrierNames().finally(() => {
+        this.carrierFetchInFlight = null;
+      });
+    }
+    return this.carrierFetchInFlight;
+  }
 
+  /** One actual carrier-list fetch. Failure → empty map, NOT cached (retry next poll). */
+  private async fetchCarrierNames(): Promise<CarrierMap> {
     try {
       const raw = await this.request<unknown>("GET", "/supported_carriers.json", false);
       // API-drift guard: must be a plain object (not null, array, or primitive)
@@ -131,14 +150,14 @@ export class ParcelClient {
         // v0.4.3 (D1): trace the one-time cache fill so a successful warm-up
         // is visible in the debug log (happens once per adapter restart).
         this.log?.debug(`carriers: fetched ${Object.keys(this.carrierCache).length} entries`);
-      } else {
-        // v0.4.3 (D3): non-object drift — supported_carriers.json returned
-        // something that isn't an object. Empty map is returned, NOT cached.
-        this.log?.debug(
-          `carriers: drift (got ${Array.isArray(raw) ? "array" : typeof raw}, expected object), kept empty`,
-        );
-        return {};
+        return this.carrierCache;
       }
+      // v0.4.3 (D3): non-object drift — supported_carriers.json returned
+      // something that isn't an object. Empty map is returned, NOT cached.
+      this.log?.debug(
+        `carriers: drift (got ${Array.isArray(raw) ? "array" : typeof raw}, expected object), kept empty`,
+      );
+      return {};
     } catch (err) {
       // v0.4.3 (D2): trace the fetch-fail so the empty-map fallback isn't
       // silent. NOT cached — next poll retries; the trace then shows the
@@ -149,8 +168,6 @@ export class ParcelClient {
       // Return empty map but don't cache it — allow retry next time
       return {};
     }
-
-    return this.carrierCache;
   }
 
   /**

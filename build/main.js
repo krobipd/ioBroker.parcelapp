@@ -5,6 +5,10 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -21,6 +25,12 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var main_exports = {};
+__export(main_exports, {
+  ParcelappAdapter: () => ParcelappAdapter
+});
+module.exports = __toCommonJS(main_exports);
 var utils = __toESM(require("@iobroker/adapter-core"));
 var import_adapter_core = require("@iobroker/adapter-core");
 var import_node_path = require("node:path");
@@ -35,6 +45,17 @@ const MIN_API_KEY_LENGTH = 10;
 class ParcelappAdapter extends utils.Adapter {
   client = null;
   stateManager = null;
+  /**
+   * Factories for the HTTP client + state manager — default to the real
+   * constructors. Test seams (fleet pattern): unit tests replace these with
+   * fakes to exercise the poll orchestration (throttle/force/rate-limit
+   * interplay, error routing, failure dedup) without real network.
+   *
+   * @param apiKey parcel.app API key
+   */
+  makeClient = (apiKey) => new import_parcel_client.ParcelClient(apiKey, { debug: (m) => this.log.debug(m) });
+  /** @param language Raw system language (resolution happens in StateManager) */
+  makeStateManager = (language) => new import_state_manager.StateManager(this, language);
   pollTimer = void 0;
   isPolling = false;
   lastPollTime = 0;
@@ -49,8 +70,6 @@ class ParcelappAdapter extends utils.Adapter {
    * the process alive past js-controller's 4-second kill deadline.
    */
   testClients = /* @__PURE__ */ new Set();
-  /** ioBroker system language — read once in `onReady` from `system.config`. EN fallback. */
-  systemLang = "en";
   /** @param options Adapter options */
   constructor(options = {}) {
     super({
@@ -70,18 +89,15 @@ class ParcelappAdapter extends utils.Adapter {
       );
       const sysConfig = await this.getForeignObjectAsync("system.config");
       const language = (_b = (_a = sysConfig == null ? void 0 : sysConfig.common) == null ? void 0 : _a.language) != null ? _b : "";
-      if (typeof language === "string" && language.length > 0) {
-        this.systemLang = language;
-      }
-      this.log.debug(`system language: '${language}' \u2192 using '${this.systemLang}'`);
+      this.log.debug(`system language: '${language}' \u2192 using '${(0, import_state_manager.resolveLanguage)(language)}'`);
       await this.setStateAsync("info.connection", { val: false, ack: true });
       const { apiKey } = this.config;
       if (!apiKey || apiKey.trim().length < MIN_API_KEY_LENGTH) {
         this.log.error("No valid API key configured \u2014 please enter your parcel.app API key in the adapter settings");
         return;
       }
-      this.client = new import_parcel_client.ParcelClient(apiKey.trim(), { debug: (m) => this.log.debug(m) });
-      this.stateManager = new import_state_manager.StateManager(this, language);
+      this.client = this.makeClient(apiKey.trim());
+      this.stateManager = this.makeStateManager(language);
       await this.cleanupObsoleteStates();
       await this.poll();
       const interval = ParcelappAdapter.coercePollInterval(this.config.pollInterval);
@@ -138,7 +154,7 @@ class ParcelappAdapter extends utils.Adapter {
             this.sendTo(obj.from, obj.command, { success: false, message: "API key is too short" }, obj.callback);
             return;
           }
-          const testClient = new import_parcel_client.ParcelClient(key, { debug: (m) => this.log.debug(m) });
+          const testClient = this.makeClient(key);
           this.testClients.add(testClient);
           try {
             const result = await testClient.testConnection();
@@ -160,9 +176,25 @@ class ParcelappAdapter extends utils.Adapter {
             );
             return;
           }
-          const request = obj.message;
+          const raw = obj.message;
+          const msg = raw !== null && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+          if (typeof msg.tracking_number !== "string" || msg.tracking_number.length === 0 || typeof msg.carrier_code !== "string" || msg.carrier_code.length === 0) {
+            this.log.debug("addDelivery: missing tracking_number/carrier_code in message");
+            this.sendTo(
+              obj.from,
+              obj.command,
+              { success: false, error_message: "tracking_number and carrier_code are required" },
+              obj.callback
+            );
+            return;
+          }
+          const request = {
+            tracking_number: msg.tracking_number,
+            carrier_code: msg.carrier_code,
+            description: typeof msg.description === "string" ? msg.description : ""
+          };
           const addResult = await this.client.addDelivery(request);
-          this.log.debug(`addDelivery: '${request == null ? void 0 : request.tracking_number}' result=${addResult.success ? "ok" : "fail"}`);
+          this.log.debug(`addDelivery: '${request.tracking_number}' result=${addResult.success ? "ok" : "fail"}`);
           this.sendTo(obj.from, obj.command, addResult, obj.callback);
           if (addResult.success) {
             void this.poll({ force: true }).catch(
@@ -317,4 +349,8 @@ if (require.main !== module) {
 } else {
   (() => new ParcelappAdapter())();
 }
+// Annotate the CommonJS export names for ESM import in node:
+0 && (module.exports = {
+  ParcelappAdapter
+});
 //# sourceMappingURL=main.js.map

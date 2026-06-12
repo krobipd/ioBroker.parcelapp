@@ -1494,11 +1494,117 @@ describe("StateManager", () => {
       });
       await manager.updateDelivery(delivery, "DHL");
       const firstWrites = adapter.metrics.setStateChangedWrites;
-      // Second identical poll: only `lastUpdated` (a fresh ISO timestamp) may
-      // change; every other state is identical and must be skipped.
+      // Second identical poll: every state is unchanged and must be skipped —
+      // since v0.7.2 that includes `lastUpdated` (only refreshed on data change).
       await manager.updateDelivery(delivery, "DHL");
       const secondPassWrites = adapter.metrics.setStateChangedWrites - firstWrites;
-      expect(secondPassWrites).toBeLessThanOrEqual(1);
+      expect(secondPassWrites).toBe(0);
+    });
+  });
+
+  describe("device-object write cache (v0.7.2)", () => {
+    it("writes the device object only once while description/tracking are unchanged", async () => {
+      const adapter = createMockAdapter();
+      const manager = new StateManager(adapter as never, "en");
+      let extendCalls = 0;
+      const origExtend = adapter.extendObjectAsync;
+      adapter.extendObjectAsync = async (...args): Promise<void> => {
+        extendCalls++;
+        return origExtend(...args);
+      };
+      const delivery = makeDelivery();
+      await manager.updateDelivery(delivery, "DHL");
+      expect(extendCalls).toBe(1);
+      await manager.updateDelivery({ ...delivery, status_code: "4" }, "DHL");
+      expect(extendCalls).toBe(1); // status change ≠ device re-write
+    });
+
+    it("re-writes the device object when the description changed", async () => {
+      const adapter = createMockAdapter();
+      const manager = new StateManager(adapter as never, "en");
+      const delivery = makeDelivery({ description: "Old name" });
+      await manager.updateDelivery(delivery, "DHL");
+      await manager.updateDelivery({ ...delivery, description: "New name" }, "DHL");
+      const pkgId = manager.packageId(delivery);
+      expect(adapter.objects.get(`deliveries.${pkgId}`)!.common.name).toBe("New name");
+    });
+
+    it("re-writes after remove + re-add (cache follows lifecycle)", async () => {
+      const adapter = createMockAdapter();
+      const manager = new StateManager(adapter as never, "en");
+      const delivery = makeDelivery();
+      await manager.updateDelivery(delivery, "DHL");
+      await manager.cleanupDeliveries([]); // removes the device
+      let extendCalls = 0;
+      const origExtend = adapter.extendObjectAsync;
+      adapter.extendObjectAsync = async (...args): Promise<void> => {
+        extendCalls++;
+        return origExtend(...args);
+      };
+      await manager.updateDelivery(delivery, "DHL");
+      expect(extendCalls).toBe(1);
+    });
+  });
+
+  describe("lastUpdated only on data change (v0.7.2)", () => {
+    it("does not rewrite lastUpdated when nothing changed between polls", async () => {
+      const adapter = createMockAdapter();
+      const manager = new StateManager(adapter as never, "en");
+      const delivery = makeDelivery({
+        status_code: "2",
+        timestamp_expected: Math.floor(Date.now() / 1000) + 3600,
+      });
+      await manager.updateDelivery(delivery, "DHL");
+      const firstWrites = adapter.metrics.setStateChangedWrites;
+      await manager.updateDelivery(delivery, "DHL");
+      // Identical data → ZERO writes on the second poll (lastUpdated included).
+      expect(adapter.metrics.setStateChangedWrites).toBe(firstWrites);
+    });
+
+    it("refreshes lastUpdated when a tracked value changes", async () => {
+      const adapter = createMockAdapter();
+      const manager = new StateManager(adapter as never, "en");
+      const delivery = makeDelivery({ status_code: "2" });
+      await manager.updateDelivery(delivery, "DHL");
+      const before = adapter.states.get(`deliveries.${manager.packageId(delivery)}.lastUpdated`)?.val;
+      await new Promise(resolve => setTimeout(resolve, 5));
+      await manager.updateDelivery({ ...delivery, status_code: "4" }, "DHL");
+      const after = adapter.states.get(`deliveries.${manager.packageId(delivery)}.lastUpdated`)?.val;
+      expect(after).not.toBe(before);
+    });
+  });
+
+  describe("cleanupDeliveries in-memory model (v0.7.2)", () => {
+    it("queries the object view only once across multiple cleanups", async () => {
+      const adapter = createMockAdapter();
+      let viewCalls = 0;
+      const origView = adapter.getObjectViewAsync;
+      adapter.getObjectViewAsync = async (...args): Promise<{ rows: ObjectViewRow[] }> => {
+        viewCalls++;
+        return origView(...args);
+      };
+      const manager = new StateManager(adapter as never, "en");
+      const a = makeDelivery({ tracking_number: "A" });
+      const b = makeDelivery({ tracking_number: "B" });
+      await manager.updateDelivery(a, "DHL");
+      await manager.updateDelivery(b, "DHL");
+
+      await manager.cleanupDeliveries(["a", "b"]); // first call seeds via view
+      expect(viewCalls).toBe(1);
+
+      await manager.cleanupDeliveries(["a"]); // in-memory diff, no view
+      expect(viewCalls).toBe(1);
+      expect(adapter.objects.has("deliveries.b")).toBe(false);
+      expect(adapter.objects.has("deliveries.a")).toBe(true);
+    });
+
+    it("still reconciles zombies from a previous run on the first cleanup", async () => {
+      const adapter = createMockAdapter();
+      // Leftover device from before this adapter start.
+      adapter.objects.set("deliveries.ghost", { type: "device", common: { name: "ghost" }, native: {} });
+      const manager = new StateManager(adapter as never, "en");
+      await manager.cleanupDeliveries([]);
+      expect(adapter.objects.has("deliveries.ghost")).toBe(false);
     });
   });
 

@@ -46,6 +46,30 @@ class StateManager {
    */
   createdIds = /* @__PURE__ */ new Set();
   /**
+   * v0.7.2: last-written device-object signature per package id (the name
+   * source: description + tracking number). `updateDelivery` used to
+   * extendObject the device on EVERY poll — one object write + objectChange
+   * event per package per minute for data that practically never changes.
+   * Now the write happens only when the signature differs.
+   */
+  deviceWritten = /* @__PURE__ */ new Map();
+  /**
+   * v0.7.2: signature of the last-written state values per package id.
+   * `lastUpdated` is only refreshed when at least one sibling value actually
+   * changed — before, a fresh ISO timestamp fired one guaranteed state event
+   * per package per poll, defeating the v0.5.3 skip-unchanged optimization
+   * for that state. Semantics: `lastUpdated` = "when the tracking data last
+   * changed", not "when the adapter last polled".
+   */
+  valuesSig = /* @__PURE__ */ new Map();
+  /**
+   * v0.7.2: package ids known to exist as device objects. Filled from the
+   * object view ONCE after adapter start (reconciles leftovers from previous
+   * runs), afterwards maintained in memory — `cleanupDeliveries` no longer
+   * needs a DB round-trip per poll.
+   */
+  knownDeliveryIds = null;
+  /**
    * @param adapter The ioBroker adapter instance
    * @param language Language code from system.config.language (falls back to English)
    */
@@ -161,22 +185,28 @@ class StateManager {
    *   pre-pass. Falls back to computing it here when called directly (tests).
    */
   async updateDelivery(delivery, carrierName, precomputedId) {
+    var _a;
     const pkgId = precomputedId != null ? precomputedId : this.packageId(delivery);
     const devicePath = `deliveries.${pkgId}`;
     const description = typeof delivery.description === "string" ? delivery.description : "";
     const trackingNumber = typeof delivery.tracking_number === "string" ? delivery.tracking_number : "";
     const extraInfo = typeof delivery.extra_information === "string" ? delivery.extra_information : "";
-    await this.adapter.extendObjectAsync(
-      devicePath,
-      {
-        type: "device",
-        common: {
-          name: description || `Package ${trackingNumber || pkgId}`
+    const deviceSig = `${description} ${trackingNumber}`;
+    if (this.deviceWritten.get(pkgId) !== deviceSig) {
+      await this.adapter.extendObjectAsync(
+        devicePath,
+        {
+          type: "device",
+          common: {
+            name: description || `Package ${trackingNumber || pkgId}`
+          },
+          native: {}
         },
-        native: {}
-      },
-      { preserve: { common: ["name"] } }
-    );
+        { preserve: { common: ["name"] } }
+      );
+      this.deviceWritten.set(pkgId, deviceSig);
+    }
+    (_a = this.knownDeliveryIds) == null ? void 0 : _a.add(pkgId);
     const statusCode = this.parseStatus(delivery);
     const labels = import_types.STATUS_LABELS[this.language];
     let statusText = labels[statusCode];
@@ -184,6 +214,10 @@ class StateManager {
       this.adapter.log.debug(`status code ${statusCode} not in STATUS_LABELS[${this.language}], using fallback`);
       statusText = `Unknown (${statusCode})`;
     }
+    const deliveryWindow = this.calculateDeliveryWindow(delivery, statusCode);
+    const deliveryEstimate = this.calculateDeliveryEstimate(delivery, statusCode);
+    const lastEvent = this.formatLastEvent(delivery);
+    const lastLocation = this.extractLastLocation(delivery);
     await Promise.all([
       this.createAndSet(`${devicePath}.carrier`, (0, import_i18n.tName)("carrier"), "string", "text", carrierName),
       this.createAndSet(`${devicePath}.status`, (0, import_i18n.tName)("status"), "string", "text", statusText),
@@ -191,36 +225,39 @@ class StateManager {
       this.createAndSet(`${devicePath}.description`, (0, import_i18n.tName)("description"), "string", "text", description),
       this.createAndSet(`${devicePath}.trackingNumber`, (0, import_i18n.tName)("trackingNumber"), "string", "text", trackingNumber),
       this.createAndSet(`${devicePath}.extraInfo`, (0, import_i18n.tName)("extraInfo"), "string", "text", extraInfo),
-      this.createAndSet(
-        `${devicePath}.deliveryWindow`,
-        (0, import_i18n.tName)("deliveryWindow"),
-        "string",
-        "text",
-        this.calculateDeliveryWindow(delivery, statusCode)
-      ),
+      this.createAndSet(`${devicePath}.deliveryWindow`, (0, import_i18n.tName)("deliveryWindow"), "string", "text", deliveryWindow),
       this.createAndSet(
         `${devicePath}.deliveryEstimate`,
         (0, import_i18n.tName)("deliveryEstimate"),
         "string",
         "text",
-        this.calculateDeliveryEstimate(delivery, statusCode)
+        deliveryEstimate
       ),
-      this.createAndSet(
-        `${devicePath}.lastEvent`,
-        (0, import_i18n.tName)("lastEvent"),
-        "string",
-        "text",
-        this.formatLastEvent(delivery)
-      ),
-      this.createAndSet(
-        `${devicePath}.lastLocation`,
-        (0, import_i18n.tName)("lastLocation"),
-        "string",
-        "text",
-        this.extractLastLocation(delivery)
-      ),
-      this.createAndSet(`${devicePath}.lastUpdated`, (0, import_i18n.tName)("lastUpdated"), "string", "date", (/* @__PURE__ */ new Date()).toISOString())
+      this.createAndSet(`${devicePath}.lastEvent`, (0, import_i18n.tName)("lastEvent"), "string", "text", lastEvent),
+      this.createAndSet(`${devicePath}.lastLocation`, (0, import_i18n.tName)("lastLocation"), "string", "text", lastLocation)
     ]);
+    const sig = JSON.stringify([
+      carrierName,
+      statusText,
+      statusCode,
+      description,
+      trackingNumber,
+      extraInfo,
+      deliveryWindow,
+      deliveryEstimate,
+      lastEvent,
+      lastLocation
+    ]);
+    if (this.valuesSig.get(pkgId) !== sig) {
+      this.valuesSig.set(pkgId, sig);
+      await this.createAndSet(
+        `${devicePath}.lastUpdated`,
+        (0, import_i18n.tName)("lastUpdated"),
+        "string",
+        "date",
+        (/* @__PURE__ */ new Date()).toISOString()
+      );
+    }
   }
   /**
    * Update summary states. Expects already-filtered active deliveries.
@@ -251,26 +288,35 @@ class StateManager {
    * @param activeIds List of currently active package IDs
    */
   async cleanupDeliveries(activeIds) {
-    const activeSet = new Set(activeIds.map((id) => `deliveries.${id}`));
-    const objects = await this.adapter.getObjectViewAsync("system", "device", {
-      startkey: `${this.adapter.namespace}.deliveries.`,
-      endkey: `${this.adapter.namespace}.deliveries.${ID_RANGE_END}`
-    });
-    if (!(objects == null ? void 0 : objects.rows)) {
-      this.adapter.log.debug("cleanupDeliveries: no objects view available, skipping");
-      return;
-    }
-    const toDelete = [];
-    for (const row of objects.rows) {
-      const relativeId = row.id.replace(`${this.adapter.namespace}.`, "");
-      if (relativeId.startsWith("deliveries.") && !activeSet.has(relativeId)) {
-        toDelete.push(relativeId);
+    if (this.knownDeliveryIds === null) {
+      const objects = await this.adapter.getObjectViewAsync("system", "device", {
+        startkey: `${this.adapter.namespace}.deliveries.`,
+        endkey: `${this.adapter.namespace}.deliveries.${ID_RANGE_END}`
+      });
+      if (!(objects == null ? void 0 : objects.rows)) {
+        this.adapter.log.debug("cleanupDeliveries: no objects view available, skipping");
+        return;
+      }
+      this.knownDeliveryIds = /* @__PURE__ */ new Set();
+      for (const row of objects.rows) {
+        const relativeId = row.id.replace(`${this.adapter.namespace}.`, "");
+        if (relativeId.startsWith("deliveries.")) {
+          const pkgId = relativeId.slice("deliveries.".length).split(".")[0];
+          if (pkgId) {
+            this.knownDeliveryIds.add(pkgId);
+          }
+        }
       }
     }
+    const activeSet = new Set(activeIds);
+    const toDelete = [...this.knownDeliveryIds].filter((pkgId) => !activeSet.has(pkgId));
     await Promise.all(
-      toDelete.map(async (relativeId) => {
+      toDelete.map(async (pkgId) => {
+        const relativeId = `deliveries.${pkgId}`;
         await this.adapter.delObjectAsync(relativeId, { recursive: true });
         this.adapter.log.debug(`Removed stale delivery: ${relativeId}`);
+        this.deviceWritten.delete(pkgId);
+        this.valuesSig.delete(pkgId);
         for (const id of [...this.createdIds]) {
           if (id === relativeId || id.startsWith(`${relativeId}.`)) {
             this.createdIds.delete(id);
@@ -278,6 +324,7 @@ class StateManager {
         }
       })
     );
+    this.knownDeliveryIds = new Set(activeSet);
   }
   /**
    * Resolve a delivery's expected window to epoch-millis bounds. Returns null

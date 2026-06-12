@@ -316,6 +316,62 @@ describe("ParcelClient", () => {
       }
     });
 
+    it("v0.7.2: concurrent callers share a single in-flight fetch (mutex)", async () => {
+      // The per-delivery updates run in Promise.all — without the mutex the
+      // first poll with N packages fired N identical concurrent fetches.
+      let callCount = 0;
+      const { server, port } = await startMockServer((_req, res) => {
+        callCount++;
+        setTimeout(() => {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ dhl: "DHL" }));
+        }, 30);
+      });
+
+      try {
+        const client = createTestClient("key", port);
+        const results = await Promise.all([
+          client.getCarrierName("dhl"),
+          client.getCarrierName("dhl"),
+          client.getCarrierName("dhl"),
+          client.getCarrierName("dhl"),
+        ]);
+        expect(results).toEqual(["DHL", "DHL", "DHL", "DHL"]);
+        expect(callCount).toBe(1);
+      } finally {
+        await stopServer(server);
+      }
+    });
+
+    it("v0.7.2: a failing fetch is shared too, and the next call retries fresh", async () => {
+      let callCount = 0;
+      const { server, port } = await startMockServer((_req, res) => {
+        callCount++;
+        if (callCount === 1) {
+          res.writeHead(500, { "Content-Type": "text/plain" });
+          res.end("Error");
+        } else {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ dhl: "DHL" }));
+        }
+      });
+
+      try {
+        const client = createTestClient("key", port);
+        // Concurrent failures share ONE request and all see the empty map.
+        const [a, b] = await Promise.all([client.getCarrierNames(), client.getCarrierNames()]);
+        expect(a).toEqual({});
+        expect(b).toEqual({});
+        expect(callCount).toBe(1);
+        // Next call retries (failure was not cached) and succeeds.
+        const c = await client.getCarrierNames();
+        expect(c).toEqual({ dhl: "DHL" });
+        expect(callCount).toBe(2);
+      } finally {
+        await stopServer(server);
+      }
+    });
+
     it("should cache carrier names after first call", async () => {
       let callCount = 0;
       const carriers = { dhl: "DHL" };

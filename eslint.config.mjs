@@ -26,6 +26,8 @@ export default [
       "test/**",
       "*.config.mjs",
       "build",
+      // Generated coverage report (npm run coverage) — never lint it.
+      "coverage",
       "admin",
       "node_modules",
       "**/adapter-config.d.ts",

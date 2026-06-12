@@ -3,7 +3,7 @@ import { I18n } from "@iobroker/adapter-core";
 import { join } from "node:path";
 import { coerceClampedInt, errText } from "./lib/coerce";
 import { ParcelClient } from "./lib/parcel-client";
-import { StateManager } from "./lib/state-manager";
+import { resolveLanguage, StateManager } from "./lib/state-manager";
 
 const MIN_POLL_INTERVAL = 5;
 const MAX_POLL_INTERVAL = 60;
@@ -12,10 +12,25 @@ const MIN_POLL_GAP_MS = 60_000; // Minimum 60s between polls
 /** v0.4.2 (M6): minimum length for an apiKey value to even be considered valid. */
 const MIN_API_KEY_LENGTH = 10;
 
-/** ioBroker adapter for parcel.app package tracking */
-class ParcelappAdapter extends utils.Adapter {
+/**
+ * ioBroker adapter for parcel.app package tracking. Exported so the
+ * orchestration unit tests can drive its lifecycle/poll handlers directly.
+ */
+export class ParcelappAdapter extends utils.Adapter {
   private client: ParcelClient | null = null;
   private stateManager: StateManager | null = null;
+  /**
+   * Factories for the HTTP client + state manager — default to the real
+   * constructors. Test seams (fleet pattern): unit tests replace these with
+   * fakes to exercise the poll orchestration (throttle/force/rate-limit
+   * interplay, error routing, failure dedup) without real network.
+   *
+   * @param apiKey parcel.app API key
+   */
+  private makeClient: (apiKey: string) => ParcelClient = apiKey =>
+    new ParcelClient(apiKey, { debug: (m: string) => this.log.debug(m) });
+  /** @param language Raw system language (resolution happens in StateManager) */
+  private makeStateManager: (language: string) => StateManager = language => new StateManager(this, language);
   private pollTimer: ioBroker.Interval | undefined = undefined;
   private isPolling = false;
   private lastPollTime = 0;
@@ -30,8 +45,6 @@ class ParcelappAdapter extends utils.Adapter {
    * the process alive past js-controller's 4-second kill deadline.
    */
   private testClients = new Set<ParcelClient>();
-  /** ioBroker system language — read once in `onReady` from `system.config`. EN fallback. */
-  private systemLang: string = "en";
 
   /** @param options Adapter options */
   public constructor(options: Partial<utils.AdapterOptions> = {}) {
@@ -53,10 +66,9 @@ class ParcelappAdapter extends utils.Adapter {
 
       const sysConfig = await this.getForeignObjectAsync("system.config");
       const language = (sysConfig?.common as { language?: string } | undefined)?.language ?? "";
-      if (typeof language === "string" && language.length > 0) {
-        this.systemLang = language;
-      }
-      this.log.debug(`system language: '${language}' → using '${this.systemLang}'`);
+      // v0.7.2: the fallback resolution lives in StateManager (resolveLanguage)
+      // — log the value that is actually used, not a dead local field.
+      this.log.debug(`system language: '${language}' → using '${resolveLanguage(language)}'`);
 
       await this.setStateAsync("info.connection", { val: false, ack: true });
 
@@ -66,8 +78,8 @@ class ParcelappAdapter extends utils.Adapter {
         return;
       }
 
-      this.client = new ParcelClient(apiKey.trim(), { debug: (m: string) => this.log.debug(m) });
-      this.stateManager = new StateManager(this, language);
+      this.client = this.makeClient(apiKey.trim());
+      this.stateManager = this.makeStateManager(language);
 
       await this.cleanupObsoleteStates();
 
@@ -146,8 +158,8 @@ class ParcelappAdapter extends utils.Adapter {
             return;
           }
           // v0.4.3: same debug-logger as the prod client so checkConnection
-          // failures get the same HTTPS-layer trace.
-          const testClient = new ParcelClient(key, { debug: (m: string) => this.log.debug(m) });
+          // failures get the same HTTPS-layer trace (via the makeClient seam).
+          const testClient = this.makeClient(key);
           // v0.4.4: register test-client so onUnload can abort its inflight
           // HTTPS-request — the adapter's `this.client.cancelAll()` only
           // touches the prod-client, not these short-lived test-clients.
@@ -174,14 +186,36 @@ class ParcelappAdapter extends utils.Adapter {
             );
             return;
           }
-          const request = obj.message as {
-            tracking_number: string;
-            carrier_code: string;
-            description: string;
+          // v0.7.2: obj.message is `unknown`-shaped — a script calling
+          // sendTo("parcelapp", "addDelivery", null) used to surface as an
+          // ugly TypeError through the catch instead of a clear validation
+          // message. Coerce to a plain object and validate required fields.
+          const raw = obj.message;
+          const msg =
+            raw !== null && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+          if (
+            typeof msg.tracking_number !== "string" ||
+            msg.tracking_number.length === 0 ||
+            typeof msg.carrier_code !== "string" ||
+            msg.carrier_code.length === 0
+          ) {
+            this.log.debug("addDelivery: missing tracking_number/carrier_code in message");
+            this.sendTo(
+              obj.from,
+              obj.command,
+              { success: false, error_message: "tracking_number and carrier_code are required" },
+              obj.callback,
+            );
+            return;
+          }
+          const request = {
+            tracking_number: msg.tracking_number,
+            carrier_code: msg.carrier_code,
+            description: typeof msg.description === "string" ? msg.description : "",
           };
           const addResult = await this.client.addDelivery(request);
           // v0.4.3 (F5): trace addDelivery result with the tracking number.
-          this.log.debug(`addDelivery: '${request?.tracking_number}' result=${addResult.success ? "ok" : "fail"}`);
+          this.log.debug(`addDelivery: '${request.tracking_number}' result=${addResult.success ? "ok" : "fail"}`);
           this.sendTo(obj.from, obj.command, addResult, obj.callback);
           if (addResult.success) {
             // C5: force bypasses the 60s throttle so the freshly added package

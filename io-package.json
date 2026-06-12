@@ -3,6 +3,19 @@
     "name": "parcelapp",
     "version": "0.7.1",
     "news": {
+      "NEXT": {
+        "en": "Much quieter state updates: a package's last-updated timestamp only changes when its tracking data actually changed, and device entries are no longer rewritten on every poll.",
+        "de": "Deutlich ruhigere State-Updates: der Zuletzt-aktualisiert-Zeitstempel eines Pakets ändert sich nur noch bei echten Datenänderungen, Geräte-Einträge werden nicht mehr jeden Poll neu geschrieben.",
+        "ru": "Обновления стали спокойнее: метка последнего обновления посылки меняется только при реальном изменении данных, записи устройств не перезаписываются при каждом опросе.",
+        "pt": "Atualizações muito mais calmas: o carimbo de última atualização de um pacote só muda quando os dados realmente mudam e as entradas de dispositivos não são mais reescritas a cada sondagem.",
+        "nl": "Veel rustigere updates: het laatst-bijgewerkt-tijdstempel van een pakket verandert alleen bij echte datawijzigingen en apparaatvermeldingen worden niet meer bij elke poll herschreven.",
+        "fr": "Mises à jour plus calmes : l'horodatage de dernière mise à jour d'un colis ne change que si ses données changent réellement, les entrées d'appareils ne sont plus réécrites à chaque cycle.",
+        "it": "Aggiornamenti più tranquilli: il timestamp di ultimo aggiornamento di un pacco cambia solo quando i dati cambiano davvero, le voci dei dispositivi non vengono più riscritte a ogni ciclo.",
+        "es": "Actualizaciones más tranquilas: la marca de última actualización de un paquete solo cambia cuando sus datos realmente cambian y las entradas ya no se reescriben en cada sondeo.",
+        "pl": "Spokojniejsze aktualizacje: znacznik ostatniej aktualizacji paczki zmienia się tylko przy realnej zmianie danych, wpisy urządzeń nie są przepisywane przy każdym odpytaniu.",
+        "uk": "Спокійніші оновлення: мітка останнього оновлення посилки змінюється лише за реальної зміни даних, записи пристроїв не перезаписуються щоопитування.",
+        "zh-cn": "状态更新更安静：包裹的最后更新时间戳仅在跟踪数据真正变化时才更新，设备条目不再每次轮询都被重写。"
+      },
       "0.7.1": {
         "en": "Fixed a timezone edge case in delivery estimates: when the API reports only a calendar date, the estimate could be off by a day in time zones west of UTC — now stable.",
         "de": "Zeitzonen-Randfall bei Lieferschätzungen behoben: Wenn die API nur ein Kalenderdatum liefert, konnte die Schätzung in Zeitzonen westlich von UTC einen Tag danebenliegen — jetzt stabil.",
@@ -80,19 +93,6 @@
         "pl": "Wewnętrzne porządki. Brak zmian dla użytkownika.",
         "uk": "Внутрішнє очищення. Без змін для користувачів.",
         "zh-cn": "内部清理。无用户可见的更改。"
-      },
-      "0.5.0": {
-        "en": "User-modified state names are no longer overwritten on adapter restart",
-        "de": "Vom Benutzer geänderte Datenpunktnamen werden beim Adapter-Neustart nicht mehr überschrieben",
-        "ru": "Имена состояний, изменённые пользователем, больше не перезаписываются при перезапуске адаптера",
-        "pt": "Nomes de estados modificados pelo utilizador já não são sobrescritos ao reiniciar o adaptador",
-        "nl": "Door de gebruiker aangepaste statusnamen worden niet meer overschreven bij herstart van de adapter",
-        "fr": "Les noms d'états modifiés par l'utilisateur ne sont plus écrasés au redémarrage de l'adaptateur",
-        "it": "I nomi degli stati modificati dall'utente non vengono più sovrascritti al riavvio dell'adattatore",
-        "es": "Los nombres de estados modificados por el usuario ya no se sobrescriben al reiniciar el adaptador",
-        "pl": "Nazwy stanów zmienione przez użytkownika nie są już nadpisywane przy restarcie adaptera",
-        "uk": "Назви станів, змінені користувачем, більше не перезаписуються при перезапуску адаптера",
-        "zh-cn": "用户修改的状态名称在适配器重启时不再被覆盖"
       }
     },
     "plugins": {

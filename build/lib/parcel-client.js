@@ -49,6 +49,14 @@ class ParcelClient {
   apiKey;
   carrierCache = null;
   /**
+   * v0.7.2: in-flight fetch for the carrier list. The per-delivery updates run
+   * in parallel (Promise.all) and each resolves carrier names — without this
+   * mutex the first poll with N packages fired N identical concurrent fetches
+   * of the static 447-entry file (and a persistently failing endpoint was
+   * retried N times per poll). Same pattern as beszel's auth mutex (B1).
+   */
+  carrierFetchInFlight = null;
+  /**
    * v0.4.2 (P1): per-request AbortController. `cancelAll()` aborts every
    * pending HTTPS request — called from the adapter's `onUnload` so a slow
    * parcel.app endpoint can't keep the adapter alive past js-controller's
@@ -108,29 +116,37 @@ class ParcelClient {
   async addDelivery(delivery) {
     return this.request("POST", "/add-delivery/", true, delivery);
   }
-  /** Get carrier names (cached after first call) */
+  /** Get carrier names (cached after first call; concurrent callers share one fetch) */
   async getCarrierNames() {
-    var _a, _b, _c;
     if (this.carrierCache) {
       return this.carrierCache;
     }
+    if (!this.carrierFetchInFlight) {
+      this.carrierFetchInFlight = this.fetchCarrierNames().finally(() => {
+        this.carrierFetchInFlight = null;
+      });
+    }
+    return this.carrierFetchInFlight;
+  }
+  /** One actual carrier-list fetch. Failure → empty map, NOT cached (retry next poll). */
+  async fetchCarrierNames() {
+    var _a, _b, _c;
     try {
       const raw = await this.request("GET", "/supported_carriers.json", false);
       if (raw && typeof raw === "object" && !Array.isArray(raw)) {
         this.carrierCache = raw;
         (_a = this.log) == null ? void 0 : _a.debug(`carriers: fetched ${Object.keys(this.carrierCache).length} entries`);
-      } else {
-        (_b = this.log) == null ? void 0 : _b.debug(
-          `carriers: drift (got ${Array.isArray(raw) ? "array" : typeof raw}, expected object), kept empty`
-        );
-        return {};
+        return this.carrierCache;
       }
+      (_b = this.log) == null ? void 0 : _b.debug(
+        `carriers: drift (got ${Array.isArray(raw) ? "array" : typeof raw}, expected object), kept empty`
+      );
+      return {};
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       (_c = this.log) == null ? void 0 : _c.debug(`carriers: fetch failed (kept empty, will retry): ${msg}`);
       return {};
     }
-    return this.carrierCache;
   }
   /**
    * Resolve a carrier code to a display name.
