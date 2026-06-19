@@ -1,4 +1,8 @@
 # Older Changes
+## 0.5.3 (2026-05-23) — stable
+
+- Reduced unnecessary state-change events by skipping writes when the value has not changed.
+
 ## 0.5.2 (2026-05-23)
 
 - Changelog rewritten in user-centric style across all versions.

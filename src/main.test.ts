@@ -55,7 +55,7 @@ function makeDelivery(overrides: Partial<ParcelDelivery> = {}): ParcelDelivery {
   return {
     carrier_code: "dhl",
     description: "Test",
-    status_code: "2",
+    status_code: 2,
     tracking_number: "TRK1",
     ...overrides,
   };
@@ -297,8 +297,8 @@ describe("ParcelappAdapter poll — happy path", () => {
   it("updates every delivery, cleans up and refreshes the summary", async () => {
     const { adapter, client, stateMgr } = await setupReady();
     const i = internalOf(adapter);
-    const a = makeDelivery({ tracking_number: "A", status_code: "2" });
-    const b = makeDelivery({ tracking_number: "B", status_code: "4" });
+    const a = makeDelivery({ tracking_number: "A", status_code: 2 });
+    const b = makeDelivery({ tracking_number: "B", status_code: 4 });
     client.getDeliveries.mockResolvedValue([a, b]);
     stateMgr.updateDelivery.mockClear();
 
@@ -314,8 +314,8 @@ describe("ParcelappAdapter poll — happy path", () => {
   it("autoRemove mode requests 'active' and filters delivered out", async () => {
     const { adapter, client, stateMgr } = await setupReady({ autoRemoveDelivered: true });
     const i = internalOf(adapter);
-    const active = makeDelivery({ tracking_number: "A", status_code: "2" });
-    const delivered = makeDelivery({ tracking_number: "D", status_code: "0" });
+    const active = makeDelivery({ tracking_number: "A", status_code: 2 });
+    const delivered = makeDelivery({ tracking_number: "D", status_code: 0 });
     client.getDeliveries.mockResolvedValue([active, delivered]);
     stateMgr.updateDelivery.mockClear();
 
@@ -329,8 +329,8 @@ describe("ParcelappAdapter poll — happy path", () => {
   it("keep mode requests 'recent' and keeps delivered packages visible", async () => {
     const { adapter, client, stateMgr } = await setupReady({ autoRemoveDelivered: false });
     const i = internalOf(adapter);
-    const active = makeDelivery({ tracking_number: "A", status_code: "2" });
-    const delivered = makeDelivery({ tracking_number: "D", status_code: "0" });
+    const active = makeDelivery({ tracking_number: "A", status_code: 2 });
+    const delivered = makeDelivery({ tracking_number: "D", status_code: 0 });
     client.getDeliveries.mockResolvedValue([active, delivered]);
     stateMgr.updateDelivery.mockClear();
 
@@ -525,6 +525,48 @@ describe("ParcelappAdapter onMessage", () => {
     expect(client.getDeliveries).toHaveBeenCalled();
   });
 
+  it("addDelivery: passes language and send_push_confirmation through when provided", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    await i.onMessage({
+      command: "addDelivery",
+      from: "system.adapter.admin.0",
+      callback: { id: 1 },
+      message: {
+        tracking_number: "NEW2",
+        carrier_code: "dhl",
+        description: "Parcel",
+        language: "de",
+        send_push_confirmation: true,
+      },
+    });
+    expect(client.addDelivery).toHaveBeenCalledWith({
+      tracking_number: "NEW2",
+      carrier_code: "dhl",
+      description: "Parcel",
+      language: "de",
+      send_push_confirmation: true,
+    });
+  });
+
+  it("addDelivery: missing description yields the validation error", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    await i.onMessage({
+      command: "addDelivery",
+      from: "system.adapter.admin.0",
+      callback: { id: 1 },
+      message: { tracking_number: "NEW3", carrier_code: "dhl" },
+    });
+    expect(client.addDelivery).not.toHaveBeenCalled();
+    expect(i.sendTo).toHaveBeenCalledWith(
+      "system.adapter.admin.0",
+      "addDelivery",
+      { success: false, error_message: "tracking_number, carrier_code and description are required" },
+      expect.anything(),
+    );
+  });
+
   it("addDelivery: a null message yields a clear validation error (v0.7.2 hardening)", async () => {
     const { adapter, client } = await setupReady();
     const i = internalOf(adapter);
@@ -538,7 +580,7 @@ describe("ParcelappAdapter onMessage", () => {
     expect(i.sendTo).toHaveBeenCalledWith(
       "system.adapter.admin.0",
       "addDelivery",
-      { success: false, error_message: "tracking_number and carrier_code are required" },
+      { success: false, error_message: "tracking_number, carrier_code and description are required" },
       expect.anything(),
     );
   });

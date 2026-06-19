@@ -34,7 +34,7 @@ For details and how to disable it, see the [Sentry plugin documentation](https:/
 ## Requirements
 
 - **Node.js >= 22**
-- **ioBroker js-controller >= 7.1.2**
+- **ioBroker js-controller >= 7.2.2**
 - **ioBroker Admin >= 7.8.23**
 - **parcel.app Premium subscription** — required for API access
 
@@ -87,10 +87,13 @@ sendTo("parcelapp.0", "addDelivery", {
   tracking_number: "1234567890",
   carrier_code: "dhl",
   description: "My package",
+  // optional:
+  language: "de", // tracking language as an ISO 639-1 code, default "en"
+  send_push_confirmation: true, // send a push once the delivery is added, default false
 });
 ```
 
-The delivery is added to your parcel.app account and immediately appears in ioBroker after an automatic poll.
+`tracking_number`, `carrier_code` and `description` are required; `language` and `send_push_confirmation` are optional. The delivery is added to your parcel.app account and a poll is triggered right away — but freshly added deliveries usually have no tracking data yet (see the note below).
 
 **Notes:**
 
@@ -126,6 +129,11 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+### 0.8.0 (2026-06-19)
+
+- The delivery window is now also shown for carriers that report it only as a date/time range, not just when the API provides a Unix timestamp.
+- When adding a delivery via script, you can now set an optional tracking language and request a push confirmation.
+
 ### 0.7.2 (2026-06-12)
 
 - Much quieter state updates: a package's last-updated timestamp now only changes when its tracking data actually changed, and device entries are no longer rewritten on every poll
@@ -144,10 +152,6 @@ The delivery is added to your parcel.app account and immediately appears in ioBr
 - The summary delivery window now covers the full time range when several packages are expected the same day — previously an overlapping window could be cut short.
 - Packages reported with an unrecognized status are no longer mistaken for delivered and removed; they stay visible as "Unknown".
 - A delivery added via the admin button now appears immediately instead of only after the next polling cycle.
-
-### 0.5.3 (2026-05-23) — stable
-
-- Reduced unnecessary state-change events by skipping writes when the value has not changed.
 
 [Older changelogs can be found there](CHANGELOG_OLD.md)
 

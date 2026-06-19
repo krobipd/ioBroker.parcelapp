@@ -100,11 +100,9 @@ class ParcelClient {
       throw apiError("API error: malformed response", "API_ERROR");
     }
     if (!(0, import_coerce.isTrueish)(response.success)) {
-      const rawCode = typeof response.error_code === "string" ? response.error_code : "";
       const rawMsg = typeof response.error_message === "string" ? response.error_message : "";
-      const code = rawCode || rawMsg || "UNKNOWN";
-      (_b = this.log) == null ? void 0 : _b.debug(`API drift: success=false, code='${code}', msg='${rawMsg}'`);
-      throw apiError(`API error: ${rawMsg || code}`, rawCode === "INVALID_API_KEY" ? "INVALID_API_KEY" : "API_ERROR");
+      (_b = this.log) == null ? void 0 : _b.debug(`API drift: success=false, msg='${rawMsg}'`);
+      throw apiError(`API error: ${rawMsg || "UNKNOWN"}`, "API_ERROR");
     }
     return Array.isArray(response.deliveries) ? response.deliveries : [];
   }

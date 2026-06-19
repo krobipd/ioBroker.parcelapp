@@ -151,7 +151,7 @@ function makeDelivery(overrides: Partial<ParcelDelivery> = {}): ParcelDelivery {
   return {
     carrier_code: "dhl",
     description: "Test Package",
-    status_code: "2",
+    status_code: 2,
     tracking_number: "1234567890",
     ...overrides,
   };
@@ -295,7 +295,7 @@ describe("StateManager", () => {
     });
 
     it("should set status label in German when language is de", async () => {
-      const delivery = makeDelivery({ status_code: "2" });
+      const delivery = makeDelivery({ status_code: 2 });
       await manager.updateDelivery(delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
@@ -307,7 +307,7 @@ describe("StateManager", () => {
       adapter = createMockAdapter();
       manager = new StateManager(adapter as never, "en");
 
-      const delivery = makeDelivery({ status_code: "4" });
+      const delivery = makeDelivery({ status_code: 4 });
       await manager.updateDelivery(delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
@@ -316,7 +316,7 @@ describe("StateManager", () => {
     });
 
     it("should set statusCode as number", async () => {
-      const delivery = makeDelivery({ status_code: "8" });
+      const delivery = makeDelivery({ status_code: 8 });
       await manager.updateDelivery(delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
@@ -325,7 +325,7 @@ describe("StateManager", () => {
     });
 
     it("should handle unknown status code", async () => {
-      const delivery = makeDelivery({ status_code: "99" });
+      const delivery = makeDelivery({ status_code: 99 });
       await manager.updateDelivery(delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
@@ -334,7 +334,7 @@ describe("StateManager", () => {
     });
 
     it("should handle non-numeric status code as unknown (kept visible)", async () => {
-      const delivery = makeDelivery({ status_code: "abc" });
+      const delivery = makeDelivery({ status_code: "abc" as unknown as number });
       await manager.updateDelivery(delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
@@ -449,7 +449,7 @@ describe("StateManager", () => {
       for (let code = 0; code <= 8; code++) {
         adapter = createMockAdapter();
         manager = new StateManager(adapter as never, "de");
-        const delivery = makeDelivery({ status_code: String(code), tracking_number: `trk${code}` });
+        const delivery = makeDelivery({ status_code: code, tracking_number: `trk${code}` });
         await manager.updateDelivery(delivery, "Test");
 
         const pkgId = manager.packageId(delivery);
@@ -462,7 +462,7 @@ describe("StateManager", () => {
       for (let code = 0; code <= 8; code++) {
         adapter = createMockAdapter();
         manager = new StateManager(adapter as never, "en");
-        const delivery = makeDelivery({ status_code: String(code), tracking_number: `trk${code}` });
+        const delivery = makeDelivery({ status_code: code, tracking_number: `trk${code}` });
         await manager.updateDelivery(delivery, "Test");
 
         const pkgId = manager.packageId(delivery);
@@ -475,7 +475,7 @@ describe("StateManager", () => {
   describe("delivery window calculation", () => {
     it("should return empty string for non-trackable status (delivered)", async () => {
       const delivery = makeDelivery({
-        status_code: "0",
+        status_code: 0,
         timestamp_expected: Math.floor(Date.now() / 1000) + 3600,
       });
       await manager.updateDelivery(delivery, "DHL");
@@ -487,7 +487,7 @@ describe("StateManager", () => {
 
     it("should return empty string for non-trackable status (frozen)", async () => {
       const delivery = makeDelivery({
-        status_code: "1",
+        status_code: 1,
         timestamp_expected: Math.floor(Date.now() / 1000) + 3600,
       });
       await manager.updateDelivery(delivery, "DHL");
@@ -505,7 +505,7 @@ describe("StateManager", () => {
       end.setHours(16, 0, 0, 0);
 
       const delivery = makeDelivery({
-        status_code: "2",
+        status_code: 2,
         timestamp_expected: Math.floor(start.getTime() / 1000),
         timestamp_expected_end: Math.floor(end.getTime() / 1000),
       });
@@ -521,7 +521,7 @@ describe("StateManager", () => {
       start.setHours(10, 30, 0, 0);
 
       const delivery = makeDelivery({
-        status_code: "4",
+        status_code: 4,
         timestamp_expected: Math.floor(start.getTime() / 1000),
       });
       await manager.updateDelivery(delivery, "DHL");
@@ -532,7 +532,7 @@ describe("StateManager", () => {
     });
 
     it("should return empty string when no timestamps", async () => {
-      const delivery = makeDelivery({ status_code: "2" });
+      const delivery = makeDelivery({ status_code: 2 });
       await manager.updateDelivery(delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
@@ -545,7 +545,7 @@ describe("StateManager", () => {
       start.setHours(9, 0, 0, 0);
 
       const delivery = makeDelivery({
-        status_code: "8",
+        status_code: 8,
         timestamp_expected: Math.floor(start.getTime() / 1000),
       });
       await manager.updateDelivery(delivery, "DHL");
@@ -554,12 +554,79 @@ describe("StateManager", () => {
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
       expect(state?.val).toBe("09:00");
     });
+
+    it("should build the window from date_expected/_end strings when timestamps are missing", async () => {
+      const delivery = makeDelivery({
+        status_code: 4,
+        date_expected: "2025-12-06 14:30:00",
+        date_expected_end: "2025-12-06 18:30:00",
+      });
+      await manager.updateDelivery(delivery, "DHL");
+
+      const pkgId = manager.packageId(delivery);
+      const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
+      expect(state?.val).toBe("14:30 - 18:30");
+    });
+
+    it("should show a single time when only date_expected (with time-of-day) is present", async () => {
+      const delivery = makeDelivery({
+        status_code: 4,
+        date_expected: "2025-12-06 11:45:00",
+      });
+      await manager.updateDelivery(delivery, "DHL");
+
+      const pkgId = manager.packageId(delivery);
+      const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
+      expect(state?.val).toBe("11:45");
+    });
+
+    it("should NOT build a window from a bare calendar date (no time-of-day)", async () => {
+      const delivery = makeDelivery({
+        status_code: 4,
+        date_expected: "2025-12-06",
+        date_expected_end: "2025-12-08",
+      });
+      await manager.updateDelivery(delivery, "DHL");
+
+      const pkgId = manager.packageId(delivery);
+      const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
+      expect(state?.val).toBe("");
+    });
+
+    it("should treat a midnight (00:00:00) date_expected as a day, not a window", async () => {
+      const delivery = makeDelivery({
+        status_code: 4,
+        date_expected: "2025-12-06 00:00:00",
+        date_expected_end: "2025-12-08 00:00:00",
+      });
+      await manager.updateDelivery(delivery, "DHL");
+
+      const pkgId = manager.packageId(delivery);
+      const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
+      expect(state?.val).toBe("");
+    });
+
+    it("should prefer the Unix timestamp over the date string", async () => {
+      const start = new Date();
+      start.setHours(8, 15, 0, 0);
+
+      const delivery = makeDelivery({
+        status_code: 2,
+        timestamp_expected: Math.floor(start.getTime() / 1000),
+        date_expected: "2025-12-06 23:00:00",
+      });
+      await manager.updateDelivery(delivery, "DHL");
+
+      const pkgId = manager.packageId(delivery);
+      const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
+      expect(state?.val).toBe("08:15");
+    });
   });
 
   describe("delivery estimate calculation", () => {
     it("should return empty string for non-trackable status", async () => {
       const delivery = makeDelivery({
-        status_code: "0",
+        status_code: 0,
         timestamp_expected: Math.floor(Date.now() / 1000),
       });
       await manager.updateDelivery(delivery, "DHL");
@@ -574,7 +641,7 @@ describe("StateManager", () => {
       today.setHours(15, 0, 0, 0);
 
       const delivery = makeDelivery({
-        status_code: "2",
+        status_code: 2,
         timestamp_expected: Math.floor(today.getTime() / 1000),
       });
       await manager.updateDelivery(delivery, "DHL");
@@ -593,7 +660,7 @@ describe("StateManager", () => {
       today.setHours(15, 0, 0, 0);
 
       const delivery = makeDelivery({
-        status_code: "2",
+        status_code: 2,
         timestamp_expected: Math.floor(today.getTime() / 1000),
       });
       await manager.updateDelivery(delivery, "DHL");
@@ -609,7 +676,7 @@ describe("StateManager", () => {
       tomorrow.setHours(12, 0, 0, 0);
 
       const delivery = makeDelivery({
-        status_code: "4",
+        status_code: 4,
         timestamp_expected: Math.floor(tomorrow.getTime() / 1000),
       });
       await manager.updateDelivery(delivery, "DHL");
@@ -629,7 +696,7 @@ describe("StateManager", () => {
       tomorrow.setHours(12, 0, 0, 0);
 
       const delivery = makeDelivery({
-        status_code: "4",
+        status_code: 4,
         timestamp_expected: Math.floor(tomorrow.getTime() / 1000),
       });
       await manager.updateDelivery(delivery, "DHL");
@@ -645,7 +712,7 @@ describe("StateManager", () => {
       future.setHours(12, 0, 0, 0);
 
       const delivery = makeDelivery({
-        status_code: "2",
+        status_code: 2,
         timestamp_expected: Math.floor(future.getTime() / 1000),
       });
       await manager.updateDelivery(delivery, "DHL");
@@ -665,7 +732,7 @@ describe("StateManager", () => {
       future.setHours(12, 0, 0, 0);
 
       const delivery = makeDelivery({
-        status_code: "2",
+        status_code: 2,
         timestamp_expected: Math.floor(future.getTime() / 1000),
       });
       await manager.updateDelivery(delivery, "DHL");
@@ -681,7 +748,7 @@ describe("StateManager", () => {
       past.setHours(12, 0, 0, 0);
 
       const delivery = makeDelivery({
-        status_code: "2",
+        status_code: 2,
         timestamp_expected: Math.floor(past.getTime() / 1000),
       });
       await manager.updateDelivery(delivery, "DHL");
@@ -702,7 +769,7 @@ describe("StateManager", () => {
       past.setHours(12, 0, 0, 0);
 
       const delivery = makeDelivery({
-        status_code: "2",
+        status_code: 2,
         timestamp_expected: Math.floor(past.getTime() / 1000),
       });
       await manager.updateDelivery(delivery, "DHL");
@@ -718,7 +785,7 @@ describe("StateManager", () => {
       const dateStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, "0")}-${String(tomorrow.getDate()).padStart(2, "0")}`;
 
       const delivery = makeDelivery({
-        status_code: "2",
+        status_code: 2,
         date_expected: dateStr,
       });
       await manager.updateDelivery(delivery, "DHL");
@@ -736,7 +803,7 @@ describe("StateManager", () => {
       const today = new Date();
       const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
-      const delivery = makeDelivery({ status_code: "2", date_expected: dateStr });
+      const delivery = makeDelivery({ status_code: 2, date_expected: dateStr });
       await manager.updateDelivery(delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
@@ -745,7 +812,7 @@ describe("StateManager", () => {
     });
 
     it("should return empty string when no expected date at all", async () => {
-      const delivery = makeDelivery({ status_code: "2" });
+      const delivery = makeDelivery({ status_code: 2 });
       await manager.updateDelivery(delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
@@ -755,7 +822,7 @@ describe("StateManager", () => {
 
     it("should return empty string for invalid date", async () => {
       const delivery = makeDelivery({
-        status_code: "2",
+        status_code: 2,
         date_expected: "not-a-date",
       });
       await manager.updateDelivery(delivery, "DHL");
@@ -879,9 +946,9 @@ describe("StateManager", () => {
 
     it("should count active deliveries", async () => {
       const deliveries = [
-        makeDelivery({ status_code: "2", tracking_number: "A" }),
-        makeDelivery({ status_code: "4", tracking_number: "B" }),
-        makeDelivery({ status_code: "8", tracking_number: "C" }),
+        makeDelivery({ status_code: 2, tracking_number: "A" }),
+        makeDelivery({ status_code: 4, tracking_number: "B" }),
+        makeDelivery({ status_code: 8, tracking_number: "C" }),
       ];
       await manager.updateSummary(deliveries);
 
@@ -897,12 +964,12 @@ describe("StateManager", () => {
 
       const deliveries = [
         makeDelivery({
-          status_code: "2",
+          status_code: 2,
           tracking_number: "A",
           timestamp_expected: Math.floor(today.getTime() / 1000),
         }),
         makeDelivery({
-          status_code: "4",
+          status_code: 4,
           tracking_number: "B",
           timestamp_expected: Math.floor(tomorrow.getTime() / 1000),
         }),
@@ -919,7 +986,7 @@ describe("StateManager", () => {
 
       const deliveries = [
         makeDelivery({
-          status_code: "2",
+          status_code: 2,
           tracking_number: "A",
           timestamp_expected: Math.floor(tomorrow.getTime() / 1000),
         }),
@@ -943,13 +1010,13 @@ describe("StateManager", () => {
 
       const deliveries = [
         makeDelivery({
-          status_code: "2",
+          status_code: 2,
           tracking_number: "A",
           timestamp_expected: Math.floor(start1.getTime() / 1000),
           timestamp_expected_end: Math.floor(end1.getTime() / 1000),
         }),
         makeDelivery({
-          status_code: "4",
+          status_code: 4,
           tracking_number: "B",
           timestamp_expected: Math.floor(start2.getTime() / 1000),
           timestamp_expected_end: Math.floor(end2.getTime() / 1000),
@@ -974,13 +1041,13 @@ describe("StateManager", () => {
 
       const deliveries = [
         makeDelivery({
-          status_code: "2",
+          status_code: 2,
           tracking_number: "WIDE",
           timestamp_expected: Math.floor(wideStart.getTime() / 1000),
           timestamp_expected_end: Math.floor(wideEnd.getTime() / 1000),
         }),
         makeDelivery({
-          status_code: "4",
+          status_code: 4,
           tracking_number: "NARROW",
           timestamp_expected: Math.floor(narrowStart.getTime() / 1000),
           timestamp_expected_end: Math.floor(narrowEnd.getTime() / 1000),
@@ -990,6 +1057,40 @@ describe("StateManager", () => {
 
       const state = adapter.states.get("summary.deliveryWindow");
       expect(state?.val).toBe("08:00 - 18:00");
+    });
+
+    it("includes date-string windows (no timestamps) in the combined window", async () => {
+      const today = new Date();
+      const y = today.getFullYear();
+      const mo = String(today.getMonth() + 1).padStart(2, "0");
+      const da = String(today.getDate()).padStart(2, "0");
+      const at = (h: number, mi: number): string =>
+        `${y}-${mo}-${da} ${String(h).padStart(2, "0")}:${String(mi).padStart(2, "0")}:00`;
+
+      const tsStart = new Date(today);
+      tsStart.setHours(9, 0, 0, 0);
+      const tsEnd = new Date(today);
+      tsEnd.setHours(11, 0, 0, 0);
+
+      const deliveries = [
+        makeDelivery({
+          status_code: 2,
+          tracking_number: "TS",
+          timestamp_expected: Math.floor(tsStart.getTime() / 1000),
+          timestamp_expected_end: Math.floor(tsEnd.getTime() / 1000),
+        }),
+        // String-only window (no Unix timestamps), expected today
+        makeDelivery({
+          status_code: 4,
+          tracking_number: "STR",
+          date_expected: at(14, 30),
+          date_expected_end: at(18, 30),
+        }),
+      ];
+      await manager.updateSummary(deliveries);
+
+      const state = adapter.states.get("summary.deliveryWindow");
+      expect(state?.val).toBe("09:00 - 18:30");
     });
 
     it("should return empty delivery window when no today deliveries", async () => {
@@ -1026,48 +1127,48 @@ describe("StateManager", () => {
     describe("parseStatus", () => {
       it("should accept number status_code (API drift)", () => {
         const delivery = makeDelivery({
-          status_code: 2 as unknown as string,
+          status_code: 2,
         });
         expect(manager.parseStatus(delivery)).toBe(2);
       });
 
       it("should truncate fractional numbers", () => {
         const delivery = makeDelivery({
-          status_code: 2.7 as unknown as string,
+          status_code: 2.7,
         });
         expect(manager.parseStatus(delivery)).toBe(2);
       });
 
       it("should return -1 (unknown) for NaN number", () => {
         const delivery = makeDelivery({
-          status_code: NaN as unknown as string,
+          status_code: NaN,
         });
         expect(manager.parseStatus(delivery)).toBe(-1);
       });
 
       it("should return -1 (unknown) for Infinity", () => {
         const delivery = makeDelivery({
-          status_code: Infinity as unknown as string,
+          status_code: Infinity,
         });
         expect(manager.parseStatus(delivery)).toBe(-1);
       });
 
       it("should return -1 (unknown) for null", () => {
         const delivery = makeDelivery({
-          status_code: null as unknown as string,
+          status_code: null as unknown as number,
         });
         expect(manager.parseStatus(delivery)).toBe(-1);
       });
 
       it("should return -1 (unknown) for object", () => {
         const delivery = makeDelivery({
-          status_code: {} as unknown as string,
+          status_code: {} as unknown as number,
         });
         expect(manager.parseStatus(delivery)).toBe(-1);
       });
 
       it("should return -1 (unknown) for non-numeric string", () => {
-        const delivery = makeDelivery({ status_code: "abc" });
+        const delivery = makeDelivery({ status_code: "abc" as unknown as number });
         expect(manager.parseStatus(delivery)).toBe(-1);
       });
     });
@@ -1180,7 +1281,7 @@ describe("StateManager", () => {
         const ts = Math.floor(now.getTime() / 1000);
 
         const delivery = makeDelivery({
-          status_code: "2",
+          status_code: 2,
           timestamp_expected: String(ts) as unknown as number,
         });
         await manager.updateDelivery(delivery, "DHL");
@@ -1192,7 +1293,7 @@ describe("StateManager", () => {
 
       it("should handle timestamp_expected as non-finite value", async () => {
         const delivery = makeDelivery({
-          status_code: "2",
+          status_code: 2,
           timestamp_expected: NaN as unknown as number,
         });
         await manager.updateDelivery(delivery, "DHL");
@@ -1204,7 +1305,7 @@ describe("StateManager", () => {
 
       it("should handle date_expected as non-string (null)", async () => {
         const delivery = makeDelivery({
-          status_code: "2",
+          status_code: 2,
           date_expected: null as unknown as string,
         });
         await manager.updateDelivery(delivery, "DHL");
@@ -1219,7 +1320,7 @@ describe("StateManager", () => {
         start.setHours(9, 0, 0, 0);
 
         const delivery = makeDelivery({
-          status_code: "2",
+          status_code: 2,
           timestamp_expected: Math.floor(start.getTime() / 1000),
           timestamp_expected_end: "not-a-number" as unknown as number,
         });
@@ -1232,7 +1333,7 @@ describe("StateManager", () => {
 
       it("should handle numeric status_code (API drift)", async () => {
         const delivery = makeDelivery({
-          status_code: 4 as unknown as string,
+          status_code: 4,
         });
         await manager.updateDelivery(delivery, "DHL");
 
@@ -1246,8 +1347,8 @@ describe("StateManager", () => {
   describe("cleanupDeliveries", () => {
     it("should remove stale deliveries", async () => {
       // Create two deliveries
-      const d1 = makeDelivery({ tracking_number: "KEEP", status_code: "2" });
-      const d2 = makeDelivery({ tracking_number: "REMOVE", status_code: "2" });
+      const d1 = makeDelivery({ tracking_number: "KEEP", status_code: 2 });
+      const d2 = makeDelivery({ tracking_number: "REMOVE", status_code: 2 });
       await manager.updateDelivery(d1, "DHL");
       await manager.updateDelivery(d2, "DHL");
 
@@ -1266,8 +1367,8 @@ describe("StateManager", () => {
     });
 
     it("should not remove anything when all IDs are active", async () => {
-      const d1 = makeDelivery({ tracking_number: "A", status_code: "2" });
-      const d2 = makeDelivery({ tracking_number: "B", status_code: "4" });
+      const d1 = makeDelivery({ tracking_number: "A", status_code: 2 });
+      const d2 = makeDelivery({ tracking_number: "B", status_code: 4 });
       await manager.updateDelivery(d1, "DHL");
       await manager.updateDelivery(d2, "UPS");
 
@@ -1280,7 +1381,7 @@ describe("StateManager", () => {
     });
 
     it("should handle empty active IDs", async () => {
-      const d1 = makeDelivery({ tracking_number: "OLD", status_code: "2" });
+      const d1 = makeDelivery({ tracking_number: "OLD", status_code: 2 });
       await manager.updateDelivery(d1, "DHL");
 
       await manager.cleanupDeliveries([]);
@@ -1311,7 +1412,7 @@ describe("StateManager", () => {
     it("should use the selected language for status strings", async () => {
       adapter = createMockAdapter();
       manager = new StateManager(adapter as never, "fr");
-      const delivery = makeDelivery({ status_code: "2" });
+      const delivery = makeDelivery({ status_code: 2 });
       await manager.updateDelivery(delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
@@ -1328,7 +1429,7 @@ describe("StateManager", () => {
         now.setHours(14, 0, 0, 0);
 
         const delivery = makeDelivery({
-          status_code: "2",
+          status_code: 2,
           tracking_number: `trk_${lang.replace("-", "_")}`,
           timestamp_expected: Math.floor(now.getTime() / 1000),
         });
@@ -1383,12 +1484,12 @@ describe("StateManager", () => {
 
         const deliveries = [
           makeDelivery({
-            status_code: "2",
+            status_code: 2,
             tracking_number: "TODAY",
             timestamp_expected: Math.floor(now.getTime() / 1000),
           }),
           makeDelivery({
-            status_code: "4",
+            status_code: 4,
             tracking_number: "NOT_TODAY",
             timestamp_expected: Math.floor(tomorrow.getTime() / 1000),
           }),
@@ -1451,7 +1552,7 @@ describe("StateManager", () => {
       await manager.updateDelivery(delivery, "DHL");
       const firstPass = adapter.metrics.setObjectNotExistsCalls;
       // Same delivery, second poll cycle — values may change, schema doesn't.
-      await manager.updateDelivery({ ...delivery, status_code: "4" }, "DHL");
+      await manager.updateDelivery({ ...delivery, status_code: 4 }, "DHL");
       expect(adapter.metrics.setObjectNotExistsCalls).toBe(firstPass);
       // Value updated:
       const pkgId = manager.packageId(delivery);
@@ -1489,7 +1590,7 @@ describe("StateManager", () => {
       const adapter = createMockAdapter();
       const manager = new StateManager(adapter as never, "en");
       const delivery = makeDelivery({
-        status_code: "2",
+        status_code: 2,
         timestamp_expected: Math.floor(Date.now() / 1000) + 3600,
       });
       await manager.updateDelivery(delivery, "DHL");
@@ -1515,7 +1616,7 @@ describe("StateManager", () => {
       const delivery = makeDelivery();
       await manager.updateDelivery(delivery, "DHL");
       expect(extendCalls).toBe(1);
-      await manager.updateDelivery({ ...delivery, status_code: "4" }, "DHL");
+      await manager.updateDelivery({ ...delivery, status_code: 4 }, "DHL");
       expect(extendCalls).toBe(1); // status change ≠ device re-write
     });
 
@@ -1551,7 +1652,7 @@ describe("StateManager", () => {
       const adapter = createMockAdapter();
       const manager = new StateManager(adapter as never, "en");
       const delivery = makeDelivery({
-        status_code: "2",
+        status_code: 2,
         timestamp_expected: Math.floor(Date.now() / 1000) + 3600,
       });
       await manager.updateDelivery(delivery, "DHL");
@@ -1564,11 +1665,11 @@ describe("StateManager", () => {
     it("refreshes lastUpdated when a tracked value changes", async () => {
       const adapter = createMockAdapter();
       const manager = new StateManager(adapter as never, "en");
-      const delivery = makeDelivery({ status_code: "2" });
+      const delivery = makeDelivery({ status_code: 2 });
       await manager.updateDelivery(delivery, "DHL");
       const before = adapter.states.get(`deliveries.${manager.packageId(delivery)}.lastUpdated`)?.val;
       await new Promise(resolve => setTimeout(resolve, 5));
-      await manager.updateDelivery({ ...delivery, status_code: "4" }, "DHL");
+      await manager.updateDelivery({ ...delivery, status_code: 4 }, "DHL");
       const after = adapter.states.get(`deliveries.${manager.packageId(delivery)}.lastUpdated`)?.val;
       expect(after).not.toBe(before);
     });

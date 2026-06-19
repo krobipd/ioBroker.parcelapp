@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.7.2",
+    "version": "0.8.0",
     "news": {
+      "0.8.0": {
+        "en": "The delivery window is now also shown for carriers that report it only as a date/time range, not just as a Unix timestamp.",
+        "de": "Das Zustellfenster wird jetzt auch für Anbieter angezeigt, die es nur als Datums-/Zeitbereich melden, nicht nur als Unix-Zeitstempel.",
+        "ru": "Окно доставки теперь показывается и для перевозчиков, которые сообщают его только как диапазон даты/времени, а не как метку времени Unix.",
+        "pt": "A janela de entrega agora também aparece para transportadoras que a informam apenas como intervalo de data/hora, não como carimbo Unix.",
+        "nl": "Het bezorgvenster wordt nu ook getoond voor vervoerders die het alleen als datum-/tijdbereik doorgeven, niet alleen als Unix-tijdstempel.",
+        "fr": "Le créneau de livraison apparaît désormais aussi pour les transporteurs qui l'indiquent seulement comme plage date/heure, pas comme horodatage Unix.",
+        "it": "La finestra di consegna ora viene mostrata anche per i corrieri che la indicano solo come intervallo data/ora, non come timestamp Unix.",
+        "es": "La ventana de entrega ahora también se muestra para transportistas que la indican solo como rango de fecha/hora, no como marca de tiempo Unix.",
+        "pl": "Okno dostawy jest teraz pokazywane także dla przewoźników, którzy podają je tylko jako zakres daty/godziny, a nie jako znacznik czasu Unix.",
+        "uk": "Вікно доставки тепер показується й для перевізників, які повідомляють його лише як діапазон дати/часу, а не як позначку часу Unix.",
+        "zh-cn": "现在，对于仅以日期/时间范围（而非 Unix 时间戳）报告的承运商，也会显示派送时段。"
+      },
       "0.7.2": {
         "en": "Much quieter state updates: a package's last-updated timestamp only changes when its tracking data actually changed, and device entries are no longer rewritten on every poll.",
         "de": "Deutlich ruhigere State-Updates: der Zuletzt-aktualisiert-Zeitstempel eines Pakets ändert sich nur noch bei echten Datenänderungen, Geräte-Einträge werden nicht mehr jeden Poll neu geschrieben.",
@@ -80,19 +93,6 @@
         "pl": "Dziennik zmian przepisany w stylu zorientowanym na użytkownika we wszystkich wersjach.",
         "uk": "Журнал змін переписано у стилі, орієнтованому на користувача, для всіх версій.",
         "zh-cn": "所有版本的更新日志已重写为以用户为中心的风格。"
-      },
-      "0.5.1": {
-        "en": "Internal cleanup. No user-facing changes.",
-        "de": "Interne Bereinigung. Keine Änderungen für Benutzer.",
-        "ru": "Внутренняя очистка. Нет изменений для пользователей.",
-        "pt": "Limpeza interna. Sem alterações para o utilizador.",
-        "nl": "Interne opruiming. Geen wijzigingen voor gebruikers.",
-        "fr": "Nettoyage interne. Aucun changement pour l'utilisateur.",
-        "it": "Pulizia interna. Nessuna modifica per l'utente.",
-        "es": "Limpieza interna. Sin cambios para el usuario.",
-        "pl": "Wewnętrzne porządki. Brak zmian dla użytkownika.",
-        "uk": "Внутрішнє очищення. Без змін для користувачів.",
-        "zh-cn": "内部清理。无用户可见的更改。"
       }
     },
     "plugins": {
@@ -162,7 +162,7 @@
     },
     "dependencies": [
       {
-        "js-controller": ">=7.1.2"
+        "js-controller": ">=7.2.2"
       }
     ],
     "globalDependencies": [

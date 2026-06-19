@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { coerceClampedInt, errText } from "./lib/coerce";
 import { ParcelClient } from "./lib/parcel-client";
 import { resolveLanguage, StateManager } from "./lib/state-manager";
+import type { AddDeliveryRequest } from "./lib/types";
 
 const MIN_POLL_INTERVAL = 5;
 const MAX_POLL_INTERVAL = 60;
@@ -197,29 +198,42 @@ export class ParcelappAdapter extends utils.Adapter {
             typeof msg.tracking_number !== "string" ||
             msg.tracking_number.length === 0 ||
             typeof msg.carrier_code !== "string" ||
-            msg.carrier_code.length === 0
+            msg.carrier_code.length === 0 ||
+            typeof msg.description !== "string" ||
+            msg.description.length === 0
           ) {
-            this.log.debug("addDelivery: missing tracking_number/carrier_code in message");
+            this.log.debug("addDelivery: missing tracking_number/carrier_code/description in message");
             this.sendTo(
               obj.from,
               obj.command,
-              { success: false, error_message: "tracking_number and carrier_code are required" },
+              { success: false, error_message: "tracking_number, carrier_code and description are required" },
               obj.callback,
             );
             return;
           }
-          const request = {
+          // Pass the optional API fields through when the caller supplies them
+          // (language: ISO 639-1 two-letter code; send_push_confirmation: push
+          // notification once the delivery is added).
+          const request: AddDeliveryRequest = {
             tracking_number: msg.tracking_number,
             carrier_code: msg.carrier_code,
-            description: typeof msg.description === "string" ? msg.description : "",
+            description: msg.description,
           };
+          if (typeof msg.language === "string" && msg.language.length > 0) {
+            request.language = msg.language;
+          }
+          if (typeof msg.send_push_confirmation === "boolean") {
+            request.send_push_confirmation = msg.send_push_confirmation;
+          }
           const addResult = await this.client.addDelivery(request);
           // v0.4.3 (F5): trace addDelivery result with the tracking number.
           this.log.debug(`addDelivery: '${request.tracking_number}' result=${addResult.success ? "ok" : "fail"}`);
           this.sendTo(obj.from, obj.command, addResult, obj.callback);
           if (addResult.success) {
-            // C5: force bypasses the 60s throttle so the freshly added package
-            // shows up immediately; the rate-limit cooldown still applies.
+            // C5: force bypasses the 60s throttle so the next poll runs right
+            // away; the rate-limit cooldown still applies. Note: the GET returns
+            // a cached list and a newly added package has no tracking data for
+            // ~45-90 min, so this poll usually won't surface it yet.
             void this.poll({ force: true }).catch(err =>
               this.log.error(`Poll after addDelivery failed: ${errText(err)}`),
             );

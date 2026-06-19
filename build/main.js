@@ -178,12 +178,12 @@ class ParcelappAdapter extends utils.Adapter {
           }
           const raw = obj.message;
           const msg = raw !== null && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
-          if (typeof msg.tracking_number !== "string" || msg.tracking_number.length === 0 || typeof msg.carrier_code !== "string" || msg.carrier_code.length === 0) {
-            this.log.debug("addDelivery: missing tracking_number/carrier_code in message");
+          if (typeof msg.tracking_number !== "string" || msg.tracking_number.length === 0 || typeof msg.carrier_code !== "string" || msg.carrier_code.length === 0 || typeof msg.description !== "string" || msg.description.length === 0) {
+            this.log.debug("addDelivery: missing tracking_number/carrier_code/description in message");
             this.sendTo(
               obj.from,
               obj.command,
-              { success: false, error_message: "tracking_number and carrier_code are required" },
+              { success: false, error_message: "tracking_number, carrier_code and description are required" },
               obj.callback
             );
             return;
@@ -191,8 +191,14 @@ class ParcelappAdapter extends utils.Adapter {
           const request = {
             tracking_number: msg.tracking_number,
             carrier_code: msg.carrier_code,
-            description: typeof msg.description === "string" ? msg.description : ""
+            description: msg.description
           };
+          if (typeof msg.language === "string" && msg.language.length > 0) {
+            request.language = msg.language;
+          }
+          if (typeof msg.send_push_confirmation === "boolean") {
+            request.send_push_confirmation = msg.send_push_confirmation;
+          }
           const addResult = await this.client.addDelivery(request);
           this.log.debug(`addDelivery: '${request.tracking_number}' result=${addResult.success ? "ok" : "fail"}`);
           this.sendTo(obj.from, obj.command, addResult, obj.callback);

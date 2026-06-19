@@ -90,8 +90,8 @@ class StateManager {
     return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 50) || "unknown";
   }
   /**
-   * Parse the status code from a delivery. API documents `status_code` as
-   * a numeric string, but we accept numbers too and fall back to 0 for drift.
+   * Parse the status code from a delivery. The API sends an int; we also accept
+   * a numeric string and fall back to the "unknown" sentinel (-1) for drift.
    *
    * @param delivery The delivery to parse
    */
@@ -327,14 +327,55 @@ class StateManager {
     this.knownDeliveryIds = new Set(activeSet);
   }
   /**
+   * Parse a parcel.app expected-date string to LOCAL epoch-millis.
+   *
+   * The API delivers `date_expected`/`date_expected_end` "without specific
+   * timezone information"; parse with explicit local calendar components so the
+   * value lands on the intended local day/time (`new Date("YYYY-MM-DD")` would
+   * be UTC midnight). `hasTime` is false for a bare date or a midnight time
+   * (a day, not an hour-window). Ambiguous carrier formats (dotted, weekday
+   * names) are deliberately NOT guessed — they return null rather than risk a
+   * wrong date.
+   *
+   * @param value Raw date/time string from the API
+   */
+  static parseExpectedToMs(value) {
+    if (typeof value !== "string") {
+      return null;
+    }
+    const m = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/.exec(value.trim());
+    if (!m) {
+      return null;
+    }
+    const hasClock = m[4] !== void 0;
+    const date = new Date(
+      Number(m[1]),
+      Number(m[2]) - 1,
+      Number(m[3]),
+      hasClock ? Number(m[4]) : 0,
+      hasClock ? Number(m[5]) : 0,
+      m[6] !== void 0 ? Number(m[6]) : 0
+    );
+    if (Number.isNaN(date.getTime())) {
+      return null;
+    }
+    const hasTime = hasClock && !(Number(m[4]) === 0 && Number(m[5]) === 0 && (m[6] === void 0 || Number(m[6]) === 0));
+    return { ms: date.getTime(), hasTime };
+  }
+  /**
    * Resolve a delivery's expected window to epoch-millis bounds. Returns null
-   * for non-trackable status or when there is no usable start timestamp.
-   * `end` is null when only a single expected time is known.
+   * for non-trackable status or when there is no usable start time.
+   *
+   * Prefers the Unix timestamp fields; for carriers that report the window only
+   * as a date/time string (`date_expected`/`date_expected_end`) it falls back to
+   * those — but only when the string carries a real time-of-day (a bare date or
+   * midnight is a day, not an hour-window). Carrier-agnostic.
    *
    * @param delivery The delivery data
    * @param statusCode Pre-parsed status code
    */
   windowBoundsMs(delivery, statusCode) {
+    var _a, _b;
     if (!TRACKABLE_STATUSES.has(statusCode)) {
       return null;
     }
@@ -346,11 +387,16 @@ class StateManager {
       const ms = ts * 1e3;
       return Number.isNaN(new Date(ms).getTime()) ? null : ms;
     };
-    const start = toMs(delivery.timestamp_expected);
+    const dateMs = (value) => {
+      const parsed = StateManager.parseExpectedToMs(value);
+      return parsed && parsed.hasTime ? parsed.ms : null;
+    };
+    const start = (_a = toMs(delivery.timestamp_expected)) != null ? _a : dateMs(delivery.date_expected);
     if (start === null) {
       return null;
     }
-    return { start, end: toMs(delivery.timestamp_expected_end) };
+    const end = (_b = toMs(delivery.timestamp_expected_end)) != null ? _b : dateMs(delivery.date_expected_end);
+    return { start, end };
   }
   /**
    * Format epoch-millis as local HH:MM.
@@ -362,7 +408,7 @@ class StateManager {
     return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
   }
   /**
-   * Calculate a delivery time-window string — only from Unix timestamps.
+   * Calculate a delivery time-window string from the resolved expected bounds.
    *
    * @param delivery The delivery data
    * @param statusCode Pre-parsed status code
@@ -390,9 +436,9 @@ class StateManager {
     const ts = (0, import_coerce.coerceFiniteNumber)(delivery.timestamp_expected);
     if (ts !== null && ts > 0) {
       expectedDate = new Date(ts * 1e3);
-    } else if (typeof delivery.date_expected === "string" && delivery.date_expected.length > 0) {
-      const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(delivery.date_expected);
-      expectedDate = dateOnly ? new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3])) : new Date(delivery.date_expected);
+    } else {
+      const parsed = StateManager.parseExpectedToMs(delivery.date_expected);
+      expectedDate = parsed ? new Date(parsed.ms) : null;
     }
     if (!expectedDate || isNaN(expectedDate.getTime())) {
       return null;

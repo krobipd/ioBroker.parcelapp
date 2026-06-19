@@ -42,7 +42,7 @@ describe("ParcelClient", () => {
         {
           carrier_code: "dhl",
           description: "Test Package",
-          status_code: "2",
+          status_code: 2,
           tracking_number: "123456",
         },
       ];
@@ -76,13 +76,12 @@ describe("ParcelClient", () => {
       }
     });
 
-    it("should throw on API error with INVALID_API_KEY code", async () => {
+    it("should classify a success:false body as API_ERROR (invalid key is detected via HTTP 401, not a body field)", async () => {
       const { server, port } = await startMockServer((_req, res) => {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
             success: false,
-            error_code: "INVALID_API_KEY",
             error_message: "Invalid API key",
           }),
         );
@@ -94,7 +93,7 @@ describe("ParcelClient", () => {
         throw new Error("Should have thrown");
       } catch (err) {
         const error = err as Error & { code: string };
-        expect(error.code).toBe("INVALID_API_KEY");
+        expect(error.code).toBe("API_ERROR");
         expect(error.message).toContain("Invalid API key");
       } finally {
         await stopServer(server);
@@ -107,7 +106,6 @@ describe("ParcelClient", () => {
         res.end(
           JSON.stringify({
             success: false,
-            error_code: "SOME_ERROR",
             error_message: "Something went wrong",
           }),
         );
@@ -649,13 +647,12 @@ describe("ParcelClient", () => {
       }
     });
 
-    it("should handle non-string error_code/error_message (API drift)", async () => {
+    it("should handle a non-string error_message (API drift)", async () => {
       const { server, port } = await startMockServer((_req, res) => {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(
           JSON.stringify({
             success: false,
-            error_code: 42,
             error_message: { nested: "object" },
           }),
         );
@@ -764,14 +761,8 @@ describe("ParcelClient", () => {
 
     it("should return failure for invalid API key", async () => {
       const { server, port } = await startMockServer((_req, res) => {
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(
-          JSON.stringify({
-            success: false,
-            error_code: "INVALID_API_KEY",
-            error_message: "Invalid API key",
-          }),
-        );
+        res.writeHead(401, { "Content-Type": "text/plain" });
+        res.end("Unauthorised");
       });
 
       try {

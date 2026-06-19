@@ -104,12 +104,12 @@ export class ParcelClient {
     }
 
     if (!isTrueish(response.success)) {
-      const rawCode = typeof response.error_code === "string" ? response.error_code : "";
       const rawMsg = typeof response.error_message === "string" ? response.error_message : "";
-      const code = rawCode || rawMsg || "UNKNOWN";
-      // v0.4.3 (A11b): trace API-side error before throwing.
-      this.log?.debug(`API drift: success=false, code='${code}', msg='${rawMsg}'`);
-      throw apiError(`API error: ${rawMsg || code}`, rawCode === "INVALID_API_KEY" ? "INVALID_API_KEY" : "API_ERROR");
+      // v0.4.3 (A11b): trace API-side error before throwing. An invalid key is
+      // reported via HTTP 401 (handled in request()), not via a body field —
+      // so a `success:false` body is always a generic API_ERROR.
+      this.log?.debug(`API drift: success=false, msg='${rawMsg}'`);
+      throw apiError(`API error: ${rawMsg || "UNKNOWN"}`, "API_ERROR");
     }
 
     // API-drift guard: deliveries must be an array

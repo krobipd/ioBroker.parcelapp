@@ -4,8 +4,6 @@ export interface ParcelApiResponse {
   success: boolean;
   /** Error message if request failed */
   error_message?: string;
-  /** Error code if request failed */
-  error_code?: string;
   /** List of deliveries */
   deliveries?: ParcelDelivery[];
 }
@@ -16,19 +14,21 @@ export interface ParcelDelivery {
   carrier_code: string;
   /** User-defined description */
   description: string;
-  /** Status code (0-8 as string) */
-  status_code: string;
+  /** Status code (int 0-8; API sends a number — parseStatus also tolerates a numeric string for drift safety) */
+  status_code: number;
   /** Tracking number */
   tracking_number: string;
   /** Extra info (postal code, email) */
   extra_information?: string;
-  /** Expected delivery date */
+  /** Expected delivery date/time as a string, without timezone (carrier-dependent format) */
   date_expected?: string;
-  /** Expected delivery Unix timestamp */
+  /** End of the delivery window as a date/time string (present when the carrier reports a range) */
+  date_expected_end?: string;
+  /** Expected delivery Unix timestamp (only when the carrier provides full date/time/timezone) */
   timestamp_expected?: number;
   /** Expected delivery end Unix timestamp */
   timestamp_expected_end?: number;
-  /** Tracking events (newest first) */
+  /** Tracking events, newest first (confirmed across multiple parcel.app clients) */
   events?: ParcelEvent[];
 }
 
