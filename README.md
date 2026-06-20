@@ -134,7 +134,7 @@ sendTo("parcelapp.0", "addDelivery", {
 - The delivery window is now also shown for carriers that report it only as a date/time range, not just when the API provides a Unix timestamp.
 - When adding a delivery via script, you can now set an optional tracking language and request a push confirmation.
 
-### 0.7.2 (2026-06-12)
+### 0.7.2 (2026-06-12) — stable
 
 - Much quieter state updates: a package's last-updated timestamp now only changes when its tracking data actually changed, and device entries are no longer rewritten on every poll
 - Adding a delivery with a malformed request now returns a clear error message instead of failing cryptically
