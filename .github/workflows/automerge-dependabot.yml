@@ -18,8 +18,13 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Auto-merge patch and minor updates
-        if: steps.metadata.outputs.update-type != 'version-update:semver-major'
+      # github-actions bumps (incl. major) are CI-gated by the PR's own test run
+      # and owned by Dependabot — auto-merge them all. npm majors stay gated
+      # (manual / pre-release.py review) because breaking changes are real there.
+      - name: Auto-merge non-major updates, plus all github-actions updates
+        if: >
+          steps.metadata.outputs.update-type != 'version-update:semver-major' ||
+          steps.metadata.outputs.package-ecosystem == 'github_actions'
         run: |
           gh pr review --approve "$PR_URL"
           gh pr merge --auto --squash "$PR_URL"
