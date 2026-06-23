@@ -314,6 +314,21 @@ describe("ParcelClient", () => {
       }
     });
 
+    it("v0.9.0 (C6): drops non-string values from the carrier map", async () => {
+      const { server, port } = await startMockServer((_req, res) => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ dhl: "DHL", broken: 123, nested: { x: 1 } }));
+      });
+
+      try {
+        const client = createTestClient("key", port);
+        const result = await client.getCarrierNames();
+        expect(result).toEqual({ dhl: "DHL" });
+      } finally {
+        await stopServer(server);
+      }
+    });
+
     it("v0.7.2: concurrent callers share a single in-flight fetch (mutex)", async () => {
       // The per-delivery updates run in Promise.all — without the mutex the
       // first poll with N packages fired N identical concurrent fetches.
@@ -532,7 +547,7 @@ describe("ParcelClient", () => {
   });
 
   describe("API-drift guards", () => {
-    it("should return [] when deliveries is not an array", async () => {
+    it("should throw API_ERROR when deliveries is not an array", async () => {
       const { server, port } = await startMockServer((_req, res) => {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ success: true, deliveries: "not-an-array" }));
@@ -540,14 +555,18 @@ describe("ParcelClient", () => {
 
       try {
         const client = createTestClient("key", port);
-        const result = await client.getDeliveries("active");
-        expect(result).toEqual([]);
+        await client.getDeliveries("active");
+        throw new Error("Should have thrown");
+      } catch (err) {
+        const error = err as Error & { code: string };
+        expect(error.code).toBe("API_ERROR");
+        expect(error.message).toContain("not an array");
       } finally {
         await stopServer(server);
       }
     });
 
-    it("should return [] when deliveries is null", async () => {
+    it("should return [] when deliveries is null (treated as empty, like absent)", async () => {
       const { server, port } = await startMockServer((_req, res) => {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ success: true, deliveries: null }));

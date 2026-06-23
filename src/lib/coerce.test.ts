@@ -1,4 +1,4 @@
-import { coerceClampedInt, coerceFiniteNumber, errText, isTrueish } from "./coerce";
+import { coerceClampedInt, coerceFiniteNumber, errText, isTrueish, oneLine } from "./coerce";
 
 describe("coerceFiniteNumber", () => {
   it("returns finite numbers as-is", () => {
@@ -144,5 +144,18 @@ describe("coerceClampedInt (X5 v0.4.2)", () => {
     expect(coerceClampedInt("", 5, 60, 10)).toBe(10);
     expect(coerceClampedInt("abc", 5, 60, 10)).toBe(10);
     expect(coerceClampedInt({}, 5, 60, 10)).toBe(10);
+  });
+});
+
+describe("oneLine", () => {
+  it("collapses CR / LF / TAB runs to single spaces (log-injection guard)", () => {
+    expect(oneLine("a\r\nb")).toBe("a b");
+    expect(oneLine("evil\nINFO 2026 forged log line")).toBe("evil INFO 2026 forged log line");
+    expect(oneLine("a\t\tb")).toBe("a b");
+  });
+
+  it("leaves single-line input unchanged", () => {
+    expect(oneLine("plain text 123")).toBe("plain text 123");
+    expect(oneLine("")).toBe("");
   });
 });

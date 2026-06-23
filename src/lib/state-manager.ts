@@ -1,5 +1,5 @@
 import { I18n, type AdapterInstance } from "@iobroker/adapter-core";
-import { coerceFiniteNumber } from "./coerce";
+import { coerceFiniteNumber, oneLine } from "./coerce";
 import { tName } from "./i18n";
 import type { ParcelDelivery, ParcelEvent } from "./types";
 import { STATUS_LABELS, SUPPORTED_LANGUAGES, FALLBACK_LANGUAGE, UNKNOWN_STATUS_CODE } from "./types";
@@ -101,7 +101,7 @@ export class StateManager {
    * @param delivery The delivery to parse
    */
   parseStatus(delivery: ParcelDelivery): number {
-    const raw = delivery.status_code as unknown;
+    const raw = delivery.status_code;
     if (typeof raw === "number" && Number.isFinite(raw)) {
       return Math.trunc(raw);
     }
@@ -147,7 +147,7 @@ export class StateManager {
       // v0.4.3 (C3): trace the collision-suffix path. Rare event but the
       // resulting state-id divergence is hard to diagnose without a log.
       this.adapter.log.debug(
-        `packageId collision: bare='${id}' owner='${owner}' new='${rawKey}' → suffixed='${suffixed}'`,
+        `packageId collision: bare='${id}' owner='${oneLine(owner)}' new='${oneLine(rawKey)}' → suffixed='${suffixed}'`,
       );
       this.idOwner.set(suffixed, rawKey);
       return suffixed;
@@ -183,7 +183,7 @@ export class StateManager {
 
   /**
    * v0.4.2 (S3): which raw-tracking-key currently "owns" each sanitized id
-   * within the running poll. Cleared via `resetIdOwners()` between polls so
+   * within the running poll. Cleared via `resetPollState()` between polls so
    * the same delivery keeps its bare id as long as it's unique.
    */
   private readonly idOwner = new Map<string, string>();
@@ -323,11 +323,14 @@ export class StateManager {
   }
 
   /**
-   * Remove deliveries that are no longer active.
+   * Remove deliveries that are no longer present in the API response.
    *
-   * @param activeIds List of currently active package IDs
+   * @param keepIds Package IDs the API still returns this poll (kept). Every
+   *   currently-known delivery NOT in this set is removed. The caller passes
+   *   ALL visible package ids, not only the ones whose state-write succeeded —
+   *   a transient write failure must not delete a still-present package.
    */
-  async cleanupDeliveries(activeIds: string[]): Promise<void> {
+  async cleanupDeliveries(keepIds: string[]): Promise<void> {
     // v0.7.2: the object view is queried only ONCE after adapter start to
     // reconcile leftovers from previous runs; afterwards the in-memory set
     // (maintained by updateDelivery + this prune) replaces the per-poll DB
@@ -357,10 +360,11 @@ export class StateManager {
       }
     }
 
-    const activeSet = new Set(activeIds);
+    const keepSet = new Set(keepIds);
     // v0.4.2 (S1): collect first, then delete in parallel. Earlier each
     // stale package took a sequential broker round-trip.
-    const toDelete = [...this.knownDeliveryIds].filter(pkgId => !activeSet.has(pkgId));
+    const toDelete = [...this.knownDeliveryIds].filter(pkgId => !keepSet.has(pkgId));
+    const toDeleteSet = new Set(toDelete);
 
     await Promise.all(
       toDelete.map(async pkgId => {
@@ -369,16 +373,23 @@ export class StateManager {
         this.adapter.log.debug(`Removed stale delivery: ${relativeId}`);
         this.deviceWritten.delete(pkgId);
         this.valuesSig.delete(pkgId);
-        // v0.4.2 (S2): snapshot to array first — defensive against any future
-        // engine that diverges from spec on Set.delete during for-of iteration.
-        for (const id of [...this.createdIds]) {
-          if (id === relativeId || id.startsWith(`${relativeId}.`)) {
-            this.createdIds.delete(id);
-          }
-        }
       }),
     );
-    this.knownDeliveryIds = new Set(activeSet);
+
+    // v0.9.0 (S2): prune createdIds for every removed package in ONE pass over
+    // the set. This used to be nested inside the delete-map above — O(deleted ×
+    // created) with a fresh `[...createdIds]` spread per deleted package; now it
+    // is O(created). A createdId is `deliveries.<pkgId>` or
+    // `deliveries.<pkgId>.<state>` — extract the pkgId and drop it if removed.
+    if (toDeleteSet.size > 0) {
+      for (const id of [...this.createdIds]) {
+        const pkgId = id.startsWith("deliveries.") ? id.slice("deliveries.".length).split(".")[0] : "";
+        if (toDeleteSet.has(pkgId)) {
+          this.createdIds.delete(id);
+        }
+      }
+    }
+    this.knownDeliveryIds = new Set(keepSet);
   }
 
   /**
@@ -403,19 +414,25 @@ export class StateManager {
       return null;
     }
     const hasClock = m[4] !== undefined;
-    const date = new Date(
-      Number(m[1]),
-      Number(m[2]) - 1,
-      Number(m[3]),
-      hasClock ? Number(m[4]) : 0,
-      hasClock ? Number(m[5]) : 0,
-      m[6] !== undefined ? Number(m[6]) : 0,
-    );
-    if (Number.isNaN(date.getTime())) {
+    const year = Number(m[1]);
+    const month = Number(m[2]); // 1-12
+    const day = Number(m[3]);
+    const hour = hasClock ? Number(m[4]) : 0;
+    const min = hasClock ? Number(m[5]) : 0;
+    const sec = m[6] !== undefined ? Number(m[6]) : 0;
+    // Range-validate the components. The regex only checks digit COUNT, not
+    // value range, and `new Date(2026, 12, 40, 25, …)` silently ROLLS OVER to a
+    // wrong date (getTime() is NOT NaN). Reject out-of-range rather than guess.
+    if (month < 1 || month > 12 || day < 1 || day > 31 || hour > 23 || min > 59 || sec > 59) {
       return null;
     }
-    const hasTime =
-      hasClock && !(Number(m[4]) === 0 && Number(m[5]) === 0 && (m[6] === undefined || Number(m[6]) === 0));
+    const date = new Date(year, month - 1, day, hour, min, sec);
+    // Catch day-of-month overflow the range check misses (Feb 30, Apr 31, …):
+    // a real date round-trips the month and day it was built from.
+    if (Number.isNaN(date.getTime()) || date.getMonth() !== month - 1 || date.getDate() !== day) {
+      return null;
+    }
+    const hasTime = hasClock && !(hour === 0 && min === 0 && sec === 0);
     return { ms: date.getTime(), hasTime };
   }
 
@@ -466,6 +483,49 @@ export class StateManager {
   }
 
   /**
+   * Local "MM-DD HH:MM" — used when a window spans more than one calendar day.
+   *
+   * @param ms Epoch milliseconds
+   */
+  private static formatDateHHMM(ms: number): string {
+    const d = new Date(ms);
+    const mm = (d.getMonth() + 1).toString().padStart(2, "0");
+    const dd = d.getDate().toString().padStart(2, "0");
+    return `${mm}-${dd} ${StateManager.formatHHMM(ms)}`;
+  }
+
+  /**
+   * Whether two epoch-millis fall on the same LOCAL calendar day.
+   *
+   * @param aMs First epoch milliseconds
+   * @param bMs Second epoch milliseconds
+   */
+  private static sameLocalDay(aMs: number, bMs: number): boolean {
+    const a = new Date(aMs);
+    const b = new Date(bMs);
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  }
+
+  /**
+   * Format a start→end window as a local string. A real end (> start) on the
+   * SAME day renders "HH:MM - HH:MM"; an end on a LATER day carries the date on
+   * both sides ("12-06 14:30 - 12-08 18:30") so a multi-day window is not shown
+   * as if it were same-day. No end, or an end <= start (reversed/equal), renders
+   * just the start.
+   *
+   * @param startMs Window start (epoch ms)
+   * @param endMs Window end (epoch ms) or null
+   */
+  private static formatWindow(startMs: number, endMs: number | null): string {
+    if (endMs === null || endMs <= startMs) {
+      return StateManager.formatHHMM(startMs);
+    }
+    return StateManager.sameLocalDay(startMs, endMs)
+      ? `${StateManager.formatHHMM(startMs)} - ${StateManager.formatHHMM(endMs)}`
+      : `${StateManager.formatDateHHMM(startMs)} - ${StateManager.formatDateHHMM(endMs)}`;
+  }
+
+  /**
    * Calculate a delivery time-window string from the resolved expected bounds.
    *
    * @param delivery The delivery data
@@ -476,8 +536,7 @@ export class StateManager {
     if (!bounds) {
       return "";
     }
-    const start = StateManager.formatHHMM(bounds.start);
-    return bounds.end !== null ? `${start} - ${StateManager.formatHHMM(bounds.end)}` : start;
+    return StateManager.formatWindow(bounds.start, bounds.end);
   }
 
   /**
@@ -601,8 +660,7 @@ export class StateManager {
 
     const minStart = Math.min(...bounds.map(b => b.start));
     const maxEnd = Math.max(...bounds.map(b => b.end ?? b.start));
-    const startStr = StateManager.formatHHMM(minStart);
-    return maxEnd > minStart ? `${startStr} - ${StateManager.formatHHMM(maxEnd)}` : startStr;
+    return StateManager.formatWindow(minStart, maxEnd);
   }
 
   /**

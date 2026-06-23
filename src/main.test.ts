@@ -217,6 +217,20 @@ describe("ParcelappAdapter onReady", () => {
       "summary.json",
     );
   });
+
+  it("a failing cleanupObsoleteStates does not abort startup — polling still arms (C8)", async () => {
+    const { adapter, client } = setup();
+    const i = internalOf(adapter);
+    (adapter as unknown as { getObjectAsync: ReturnType<typeof vi.fn> }).getObjectAsync.mockRejectedValueOnce(
+      new Error("db down"),
+    );
+    await i.onReady();
+    // C8: the cleanup failure is contained, so the poll interval is still armed.
+    // The old code let it bubble to the outer catch and skipped arming it.
+    expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("cleanupObsoleteStates failed"));
+    expect(client.getDeliveries).toHaveBeenCalled();
+    expect(i.setInterval).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("ParcelappAdapter onUnload", () => {
@@ -350,7 +364,7 @@ describe("ParcelappAdapter poll — per-delivery failure dedup", () => {
 
     await i.poll();
     expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("Failed to update 'TRK1'"));
-    expect(i.failedDeliveries.has("TRK1")).toBe(true);
+    expect(i.failedDeliveries.has("trk1")).toBe(true);
 
     i.lastPollTime = 0;
     i.log.warn.mockClear();
@@ -360,10 +374,10 @@ describe("ParcelappAdapter poll — per-delivery failure dedup", () => {
     stateMgr.updateDelivery.mockResolvedValue(undefined);
     i.lastPollTime = 0;
     await i.poll();
-    expect(i.failedDeliveries.has("TRK1")).toBe(false);
+    expect(i.failedDeliveries.has("trk1")).toBe(false);
   });
 
-  it("a failed delivery is excluded from cleanup so its states survive", async () => {
+  it("keeps a write-failed but still-present delivery in the cleanup keep-set", async () => {
     const { adapter, client, stateMgr } = await setupReady();
     const i = internalOf(adapter);
     const ok = makeDelivery({ tracking_number: "OK" });
@@ -376,7 +390,23 @@ describe("ParcelappAdapter poll — per-delivery failure dedup", () => {
     });
 
     await i.poll();
-    expect(stateMgr.cleanupDeliveries).toHaveBeenCalledWith(["ok"]);
+    // The keep-set is EVERY package the API still returns this poll — including
+    // 'bad', whose updateDelivery threw. The old code passed only the writes
+    // that succeeded (['ok']), so 'bad' got deleted on the next prune (silent
+    // data loss). cleanupDeliveries itself (real-StateManager tests) then keeps
+    // exactly these and removes the rest.
+    expect(stateMgr.cleanupDeliveries).toHaveBeenCalledWith(["ok", "bad"]);
+  });
+
+  it("polls cleanly when the API drops optional fields (no tracking_number/carrier_code)", async () => {
+    const { adapter, client, stateMgr } = await setupReady();
+    const i = internalOf(adapter);
+    const partial = makeDelivery({ tracking_number: undefined, carrier_code: undefined });
+    client.getDeliveries.mockResolvedValue([partial]);
+
+    // The optional-field guards (`?? ""`) must keep the poll from throwing.
+    await expect(i.poll()).resolves.toBeUndefined();
+    expect(stateMgr.updateDelivery).toHaveBeenCalled();
   });
 
   it("prunes failedDeliveries entries for trackings that vanished from the API", async () => {
@@ -563,6 +593,53 @@ describe("ParcelappAdapter onMessage", () => {
       "system.adapter.admin.0",
       "addDelivery",
       { success: false, error_message: "tracking_number, carrier_code and description are required" },
+      expect.anything(),
+    );
+  });
+
+  it("addDelivery: an over-long field yields the length validation error", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    await i.onMessage({
+      command: "addDelivery",
+      from: "system.adapter.admin.0",
+      callback: { id: 1 },
+      message: { tracking_number: "NEW4", carrier_code: "dhl", description: "x".repeat(513) },
+    });
+    expect(client.addDelivery).not.toHaveBeenCalled();
+    expect(i.sendTo).toHaveBeenCalledWith(
+      "system.adapter.admin.0",
+      "addDelivery",
+      { success: false, error_message: "each field must be at most 512 characters" },
+      expect.anything(),
+    );
+  });
+
+  it("addDelivery: throttles a burst beyond the per-window limit (S4)", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    const add = (n: number): Promise<void> =>
+      i.onMessage({
+        command: "addDelivery",
+        from: "system.adapter.admin.0",
+        callback: { id: n },
+        message: { tracking_number: `T${n}`, carrier_code: "dhl", description: "x" },
+      });
+
+    // The first 20 (MAX_ADDS_PER_WINDOW) go through within the same window...
+    for (let n = 0; n < 20; n++) {
+      await add(n);
+    }
+    expect(client.addDelivery).toHaveBeenCalledTimes(20);
+
+    // ...the 21st is throttled — not sent to the API, clear error back.
+    i.sendTo.mockClear();
+    await add(99);
+    expect(client.addDelivery).toHaveBeenCalledTimes(20);
+    expect(i.sendTo).toHaveBeenCalledWith(
+      "system.adapter.admin.0",
+      "addDelivery",
+      expect.objectContaining({ success: false, error_message: expect.stringContaining("too many") }),
       expect.anything(),
     );
   });

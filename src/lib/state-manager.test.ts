@@ -516,6 +516,47 @@ describe("StateManager", () => {
       expect(state?.val).toBe("14:00 - 16:00");
     });
 
+    it("renders just the start when the end is before the start (reversed window)", async () => {
+      const start = new Date();
+      start.setHours(18, 0, 0, 0);
+      const end = new Date();
+      end.setHours(14, 0, 0, 0); // earlier than start → reversed/invalid
+
+      const delivery = makeDelivery({
+        status_code: 2,
+        timestamp_expected: Math.floor(start.getTime() / 1000),
+        timestamp_expected_end: Math.floor(end.getTime() / 1000),
+      });
+      await manager.updateDelivery(delivery, "DHL");
+
+      const pkgId = manager.packageId(delivery);
+      const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
+      expect(state?.val).toBe("18:00");
+    });
+
+    it("carries the date on both sides when the window spans more than one day", async () => {
+      const start = new Date();
+      start.setHours(22, 0, 0, 0);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 2); // +2 calendar days (DST-safe)
+      end.setHours(8, 30, 0, 0);
+
+      const delivery = makeDelivery({
+        status_code: 2,
+        timestamp_expected: Math.floor(start.getTime() / 1000),
+        timestamp_expected_end: Math.floor(end.getTime() / 1000),
+      });
+      await manager.updateDelivery(delivery, "DHL");
+
+      const pkgId = manager.packageId(delivery);
+      const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
+      const mm = (start.getMonth() + 1).toString().padStart(2, "0");
+      const sd = start.getDate().toString().padStart(2, "0");
+      const emm = (end.getMonth() + 1).toString().padStart(2, "0");
+      const ed = end.getDate().toString().padStart(2, "0");
+      expect(state?.val).toBe(`${mm}-${sd} 22:00 - ${emm}-${ed} 08:30`);
+    });
+
     it("should return single time when no end timestamp", async () => {
       const start = new Date();
       start.setHours(10, 30, 0, 0);
@@ -598,6 +639,32 @@ describe("StateManager", () => {
         status_code: 4,
         date_expected: "2025-12-06 00:00:00",
         date_expected_end: "2025-12-08 00:00:00",
+      });
+      await manager.updateDelivery(delivery, "DHL");
+
+      const pkgId = manager.packageId(delivery);
+      const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
+      expect(state?.val).toBe("");
+    });
+
+    it("should NOT build a window from an out-of-range date string", async () => {
+      const delivery = makeDelivery({
+        status_code: 4,
+        date_expected: "2026-13-40 25:99:99", // every component out of range
+        date_expected_end: "2026-13-41 26:00:00",
+      });
+      await manager.updateDelivery(delivery, "DHL");
+
+      const pkgId = manager.packageId(delivery);
+      const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
+      expect(state?.val).toBe("");
+    });
+
+    it("should NOT build a window from an impossible calendar day (Feb 30)", async () => {
+      const delivery = makeDelivery({
+        status_code: 4,
+        date_expected: "2026-02-30 14:30:00", // Feb 2026 has 28 days → would roll to Mar 2
+        date_expected_end: "2026-02-30 18:30:00",
       });
       await manager.updateDelivery(delivery, "DHL");
 

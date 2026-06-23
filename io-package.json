@@ -3,6 +3,19 @@
     "name": "parcelapp",
     "version": "0.8.0",
     "news": {
+      "NEXT": {
+        "en": "Tracked packages no longer disappear after a temporary error or an unexpected API response, and multi-day delivery windows now show the date on each side.",
+        "de": "Verfolgte Pakete verschwinden nicht mehr nach einem vorübergehenden Fehler oder einer unerwarteten API-Antwort, und mehrtägige Zustellfenster zeigen jetzt auf beiden Seiten das Datum.",
+        "ru": "Отслеживаемые посылки больше не исчезают после временной ошибки или неожиданного ответа API, а многодневные окна доставки теперь показывают дату с обеих сторон.",
+        "pt": "Os pacotes monitorizados já não desaparecem após um erro temporário ou uma resposta inesperada da API, e as janelas de entrega de vários dias mostram agora a data em cada lado.",
+        "nl": "Gevolgde pakketten verdwijnen niet meer na een tijdelijke fout of een onverwacht API-antwoord, en bezorgvensters over meerdere dagen tonen nu aan beide kanten de datum.",
+        "fr": "Les colis suivis ne disparaissent plus après une erreur temporaire ou une réponse inattendue de l'API, et les créneaux de livraison sur plusieurs jours affichent désormais la date de chaque côté.",
+        "it": "I pacchi tracciati non scompaiono più dopo un errore temporaneo o una risposta API imprevista, e le finestre di consegna su più giorni ora mostrano la data su entrambi i lati.",
+        "es": "Los paquetes rastreados ya no desaparecen tras un error temporal o una respuesta inesperada de la API, y las ventanas de entrega de varios días ahora muestran la fecha en cada lado.",
+        "pl": "Śledzone paczki nie znikają już po tymczasowym błędzie lub nieoczekiwanej odpowiedzi API, a wielodniowe okna dostawy pokazują teraz datę po obu stronach.",
+        "uk": "Відстежувані посилки більше не зникають після тимчасової помилки або неочікуваної відповіді API, а багатоденні вікна доставки тепер показують дату з обох боків.",
+        "zh-cn": "跟踪的包裹在临时错误或意外的 API 响应后不再消失，跨多天的派送时段现在会在两侧显示日期。"
+      },
       "0.8.0": {
         "en": "The delivery window is now also shown for carriers that report it only as a date/time range, not just as a Unix timestamp.",
         "de": "Das Zustellfenster wird jetzt auch für Anbieter angezeigt, die es nur als Datums-/Zeitbereich melden, nicht nur als Unix-Zeitstempel.",
@@ -80,19 +93,6 @@
         "pl": "Zmniejszono niepotrzebne zdarzenia zmiany stanu, pomijając zapisy gdy wartość się nie zmieniła.",
         "uk": "Зменшено непотрібні події зміни стану шляхом пропуску запису при незміненому значенні.",
         "zh-cn": "通过在值未更改时跳过写入来减少不必要的状态变更事件。"
-      },
-      "0.5.2": {
-        "en": "Changelog rewritten in user-centric style across all versions.",
-        "de": "Changelog in benutzerorientiertem Stil über alle Versionen neu geschrieben.",
-        "ru": "Журнал изменений переписан в пользовательском стиле для всех версий.",
-        "pt": "Registo de alterações reescrito em estilo centrado no utilizador em todas as versões.",
-        "nl": "Changelog herschreven in gebruikersgerichte stijl voor alle versies.",
-        "fr": "Journal des modifications réécrit dans un style centré sur l'utilisateur pour toutes les versions.",
-        "it": "Registro delle modifiche riscritto in stile orientato all'utente per tutte le versioni.",
-        "es": "Registro de cambios reescrito en estilo centrado en el usuario en todas las versiones.",
-        "pl": "Dziennik zmian przepisany w stylu zorientowanym na użytkownika we wszystkich wersjach.",
-        "uk": "Журнал змін переписано у стилі, орієнтованому на користувача, для всіх версій.",
-        "zh-cn": "所有版本的更新日志已重写为以用户为中心的风格。"
       }
     },
     "plugins": {

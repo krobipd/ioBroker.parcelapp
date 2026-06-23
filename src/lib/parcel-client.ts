@@ -1,6 +1,6 @@
 import * as http from "node:http";
 import * as https from "node:https";
-import { isTrueish } from "./coerce";
+import { isTrueish, oneLine } from "./coerce";
 import type { ParcelApiResponse, ParcelDelivery, AddDeliveryRequest, AddDeliveryResponse, CarrierMap } from "./types";
 
 const API_BASE = "https://api.parcel.app/external";
@@ -13,7 +13,7 @@ const REQUEST_TIMEOUT = 15_000;
  * constructor signature backward-compatible.
  */
 export interface ParcelClientLogger {
-  /** Adapter debug log. Called at most once per request/response decision. */
+  /** Adapter debug log. Called per request/response outcome (drift, status, parse, oversize) — low-frequency tracing. */
   debug(message: string): void;
 }
 /**
@@ -49,7 +49,7 @@ export class ParcelClient {
    * v0.7.2: in-flight fetch for the carrier list. The per-delivery updates run
    * in parallel (Promise.all) and each resolves carrier names — without this
    * mutex the first poll with N packages fired N identical concurrent fetches
-   * of the static 447-entry file (and a persistently failing endpoint was
+   * of the static carrier-list file (and a persistently failing endpoint was
    * retried N times per poll). Same pattern as beszel's auth mutex (B1).
    */
   private carrierFetchInFlight: Promise<CarrierMap> | null = null;
@@ -112,8 +112,20 @@ export class ParcelClient {
       throw apiError(`API error: ${rawMsg || "UNKNOWN"}`, "API_ERROR");
     }
 
-    // API-drift guard: deliveries must be an array
-    return Array.isArray(response.deliveries) ? response.deliveries : [];
+    // API-drift guard. An absent OR null `deliveries` is the API's "no
+    // deliveries" shape → [] (zero active packages is the common state; a false
+    // throw there would flip the adapter to disconnected on every poll). Only a
+    // PRESENT, NON-NULL, wrong-typed value (string/number/object/boolean) is
+    // real drift — throw so the poll keeps the existing states stale instead of
+    // reading garbage as "zero deliveries" and deleting every package's states.
+    if (response.deliveries == null) {
+      return [];
+    }
+    if (!Array.isArray(response.deliveries)) {
+      this.log?.debug(`API drift: deliveries not an array (got ${typeof response.deliveries})`);
+      throw apiError("API error: deliveries not an array", "API_ERROR");
+    }
+    return response.deliveries;
   }
 
   /**
@@ -146,7 +158,16 @@ export class ParcelClient {
       const raw = await this.request<unknown>("GET", "/supported_carriers.json", false);
       // API-drift guard: must be a plain object (not null, array, or primitive)
       if (raw && typeof raw === "object" && !Array.isArray(raw)) {
-        this.carrierCache = raw as CarrierMap;
+        // v0.9.0 (C6): keep only string-valued entries instead of asserting the
+        // whole object is Record<string,string>. A drifted non-string value is
+        // dropped here, so the cache is honestly typed (no `as CarrierMap`).
+        const clean: CarrierMap = {};
+        for (const [code, name] of Object.entries(raw)) {
+          if (typeof name === "string") {
+            clean[code] = name;
+          }
+        }
+        this.carrierCache = clean;
         // v0.4.3 (D1): trace the one-time cache fill so a successful warm-up
         // is visible in the debug log (happens once per adapter restart).
         this.log?.debug(`carriers: fetched ${Object.keys(this.carrierCache).length} entries`);
@@ -299,6 +320,8 @@ export class ParcelClient {
             return; // already cleaned up + rejected in the data handler
           }
           cleanup();
+          // The MAX_BODY_BYTES cap above bounds `chunks`, so concat stays well
+          // under Buffer's max length and toString won't throw here.
           const raw = Buffer.concat(chunks).toString("utf-8");
 
           if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
@@ -320,7 +343,9 @@ export class ParcelClient {
             const code =
               res.statusCode === 401 ? "INVALID_API_KEY" : res.statusCode === 403 ? "FORBIDDEN" : "HTTP_ERROR";
             // v0.4.3 (A3): trace 4xx/5xx with body-snippet for diagnosis.
-            this.log?.debug(`HTTP ${method} ${path} → ${res.statusCode} ${code} (body=${raw.substring(0, 200)})`);
+            this.log?.debug(
+              `HTTP ${method} ${path} → ${res.statusCode} ${code} (body=${oneLine(raw.substring(0, 200))})`,
+            );
             reject(apiError(`HTTP ${res.statusCode}: ${res.statusMessage}`, code));
             return;
           }
@@ -331,9 +356,12 @@ export class ParcelClient {
             this.log?.debug(`HTTP ${method} ${path} → ${res.statusCode} (${Date.now() - startedAt}ms, ${bodyBytes}B)`);
             resolve(parsed);
           } catch {
-            // v0.4.3 (A8): trace JSON parse-fail with snippet.
-            this.log?.debug(`HTTP JSON parse fail ${path}: ${raw.substring(0, 200)}`);
-            reject(new Error(`JSON parse error: ${raw.substring(0, 200)}`));
+            // v0.4.3 (A8): trace JSON parse-fail with snippet (debug only).
+            this.log?.debug(`HTTP JSON parse fail ${path}: ${oneLine(raw.substring(0, 200))}`);
+            // v0.9.0 (S1): keep the raw body OUT of the Error message — it
+            // bubbles to a poll error-log; a malformed PII-bearing body must
+            // not reach error level. The snippet stays in the debug line above.
+            reject(new Error(`JSON parse error (${raw.length} bytes)`));
           }
         });
       });

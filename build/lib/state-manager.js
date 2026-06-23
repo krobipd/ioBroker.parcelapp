@@ -131,7 +131,7 @@ class StateManager {
     if (owner !== void 0 && owner !== rawKey) {
       const suffixed = `${id}__${StateManager.shortHash(rawKey)}`;
       this.adapter.log.debug(
-        `packageId collision: bare='${id}' owner='${owner}' new='${rawKey}' \u2192 suffixed='${suffixed}'`
+        `packageId collision: bare='${id}' owner='${(0, import_coerce.oneLine)(owner)}' new='${(0, import_coerce.oneLine)(rawKey)}' \u2192 suffixed='${suffixed}'`
       );
       this.idOwner.set(suffixed, rawKey);
       return suffixed;
@@ -164,7 +164,7 @@ class StateManager {
   }
   /**
    * v0.4.2 (S3): which raw-tracking-key currently "owns" each sanitized id
-   * within the running poll. Cleared via `resetIdOwners()` between polls so
+   * within the running poll. Cleared via `resetPollState()` between polls so
    * the same delivery keeps its bare id as long as it's unique.
    */
   idOwner = /* @__PURE__ */ new Map();
@@ -283,11 +283,14 @@ class StateManager {
     ]);
   }
   /**
-   * Remove deliveries that are no longer active.
+   * Remove deliveries that are no longer present in the API response.
    *
-   * @param activeIds List of currently active package IDs
+   * @param keepIds Package IDs the API still returns this poll (kept). Every
+   *   currently-known delivery NOT in this set is removed. The caller passes
+   *   ALL visible package ids, not only the ones whose state-write succeeded —
+   *   a transient write failure must not delete a still-present package.
    */
-  async cleanupDeliveries(activeIds) {
+  async cleanupDeliveries(keepIds) {
     if (this.knownDeliveryIds === null) {
       const objects = await this.adapter.getObjectViewAsync("system", "device", {
         startkey: `${this.adapter.namespace}.deliveries.`,
@@ -308,8 +311,9 @@ class StateManager {
         }
       }
     }
-    const activeSet = new Set(activeIds);
-    const toDelete = [...this.knownDeliveryIds].filter((pkgId) => !activeSet.has(pkgId));
+    const keepSet = new Set(keepIds);
+    const toDelete = [...this.knownDeliveryIds].filter((pkgId) => !keepSet.has(pkgId));
+    const toDeleteSet = new Set(toDelete);
     await Promise.all(
       toDelete.map(async (pkgId) => {
         const relativeId = `deliveries.${pkgId}`;
@@ -317,14 +321,17 @@ class StateManager {
         this.adapter.log.debug(`Removed stale delivery: ${relativeId}`);
         this.deviceWritten.delete(pkgId);
         this.valuesSig.delete(pkgId);
-        for (const id of [...this.createdIds]) {
-          if (id === relativeId || id.startsWith(`${relativeId}.`)) {
-            this.createdIds.delete(id);
-          }
-        }
       })
     );
-    this.knownDeliveryIds = new Set(activeSet);
+    if (toDeleteSet.size > 0) {
+      for (const id of [...this.createdIds]) {
+        const pkgId = id.startsWith("deliveries.") ? id.slice("deliveries.".length).split(".")[0] : "";
+        if (toDeleteSet.has(pkgId)) {
+          this.createdIds.delete(id);
+        }
+      }
+    }
+    this.knownDeliveryIds = new Set(keepSet);
   }
   /**
    * Parse a parcel.app expected-date string to LOCAL epoch-millis.
@@ -348,18 +355,20 @@ class StateManager {
       return null;
     }
     const hasClock = m[4] !== void 0;
-    const date = new Date(
-      Number(m[1]),
-      Number(m[2]) - 1,
-      Number(m[3]),
-      hasClock ? Number(m[4]) : 0,
-      hasClock ? Number(m[5]) : 0,
-      m[6] !== void 0 ? Number(m[6]) : 0
-    );
-    if (Number.isNaN(date.getTime())) {
+    const year = Number(m[1]);
+    const month = Number(m[2]);
+    const day = Number(m[3]);
+    const hour = hasClock ? Number(m[4]) : 0;
+    const min = hasClock ? Number(m[5]) : 0;
+    const sec = m[6] !== void 0 ? Number(m[6]) : 0;
+    if (month < 1 || month > 12 || day < 1 || day > 31 || hour > 23 || min > 59 || sec > 59) {
       return null;
     }
-    const hasTime = hasClock && !(Number(m[4]) === 0 && Number(m[5]) === 0 && (m[6] === void 0 || Number(m[6]) === 0));
+    const date = new Date(year, month - 1, day, hour, min, sec);
+    if (Number.isNaN(date.getTime()) || date.getMonth() !== month - 1 || date.getDate() !== day) {
+      return null;
+    }
+    const hasTime = hasClock && !(hour === 0 && min === 0 && sec === 0);
     return { ms: date.getTime(), hasTime };
   }
   /**
@@ -408,6 +417,44 @@ class StateManager {
     return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
   }
   /**
+   * Local "MM-DD HH:MM" — used when a window spans more than one calendar day.
+   *
+   * @param ms Epoch milliseconds
+   */
+  static formatDateHHMM(ms) {
+    const d = new Date(ms);
+    const mm = (d.getMonth() + 1).toString().padStart(2, "0");
+    const dd = d.getDate().toString().padStart(2, "0");
+    return `${mm}-${dd} ${StateManager.formatHHMM(ms)}`;
+  }
+  /**
+   * Whether two epoch-millis fall on the same LOCAL calendar day.
+   *
+   * @param aMs First epoch milliseconds
+   * @param bMs Second epoch milliseconds
+   */
+  static sameLocalDay(aMs, bMs) {
+    const a = new Date(aMs);
+    const b = new Date(bMs);
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  }
+  /**
+   * Format a start→end window as a local string. A real end (> start) on the
+   * SAME day renders "HH:MM - HH:MM"; an end on a LATER day carries the date on
+   * both sides ("12-06 14:30 - 12-08 18:30") so a multi-day window is not shown
+   * as if it were same-day. No end, or an end <= start (reversed/equal), renders
+   * just the start.
+   *
+   * @param startMs Window start (epoch ms)
+   * @param endMs Window end (epoch ms) or null
+   */
+  static formatWindow(startMs, endMs) {
+    if (endMs === null || endMs <= startMs) {
+      return StateManager.formatHHMM(startMs);
+    }
+    return StateManager.sameLocalDay(startMs, endMs) ? `${StateManager.formatHHMM(startMs)} - ${StateManager.formatHHMM(endMs)}` : `${StateManager.formatDateHHMM(startMs)} - ${StateManager.formatDateHHMM(endMs)}`;
+  }
+  /**
    * Calculate a delivery time-window string from the resolved expected bounds.
    *
    * @param delivery The delivery data
@@ -418,8 +465,7 @@ class StateManager {
     if (!bounds) {
       return "";
     }
-    const start = StateManager.formatHHMM(bounds.start);
-    return bounds.end !== null ? `${start} - ${StateManager.formatHHMM(bounds.end)}` : start;
+    return StateManager.formatWindow(bounds.start, bounds.end);
   }
   /**
    * Days from today to the expected delivery date. Returns null when the
@@ -529,8 +575,7 @@ class StateManager {
       var _a;
       return (_a = b.end) != null ? _a : b.start;
     }));
-    const startStr = StateManager.formatHHMM(minStart);
-    return maxEnd > minStart ? `${startStr} - ${StateManager.formatHHMM(maxEnd)}` : startStr;
+    return StateManager.formatWindow(minStart, maxEnd);
   }
   /**
    * Create/extend a read-only state and set its value. Skips the

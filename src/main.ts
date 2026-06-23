@@ -1,7 +1,7 @@
 import * as utils from "@iobroker/adapter-core";
 import { I18n } from "@iobroker/adapter-core";
 import { join } from "node:path";
-import { coerceClampedInt, errText } from "./lib/coerce";
+import { coerceClampedInt, errText, oneLine } from "./lib/coerce";
 import { ParcelClient } from "./lib/parcel-client";
 import { resolveLanguage, StateManager } from "./lib/state-manager";
 import type { AddDeliveryRequest } from "./lib/types";
@@ -12,6 +12,20 @@ const DEFAULT_POLL_INTERVAL = 10;
 const MIN_POLL_GAP_MS = 60_000; // Minimum 60s between polls
 /** v0.4.2 (M6): minimum length for an apiKey value to even be considered valid. */
 const MIN_API_KEY_LENGTH = 10;
+// v0.9.0 (S5): cap addDelivery field lengths. A sendTo caller is local, but a
+// runaway script must not push a multi-MB POST body to parcel.app. Identifiers
+// are short; this is generous for a description.
+const MAX_ADD_FIELD_LEN = 512;
+// v0.9.0 (S3): cap the per-poll broker fan-out. Updates run in batches of this
+// size instead of all deliveries at once, so an abnormally large API response
+// can't flood the broker with thousands of concurrent writes.
+const UPDATE_BATCH_SIZE = 25;
+// v0.9.0 (S4): client-side throttle on addDelivery POSTs. parcel.app enforces
+// ~20 POST/day server-side; this caps a runaway/buggy script's burst so it can't
+// hammer the API. The window is generous enough never to block a real batch-add
+// (the daily server limit is the real cap).
+const MAX_ADDS_PER_WINDOW = 20;
+const ADD_WINDOW_MS = 60_000;
 
 /**
  * ioBroker adapter for parcel.app package tracking. Exported so the
@@ -37,7 +51,14 @@ export class ParcelappAdapter extends utils.Adapter {
   private lastPollTime = 0;
   private rateLimitedUntil = 0;
   private lastErrorCode = "";
+  /**
+   * Package ids (not raw tracking numbers) whose last updateDelivery failed.
+   * Keyed like the states so the dedup survives a sanitize collision or a
+   * missing tracking number; pruned each poll against the visible pkgIds.
+   */
   private failedDeliveries = new Set<string>();
+  /** Timestamps of recent addDelivery POSTs — the S4 throttle window. */
+  private addTimestamps: number[] = [];
   /**
    * v0.4.4: short-lived test-clients spawned from `checkConnection` admin
    * messages. The prod-`this.client` is what `onUnload` cancels, so these
@@ -82,7 +103,14 @@ export class ParcelappAdapter extends utils.Adapter {
       this.client = this.makeClient(apiKey.trim());
       this.stateManager = this.makeStateManager(language);
 
-      await this.cleanupObsoleteStates();
+      try {
+        await this.cleanupObsoleteStates();
+      } catch (err) {
+        // C8: a cleanup failure must not abort startup. Without this guard the
+        // outer catch would skip arming the poll interval below, and the adapter
+        // would never poll until a manual restart. Degrade to a warning.
+        this.log.warn(`cleanupObsoleteStates failed (continuing): ${errText(err)}`);
+      }
 
       await this.poll();
 
@@ -211,6 +239,24 @@ export class ParcelappAdapter extends utils.Adapter {
             );
             return;
           }
+          // v0.9.0 (S5): cap field lengths so a runaway local script can't push
+          // a multi-MB POST body to parcel.app. Checked after the required-field
+          // guard above so the two validation messages stay distinct.
+          if (
+            msg.tracking_number.length > MAX_ADD_FIELD_LEN ||
+            msg.carrier_code.length > MAX_ADD_FIELD_LEN ||
+            msg.description.length > MAX_ADD_FIELD_LEN ||
+            (typeof msg.language === "string" && msg.language.length > MAX_ADD_FIELD_LEN)
+          ) {
+            this.log.debug("addDelivery: a field exceeds the maximum length");
+            this.sendTo(
+              obj.from,
+              obj.command,
+              { success: false, error_message: `each field must be at most ${MAX_ADD_FIELD_LEN} characters` },
+              obj.callback,
+            );
+            return;
+          }
           // Pass the optional API fields through when the caller supplies them
           // (language: ISO 639-1 two-letter code; send_push_confirmation: push
           // notification once the delivery is added).
@@ -225,6 +271,28 @@ export class ParcelappAdapter extends utils.Adapter {
           if (typeof msg.send_push_confirmation === "boolean") {
             request.send_push_confirmation = msg.send_push_confirmation;
           }
+          // v0.9.0 (S4): throttle addDelivery POSTs. parcel.app caps ~20/day
+          // server-side; this stops a runaway/buggy script from hammering the API
+          // with a burst. Record the attempt before the await so concurrent
+          // callers count too.
+          const nowMs = Date.now();
+          this.addTimestamps = this.addTimestamps.filter(t => nowMs - t < ADD_WINDOW_MS);
+          if (this.addTimestamps.length >= MAX_ADDS_PER_WINDOW) {
+            this.log.warn(
+              `addDelivery throttled: more than ${MAX_ADDS_PER_WINDOW} requests within ${ADD_WINDOW_MS / 1000}s`,
+            );
+            this.sendTo(
+              obj.from,
+              obj.command,
+              {
+                success: false,
+                error_message: `too many addDelivery requests; max ${MAX_ADDS_PER_WINDOW} per ${ADD_WINDOW_MS / 1000}s`,
+              },
+              obj.callback,
+            );
+            return;
+          }
+          this.addTimestamps.push(nowMs);
           const addResult = await this.client.addDelivery(request);
           // v0.4.3 (F5): trace addDelivery result with the tracking number.
           this.log.debug(`addDelivery: '${request.tracking_number}' result=${addResult.success ? "ok" : "fail"}`);
@@ -354,46 +422,60 @@ export class ParcelappAdapter extends utils.Adapter {
 
       // v0.4.2 (M4): per-delivery updates run in parallel, each wrapped in
       // try/catch so one bad delivery doesn't poison the others.
-      const idResults = await Promise.all(
-        visibleDeliveries.map(async (delivery, index) => {
-          const pkgId = pkgIds[index];
-          try {
-            // v0.4.3 (C1): per-delivery entry. ~10 packages × 144 polls/day
-            // = ~1440 debug lines/day — acceptable at debug-level. Line stays
-            // short (tracking + carrier + status only, no full delivery JSON).
-            this.log.debug(
-              `updateDelivery: '${delivery.tracking_number}' carrier=${delivery.carrier_code} status=${delivery.status_code}`,
-            );
-            const carrierName = await this.client!.getCarrierName(delivery.carrier_code);
-            await this.stateManager!.updateDelivery(delivery, carrierName, pkgId);
-            this.failedDeliveries.delete(delivery.tracking_number);
-            return pkgId;
-          } catch (err) {
-            const msg = errText(err);
-            if (this.failedDeliveries.has(delivery.tracking_number)) {
-              this.log.debug(`Failed to update "${delivery.tracking_number}": ${msg}`);
-            } else {
-              this.log.warn(`Failed to update '${delivery.tracking_number}': ${msg}`);
-              this.failedDeliveries.add(delivery.tracking_number);
+      // v0.9.0 (S3): process the updates in bounded batches instead of one
+      // broker fan-out for ALL deliveries at once. The keep-set is still every
+      // visible pkgId (computed above), so this only caps concurrency — it never
+      // drops a package. A normal poll (a handful of packages) is a single batch.
+      if (visibleDeliveries.length > UPDATE_BATCH_SIZE) {
+        this.log.debug(`Updating ${visibleDeliveries.length} deliveries in batches of ${UPDATE_BATCH_SIZE}`);
+      }
+      for (let start = 0; start < visibleDeliveries.length; start += UPDATE_BATCH_SIZE) {
+        const batch = visibleDeliveries.slice(start, start + UPDATE_BATCH_SIZE);
+        await Promise.all(
+          batch.map(async (delivery, offset) => {
+            const pkgId = pkgIds[start + offset];
+            // Pre-sanitize the externally-sourced strings once for logging. The
+            // fields are optional (the API can drop them), so default to "" before
+            // oneLine flattens them onto a single log line.
+            const tracking = oneLine(delivery.tracking_number ?? "");
+            const carrier = oneLine(delivery.carrier_code ?? "");
+            try {
+              // v0.4.3 (C1): per-delivery entry. ~10 packages × 144 polls/day
+              // = ~1440 debug lines/day — acceptable at debug-level. Line stays
+              // short (tracking + carrier + status only, no full delivery JSON).
+              this.log.debug(`updateDelivery: '${tracking}' carrier=${carrier} status=${delivery.status_code}`);
+              const carrierName = await this.client!.getCarrierName(delivery.carrier_code);
+              await this.stateManager!.updateDelivery(delivery, carrierName, pkgId);
+              this.failedDeliveries.delete(pkgId);
+            } catch (err) {
+              const msg = errText(err);
+              if (this.failedDeliveries.has(pkgId)) {
+                this.log.debug(`Failed to update '${tracking}': ${msg}`);
+              } else {
+                this.log.warn(`Failed to update '${tracking}': ${msg}`);
+                this.failedDeliveries.add(pkgId);
+              }
             }
-            return null;
-          }
-        }),
-      );
-      const activeIds = idResults.filter((id): id is string => id !== null);
+          }),
+        );
+      }
 
-      // Cleanup stale deliveries
-      await this.stateManager.cleanupDeliveries(activeIds);
+      // v0.9.0 (C1): keep-set = EVERY package the API still returns this poll
+      // (pkgIds), NOT only the writes that just succeeded. A transient
+      // updateDelivery failure leaves a package's states stale, but it must not
+      // drop the package from cleanup — that would delete a still-present
+      // package's states (and any user-set device name) at green info.connection.
+      await this.stateManager.cleanupDeliveries(pkgIds);
 
       // Update summary (always uses active/non-delivered)
       await this.stateManager.updateSummary(activeDeliveries);
 
-      // Keep failedDeliveries bounded: drop entries for trackings no longer
+      // Keep failedDeliveries bounded: drop entries for package ids no longer
       // present, so packages that vanish from the API don't linger forever.
-      const seenTracking = new Set(visibleDeliveries.map(d => d.tracking_number));
-      for (const tracking of [...this.failedDeliveries]) {
-        if (!seenTracking.has(tracking)) {
-          this.failedDeliveries.delete(tracking);
+      const seenPkgIds = new Set(pkgIds);
+      for (const id of [...this.failedDeliveries]) {
+        if (!seenPkgIds.has(id)) {
+          this.failedDeliveries.delete(id);
         }
       }
 

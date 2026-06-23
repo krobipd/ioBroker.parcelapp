@@ -52,7 +52,7 @@ class ParcelClient {
    * v0.7.2: in-flight fetch for the carrier list. The per-delivery updates run
    * in parallel (Promise.all) and each resolves carrier names — without this
    * mutex the first poll with N packages fired N identical concurrent fetches
-   * of the static 447-entry file (and a persistently failing endpoint was
+   * of the static carrier-list file (and a persistently failing endpoint was
    * retried N times per poll). Same pattern as beszel's auth mutex (B1).
    */
   carrierFetchInFlight = null;
@@ -93,7 +93,7 @@ class ParcelClient {
    * @param filterMode Filter active or recent deliveries
    */
   async getDeliveries(filterMode = "active") {
-    var _a, _b;
+    var _a, _b, _c;
     const response = await this.request("GET", `/deliveries/?filter_mode=${filterMode}`, true);
     if (!response || typeof response !== "object") {
       (_a = this.log) == null ? void 0 : _a.debug(`API drift: malformed response (got ${typeof response})`);
@@ -104,7 +104,14 @@ class ParcelClient {
       (_b = this.log) == null ? void 0 : _b.debug(`API drift: success=false, msg='${rawMsg}'`);
       throw apiError(`API error: ${rawMsg || "UNKNOWN"}`, "API_ERROR");
     }
-    return Array.isArray(response.deliveries) ? response.deliveries : [];
+    if (response.deliveries == null) {
+      return [];
+    }
+    if (!Array.isArray(response.deliveries)) {
+      (_c = this.log) == null ? void 0 : _c.debug(`API drift: deliveries not an array (got ${typeof response.deliveries})`);
+      throw apiError("API error: deliveries not an array", "API_ERROR");
+    }
+    return response.deliveries;
   }
   /**
    * Add a new delivery to parcel.app.
@@ -132,7 +139,13 @@ class ParcelClient {
     try {
       const raw = await this.request("GET", "/supported_carriers.json", false);
       if (raw && typeof raw === "object" && !Array.isArray(raw)) {
-        this.carrierCache = raw;
+        const clean = {};
+        for (const [code, name] of Object.entries(raw)) {
+          if (typeof name === "string") {
+            clean[code] = name;
+          }
+        }
+        this.carrierCache = clean;
         (_a = this.log) == null ? void 0 : _a.debug(`carriers: fetched ${Object.keys(this.carrierCache).length} entries`);
         return this.carrierCache;
       }
@@ -257,7 +270,9 @@ class ParcelClient {
               return;
             }
             const code = res.statusCode === 401 ? "INVALID_API_KEY" : res.statusCode === 403 ? "FORBIDDEN" : "HTTP_ERROR";
-            (_b = this.log) == null ? void 0 : _b.debug(`HTTP ${method} ${path} \u2192 ${res.statusCode} ${code} (body=${raw.substring(0, 200)})`);
+            (_b = this.log) == null ? void 0 : _b.debug(
+              `HTTP ${method} ${path} \u2192 ${res.statusCode} ${code} (body=${(0, import_coerce.oneLine)(raw.substring(0, 200))})`
+            );
             reject(apiError(`HTTP ${res.statusCode}: ${res.statusMessage}`, code));
             return;
           }
@@ -266,8 +281,8 @@ class ParcelClient {
             (_c = this.log) == null ? void 0 : _c.debug(`HTTP ${method} ${path} \u2192 ${res.statusCode} (${Date.now() - startedAt}ms, ${bodyBytes}B)`);
             resolve(parsed);
           } catch {
-            (_d = this.log) == null ? void 0 : _d.debug(`HTTP JSON parse fail ${path}: ${raw.substring(0, 200)}`);
-            reject(new Error(`JSON parse error: ${raw.substring(0, 200)}`));
+            (_d = this.log) == null ? void 0 : _d.debug(`HTTP JSON parse fail ${path}: ${(0, import_coerce.oneLine)(raw.substring(0, 200))}`);
+            reject(new Error(`JSON parse error (${raw.length} bytes)`));
           }
         });
       });

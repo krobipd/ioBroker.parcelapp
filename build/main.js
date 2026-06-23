@@ -42,6 +42,10 @@ const MAX_POLL_INTERVAL = 60;
 const DEFAULT_POLL_INTERVAL = 10;
 const MIN_POLL_GAP_MS = 6e4;
 const MIN_API_KEY_LENGTH = 10;
+const MAX_ADD_FIELD_LEN = 512;
+const UPDATE_BATCH_SIZE = 25;
+const MAX_ADDS_PER_WINDOW = 20;
+const ADD_WINDOW_MS = 6e4;
 class ParcelappAdapter extends utils.Adapter {
   client = null;
   stateManager = null;
@@ -61,7 +65,14 @@ class ParcelappAdapter extends utils.Adapter {
   lastPollTime = 0;
   rateLimitedUntil = 0;
   lastErrorCode = "";
+  /**
+   * Package ids (not raw tracking numbers) whose last updateDelivery failed.
+   * Keyed like the states so the dedup survives a sanitize collision or a
+   * missing tracking number; pruned each poll against the visible pkgIds.
+   */
   failedDeliveries = /* @__PURE__ */ new Set();
+  /** Timestamps of recent addDelivery POSTs — the S4 throttle window. */
+  addTimestamps = [];
   /**
    * v0.4.4: short-lived test-clients spawned from `checkConnection` admin
    * messages. The prod-`this.client` is what `onUnload` cancels, so these
@@ -98,7 +109,11 @@ class ParcelappAdapter extends utils.Adapter {
       }
       this.client = this.makeClient(apiKey.trim());
       this.stateManager = this.makeStateManager(language);
-      await this.cleanupObsoleteStates();
+      try {
+        await this.cleanupObsoleteStates();
+      } catch (err) {
+        this.log.warn(`cleanupObsoleteStates failed (continuing): ${(0, import_coerce.errText)(err)}`);
+      }
       await this.poll();
       const interval = ParcelappAdapter.coercePollInterval(this.config.pollInterval);
       this.log.debug(`pollInterval: raw=${JSON.stringify(this.config.pollInterval)} resolved=${interval}min`);
@@ -188,6 +203,16 @@ class ParcelappAdapter extends utils.Adapter {
             );
             return;
           }
+          if (msg.tracking_number.length > MAX_ADD_FIELD_LEN || msg.carrier_code.length > MAX_ADD_FIELD_LEN || msg.description.length > MAX_ADD_FIELD_LEN || typeof msg.language === "string" && msg.language.length > MAX_ADD_FIELD_LEN) {
+            this.log.debug("addDelivery: a field exceeds the maximum length");
+            this.sendTo(
+              obj.from,
+              obj.command,
+              { success: false, error_message: `each field must be at most ${MAX_ADD_FIELD_LEN} characters` },
+              obj.callback
+            );
+            return;
+          }
           const request = {
             tracking_number: msg.tracking_number,
             carrier_code: msg.carrier_code,
@@ -199,6 +224,24 @@ class ParcelappAdapter extends utils.Adapter {
           if (typeof msg.send_push_confirmation === "boolean") {
             request.send_push_confirmation = msg.send_push_confirmation;
           }
+          const nowMs = Date.now();
+          this.addTimestamps = this.addTimestamps.filter((t) => nowMs - t < ADD_WINDOW_MS);
+          if (this.addTimestamps.length >= MAX_ADDS_PER_WINDOW) {
+            this.log.warn(
+              `addDelivery throttled: more than ${MAX_ADDS_PER_WINDOW} requests within ${ADD_WINDOW_MS / 1e3}s`
+            );
+            this.sendTo(
+              obj.from,
+              obj.command,
+              {
+                success: false,
+                error_message: `too many addDelivery requests; max ${MAX_ADDS_PER_WINDOW} per ${ADD_WINDOW_MS / 1e3}s`
+              },
+              obj.callback
+            );
+            return;
+          }
+          this.addTimestamps.push(nowMs);
           const addResult = await this.client.addDelivery(request);
           this.log.debug(`addDelivery: '${request.tracking_number}' result=${addResult.success ? "ok" : "fail"}`);
           this.sendTo(obj.from, obj.command, addResult, obj.callback);
@@ -285,36 +328,40 @@ class ParcelappAdapter extends utils.Adapter {
       const visibleDeliveries = autoRemoveMode ? activeDeliveries : deliveries;
       this.stateManager.resetPollState();
       const pkgIds = visibleDeliveries.map((d) => this.stateManager.packageId(d));
-      const idResults = await Promise.all(
-        visibleDeliveries.map(async (delivery, index) => {
-          const pkgId = pkgIds[index];
-          try {
-            this.log.debug(
-              `updateDelivery: '${delivery.tracking_number}' carrier=${delivery.carrier_code} status=${delivery.status_code}`
-            );
-            const carrierName = await this.client.getCarrierName(delivery.carrier_code);
-            await this.stateManager.updateDelivery(delivery, carrierName, pkgId);
-            this.failedDeliveries.delete(delivery.tracking_number);
-            return pkgId;
-          } catch (err) {
-            const msg = (0, import_coerce.errText)(err);
-            if (this.failedDeliveries.has(delivery.tracking_number)) {
-              this.log.debug(`Failed to update "${delivery.tracking_number}": ${msg}`);
-            } else {
-              this.log.warn(`Failed to update '${delivery.tracking_number}': ${msg}`);
-              this.failedDeliveries.add(delivery.tracking_number);
+      if (visibleDeliveries.length > UPDATE_BATCH_SIZE) {
+        this.log.debug(`Updating ${visibleDeliveries.length} deliveries in batches of ${UPDATE_BATCH_SIZE}`);
+      }
+      for (let start = 0; start < visibleDeliveries.length; start += UPDATE_BATCH_SIZE) {
+        const batch = visibleDeliveries.slice(start, start + UPDATE_BATCH_SIZE);
+        await Promise.all(
+          batch.map(async (delivery, offset) => {
+            var _a2, _b;
+            const pkgId = pkgIds[start + offset];
+            const tracking = (0, import_coerce.oneLine)((_a2 = delivery.tracking_number) != null ? _a2 : "");
+            const carrier = (0, import_coerce.oneLine)((_b = delivery.carrier_code) != null ? _b : "");
+            try {
+              this.log.debug(`updateDelivery: '${tracking}' carrier=${carrier} status=${delivery.status_code}`);
+              const carrierName = await this.client.getCarrierName(delivery.carrier_code);
+              await this.stateManager.updateDelivery(delivery, carrierName, pkgId);
+              this.failedDeliveries.delete(pkgId);
+            } catch (err) {
+              const msg = (0, import_coerce.errText)(err);
+              if (this.failedDeliveries.has(pkgId)) {
+                this.log.debug(`Failed to update '${tracking}': ${msg}`);
+              } else {
+                this.log.warn(`Failed to update '${tracking}': ${msg}`);
+                this.failedDeliveries.add(pkgId);
+              }
             }
-            return null;
-          }
-        })
-      );
-      const activeIds = idResults.filter((id) => id !== null);
-      await this.stateManager.cleanupDeliveries(activeIds);
+          })
+        );
+      }
+      await this.stateManager.cleanupDeliveries(pkgIds);
       await this.stateManager.updateSummary(activeDeliveries);
-      const seenTracking = new Set(visibleDeliveries.map((d) => d.tracking_number));
-      for (const tracking of [...this.failedDeliveries]) {
-        if (!seenTracking.has(tracking)) {
-          this.failedDeliveries.delete(tracking);
+      const seenPkgIds = new Set(pkgIds);
+      for (const id of [...this.failedDeliveries]) {
+        if (!seenPkgIds.has(id)) {
+          this.failedDeliveries.delete(id);
         }
       }
       this.log.debug(`Polled ${visibleDeliveries.length} deliveries (${activeDeliveries.length} active)`);

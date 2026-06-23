@@ -10,14 +10,19 @@ export interface ParcelApiResponse {
 
 /** Single delivery from the parcel.app API */
 export interface ParcelDelivery {
-  /** Carrier identifier */
-  carrier_code: string;
-  /** User-defined description */
-  description: string;
-  /** Status code (int 0-8; API sends a number — parseStatus also tolerates a numeric string for drift safety) */
-  status_code: number;
-  /** Tracking number */
-  tracking_number: string;
+  /** Carrier identifier (optional: the API normally always sends it, but the adapter guards against drift) */
+  carrier_code?: string;
+  /** User-defined description (optional: guarded against drift) */
+  description?: string;
+  /**
+   * Status code (int 0-8). The API sends a number; the type also admits a
+   * numeric string, which `parseStatus` tolerates for drift safety. Widening
+   * the type here lets `parseStatus` narrow with plain `typeof` guards instead
+   * of an `as unknown` cast that hid the real runtime shape.
+   */
+  status_code: number | string;
+  /** Tracking number (optional: guarded against drift) */
+  tracking_number?: string;
   /** Extra info (postal code, email) */
   extra_information?: string;
   /** Expected delivery date/time as a string, without timezone (carrier-dependent format) */

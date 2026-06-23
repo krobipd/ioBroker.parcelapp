@@ -21,7 +21,8 @@ __export(coerce_exports, {
   coerceClampedInt: () => coerceClampedInt,
   coerceFiniteNumber: () => coerceFiniteNumber,
   errText: () => errText,
-  isTrueish: () => isTrueish
+  isTrueish: () => isTrueish,
+  oneLine: () => oneLine
 });
 module.exports = __toCommonJS(coerce_exports);
 const DECIMAL_NUMBER_RE = /^-?\d+(\.\d+)?$/;
@@ -77,11 +78,15 @@ function coerceClampedInt(raw, min, max, defaultValue) {
   }
   return Math.max(min, Math.min(max, Math.floor(n)));
 }
+function oneLine(value) {
+  return value.replace(/[\r\n\t]+/g, " ");
+}
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   coerceClampedInt,
   coerceFiniteNumber,
   errText,
-  isTrueish
+  isTrueish,
+  oneLine
 });
 //# sourceMappingURL=coerce.js.map
