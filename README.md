@@ -129,7 +129,7 @@ sendTo("parcelapp.0", "addDelivery", {
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
-### **WORK IN PROGRESS**
+### 0.9.0 (2026-06-23)
 
 - Fixed: tracked packages could disappear from the object tree after a temporary update error or an unexpected API response — a package is now kept until parcel.app actually stops returning it.
 - Changed: multi-day delivery windows now show the date on each side (e.g. `12-06 14:30 - 12-08 18:30`) instead of looking same-day; out-of-range or reversed dates no longer produce a misleading window.
@@ -151,12 +151,6 @@ sendTo("parcelapp.0", "addDelivery", {
 ### 0.7.0 (2026-06-07)
 
 - Added optional Sentry error reporting: crashes are sent to the developer so issues get fixed faster. Active only with ioBroker diagnostics enabled; anonymous.
-
-### 0.6.0 (2026-05-31)
-
-- The summary delivery window now covers the full time range when several packages are expected the same day — previously an overlapping window could be cut short.
-- Packages reported with an unrecognized status are no longer mistaken for delivered and removed; they stay visible as "Unknown".
-- A delivery added via the admin button now appears immediately instead of only after the next polling cycle.
 
 [Older changelogs can be found there](CHANGELOG_OLD.md)
 
