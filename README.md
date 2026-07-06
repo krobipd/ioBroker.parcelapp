@@ -129,7 +129,7 @@ sendTo("parcelapp.0", "addDelivery", {
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
-### 0.9.0 (2026-06-23)
+### 0.9.0 (2026-06-23) — stable
 
 - Fixed: tracked packages could disappear from the object tree after a temporary update error or an unexpected API response — a package is now kept until parcel.app actually stops returning it.
 - Changed: multi-day delivery windows now show the date on each side (e.g. `12-06 14:30 - 12-08 18:30`) instead of looking same-day; out-of-range or reversed dates no longer produce a misleading window.
