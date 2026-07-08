@@ -3,8 +3,6 @@
   "apiKeyInfo": "Enter your parcel.app API key. A Premium subscription is required. Get your key at web.parcelapp.net → API panel.",
   "label_apiKey": "API Key",
   "btn_checkConnection": "Test Connection",
-  "msg_connectionOk": "Connection successful!",
-  "msg_connectionFailed": "Connection failed!",
   "header_polling": "Polling",
   "label_pollInterval": "Poll Interval (minutes)",
   "tooltip_pollInterval": "How often to fetch delivery updates (5-60 minutes, default: 10). Rate limit: 20 requests/hour.",
@@ -36,5 +34,15 @@
   "estimateOverdue": "overdue",
   "estimateToday": "today",
   "estimateTomorrow": "tomorrow",
-  "estimateDays": "in %d days"
+  "estimateDays": "in %s days",
+  "status_0": "Delivered",
+  "status_1": "Frozen",
+  "status_2": "In Transit",
+  "status_3": "Awaiting Pickup",
+  "status_4": "Out for Delivery",
+  "status_5": "Not Found",
+  "status_6": "Delivery Attempt Failed",
+  "status_7": "Exception",
+  "status_8": "Info Received",
+  "packageName": "Package %s"
 }

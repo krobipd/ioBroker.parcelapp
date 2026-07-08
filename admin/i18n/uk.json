@@ -3,8 +3,6 @@
   "apiKeyInfo": "Введіть ваш API-ключ parcel.app. Потрібна Premium-підписка. Отримайте ключ на web.parcelapp.net → панель API.",
   "label_apiKey": "API-ключ",
   "btn_checkConnection": "Перевірити з'єднання",
-  "msg_connectionOk": "З'єднання успішне!",
-  "msg_connectionFailed": "Помилка з'єднання!",
   "header_polling": "Опитування",
   "label_pollInterval": "Інтервал опитування (хвилини)",
   "tooltip_pollInterval": "Як часто отримувати оновлення доставки (5-60 хвилин, за замовчуванням: 10). Ліміт: 20 запитів/годину.",
@@ -36,5 +34,15 @@
   "estimateOverdue": "прострочено",
   "estimateToday": "сьогодні",
   "estimateTomorrow": "завтра",
-  "estimateDays": "через %d дн."
+  "estimateDays": "через %s дн.",
+  "status_0": "Доставлено",
+  "status_1": "Заморожено",
+  "status_2": "В дорозі",
+  "status_3": "Очікує отримання",
+  "status_4": "Доставляється",
+  "status_5": "Не знайдено",
+  "status_6": "Невдала спроба доставки",
+  "status_7": "Виняток",
+  "status_8": "Зареєстровано",
+  "packageName": "Посилка %s"
 }

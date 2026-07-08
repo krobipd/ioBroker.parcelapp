@@ -3,8 +3,6 @@
   "apiKeyInfo": "Voer je parcel.app API-sleutel in. Een Premium-abonnement is vereist. Haal je sleutel op via web.parcelapp.net → API-paneel.",
   "label_apiKey": "API-sleutel",
   "btn_checkConnection": "Verbinding testen",
-  "msg_connectionOk": "Verbinding succesvol!",
-  "msg_connectionFailed": "Verbinding mislukt!",
   "header_polling": "Polling",
   "label_pollInterval": "Polling-interval (minuten)",
   "tooltip_pollInterval": "Hoe vaak bezorgingsupdates ophalen (5-60 minuten, standaard: 10). Limiet: 20 verzoeken/uur.",
@@ -36,5 +34,15 @@
   "estimateOverdue": "te laat",
   "estimateToday": "vandaag",
   "estimateTomorrow": "morgen",
-  "estimateDays": "over %d dagen"
+  "estimateDays": "over %s dagen",
+  "status_0": "Bezorgd",
+  "status_1": "Bevroren",
+  "status_2": "Onderweg",
+  "status_3": "Wacht op ophaling",
+  "status_4": "Wordt bezorgd",
+  "status_5": "Niet gevonden",
+  "status_6": "Bezorgpoging mislukt",
+  "status_7": "Uitzondering",
+  "status_8": "Geregistreerd",
+  "packageName": "Pakket %s"
 }

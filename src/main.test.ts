@@ -10,19 +10,19 @@ vi.mock("@iobroker/adapter-core", () => {
     public adapterDir = "/tmp";
     public config: Record<string, unknown> = {};
     public on = vi.fn();
-    public setStateAsync = vi.fn(async () => {});
-    public setStateChangedAsync = vi.fn(async () => {});
+    public setStateChangedAsync = vi.fn(async () => ({ id: "", notChanged: false }));
     public setState = vi.fn(async () => {});
     public setInterval = vi.fn(() => ({}) as unknown);
     public clearInterval = vi.fn();
     public sendTo = vi.fn();
-    public getForeignObjectAsync = vi.fn(async () => ({ common: { language: "de" } }));
+    public terminate = vi.fn();
     public getObjectAsync = vi.fn(async () => null);
     public delObjectAsync = vi.fn(async () => {});
     constructor(_opts: unknown) {}
   }
   return {
     Adapter,
+    EXIT_CODES: { START_IMMEDIATELY_AFTER_STOP: 156 },
     I18n: {
       init: vi.fn(async () => {}),
       getTranslatedObject: (k: string) => ({ en: k }),
@@ -78,21 +78,29 @@ function internalOf(adapter: ParcelappAdapter): {
   lastPollTime: number;
   rateLimitedUntil: number;
   lastErrorCode: string;
+  unloaded: boolean;
   failedDeliveries: Set<string>;
+  addTimestamps: number[];
   testClients: Set<{ cancelAll: () => void }>;
   pollTimer: unknown;
   config: Record<string, unknown>;
-  log: { debug: ReturnType<typeof vi.fn>; info: ReturnType<typeof vi.fn>; warn: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
-  setStateAsync: ReturnType<typeof vi.fn>;
+  log: {
+    debug: ReturnType<typeof vi.fn>;
+    info: ReturnType<typeof vi.fn>;
+    warn: ReturnType<typeof vi.fn>;
+    error: ReturnType<typeof vi.fn>;
+  };
+  setState: ReturnType<typeof vi.fn>;
   setStateChangedAsync: ReturnType<typeof vi.fn>;
   setInterval: ReturnType<typeof vi.fn>;
   clearInterval: ReturnType<typeof vi.fn>;
   sendTo: ReturnType<typeof vi.fn>;
+  terminate: ReturnType<typeof vi.fn>;
   classifyError: (err: Error & { code?: string }) => string;
   onReady: () => Promise<void>;
   onUnload: (cb: () => void) => void;
   onMessage: (obj: unknown) => Promise<void>;
-  poll: (options?: { force?: boolean }) => Promise<void>;
+  poll: () => Promise<void>;
 } {
   return adapter as unknown as ReturnType<typeof internalOf>;
 }
@@ -117,10 +125,20 @@ function setup(configOverrides: Record<string, unknown> = {}): {
     testConnection: vi.fn(async () => ({ success: true, message: "Connection successful" })),
     cancelAll: vi.fn(),
   };
+  // Fake mirrors the REAL StateManager contract (v0.10.0, L21): drift status
+  // codes resolve to -1 (kept visible), never 0/Delivered; a missing tracking
+  // number sanitizes to "unknown", never the string "undefined".
   const stateMgr: FakeStateMgr = {
-    parseStatus: vi.fn((d: ParcelDelivery) => parseInt(String(d.status_code), 10) || 0),
+    parseStatus: vi.fn((d: ParcelDelivery) => {
+      const n = typeof d.status_code === "number" ? d.status_code : parseInt(String(d.status_code ?? ""), 10);
+      return Number.isFinite(n) ? Math.trunc(n) : -1;
+    }),
     resetPollState: vi.fn(),
-    packageId: vi.fn((d: ParcelDelivery) => String(d.tracking_number).toLowerCase()),
+    packageId: vi.fn((d: ParcelDelivery) =>
+      typeof d.tracking_number === "string" && d.tracking_number.length > 0
+        ? d.tracking_number.toLowerCase()
+        : "unknown",
+    ),
     updateDelivery: vi.fn(async () => {}),
     cleanupDeliveries: vi.fn(async () => {}),
     updateSummary: vi.fn(async () => {}),
@@ -142,7 +160,7 @@ async function setupReady(configOverrides: Record<string, unknown> = {}): Promis
 }> {
   const ctx = setup(configOverrides);
   await internalOf(ctx.adapter).onReady();
-  // Clear the 60s throttle so each test's poll() runs without force.
+  // Clear the 60s gap so each test's poll() runs immediately.
   internalOf(ctx.adapter).lastPollTime = 0;
   return ctx;
 }
@@ -158,8 +176,19 @@ describe("ParcelappAdapter classifyError", () => {
     ["ENETUNREACH", codeError("net", "ENETUNREACH"), "NETWORK"],
     ["EHOSTUNREACH", codeError("host", "EHOSTUNREACH"), "NETWORK"],
     ["EAI_AGAIN", codeError("dns-temp", "EAI_AGAIN"), "NETWORK"],
+    // v0.10.0 (I9): further transient transport codes in the NETWORK class.
+    ["EPIPE", codeError("pipe", "EPIPE"), "NETWORK"],
+    ["ECONNABORTED", codeError("aborted", "ECONNABORTED"), "NETWORK"],
+    ["EPROTO", codeError("tls", "EPROTO"), "NETWORK"],
     ["ETIMEDOUT", codeError("slow", "ETIMEDOUT"), "TIMEOUT"],
-    ["timeout in message", new Error("Request timeout"), "TIMEOUT"],
+    // v0.10.0 (M1): client-coded failures pass through as-is...
+    ["TIMEOUT", codeError("Request timeout", "TIMEOUT"), "TIMEOUT"],
+    ["PARSE_ERROR", codeError("JSON parse error (12 bytes)", "PARSE_ERROR"), "PARSE_ERROR"],
+    ["ABORTED", codeError("Request aborted", "ABORTED"), "ABORTED"],
+    // ...and a present code WINS over a "timeout" substring in the message —
+    // an API error_message merely containing the word is no longer TIMEOUT.
+    ["API_ERROR with timeout text", codeError("API error: connection timeout to carrier", "API_ERROR"), "API_ERROR"],
+    ["timeout in message (code-less)", new Error("Request timeout"), "TIMEOUT"],
     ["other code", codeError("denied", "EACCES"), "EACCES"],
     ["no code", new Error("weird"), "UNKNOWN"],
   ];
@@ -179,6 +208,8 @@ describe("ParcelappAdapter onReady", () => {
     expect(i.log.error).toHaveBeenCalledWith(expect.stringContaining("No valid API key"));
     expect(i.client).toBeNull();
     expect(client.getDeliveries).not.toHaveBeenCalled();
+    // A config problem is the user's move — no restart loop out of it.
+    expect(i.terminate).not.toHaveBeenCalled();
   });
 
   it("happy path: polls once and schedules the interval", async () => {
@@ -195,15 +226,42 @@ describe("ParcelappAdapter onReady", () => {
     const { adapter } = setup();
     const i = internalOf(adapter);
     await i.onReady();
-    expect(i.setStateAsync.mock.calls[0]).toEqual(["info.connection", { val: false, ack: true }]);
+    expect(i.setState.mock.calls[0]).toEqual(["info.connection", { val: false, ack: true }]);
   });
 
-  it("catches a failing boot step instead of crashing", async () => {
+  it("a failing boot step logs and requests a restart instead of idling as a zombie (L4)", async () => {
     const { adapter } = setup();
     const i = internalOf(adapter);
-    i.setStateAsync.mockRejectedValueOnce(new Error("db down"));
+    i.setState.mockRejectedValueOnce(new Error("db down"));
     await i.onReady();
     expect(i.log.error).toHaveBeenCalledWith(expect.stringContaining("onReady failed: db down"));
+    // v0.10.0 (L4): terminate with the restart exit code — js-controller
+    // brings the instance back up, which self-heals a transient failure.
+    expect(i.terminate).toHaveBeenCalledWith(expect.stringContaining("restart"), 156);
+  });
+
+  it("does not terminate when the failure happened because of an unload mid-start (L2)", async () => {
+    const { adapter, client } = setup();
+    const i = internalOf(adapter);
+    client.getDeliveries.mockImplementationOnce(async () => {
+      i.onUnload(vi.fn());
+      throw codeError("Request aborted", "ABORTED");
+    });
+    await i.onReady();
+    expect(i.terminate).not.toHaveBeenCalled();
+  });
+
+  it("a stop during the first poll does not arm the timer afterwards (L2)", async () => {
+    const { adapter, client } = setup();
+    const i = internalOf(adapter);
+    client.getDeliveries.mockImplementationOnce(async () => {
+      // Unload arrives while the first poll is in flight.
+      i.onUnload(vi.fn());
+      return [];
+    });
+    await i.onReady();
+    expect(i.setInterval).not.toHaveBeenCalled();
+    expect(i.log.info).not.toHaveBeenCalledWith(expect.stringContaining("Parcel tracking started"));
   });
 
   it("removes the obsolete summary.json state from pre-0.2.0 installs", async () => {
@@ -226,7 +284,6 @@ describe("ParcelappAdapter onReady", () => {
     );
     await i.onReady();
     // C8: the cleanup failure is contained, so the poll interval is still armed.
-    // The old code let it bubble to the outer catch and skipped arming it.
     expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("cleanupObsoleteStates failed"));
     expect(client.getDeliveries).toHaveBeenCalled();
     expect(i.setInterval).toHaveBeenCalledTimes(1);
@@ -248,6 +305,7 @@ describe("ParcelappAdapter onUnload", () => {
     expect(client.cancelAll).toHaveBeenCalled();
     expect(testClient.cancelAll).toHaveBeenCalled();
     expect(i.testClients.size).toBe(0);
+    expect(i.unloaded).toBe(true);
     expect(callback).toHaveBeenCalledTimes(1);
   });
 
@@ -265,7 +323,7 @@ describe("ParcelappAdapter onUnload", () => {
 });
 
 describe("ParcelappAdapter poll — guards", () => {
-  it("skips overlapping polls (in-flight guard)", async () => {
+  it("skips overlapping polls (in-flight guard) and leaves a debug trace (M4)", async () => {
     const { adapter, client } = await setupReady();
     const i = internalOf(adapter);
     let release!: (v: ParcelDelivery[]) => void;
@@ -278,11 +336,13 @@ describe("ParcelappAdapter poll — guards", () => {
     const first = i.poll();
     await i.poll(); // must bail via isPolling
     expect(client.getDeliveries).toHaveBeenCalledTimes(2); // onReady + first (the second poll bailed)
+    // v0.10.0 (M4): the skip is no longer silent.
+    expect(i.log.debug).toHaveBeenCalledWith(expect.stringContaining("already running"));
     release([]);
     await first;
   });
 
-  it("throttles polls within 60s but lets force bypass the throttle", async () => {
+  it("throttles polls within the 60s gap (no force bypass anymore, L5)", async () => {
     const { adapter, client } = await setupReady();
     const i = internalOf(adapter);
     await i.poll(); // sets lastPollTime = now
@@ -291,17 +351,14 @@ describe("ParcelappAdapter poll — guards", () => {
     await i.poll(); // within 60s → skipped
     expect(client.getDeliveries).not.toHaveBeenCalled();
     expect(i.log.debug).toHaveBeenCalledWith(expect.stringContaining("too soon after last poll"));
-
-    await i.poll({ force: true }); // force bypasses the throttle
-    expect(client.getDeliveries).toHaveBeenCalledTimes(1);
   });
 
-  it("the rate-limit cooldown blocks even forced polls", async () => {
+  it("the rate-limit cooldown blocks polls", async () => {
     const { adapter, client } = await setupReady();
     const i = internalOf(adapter);
     i.rateLimitedUntil = Date.now() + 60_000;
     client.getDeliveries.mockClear();
-    await i.poll({ force: true });
+    await i.poll();
     expect(client.getDeliveries).not.toHaveBeenCalled();
     expect(i.log.debug).toHaveBeenCalledWith(expect.stringContaining("rate limited"));
   });
@@ -353,6 +410,32 @@ describe("ParcelappAdapter poll — happy path", () => {
     expect(client.getDeliveries).toHaveBeenLastCalledWith("recent");
     expect(stateMgr.updateDelivery).toHaveBeenCalledTimes(2); // delivered stays visible
     expect(stateMgr.updateSummary).toHaveBeenCalledWith([active]); // summary still active-only
+  });
+
+  it("pairs every delivery with its pre-pass pkgId across update batches (M10, 30 deliveries)", async () => {
+    const { adapter, client, stateMgr } = await setupReady();
+    const i = internalOf(adapter);
+    const deliveries = Array.from({ length: 30 }, (_, n) =>
+      makeDelivery({ tracking_number: `BULK${String(n).padStart(2, "0")}`, status_code: 2 }),
+    );
+    client.getDeliveries.mockResolvedValue(deliveries);
+    stateMgr.updateDelivery.mockClear();
+    stateMgr.cleanupDeliveries.mockClear();
+
+    await i.poll();
+
+    // 30 > UPDATE_BATCH_SIZE (25) → two batches, announced in the debug log.
+    expect(i.log.debug).toHaveBeenCalledWith(expect.stringContaining("batches of 25"));
+    expect(stateMgr.updateDelivery).toHaveBeenCalledTimes(30);
+    // The only index arithmetic in the poll path is pkgIds[start + offset] —
+    // every call must carry ITS OWN delivery paired with ITS OWN pkgId.
+    for (const call of stateMgr.updateDelivery.mock.calls as [ParcelDelivery, string, string][]) {
+      expect(call[2], `pkgId pairing for ${call[0].tracking_number}`).toBe(String(call[0].tracking_number).toLowerCase());
+    }
+    // The keep-set contains ALL 30 ids — nothing dropped by the batching.
+    const keepSet = stateMgr.cleanupDeliveries.mock.calls[0][0] as string[];
+    expect(keepSet).toHaveLength(30);
+    expect(new Set(keepSet).size).toBe(30);
   });
 });
 
@@ -417,6 +500,22 @@ describe("ParcelappAdapter poll — per-delivery failure dedup", () => {
     await i.poll();
     expect(i.failedDeliveries.has("GONE")).toBe(false);
   });
+
+  it("broker failures in cleanup/summary warn but keep info.connection green (M2)", async () => {
+    const { adapter, stateMgr } = await setupReady();
+    const i = internalOf(adapter);
+    stateMgr.cleanupDeliveries.mockRejectedValueOnce(new Error("db down"));
+    i.setStateChangedAsync.mockClear();
+
+    await i.poll();
+
+    expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("State maintenance failed"));
+    // The API call succeeded — connection stays true, no false write follows.
+    expect(i.setStateChangedAsync).toHaveBeenCalledWith("info.connection", { val: true, ack: true });
+    expect(i.setStateChangedAsync).not.toHaveBeenCalledWith("info.connection", { val: false, ack: true });
+    // And the failure does not poison the API error dedup state.
+    expect(i.lastErrorCode).toBe("");
+  });
 });
 
 describe("ParcelappAdapter poll — error routing", () => {
@@ -439,6 +538,21 @@ describe("ParcelappAdapter poll — error routing", () => {
     expect(i.rateLimitedUntil).toBeLessThanOrEqual(Date.now() + 5 * 60_000 + 1000);
   });
 
+  it("a persistent 429 warns once and demotes repeats to debug (M3)", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    client.getDeliveries.mockRejectedValue(codeError("429", "RATE_LIMITED", { retryAfterSeconds: 60 }));
+    await i.poll();
+    expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("Rate limit hit"));
+
+    i.lastPollTime = 0;
+    i.rateLimitedUntil = 0; // cooldown elapsed, next attempt hits 429 again
+    i.log.warn.mockClear();
+    await i.poll();
+    expect(i.log.warn).not.toHaveBeenCalled(); // repeat → debug
+    expect(i.log.debug).toHaveBeenCalledWith(expect.stringContaining("Rate limit hit"));
+  });
+
   it("a successful poll clears the rate-limit cooldown", async () => {
     const { adapter } = await setupReady();
     const i = internalOf(adapter);
@@ -447,16 +561,19 @@ describe("ParcelappAdapter poll — error routing", () => {
     expect(i.rateLimitedUntil).toBe(0);
   });
 
-  it("INVALID_API_KEY logs an error on every occurrence (user must fix config)", async () => {
+  it("INVALID_API_KEY logs one error, repeats demote to debug (M3)", async () => {
     const { adapter, client } = await setupReady();
     const i = internalOf(adapter);
     client.getDeliveries.mockRejectedValue(codeError("401", "INVALID_API_KEY"));
     await i.poll();
+    expect(i.log.error).toHaveBeenCalledWith(expect.stringContaining("Invalid API key"));
+
     i.lastPollTime = 0;
     i.log.error.mockClear();
     await i.poll();
-    // Repeats stay at error level — unlike NETWORK, this needs user action.
-    expect(i.log.error).toHaveBeenCalledWith(expect.stringContaining("Invalid API key"));
+    // v0.10.0 (M3): no more 144 identical error lines/day — repeats at debug.
+    expect(i.log.error).not.toHaveBeenCalled();
+    expect(i.log.debug).toHaveBeenCalledWith(expect.stringContaining("Invalid API key"));
   });
 
   it("FORBIDDEN surfaces the premium-subscription hint", async () => {
@@ -490,14 +607,24 @@ describe("ParcelappAdapter poll — error routing", () => {
   it("TIMEOUT warns with the retry hint", async () => {
     const { adapter, client } = await setupReady();
     const i = internalOf(adapter);
-    client.getDeliveries.mockRejectedValueOnce(codeError("Request timeout", "ETIMEDOUT"));
+    client.getDeliveries.mockRejectedValueOnce(codeError("Request timeout", "TIMEOUT"));
     await i.poll();
     expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("timeout"));
+  });
+
+  it("a shutdown abort routes to debug — no red error line on a deliberate stop (M1)", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    client.getDeliveries.mockRejectedValueOnce(codeError("Request aborted", "ABORTED"));
+    await i.poll();
+    expect(i.log.error).not.toHaveBeenCalled();
+    expect(i.log.warn).not.toHaveBeenCalledWith(expect.stringContaining("aborted"));
+    expect(i.log.debug).toHaveBeenCalledWith(expect.stringContaining("Poll aborted"));
   });
 });
 
 describe("ParcelappAdapter onMessage", () => {
-  it("checkConnection: rejects a too-short api key without creating a client", async () => {
+  it("checkConnection: rejects a too-short api key with the admin {error} envelope (H1)", async () => {
     const { adapter, client } = await setupReady();
     const i = internalOf(adapter);
     client.testConnection.mockClear();
@@ -511,12 +638,12 @@ describe("ParcelappAdapter onMessage", () => {
     expect(i.sendTo).toHaveBeenCalledWith(
       "system.adapter.admin.0",
       "checkConnection",
-      { success: false, message: "API key is too short" },
+      { error: "API key is too short" },
       expect.anything(),
     );
   });
 
-  it("checkConnection: runs the test client and reports the result", async () => {
+  it("checkConnection: success maps to {result} — the shape ConfigSendto actually reads (H1)", async () => {
     const { adapter, client } = await setupReady();
     const i = internalOf(adapter);
     await i.onMessage({
@@ -529,13 +656,31 @@ describe("ParcelappAdapter onMessage", () => {
     expect(i.sendTo).toHaveBeenCalledWith(
       "system.adapter.admin.0",
       "checkConnection",
-      { success: true, message: "Connection successful" },
+      { result: "Connection successful" },
       expect.anything(),
     );
     expect(i.testClients.size).toBe(0); // registered + deregistered
   });
 
-  it("addDelivery: adds and triggers a forced follow-up poll", async () => {
+  it("checkConnection: a failed test maps to {error} — no more false-positive 'Ok' (H1)", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    client.testConnection.mockResolvedValueOnce({ success: false, message: "Invalid API key" });
+    await i.onMessage({
+      command: "checkConnection",
+      from: "system.adapter.admin.0",
+      callback: { id: 1 },
+      message: { apiKey: "0123456789abcdef" },
+    });
+    expect(i.sendTo).toHaveBeenCalledWith(
+      "system.adapter.admin.0",
+      "checkConnection",
+      { error: "Invalid API key" },
+      expect.anything(),
+    );
+  });
+
+  it("addDelivery: adds and triggers an immediate follow-up poll (gap already elapsed)", async () => {
     const { adapter, client } = await setupReady();
     const i = internalOf(adapter);
     client.getDeliveries.mockClear();
@@ -550,9 +695,26 @@ describe("ParcelappAdapter onMessage", () => {
       carrier_code: "dhl",
       description: "New package",
     });
-    // The forced poll bypasses the 60s throttle.
     await new Promise(resolve => setImmediate(resolve));
     expect(client.getDeliveries).toHaveBeenCalled();
+  });
+
+  it("addDelivery: the follow-up poll respects the 60s gap — bursts cannot stack GETs (L5)", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    i.lastPollTime = Date.now(); // a poll just ran
+    client.getDeliveries.mockClear();
+    await i.onMessage({
+      command: "addDelivery",
+      from: "system.adapter.admin.0",
+      callback: { id: 1 },
+      message: { tracking_number: "NEW1B", carrier_code: "dhl", description: "New package" },
+    });
+    await new Promise(resolve => setImmediate(resolve));
+    // The add itself succeeded, but no extra GET was burned within the gap.
+    expect(client.addDelivery).toHaveBeenCalled();
+    expect(client.getDeliveries).not.toHaveBeenCalled();
+    expect(i.log.debug).toHaveBeenCalledWith(expect.stringContaining("too soon after last poll"));
   });
 
   it("addDelivery: passes language and send_push_confirmation through when provided", async () => {
@@ -579,6 +741,21 @@ describe("ParcelappAdapter onMessage", () => {
     });
   });
 
+  it("addDelivery: a drifted success string ('false') does not trigger the follow-up poll (L9)", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    client.addDelivery.mockResolvedValueOnce({ success: "false" });
+    client.getDeliveries.mockClear();
+    await i.onMessage({
+      command: "addDelivery",
+      from: "system.adapter.admin.0",
+      callback: { id: 1 },
+      message: { tracking_number: "DRIFT1", carrier_code: "dhl", description: "x" },
+    });
+    await new Promise(resolve => setImmediate(resolve));
+    expect(client.getDeliveries).not.toHaveBeenCalled();
+  });
+
   it("addDelivery: missing description yields the validation error", async () => {
     const { adapter, client } = await setupReady();
     const i = internalOf(adapter);
@@ -597,7 +774,7 @@ describe("ParcelappAdapter onMessage", () => {
     );
   });
 
-  it("addDelivery: an over-long field yields the length validation error", async () => {
+  it("addDelivery: an over-long description yields the length validation error", async () => {
     const { adapter, client } = await setupReady();
     const i = internalOf(adapter);
     await i.onMessage({
@@ -605,6 +782,24 @@ describe("ParcelappAdapter onMessage", () => {
       from: "system.adapter.admin.0",
       callback: { id: 1 },
       message: { tracking_number: "NEW4", carrier_code: "dhl", description: "x".repeat(513) },
+    });
+    expect(client.addDelivery).not.toHaveBeenCalled();
+    expect(i.sendTo).toHaveBeenCalledWith(
+      "system.adapter.admin.0",
+      "addDelivery",
+      { success: false, error_message: "each field must be at most 512 characters" },
+      expect.anything(),
+    );
+  });
+
+  it("addDelivery: an over-long optional language field is capped too (L24)", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    await i.onMessage({
+      command: "addDelivery",
+      from: "system.adapter.admin.0",
+      callback: { id: 1 },
+      message: { tracking_number: "NEW5", carrier_code: "dhl", description: "ok", language: "x".repeat(513) },
     });
     expect(client.addDelivery).not.toHaveBeenCalled();
     expect(i.sendTo).toHaveBeenCalledWith(
@@ -642,6 +837,22 @@ describe("ParcelappAdapter onMessage", () => {
       expect.objectContaining({ success: false, error_message: expect.stringContaining("too many") }),
       expect.anything(),
     );
+  });
+
+  it("addDelivery: the throttle window expires — a request goes through again after 60s (L25)", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    // Simulate 20 adds that happened 61s ago: a sign/comparison bug in the
+    // window filter would keep the throttle closed forever.
+    i.addTimestamps = Array.from({ length: 20 }, () => Date.now() - 61_000);
+    client.addDelivery.mockClear();
+    await i.onMessage({
+      command: "addDelivery",
+      from: "system.adapter.admin.0",
+      callback: { id: 1 },
+      message: { tracking_number: "AFTER_WINDOW", carrier_code: "dhl", description: "x" },
+    });
+    expect(client.addDelivery).toHaveBeenCalledTimes(1);
   });
 
   it("addDelivery: a null message yields a clear validation error (v0.7.2 hardening)", async () => {
@@ -699,7 +910,7 @@ describe("ParcelappAdapter onMessage", () => {
     expect(i.sendTo).toHaveBeenCalledWith("x", "noSuchCommand", { error: "Unknown command" }, expect.anything());
   });
 
-  it("a throwing handler reports the failure through sendTo", async () => {
+  it("a throwing checkConnection handler reports via the admin {error} envelope (H1)", async () => {
     const { adapter, client } = await setupReady();
     const i = internalOf(adapter);
     client.testConnection.mockRejectedValueOnce(new Error("boom"));
@@ -709,12 +920,25 @@ describe("ParcelappAdapter onMessage", () => {
       callback: { id: 1 },
       message: { apiKey: "0123456789abcdef" },
     });
+    expect(i.sendTo).toHaveBeenCalledWith("x", "checkConnection", { error: "boom" }, expect.anything());
+    expect(i.testClients.size).toBe(0); // finally cleaned up
+  });
+
+  it("a throwing addDelivery handler keeps the documented script envelope", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    client.addDelivery.mockRejectedValueOnce(new Error("boom"));
+    await i.onMessage({
+      command: "addDelivery",
+      from: "x",
+      callback: { id: 1 },
+      message: { tracking_number: "N1", carrier_code: "dhl", description: "d" },
+    });
     expect(i.sendTo).toHaveBeenCalledWith(
       "x",
-      "checkConnection",
+      "addDelivery",
       { success: false, error_message: "boom" },
       expect.anything(),
     );
-    expect(i.testClients.size).toBe(0); // finally cleaned up
   });
 });

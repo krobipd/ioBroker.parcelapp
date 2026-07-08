@@ -1,10 +1,10 @@
-import { I18n, type AdapterInstance } from "@iobroker/adapter-core";
+import { type AdapterInstance } from "@iobroker/adapter-core";
 import { coerceFiniteNumber, oneLine } from "./coerce";
-import { tName } from "./i18n";
+import { packageName, statusLabel, tName, tText } from "./i18n";
 import type { ParcelDelivery, ParcelEvent } from "./types";
-import { STATUS_LABELS, SUPPORTED_LANGUAGES, FALLBACK_LANGUAGE, UNKNOWN_STATUS_CODE } from "./types";
+import { UNKNOWN_STATUS_CODE } from "./types";
 
-/** Status codes that have expected delivery date/time */
+/** Status codes that have expected delivery date/time: 2=In Transit, 4=Out for Delivery, 8=Info Received */
 const TRACKABLE_STATUSES = new Set([2, 4, 8]);
 
 /**
@@ -13,23 +13,19 @@ const TRACKABLE_STATUSES = new Set([2, 4, 8]);
  */
 const ID_RANGE_END = "￿";
 
+/** Max length of a sanitized package-id segment (collision suffix handles truncation clashes). */
+const MAX_ID_LENGTH = 50;
+
 /**
- * Resolve a language code to one that has labels. Falls back to English
- * when the system language is not one of the supported ioBroker languages.
- *
- * @param language Raw language code (e.g. from system.config.language)
+ * v0.10.0 (I2): cap the parallel recursive deletes in cleanupDeliveries the
+ * same way main.ts caps the update fan-out — a poll that suddenly loses many
+ * packages must not flood the broker in one burst.
  */
-export function resolveLanguage(language: unknown): string {
-  if (typeof language === "string" && SUPPORTED_LANGUAGES.includes(language)) {
-    return language;
-  }
-  return FALLBACK_LANGUAGE;
-}
+const DELETE_BATCH_SIZE = 25;
 
 /** Manages ioBroker states for parcel deliveries */
 export class StateManager {
   private adapter: AdapterInstance;
-  private language: string;
   /**
    * Cache of state IDs that have already passed `setObjectNotExistsAsync`.
    * Skips repeat DB lookups on the hot path — each poll touches ~11 states
@@ -40,23 +36,13 @@ export class StateManager {
   private readonly createdIds = new Set<string>();
 
   /**
-   * v0.7.2: last-written device-object signature per package id (the name
-   * source: description + tracking number). `updateDelivery` used to
-   * extendObject the device on EVERY poll — one object write + objectChange
-   * event per package per minute for data that practically never changes.
-   * Now the write happens only when the signature differs.
+   * v0.10.0 (DP-5): package ids whose device object was ensured this process.
+   * Replaces the former description+tracking signature map: with
+   * `preserve: { common: ["name"] }` a rewrite never changed an existing
+   * object's name anyway, so ensuring existence ONCE per process is the
+   * honest version of what the signature cache actually did.
    */
-  private readonly deviceWritten = new Map<string, string>();
-
-  /**
-   * v0.7.2: signature of the last-written state values per package id.
-   * `lastUpdated` is only refreshed when at least one sibling value actually
-   * changed — before, a fresh ISO timestamp fired one guaranteed state event
-   * per package per poll, defeating the v0.5.3 skip-unchanged optimization
-   * for that state. Semantics: `lastUpdated` = "when the tracking data last
-   * changed", not "when the adapter last polled".
-   */
-  private readonly valuesSig = new Map<string, string>();
+  private readonly deviceEnsured = new Set<string>();
 
   /**
    * v0.7.2: package ids known to exist as device objects. Filled from the
@@ -67,12 +53,17 @@ export class StateManager {
   private knownDeliveryIds: Set<string> | null = null;
 
   /**
-   * @param adapter The ioBroker adapter instance
-   * @param language Language code from system.config.language (falls back to English)
+   * v0.4.2 (S3): which raw-tracking-key currently "owns" each sanitized id
+   * within the running poll. Cleared via `resetPollState()` between polls so
+   * the same delivery keeps its bare id as long as it's unique.
    */
-  constructor(adapter: AdapterInstance, language: string) {
+  private readonly idOwner = new Map<string, string>();
+
+  /**
+   * @param adapter The ioBroker adapter instance
+   */
+  constructor(adapter: AdapterInstance) {
     this.adapter = adapter;
-    this.language = resolveLanguage(language);
   }
 
   /**
@@ -90,7 +81,7 @@ export class StateManager {
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "_")
         .replace(/^_+|_+$/g, "")
-        .slice(0, 50) || "unknown"
+        .slice(0, MAX_ID_LENGTH) || "unknown"
     );
   }
 
@@ -182,13 +173,6 @@ export class StateManager {
   }
 
   /**
-   * v0.4.2 (S3): which raw-tracking-key currently "owns" each sanitized id
-   * within the running poll. Cleared via `resetPollState()` between polls so
-   * the same delivery keeps its bare id as long as it's unique.
-   */
-  private readonly idOwner = new Map<string, string>();
-
-  /**
    * v0.4.2 (S3): reset the per-poll collision tracker. Call from main.ts
    * before iterating deliveries so the bare id always wins for the first
    * occurrence in each poll.
@@ -198,49 +182,60 @@ export class StateManager {
   }
 
   /**
+   * Extract the package-id segment from a relative object id
+   * (`deliveries.<pkgId>` or `deliveries.<pkgId>.<state>`); "" when the id is
+   * outside the deliveries tree. Single source for the id-schema knowledge
+   * (v0.10.0, L15).
+   *
+   * @param relativeId Object id relative to the adapter namespace
+   */
+  private static pkgIdOf(relativeId: string): string {
+    return relativeId.startsWith("deliveries.") ? relativeId.slice("deliveries.".length).split(".")[0] : "";
+  }
+
+  /**
    * Update or create all states for a delivery.
    *
    * @param delivery The delivery data from API
    * @param carrierName Resolved carrier display name
-   * @param precomputedId Optional package id from the caller's deterministic
-   *   pre-pass. Falls back to computing it here when called directly (tests).
+   * @param pkgId Package id from the caller's deterministic pre-pass — always
+   *   computed via `packageId()` so the collision suffixing stays deterministic
+   *   (v0.10.0, L11: no test-only fallback path anymore).
    */
-  async updateDelivery(delivery: ParcelDelivery, carrierName: string, precomputedId?: string): Promise<void> {
-    const pkgId = precomputedId ?? this.packageId(delivery);
+  async updateDelivery(delivery: ParcelDelivery, carrierName: string, pkgId: string): Promise<void> {
     const devicePath = `deliveries.${pkgId}`;
 
     const description = typeof delivery.description === "string" ? delivery.description : "";
     const trackingNumber = typeof delivery.tracking_number === "string" ? delivery.tracking_number : "";
     const extraInfo = typeof delivery.extra_information === "string" ? delivery.extra_information : "";
 
-    // v0.7.2: only write the device object when its name source changed —
-    // extendObject on every poll meant one object write + objectChange event
-    // per package per minute for data that practically never changes.
-    const deviceSig = `${description} ${trackingNumber}`;
-    if (this.deviceWritten.get(pkgId) !== deviceSig) {
-      await this.adapter.extendObjectAsync(
+    // v0.10.0 (DP-5): ensure the device object once per process. `preserve:
+    // name` keeps an existing name (user renames win), so the name — localized
+    // fallback when the API sends no description (L18) — only matters at
+    // first creation; the former per-change rewrite never had a visible effect.
+    if (!this.deviceEnsured.has(pkgId)) {
+      await this.adapter.extendObject(
         devicePath,
         {
           type: "device",
           common: {
-            name: description || `Package ${trackingNumber || pkgId}`,
+            name: description || packageName(trackingNumber || pkgId),
           },
           native: {},
         },
         { preserve: { common: ["name"] } },
       );
-      this.deviceWritten.set(pkgId, deviceSig);
+      this.deviceEnsured.add(pkgId);
     }
     this.knownDeliveryIds?.add(pkgId);
 
     const statusCode = this.parseStatus(delivery);
-    const labels = STATUS_LABELS[this.language];
-    let statusText = labels[statusCode];
-    if (!statusText) {
+    let statusText = statusLabel(statusCode);
+    if (statusText === undefined) {
       // v0.4.3 (E3): trace unknown status-code (API drift). A future
       // parcel.app status (e.g. 9, 10) would render as "Unknown (N)"
-      // without any log clue that the codes table is out of date.
-      this.adapter.log.debug(`status code ${statusCode} not in STATUS_LABELS[${this.language}], using fallback`);
+      // without any log clue that the label table is out of date.
+      this.adapter.log.debug(`status code ${statusCode} has no status_* label, using fallback`);
       statusText = `Unknown (${statusCode})`;
     }
 
@@ -249,42 +244,38 @@ export class StateManager {
     const lastEvent = this.formatLastEvent(delivery);
     const lastLocation = this.extractLastLocation(delivery);
 
-    await Promise.all([
-      this.createAndSet(`${devicePath}.carrier`, tName("carrier"), "string", "text", carrierName),
-      this.createAndSet(`${devicePath}.status`, tName("status"), "string", "text", statusText),
-      this.createAndSet(`${devicePath}.statusCode`, tName("statusCode"), "number", "value", statusCode),
-      this.createAndSet(`${devicePath}.description`, tName("description"), "string", "text", description),
-      this.createAndSet(`${devicePath}.trackingNumber`, tName("trackingNumber"), "string", "text", trackingNumber),
-      this.createAndSet(`${devicePath}.extraInfo`, tName("extraInfo"), "string", "text", extraInfo),
-      this.createAndSet(`${devicePath}.deliveryWindow`, tName("deliveryWindow"), "string", "text", deliveryWindow),
-      this.createAndSet(
-        `${devicePath}.deliveryEstimate`,
-        tName("deliveryEstimate"),
-        "string",
-        "text",
-        deliveryEstimate,
-      ),
-      this.createAndSet(`${devicePath}.lastEvent`, tName("lastEvent"), "string", "text", lastEvent),
-      this.createAndSet(`${devicePath}.lastLocation`, tName("lastLocation"), "string", "text", lastLocation),
-    ]);
+    // v0.10.0 (M5): ONE definition list drives the writes AND the lastUpdated
+    // decision — the former parallel JSON.stringify signature array was a
+    // silent drift trap (a new field added to one list but not the other).
+    const stateDefs: [
+      id: string,
+      name: ioBroker.StringOrTranslated,
+      type: ioBroker.CommonType,
+      role: string,
+      val: ioBroker.StateValue,
+    ][] = [
+      [`${devicePath}.carrier`, tName("carrier"), "string", "text", carrierName],
+      [`${devicePath}.status`, tName("status"), "string", "text", statusText],
+      [`${devicePath}.statusCode`, tName("statusCode"), "number", "value", statusCode],
+      [`${devicePath}.description`, tName("description"), "string", "text", description],
+      [`${devicePath}.trackingNumber`, tName("trackingNumber"), "string", "text", trackingNumber],
+      [`${devicePath}.extraInfo`, tName("extraInfo"), "string", "text", extraInfo],
+      [`${devicePath}.deliveryWindow`, tName("deliveryWindow"), "string", "text", deliveryWindow],
+      [`${devicePath}.deliveryEstimate`, tName("deliveryEstimate"), "string", "text", deliveryEstimate],
+      [`${devicePath}.lastEvent`, tName("lastEvent"), "string", "text", lastEvent],
+      [`${devicePath}.lastLocation`, tName("lastLocation"), "string", "text", lastLocation],
+    ];
+    const changed = await Promise.all(
+      stateDefs.map(([id, name, type, role, val]) => this.createAndSet(id, name, type, role, val)),
+    );
 
-    // v0.7.2: `lastUpdated` = "when the tracking data last CHANGED". Writing a
-    // fresh timestamp every poll fired one guaranteed state event per package
-    // per poll and defeated the skip-unchanged optimization for this state.
-    const sig = JSON.stringify([
-      carrierName,
-      statusText,
-      statusCode,
-      description,
-      trackingNumber,
-      extraInfo,
-      deliveryWindow,
-      deliveryEstimate,
-      lastEvent,
-      lastLocation,
-    ]);
-    if (this.valuesSig.get(pkgId) !== sig) {
-      this.valuesSig.set(pkgId, sig);
+    // v0.10.0 (M5): `lastUpdated` = "when the tracking data last CHANGED".
+    // The decision now rides on the broker's own setStateChanged answer
+    // (notChanged=false ⇒ a sibling value really differed in the DB), so an
+    // adapter restart no longer stamps every package with a fresh timestamp —
+    // the old in-memory signature map always missed on the first poll after a
+    // restart, and it was updated BEFORE its write survived (ASYNC-6).
+    if (changed.some(Boolean)) {
       await this.createAndSet(
         `${devicePath}.lastUpdated`,
         tName("lastUpdated"),
@@ -349,42 +340,39 @@ export class StateManager {
       }
       this.knownDeliveryIds = new Set<string>();
       for (const row of objects.rows) {
-        const relativeId = row.id.replace(`${this.adapter.namespace}.`, "");
-        if (relativeId.startsWith("deliveries.")) {
-          // Direct device segment only (`deliveries.<pkgId>`).
-          const pkgId = relativeId.slice("deliveries.".length).split(".")[0];
-          if (pkgId) {
-            this.knownDeliveryIds.add(pkgId);
-          }
+        // The range query guarantees the namespace prefix — cut it instead of
+        // pattern-replacing (v0.10.0, KISS-13).
+        const pkgId = StateManager.pkgIdOf(row.id.slice(this.adapter.namespace.length + 1));
+        if (pkgId) {
+          this.knownDeliveryIds.add(pkgId);
         }
       }
     }
 
     const keepSet = new Set(keepIds);
-    // v0.4.2 (S1): collect first, then delete in parallel. Earlier each
-    // stale package took a sequential broker round-trip.
+    // v0.4.2 (S1): collect first, then delete in parallel — capped in batches
+    // (v0.10.0, I2) like the update fan-out in main.ts.
     const toDelete = [...this.knownDeliveryIds].filter(pkgId => !keepSet.has(pkgId));
     const toDeleteSet = new Set(toDelete);
 
-    await Promise.all(
-      toDelete.map(async pkgId => {
-        const relativeId = `deliveries.${pkgId}`;
-        await this.adapter.delObjectAsync(relativeId, { recursive: true });
-        this.adapter.log.debug(`Removed stale delivery: ${relativeId}`);
-        this.deviceWritten.delete(pkgId);
-        this.valuesSig.delete(pkgId);
-      }),
-    );
+    for (let start = 0; start < toDelete.length; start += DELETE_BATCH_SIZE) {
+      const batch = toDelete.slice(start, start + DELETE_BATCH_SIZE);
+      await Promise.all(
+        batch.map(async pkgId => {
+          const relativeId = `deliveries.${pkgId}`;
+          await this.adapter.delObjectAsync(relativeId, { recursive: true });
+          this.adapter.log.debug(`Removed stale delivery: ${relativeId}`);
+          this.deviceEnsured.delete(pkgId);
+        }),
+      );
+    }
 
     // v0.9.0 (S2): prune createdIds for every removed package in ONE pass over
-    // the set. This used to be nested inside the delete-map above — O(deleted ×
-    // created) with a fresh `[...createdIds]` spread per deleted package; now it
-    // is O(created). A createdId is `deliveries.<pkgId>` or
+    // the set — O(created). A createdId is `deliveries.<pkgId>` or
     // `deliveries.<pkgId>.<state>` — extract the pkgId and drop it if removed.
     if (toDeleteSet.size > 0) {
       for (const id of [...this.createdIds]) {
-        const pkgId = id.startsWith("deliveries.") ? id.slice("deliveries.".length).split(".")[0] : "";
-        if (toDeleteSet.has(pkgId)) {
+        if (toDeleteSet.has(StateManager.pkgIdOf(id))) {
           this.createdIds.delete(id);
         }
       }
@@ -563,7 +551,7 @@ export class StateManager {
       expectedDate = parsed ? new Date(parsed.ms) : null;
     }
 
-    if (!expectedDate || isNaN(expectedDate.getTime())) {
+    if (!expectedDate || Number.isNaN(expectedDate.getTime())) {
       return null;
     }
 
@@ -585,15 +573,15 @@ export class StateManager {
       return "";
     }
     if (diffDays < 0) {
-      return I18n.translate("estimateOverdue");
+      return tText("estimateOverdue");
     }
     if (diffDays === 0) {
-      return I18n.translate("estimateToday");
+      return tText("estimateToday");
     }
     if (diffDays === 1) {
-      return I18n.translate("estimateTomorrow");
+      return tText("estimateTomorrow");
     }
-    return I18n.translate("estimateDays").replace("%d", String(diffDays));
+    return tText("estimateDays", diffDays);
   }
 
   /**
@@ -673,6 +661,9 @@ export class StateManager {
    * @param type Value type
    * @param role ioBroker role
    * @param val Value to set
+   * @returns true when the broker actually wrote the value (it differed or the
+   *   state was new) — the DB-backed "did anything change" signal driving
+   *   `lastUpdated` (v0.10.0, M5)
    */
   private async createAndSet(
     id: string,
@@ -680,7 +671,7 @@ export class StateManager {
     type: ioBroker.CommonType,
     role: string,
     val: ioBroker.StateValue,
-  ): Promise<void> {
+  ): Promise<boolean> {
     if (!this.createdIds.has(id)) {
       await this.adapter.setObjectNotExistsAsync(id, {
         type: "state",
@@ -689,6 +680,15 @@ export class StateManager {
       });
       this.createdIds.add(id);
     }
-    await this.adapter.setStateChangedAsync(id, { val, ack: true });
+    // The bundled @iobroker/types 7.1.2 types this promise as `string`, but
+    // js-controller ≥7.2.2 (our dependency floor) resolves { id, notChanged }
+    // — verified at v7.2.2: adapter.ts invokes the callback with
+    // (null, res.id, res.notChanged) and tools.promisify(['id','notChanged'])
+    // builds the object from exactly these named args. Narrow locally instead
+    // of trusting the stale published type.
+    const result: unknown = await this.adapter.setStateChangedAsync(id, { val, ack: true });
+    // Only an explicit notChanged=false counts as a write — anything else
+    // (missing field, drifted runtime) must not fake "changed" on every poll.
+    return typeof result === "object" && result !== null && (result as { notChanged?: unknown }).notChanged === false;
   }
 }

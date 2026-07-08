@@ -105,13 +105,15 @@ export function coerceClampedInt(raw: unknown, min: number, max: number, default
 }
 
 /**
- * Collapse CR / LF / TAB runs in an untrusted string to a single space before
- * it is interpolated into a log line — prevents log-injection (a forged second
- * log line) from external values (tracking number, carrier code, raw API body,
- * reverse-DNS owner key, …). Fleet convention (hassemu/hueemu v1.36.0 S4).
+ * Collapse control-character runs (CR / LF / TAB / NUL / VT / FF and the
+ * Unicode line separators U+2028/U+2029) in an untrusted string to a single
+ * space before it is interpolated into a log line — prevents log-injection
+ * (a forged second log line) from external values (tracking number, carrier
+ * code, raw API body, collision raw-key with its NUL separator, …). Fleet
+ * convention (hassemu/hueemu v1.36.0 S4); widened in v0.10.0 (I10).
  *
  * @param value Untrusted string to flatten for single-line logging.
  */
 export function oneLine(value: string): string {
-  return value.replace(/[\r\n\t]+/g, " ");
+  return value.replace(/[\r\n\t\0\v\f\u2028\u2029]+/g, " ");
 }

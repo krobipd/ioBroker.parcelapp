@@ -277,7 +277,7 @@ describe("ParcelClient", () => {
       }
     });
 
-    it("should throw on invalid JSON response", async () => {
+    it("should throw PARSE_ERROR on invalid JSON — and keep the body OUT of the message (S1)", async () => {
       const { server, port } = await startMockServer((_req, res) => {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end("not valid json{{{");
@@ -288,8 +288,13 @@ describe("ParcelClient", () => {
         await client.getDeliveries("active");
         throw new Error("Should have thrown");
       } catch (err) {
-        const error = err as Error;
+        const error = err as Error & { code: string };
         expect(error.message).toContain("JSON parse error");
+        // v0.10.0 (M1): parse failures carry a machine code now.
+        expect(error.code).toBe("PARSE_ERROR");
+        // v0.10.0 (L26): the whole point of S1 — the (potentially PII-bearing)
+        // raw body must NOT leak into the error-level message.
+        expect(error.message).not.toContain("not valid json");
       } finally {
         await stopServer(server);
       }
@@ -822,7 +827,7 @@ describe("ParcelClient", () => {
       client.cancelAll();
     });
 
-    it("aborts an in-flight request", async () => {
+    it("aborts an in-flight request with the ABORTED code (M1)", async () => {
       // Hanging mock: never responds, so the request stays in-flight until aborted.
       const { server, port } = await startMockServer(() => {
         /* intentionally no response */
@@ -831,7 +836,67 @@ describe("ParcelClient", () => {
         const client = createTestClient("key", port);
         const pending = client.getDeliveries("active");
         client.cancelAll();
-        await expect(pending).rejects.toThrow();
+        // v0.10.0 (M1): the shutdown abort carries a machine code so the
+        // adapter routes it to debug instead of a red "Poll failed" line.
+        await expect(pending).rejects.toMatchObject({ code: "ABORTED" });
+      } finally {
+        await stopServer(server);
+      }
+    });
+
+    it("is terminal: a request STARTED after cancelAll is refused immediately (L3)", async () => {
+      const { server, port } = await startMockServer((_req, res) => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ success: true, deliveries: [] }));
+      });
+      try {
+        const client = createTestClient("key", port);
+        client.cancelAll();
+        // No fresh connection may open during shutdown — e.g. the carrier
+        // fetch kicked off by a poll batch that was already past getDeliveries.
+        await expect(client.getDeliveries("active")).rejects.toMatchObject({ code: "ABORTED" });
+      } finally {
+        await stopServer(server);
+      }
+    });
+  });
+
+  describe("API-drift guards (v0.10.0 additions)", () => {
+    it("should throw API_ERROR when deliveries is a plain object (L22)", async () => {
+      const { server, port } = await startMockServer((_req, res) => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ success: true, deliveries: {} }));
+      });
+      try {
+        const client = createTestClient("key", port);
+        await client.getDeliveries("active");
+        throw new Error("Should have thrown");
+      } catch (err) {
+        // Present-but-wrong-typed deliveries is real drift — it must throw so
+        // the poll keeps existing states instead of reading it as "empty" and
+        // deleting every package (the 0.9.0 data-loss class).
+        expect((err as Error & { code: string }).code).toBe("API_ERROR");
+      } finally {
+        await stopServer(server);
+      }
+    });
+
+    it("flattens and caps a hostile error_message before it reaches the Error (M6)", async () => {
+      const { server, port } = await startMockServer((_req, res) => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({ success: false, error_message: `line1\nFORGED second log line\n${"x".repeat(500)}` }),
+        );
+      });
+      try {
+        const client = createTestClient("key", port);
+        await client.getDeliveries("active");
+        throw new Error("Should have thrown");
+      } catch (err) {
+        const error = err as Error & { code: string };
+        expect(error.code).toBe("API_ERROR");
+        expect(error.message).not.toContain("\n"); // flattened
+        expect(error.message.length).toBeLessThan(250); // capped at the snippet length
       } finally {
         await stopServer(server);
       }

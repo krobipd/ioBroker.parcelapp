@@ -39,10 +39,10 @@ export interface ParcelDelivery {
 
 /** Single tracking event */
 export interface ParcelEvent {
-  /** Event description */
-  event: string;
-  /** Event date string */
-  date: string;
+  /** Event description (optional: the API normally sends it, but the adapter guards against drift) */
+  event?: string;
+  /** Event date string (optional: guarded against drift) */
+  date?: string;
   /** Event location */
   location?: string;
 }
@@ -72,141 +72,46 @@ export interface AddDeliveryResponse {
 /** Carrier names mapping (carrier_code → display name) */
 export type CarrierMap = Record<string, string>;
 
-/** Delivery status labels for status codes 0-8, keyed by ioBroker language code */
-export const STATUS_LABELS: Record<string, Record<number, string>> = {
-  de: {
-    0: "Zugestellt",
-    1: "Eingefroren",
-    2: "Unterwegs",
-    3: "Abholung erwartet",
-    4: "In Zustellung",
-    5: "Nicht gefunden",
-    6: "Zustellversuch gescheitert",
-    7: "Ausnahme",
-    8: "Registriert",
-  },
-  en: {
-    0: "Delivered",
-    1: "Frozen",
-    2: "In Transit",
-    3: "Awaiting Pickup",
-    4: "Out for Delivery",
-    5: "Not Found",
-    6: "Delivery Attempt Failed",
-    7: "Exception",
-    8: "Info Received",
-  },
-  ru: {
-    0: "Доставлено",
-    1: "Заморожено",
-    2: "В пути",
-    3: "Ожидает получения",
-    4: "Доставляется",
-    5: "Не найдено",
-    6: "Неудачная доставка",
-    7: "Исключение",
-    8: "Зарегистрировано",
-  },
-  pt: {
-    0: "Entregue",
-    1: "Congelado",
-    2: "Em trânsito",
-    3: "Aguardando recolha",
-    4: "Em entrega",
-    5: "Não encontrado",
-    6: "Tentativa de entrega falhou",
-    7: "Exceção",
-    8: "Registado",
-  },
-  nl: {
-    0: "Bezorgd",
-    1: "Bevroren",
-    2: "Onderweg",
-    3: "Wacht op ophaling",
-    4: "Wordt bezorgd",
-    5: "Niet gevonden",
-    6: "Bezorgpoging mislukt",
-    7: "Uitzondering",
-    8: "Geregistreerd",
-  },
-  fr: {
-    0: "Livré",
-    1: "Gelé",
-    2: "En transit",
-    3: "En attente de retrait",
-    4: "En cours de livraison",
-    5: "Introuvable",
-    6: "Échec de la livraison",
-    7: "Exception",
-    8: "Enregistré",
-  },
-  it: {
-    0: "Consegnato",
-    1: "Congelato",
-    2: "In transito",
-    3: "In attesa di ritiro",
-    4: "In consegna",
-    5: "Non trovato",
-    6: "Consegna fallita",
-    7: "Eccezione",
-    8: "Registrato",
-  },
-  es: {
-    0: "Entregado",
-    1: "Congelado",
-    2: "En tránsito",
-    3: "Esperando recogida",
-    4: "En reparto",
-    5: "No encontrado",
-    6: "Intento de entrega fallido",
-    7: "Excepción",
-    8: "Registrado",
-  },
-  pl: {
-    0: "Dostarczone",
-    1: "Zamrożone",
-    2: "W drodze",
-    3: "Oczekuje na odbiór",
-    4: "W doręczeniu",
-    5: "Nie znaleziono",
-    6: "Nieudana próba doręczenia",
-    7: "Wyjątek",
-    8: "Zarejestrowane",
-  },
-  uk: {
-    0: "Доставлено",
-    1: "Заморожено",
-    2: "В дорозі",
-    3: "Очікує отримання",
-    4: "Доставляється",
-    5: "Не знайдено",
-    6: "Невдала спроба доставки",
-    7: "Виняток",
-    8: "Зареєстровано",
-  },
-  "zh-cn": {
-    0: "已送达",
-    1: "已冻结",
-    2: "运输中",
-    3: "等待取件",
-    4: "派送中",
-    5: "未找到",
-    6: "派送失败",
-    7: "异常",
-    8: "已登记",
-  },
-};
+/**
+ * Machine-readable codes carried by every Error the ParcelClient rejects with.
+ * Single source of truth for the client↔adapter error contract — main.ts
+ * classifies against these, so a typo on either side is a compile error.
+ */
+export type ApiErrorCode =
+  | "RATE_LIMITED"
+  | "INVALID_API_KEY"
+  | "FORBIDDEN"
+  | "HTTP_ERROR"
+  | "API_ERROR"
+  | "BODY_TOO_LARGE"
+  | "INVALID_URL"
+  | "TIMEOUT"
+  | "PARSE_ERROR"
+  | "ABORTED";
 
-/** Language codes the adapter generates state labels for */
-export const SUPPORTED_LANGUAGES = Object.keys(STATUS_LABELS);
+/** Error contract between ParcelClient and the adapter. */
+export interface ApiError extends Error {
+  /** Machine-readable failure class the adapter dispatches on. */
+  code: ApiErrorCode;
+  /** Present on RATE_LIMITED: server-provided cooldown in seconds. */
+  retryAfterSeconds?: number;
+}
 
-/** Fallback language used when system.config.language is outside SUPPORTED_LANGUAGES */
-export const FALLBACK_LANGUAGE = "en";
+/*
+ * v0.10.0 (L20): the former STATUS_LABELS table (status codes 0-8 in 11
+ * languages) moved to admin/i18n/<lang>.json as status_0 … status_8 — one
+ * translation system (adapter-core I18n) instead of two parallel ones.
+ * Lookup lives in i18n.ts (statusLabel).
+ */
+
+/** Status code the API uses for a delivered package (drives the active filter and autoRemove). */
+export const DELIVERED_STATUS_CODE = 0;
 
 /**
  * Sentinel status code for unparseable API drift. Distinct from 0 (Delivered)
  * so a garbage `status_code` keeps the package visible (the active filter is
- * `status !== 0`) and renders as "Unknown" instead of silently dropping it.
+ * `status !== DELIVERED_STATUS_CODE`) and renders as "Unknown" instead of
+ * silently dropping it.
  */
 export const UNKNOWN_STATUS_CODE = -1;
 

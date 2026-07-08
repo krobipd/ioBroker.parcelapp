@@ -28,7 +28,9 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var parcel_client_exports = {};
 __export(parcel_client_exports, {
-  ParcelClient: () => ParcelClient
+  ParcelClient: () => ParcelClient,
+  RETRY_AFTER_DEFAULT_SEC: () => RETRY_AFTER_DEFAULT_SEC,
+  RETRY_AFTER_MAX_SEC: () => RETRY_AFTER_MAX_SEC
 });
 module.exports = __toCommonJS(parcel_client_exports);
 var http = __toESM(require("node:http"));
@@ -36,6 +38,10 @@ var https = __toESM(require("node:https"));
 var import_coerce = require("./coerce");
 const API_BASE = "https://api.parcel.app/external";
 const REQUEST_TIMEOUT = 15e3;
+const REQUEST_DEADLINE_MS = 6e4;
+const RETRY_AFTER_MAX_SEC = 24 * 3600;
+const RETRY_AFTER_DEFAULT_SEC = 5 * 60;
+const BODY_SNIPPET_LEN = 200;
 const MAX_BODY_BYTES = 1 << 20;
 function apiError(message, code, extra) {
   const err = new Error(message);
@@ -78,17 +84,30 @@ class ParcelClient {
     this.baseUrl = baseUrl;
   }
   /**
-   * v0.4.2 (P1): abort every in-flight HTTPS request. Idempotent.
+   * v0.10.0 (L3): once cancelAll ran, the client is terminal — a request
+   * STARTED after the abort (e.g. the carrier fetch kicked off by a poll
+   * batch that was already past getDeliveries at unload) must not open a
+   * fresh HTTPS connection that could outlive js-controller's 4s kill
+   * deadline. `request()` rejects immediately when this is set.
+   */
+  cancelled = false;
+  /**
+   * v0.4.2 (P1): abort every in-flight HTTPS request and refuse new ones.
+   * Idempotent.
    */
   cancelAll() {
     var _a;
     (_a = this.log) == null ? void 0 : _a.debug(`cancelAll: aborting ${this.inflight.size} inflight requests`);
+    this.cancelled = true;
     for (const ctrl of this.inflight) {
       ctrl.abort();
     }
   }
   /**
    * Fetch deliveries from parcel.app.
+   *
+   * Error style: rejects with a code-bearing {@link ApiError} on every failure
+   * (HTTP status, drift, transport) — callers classify via `error.code`.
    *
    * @param filterMode Filter active or recent deliveries
    */
@@ -100,7 +119,7 @@ class ParcelClient {
       throw apiError("API error: malformed response", "API_ERROR");
     }
     if (!(0, import_coerce.isTrueish)(response.success)) {
-      const rawMsg = typeof response.error_message === "string" ? response.error_message : "";
+      const rawMsg = typeof response.error_message === "string" ? (0, import_coerce.oneLine)(response.error_message).slice(0, BODY_SNIPPET_LEN) : "";
       (_b = this.log) == null ? void 0 : _b.debug(`API drift: success=false, msg='${rawMsg}'`);
       throw apiError(`API error: ${rawMsg || "UNKNOWN"}`, "API_ERROR");
     }
@@ -115,6 +134,10 @@ class ParcelClient {
   }
   /**
    * Add a new delivery to parcel.app.
+   *
+   * Error style: transport/HTTP failures reject with {@link ApiError}; a 2xx
+   * body is returned RAW and never validated — `success: false` is passed
+   * through unchanged because sendTo callers receive this object verbatim.
    *
    * @param delivery The delivery to add
    */
@@ -133,7 +156,12 @@ class ParcelClient {
     }
     return this.carrierFetchInFlight;
   }
-  /** One actual carrier-list fetch. Failure → empty map, NOT cached (retry next poll). */
+  /**
+   * One actual carrier-list fetch. Failure → empty map, NOT cached — retried by
+   * the next update batch (the mutex above only dedupes CONCURRENT callers, so
+   * a poll with several 25er batches may retry once per batch; the endpoint is
+   * a static, unauthenticated file without a rate limit).
+   */
   async fetchCarrierNames() {
     var _a, _b, _c;
     try {
@@ -154,8 +182,7 @@ class ParcelClient {
       );
       return {};
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      (_c = this.log) == null ? void 0 : _c.debug(`carriers: fetch failed (kept empty, will retry): ${msg}`);
+      (_c = this.log) == null ? void 0 : _c.debug(`carriers: fetch failed (kept empty, will retry): ${(0, import_coerce.errText)(err)}`);
       return {};
     }
   }
@@ -174,7 +201,12 @@ class ParcelClient {
     const mapped = carriers[carrierCode];
     return typeof mapped === "string" && mapped.length > 0 ? mapped : carrierCode.toUpperCase();
   }
-  /** Test if the API key is valid */
+  /**
+   * Test if the API key is valid.
+   *
+   * Error style: never throws — failures are folded into the returned
+   * `{ success: false, message }` result object.
+   */
   async testConnection() {
     try {
       await this.getDeliveries("active");
@@ -200,12 +232,17 @@ class ParcelClient {
     const startedAt = Date.now();
     (_a = this.log) == null ? void 0 : _a.debug(`HTTP ${method} ${path}`);
     return new Promise((resolve, reject) => {
-      var _a2;
+      var _a2, _b;
+      if (this.cancelled) {
+        (_a2 = this.log) == null ? void 0 : _a2.debug(`HTTP ${method} ${path} refused \u2014 client cancelled`);
+        reject(apiError("Client cancelled", "ABORTED"));
+        return;
+      }
       let url;
       try {
         url = new URL(`${this.baseUrl}${path}`);
       } catch {
-        (_a2 = this.log) == null ? void 0 : _a2.debug(`HTTP invalid URL: ${this.baseUrl}${path}`);
+        (_b = this.log) == null ? void 0 : _b.debug(`HTTP invalid URL: ${this.baseUrl}${path}`);
         reject(apiError(`Invalid URL: ${this.baseUrl}${path}`, "INVALID_URL"));
         return;
       }
@@ -226,8 +263,13 @@ class ParcelClient {
       };
       const ctrl = new AbortController();
       this.inflight.add(ctrl);
+      let deadlineTimer;
       const cleanup = () => {
         this.inflight.delete(ctrl);
+        if (deadlineTimer !== void 0) {
+          clearTimeout(deadlineTimer);
+          deadlineTimer = void 0;
+        }
       };
       const transportRequest = url.protocol === "http:" ? http.request : https.request;
       const req = transportRequest(options, (res) => {
@@ -255,46 +297,44 @@ class ParcelClient {
           chunks.push(chunk);
         });
         res.on("end", () => {
-          var _a3, _b, _c, _d;
+          var _a3, _b2, _c;
           if (oversized) {
             return;
           }
           cleanup();
           const raw = Buffer.concat(chunks).toString("utf-8");
           if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
-            if (res.statusCode === 429) {
-              const retryAfter = parseInt(res.headers["retry-after"] || "", 10);
-              const retryAfterSeconds = Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(24 * 3600, retryAfter) : 5 * 60;
-              (_a3 = this.log) == null ? void 0 : _a3.debug(`HTTP 429 ${path} \u2192 retry-after=${retryAfterSeconds}s`);
-              reject(apiError("Rate limit exceeded", "RATE_LIMITED", { retryAfterSeconds }));
-              return;
-            }
-            const code = res.statusCode === 401 ? "INVALID_API_KEY" : res.statusCode === 403 ? "FORBIDDEN" : "HTTP_ERROR";
-            (_b = this.log) == null ? void 0 : _b.debug(
-              `HTTP ${method} ${path} \u2192 ${res.statusCode} ${code} (body=${(0, import_coerce.oneLine)(raw.substring(0, 200))})`
+            const httpError = ParcelClient.mapHttpStatusError(res.statusCode, res.statusMessage, res.headers["retry-after"]);
+            (_a3 = this.log) == null ? void 0 : _a3.debug(
+              `HTTP ${method} ${path} \u2192 ${res.statusCode} ${httpError.code}${httpError.retryAfterSeconds !== void 0 ? ` retry-after=${httpError.retryAfterSeconds}s` : ""} (body=${(0, import_coerce.oneLine)(raw.substring(0, BODY_SNIPPET_LEN))})`
             );
-            reject(apiError(`HTTP ${res.statusCode}: ${res.statusMessage}`, code));
+            reject(httpError);
             return;
           }
           try {
             const parsed = JSON.parse(raw);
-            (_c = this.log) == null ? void 0 : _c.debug(`HTTP ${method} ${path} \u2192 ${res.statusCode} (${Date.now() - startedAt}ms, ${bodyBytes}B)`);
+            (_b2 = this.log) == null ? void 0 : _b2.debug(`HTTP ${method} ${path} \u2192 ${res.statusCode} (${Date.now() - startedAt}ms, ${bodyBytes}B)`);
             resolve(parsed);
           } catch {
-            (_d = this.log) == null ? void 0 : _d.debug(`HTTP JSON parse fail ${path}: ${(0, import_coerce.oneLine)(raw.substring(0, 200))}`);
-            reject(new Error(`JSON parse error (${raw.length} bytes)`));
+            (_c = this.log) == null ? void 0 : _c.debug(`HTTP JSON parse fail ${path}: ${(0, import_coerce.oneLine)(raw.substring(0, BODY_SNIPPET_LEN))}`);
+            reject(apiError(`JSON parse error (${raw.length} bytes)`, "PARSE_ERROR"));
           }
         });
       });
+      deadlineTimer = setTimeout(() => {
+        var _a3;
+        (_a3 = this.log) == null ? void 0 : _a3.debug(`HTTP deadline ${method} ${path} (${Date.now() - startedAt}ms > ${REQUEST_DEADLINE_MS}ms)`);
+        req.destroy(apiError(`Request deadline exceeded (${REQUEST_DEADLINE_MS / 1e3}s)`, "TIMEOUT"));
+      }, REQUEST_DEADLINE_MS);
       ctrl.signal.addEventListener("abort", () => {
-        req.destroy(new Error("Request aborted"));
+        req.destroy(apiError("Request aborted", "ABORTED"));
       });
       req.on("timeout", () => {
         var _a3;
         req.destroy();
         cleanup();
         (_a3 = this.log) == null ? void 0 : _a3.debug(`HTTP timeout ${method} ${path} (${Date.now() - startedAt}ms)`);
-        reject(new Error("Request timeout"));
+        reject(apiError("Request timeout", "TIMEOUT"));
       });
       req.on("error", (err) => {
         var _a3;
@@ -302,15 +342,40 @@ class ParcelClient {
         (_a3 = this.log) == null ? void 0 : _a3.debug(`HTTP error ${method} ${path} (${Date.now() - startedAt}ms): ${err.message}`);
         reject(err);
       });
-      if (body) {
-        req.write(JSON.stringify(body));
+      try {
+        if (body) {
+          req.write(JSON.stringify(body));
+        }
+        req.end();
+      } catch (err) {
+        cleanup();
+        req.destroy();
+        reject(apiError(`Request write failed: ${(0, import_coerce.errText)(err)}`, "API_ERROR"));
       }
-      req.end();
     });
+  }
+  /**
+   * Map a non-2xx HTTP status to its {@link ApiError}. Pure — extracted from
+   * the end-handler so the 401/403/429 rules read in isolation (v0.10.0, L17).
+   *
+   * @param statusCode HTTP status code (non-2xx)
+   * @param statusMessage HTTP status message
+   * @param retryAfterHeader Raw Retry-After header value (429 only)
+   */
+  static mapHttpStatusError(statusCode, statusMessage, retryAfterHeader) {
+    if (statusCode === 429) {
+      const retryAfter = parseInt(retryAfterHeader || "", 10);
+      const retryAfterSeconds = Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(RETRY_AFTER_MAX_SEC, retryAfter) : RETRY_AFTER_DEFAULT_SEC;
+      return apiError("Rate limit exceeded", "RATE_LIMITED", { retryAfterSeconds });
+    }
+    const code = statusCode === 401 ? "INVALID_API_KEY" : statusCode === 403 ? "FORBIDDEN" : "HTTP_ERROR";
+    return apiError(`HTTP ${statusCode}: ${statusMessage}`, code);
   }
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  ParcelClient
+  ParcelClient,
+  RETRY_AFTER_DEFAULT_SEC,
+  RETRY_AFTER_MAX_SEC
 });
 //# sourceMappingURL=parcel-client.js.map

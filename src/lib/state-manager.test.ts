@@ -8,22 +8,34 @@ for (const f of readdirSync(i18nDir).filter(f => f.endsWith(".json"))) {
 }
 let mockLang = "en";
 
+// Mirrors adapter-core I18n incl. its %s substitution (translate fills args in
+// the current language; getTranslatedObject fills them in EVERY language).
+const fillArgs = (text: string, args: (string | number | boolean | null)[]): string => {
+  for (const arg of args) {
+    text = text.replace("%s", arg === null ? "null" : String(arg));
+  }
+  return text;
+};
 vi.mock("@iobroker/adapter-core", () => ({
   I18n: {
-    getTranslatedObject: vi.fn((key: string) => {
+    getTranslatedObject: vi.fn((key: string, ...args: (string | number | boolean | null)[]) => {
       const result: Record<string, string> = {};
       for (const [lang, data] of Object.entries(i18nData)) {
-        result[lang] = data[key] ?? key;
+        result[lang] = fillArgs(data[key] ?? key, args);
       }
       return result;
     }),
-    translate: vi.fn((key: string) => i18nData[mockLang]?.[key] ?? i18nData.en?.[key] ?? key),
+    translate: vi.fn((key: string, ...args: (string | number | boolean | null)[]) =>
+      fillArgs(i18nData[mockLang]?.[key] ?? i18nData.en?.[key] ?? key, args),
+    ),
   },
 }));
 
-import { StateManager, resolveLanguage } from "./state-manager";
-import { STATUS_LABELS, SUPPORTED_LANGUAGES, FALLBACK_LANGUAGE } from "./types";
+import { StateManager } from "./state-manager";
 import type { ParcelDelivery } from "./types";
+
+/** All ioBroker languages the adapter ships i18n files for. */
+const EXPECTED_LANGUAGES = ["de", "en", "ru", "pt", "nl", "fr", "it", "es", "pl", "uk", "zh-cn"];
 
 interface ObjectDef {
   type: string;
@@ -53,14 +65,13 @@ interface MockAdapter {
   states: Map<string, StateValue>;
   metrics: MockAdapterMetrics;
   log: { debug: (msg: string) => void };
-  extendObjectAsync: (
+  extendObject: (
     id: string,
     obj: Partial<ObjectDef>,
     options?: { preserve?: { common?: string[] } },
   ) => Promise<void>;
   setObjectNotExistsAsync: (id: string, obj: ObjectDef) => Promise<void>;
-  setStateAsync: (id: string, state: StateValue) => Promise<void>;
-  setStateChangedAsync: (id: string, state: StateValue) => Promise<void>;
+  setStateChangedAsync: (id: string, state: StateValue) => Promise<{ id: string; notChanged: boolean }>;
   delObjectAsync: (id: string, opts?: { recursive: boolean }) => Promise<void>;
   getObjectViewAsync: (
     design: string,
@@ -86,7 +97,7 @@ function createMockAdapter(): MockAdapter {
         debugMessages.push(msg);
       },
     },
-    extendObjectAsync: async (
+    extendObject: async (
       id: string,
       obj: Partial<ObjectDef>,
       _options?: { preserve?: { common?: string[] } },
@@ -104,17 +115,17 @@ function createMockAdapter(): MockAdapter {
         objects.set(id, obj);
       }
     },
-    setStateAsync: async (id: string, state: StateValue): Promise<void> => {
-      states.set(id, state);
-    },
-    setStateChangedAsync: async (id: string, state: StateValue): Promise<void> => {
-      // Mirror js-controller: only write (and count) when the value changed.
+    setStateChangedAsync: async (id: string, state: StateValue): Promise<{ id: string; notChanged: boolean }> => {
+      // Mirror js-controller ≥7.2.2: only write (and count) when the value
+      // changed, and resolve { id, notChanged } — the DB-backed signal the
+      // v0.10.0 lastUpdated decision rides on.
       const existing = states.get(id);
       if (existing && existing.val === state.val) {
-        return;
+        return { id, notChanged: true };
       }
       metrics.setStateChangedWrites++;
       states.set(id, state);
+      return { id, notChanged: false };
     },
     delObjectAsync: async (id: string, _opts?: { recursive: boolean }): Promise<void> => {
       for (const key of objects.keys()) {
@@ -157,6 +168,14 @@ function makeDelivery(overrides: Partial<ParcelDelivery> = {}): ParcelDelivery {
   };
 }
 
+/**
+ * Calls updateDelivery the way main.ts does: with the pkgId from the
+ * deterministic pre-pass (the parameter is required since v0.10.0, L11).
+ */
+async function updateDeliveryT(mgr: StateManager, d: ParcelDelivery, carrier: string): Promise<void> {
+  return mgr.updateDelivery(d, carrier, mgr.packageId(d));
+}
+
 describe("StateManager", () => {
   let adapter: MockAdapter;
   let manager: StateManager;
@@ -164,7 +183,7 @@ describe("StateManager", () => {
   beforeEach(() => {
     mockLang = "de";
     adapter = createMockAdapter();
-    manager = new StateManager(adapter as never, "de");
+    manager = new StateManager(adapter as never);
   });
 
   describe("sanitize", () => {
@@ -266,7 +285,7 @@ describe("StateManager", () => {
   describe("updateDelivery", () => {
     it("should create device object with description as name", async () => {
       const delivery = makeDelivery({ description: "My DHL Package" });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const device = adapter.objects.get(`deliveries.${pkgId}`);
@@ -275,18 +294,21 @@ describe("StateManager", () => {
       expect(device!.common.name).toBe("My DHL Package");
     });
 
-    it("should use tracking number as fallback name when description is empty", async () => {
+    it("should use a localized tracking-number fallback name when description is empty", async () => {
       const delivery = makeDelivery({ description: "", tracking_number: "TRK99" });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const device = adapter.objects.get(`deliveries.${pkgId}`);
-      expect(device!.common.name).toBe("Package TRK99");
+      // v0.10.0 (L18): the fallback is a translation object, not hard English.
+      const name = device!.common.name as Record<string, string>;
+      expect(name.en).toBe("Package TRK99");
+      expect(name.de).toBe("Paket TRK99");
     });
 
     it("should create carrier state with correct value", async () => {
       const delivery = makeDelivery();
-      await manager.updateDelivery(delivery, "DHL Express");
+      await updateDeliveryT(manager, delivery, "DHL Express");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.carrier`);
@@ -296,7 +318,7 @@ describe("StateManager", () => {
 
     it("should set status label in German when language is de", async () => {
       const delivery = makeDelivery({ status_code: 2 });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.status`);
@@ -304,11 +326,12 @@ describe("StateManager", () => {
     });
 
     it("should set status label in English when language is en", async () => {
+      mockLang = "en";
       adapter = createMockAdapter();
-      manager = new StateManager(adapter as never, "en");
+      manager = new StateManager(adapter as never);
 
       const delivery = makeDelivery({ status_code: 4 });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.status`);
@@ -317,7 +340,7 @@ describe("StateManager", () => {
 
     it("should set statusCode as number", async () => {
       const delivery = makeDelivery({ status_code: 8 });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.statusCode`);
@@ -326,7 +349,7 @@ describe("StateManager", () => {
 
     it("should handle unknown status code", async () => {
       const delivery = makeDelivery({ status_code: 99 });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.status`);
@@ -335,7 +358,7 @@ describe("StateManager", () => {
 
     it("should handle non-numeric status code as unknown (kept visible)", async () => {
       const delivery = makeDelivery({ status_code: "abc" as unknown as number });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const statusCode = adapter.states.get(`deliveries.${pkgId}.statusCode`);
@@ -346,7 +369,7 @@ describe("StateManager", () => {
 
     it("should set trackingNumber as original string", async () => {
       const delivery = makeDelivery({ tracking_number: "DHL-ABC-123" });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.trackingNumber`);
@@ -355,7 +378,7 @@ describe("StateManager", () => {
 
     it("should set extraInfo or empty string", async () => {
       const delivery = makeDelivery({ extra_information: "PLZ12345" });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.extraInfo`);
@@ -365,7 +388,7 @@ describe("StateManager", () => {
     it("should set empty extraInfo when undefined", async () => {
       const delivery = makeDelivery();
       delete delivery.extra_information;
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.extraInfo`);
@@ -374,7 +397,7 @@ describe("StateManager", () => {
 
     it("should set lastUpdated as ISO string", async () => {
       const delivery = makeDelivery();
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.lastUpdated`);
@@ -386,7 +409,7 @@ describe("StateManager", () => {
 
     it("should create all expected states", async () => {
       const delivery = makeDelivery();
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const expectedStates = [
@@ -409,7 +432,7 @@ describe("StateManager", () => {
 
     it("should create state objects with correct types", async () => {
       const delivery = makeDelivery();
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const carrierObj = adapter.objects.get(`deliveries.${pkgId}.carrier`);
@@ -424,50 +447,46 @@ describe("StateManager", () => {
     });
   });
 
-  describe("status labels", () => {
+  describe("status labels (admin/i18n status_0…status_8, v0.10.0 L20)", () => {
     it("should have all status codes 0-8 in German", () => {
       for (let i = 0; i <= 8; i++) {
-        expect(STATUS_LABELS.de[i], `Missing DE label for code ${i}`).toBeTypeOf("string");
-        expect(STATUS_LABELS.de[i].length).toBeGreaterThan(0);
+        expect(i18nData.de[`status_${i}`], `Missing DE label for code ${i}`).toBeTypeOf("string");
+        expect(i18nData.de[`status_${i}`].length).toBeGreaterThan(0);
       }
     });
 
     it("should have all status codes 0-8 in English", () => {
       for (let i = 0; i <= 8; i++) {
-        expect(STATUS_LABELS.en[i], `Missing EN label for code ${i}`).toBeTypeOf("string");
-        expect(STATUS_LABELS.en[i].length).toBeGreaterThan(0);
+        expect(i18nData.en[`status_${i}`], `Missing EN label for code ${i}`).toBeTypeOf("string");
+        expect(i18nData.en[`status_${i}`].length).toBeGreaterThan(0);
       }
-    });
-
-    it("should have matching key sets for DE and EN", () => {
-      const deKeys = Object.keys(STATUS_LABELS.de).sort();
-      const enKeys = Object.keys(STATUS_LABELS.en).sort();
-      expect(deKeys).toEqual(enKeys);
     });
 
     it("should map all codes through updateDelivery in DE", async () => {
       for (let code = 0; code <= 8; code++) {
+        mockLang = "de";
         adapter = createMockAdapter();
-        manager = new StateManager(adapter as never, "de");
+        manager = new StateManager(adapter as never);
         const delivery = makeDelivery({ status_code: code, tracking_number: `trk${code}` });
-        await manager.updateDelivery(delivery, "Test");
+        await updateDeliveryT(manager, delivery, "Test");
 
         const pkgId = manager.packageId(delivery);
         const status = adapter.states.get(`deliveries.${pkgId}.status`);
-        expect(status?.val, `Status for code ${code}`).toBe(STATUS_LABELS.de[code]);
+        expect(status?.val, `Status for code ${code}`).toBe(i18nData.de[`status_${code}`]);
       }
     });
 
     it("should map all codes through updateDelivery in EN", async () => {
       for (let code = 0; code <= 8; code++) {
+        mockLang = "en";
         adapter = createMockAdapter();
-        manager = new StateManager(adapter as never, "en");
+        manager = new StateManager(adapter as never);
         const delivery = makeDelivery({ status_code: code, tracking_number: `trk${code}` });
-        await manager.updateDelivery(delivery, "Test");
+        await updateDeliveryT(manager, delivery, "Test");
 
         const pkgId = manager.packageId(delivery);
         const status = adapter.states.get(`deliveries.${pkgId}.status`);
-        expect(status?.val, `Status for code ${code}`).toBe(STATUS_LABELS.en[code]);
+        expect(status?.val, `Status for code ${code}`).toBe(i18nData.en[`status_${code}`]);
       }
     });
   });
@@ -478,7 +497,7 @@ describe("StateManager", () => {
         status_code: 0,
         timestamp_expected: Math.floor(Date.now() / 1000) + 3600,
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
@@ -490,7 +509,7 @@ describe("StateManager", () => {
         status_code: 1,
         timestamp_expected: Math.floor(Date.now() / 1000) + 3600,
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
@@ -509,7 +528,7 @@ describe("StateManager", () => {
         timestamp_expected: Math.floor(start.getTime() / 1000),
         timestamp_expected_end: Math.floor(end.getTime() / 1000),
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
@@ -527,7 +546,7 @@ describe("StateManager", () => {
         timestamp_expected: Math.floor(start.getTime() / 1000),
         timestamp_expected_end: Math.floor(end.getTime() / 1000),
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
@@ -546,7 +565,7 @@ describe("StateManager", () => {
         timestamp_expected: Math.floor(start.getTime() / 1000),
         timestamp_expected_end: Math.floor(end.getTime() / 1000),
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
@@ -565,7 +584,7 @@ describe("StateManager", () => {
         status_code: 4,
         timestamp_expected: Math.floor(start.getTime() / 1000),
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
@@ -574,7 +593,7 @@ describe("StateManager", () => {
 
     it("should return empty string when no timestamps", async () => {
       const delivery = makeDelivery({ status_code: 2 });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
@@ -589,7 +608,7 @@ describe("StateManager", () => {
         status_code: 8,
         timestamp_expected: Math.floor(start.getTime() / 1000),
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
@@ -602,7 +621,7 @@ describe("StateManager", () => {
         date_expected: "2025-12-06 14:30:00",
         date_expected_end: "2025-12-06 18:30:00",
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
@@ -614,7 +633,7 @@ describe("StateManager", () => {
         status_code: 4,
         date_expected: "2025-12-06 11:45:00",
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
@@ -627,7 +646,7 @@ describe("StateManager", () => {
         date_expected: "2025-12-06",
         date_expected_end: "2025-12-08",
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
@@ -640,7 +659,7 @@ describe("StateManager", () => {
         date_expected: "2025-12-06 00:00:00",
         date_expected_end: "2025-12-08 00:00:00",
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
@@ -653,7 +672,7 @@ describe("StateManager", () => {
         date_expected: "2026-13-40 25:99:99", // every component out of range
         date_expected_end: "2026-13-41 26:00:00",
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
@@ -666,7 +685,7 @@ describe("StateManager", () => {
         date_expected: "2026-02-30 14:30:00", // Feb 2026 has 28 days → would roll to Mar 2
         date_expected_end: "2026-02-30 18:30:00",
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
@@ -682,7 +701,7 @@ describe("StateManager", () => {
         timestamp_expected: Math.floor(start.getTime() / 1000),
         date_expected: "2025-12-06 23:00:00",
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
@@ -696,7 +715,7 @@ describe("StateManager", () => {
         status_code: 0,
         timestamp_expected: Math.floor(Date.now() / 1000),
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
@@ -711,7 +730,7 @@ describe("StateManager", () => {
         status_code: 2,
         timestamp_expected: Math.floor(today.getTime() / 1000),
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
@@ -721,7 +740,7 @@ describe("StateManager", () => {
     it("should return 'today' for today delivery in English", async () => {
       mockLang = "en";
       adapter = createMockAdapter();
-      manager = new StateManager(adapter as never, "en");
+      manager = new StateManager(adapter as never);
 
       const today = new Date();
       today.setHours(15, 0, 0, 0);
@@ -730,7 +749,7 @@ describe("StateManager", () => {
         status_code: 2,
         timestamp_expected: Math.floor(today.getTime() / 1000),
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
@@ -746,7 +765,7 @@ describe("StateManager", () => {
         status_code: 4,
         timestamp_expected: Math.floor(tomorrow.getTime() / 1000),
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
@@ -756,7 +775,7 @@ describe("StateManager", () => {
     it("should return 'tomorrow' for tomorrow delivery in English", async () => {
       mockLang = "en";
       adapter = createMockAdapter();
-      manager = new StateManager(adapter as never, "en");
+      manager = new StateManager(adapter as never);
 
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -766,7 +785,7 @@ describe("StateManager", () => {
         status_code: 4,
         timestamp_expected: Math.floor(tomorrow.getTime() / 1000),
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
@@ -782,7 +801,7 @@ describe("StateManager", () => {
         status_code: 2,
         timestamp_expected: Math.floor(future.getTime() / 1000),
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
@@ -792,7 +811,7 @@ describe("StateManager", () => {
     it("should return 'in %d days' for future delivery in English", async () => {
       mockLang = "en";
       adapter = createMockAdapter();
-      manager = new StateManager(adapter as never, "en");
+      manager = new StateManager(adapter as never);
 
       const future = new Date();
       future.setDate(future.getDate() + 5);
@@ -802,7 +821,7 @@ describe("StateManager", () => {
         status_code: 2,
         timestamp_expected: Math.floor(future.getTime() / 1000),
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
@@ -818,7 +837,7 @@ describe("StateManager", () => {
         status_code: 2,
         timestamp_expected: Math.floor(past.getTime() / 1000),
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
@@ -829,7 +848,7 @@ describe("StateManager", () => {
     it("should return 'overdue' for overdue delivery in English", async () => {
       mockLang = "en";
       adapter = createMockAdapter();
-      manager = new StateManager(adapter as never, "en");
+      manager = new StateManager(adapter as never);
 
       const past = new Date();
       past.setDate(past.getDate() - 2);
@@ -839,7 +858,7 @@ describe("StateManager", () => {
         status_code: 2,
         timestamp_expected: Math.floor(past.getTime() / 1000),
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
@@ -855,7 +874,7 @@ describe("StateManager", () => {
         status_code: 2,
         date_expected: dateStr,
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
@@ -871,7 +890,7 @@ describe("StateManager", () => {
       const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
       const delivery = makeDelivery({ status_code: 2, date_expected: dateStr });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
@@ -880,7 +899,7 @@ describe("StateManager", () => {
 
     it("should return empty string when no expected date at all", async () => {
       const delivery = makeDelivery({ status_code: 2 });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
@@ -892,7 +911,7 @@ describe("StateManager", () => {
         status_code: 2,
         date_expected: "not-a-date",
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
@@ -905,7 +924,7 @@ describe("StateManager", () => {
       const delivery = makeDelivery({
         events: [{ event: "Arrived at sort facility", date: "2026-04-04 10:30" }],
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.lastEvent`);
@@ -916,7 +935,7 @@ describe("StateManager", () => {
       const delivery = makeDelivery({
         events: [{ event: "Package picked up", date: "" }],
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.lastEvent`);
@@ -925,7 +944,7 @@ describe("StateManager", () => {
 
     it("should return empty string when no events", async () => {
       const delivery = makeDelivery({ events: [] });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.lastEvent`);
@@ -935,7 +954,7 @@ describe("StateManager", () => {
     it("should return empty string when events is undefined", async () => {
       const delivery = makeDelivery();
       delete delivery.events;
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.lastEvent`);
@@ -950,7 +969,7 @@ describe("StateManager", () => {
           { event: "Picked up", date: "2026-04-02" },
         ],
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.lastEvent`);
@@ -963,7 +982,7 @@ describe("StateManager", () => {
       const delivery = makeDelivery({
         events: [{ event: "Arrived", date: "2026-04-04", location: "Berlin Hub" }],
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.lastLocation`);
@@ -974,7 +993,7 @@ describe("StateManager", () => {
       const delivery = makeDelivery({
         events: [{ event: "Arrived", date: "2026-04-04" }],
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.lastLocation`);
@@ -984,7 +1003,7 @@ describe("StateManager", () => {
     it("should return empty string when no events", async () => {
       const delivery = makeDelivery();
       delete delivery.events;
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.lastLocation`);
@@ -1271,13 +1290,14 @@ describe("StateManager", () => {
           description: 42 as unknown as string,
           tracking_number: "TRK1",
         });
-        await manager.updateDelivery(delivery, "DHL");
+        await updateDeliveryT(manager, delivery, "DHL");
 
         const pkgId = manager.packageId(delivery);
         const state = adapter.states.get(`deliveries.${pkgId}.description`);
         expect(state?.val).toBe("");
         const device = adapter.objects.get(`deliveries.${pkgId}`);
-        expect(device!.common.name).toBe("Package TRK1");
+        // v0.10.0 (L18): drift fallback is the localized name object too.
+        expect((device!.common.name as Record<string, string>).en).toBe("Package TRK1");
       });
 
       it("should handle non-string tracking_number", async () => {
@@ -1285,7 +1305,7 @@ describe("StateManager", () => {
           tracking_number: 999 as unknown as string,
           description: "",
         });
-        await manager.updateDelivery(delivery, "DHL");
+        await updateDeliveryT(manager, delivery, "DHL");
 
         const pkgId = manager.packageId(delivery);
         const state = adapter.states.get(`deliveries.${pkgId}.trackingNumber`);
@@ -1296,7 +1316,7 @@ describe("StateManager", () => {
         const delivery = makeDelivery({
           extra_information: { zip: "12345" } as unknown as string,
         });
-        await manager.updateDelivery(delivery, "DHL");
+        await updateDeliveryT(manager, delivery, "DHL");
 
         const pkgId = manager.packageId(delivery);
         const state = adapter.states.get(`deliveries.${pkgId}.extraInfo`);
@@ -1307,7 +1327,7 @@ describe("StateManager", () => {
         const delivery = makeDelivery({
           events: { event: "x", date: "y" } as unknown as never,
         });
-        await manager.updateDelivery(delivery, "DHL");
+        await updateDeliveryT(manager, delivery, "DHL");
 
         const pkgId = manager.packageId(delivery);
         expect(adapter.states.get(`deliveries.${pkgId}.lastEvent`)?.val).toBe("");
@@ -1318,7 +1338,7 @@ describe("StateManager", () => {
         const delivery = makeDelivery({
           events: [null as unknown as { event: string; date: string }],
         });
-        await manager.updateDelivery(delivery, "DHL");
+        await updateDeliveryT(manager, delivery, "DHL");
 
         const pkgId = manager.packageId(delivery);
         expect(adapter.states.get(`deliveries.${pkgId}.lastEvent`)?.val).toBe("");
@@ -1335,7 +1355,7 @@ describe("StateManager", () => {
             },
           ],
         });
-        await manager.updateDelivery(delivery, "DHL");
+        await updateDeliveryT(manager, delivery, "DHL");
 
         const pkgId = manager.packageId(delivery);
         expect(adapter.states.get(`deliveries.${pkgId}.lastEvent`)?.val).toBe("");
@@ -1351,7 +1371,7 @@ describe("StateManager", () => {
           status_code: 2,
           timestamp_expected: String(ts) as unknown as number,
         });
-        await manager.updateDelivery(delivery, "DHL");
+        await updateDeliveryT(manager, delivery, "DHL");
 
         const pkgId = manager.packageId(delivery);
         const window = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
@@ -1363,7 +1383,7 @@ describe("StateManager", () => {
           status_code: 2,
           timestamp_expected: NaN as unknown as number,
         });
-        await manager.updateDelivery(delivery, "DHL");
+        await updateDeliveryT(manager, delivery, "DHL");
 
         const pkgId = manager.packageId(delivery);
         const window = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
@@ -1375,7 +1395,7 @@ describe("StateManager", () => {
           status_code: 2,
           date_expected: null as unknown as string,
         });
-        await manager.updateDelivery(delivery, "DHL");
+        await updateDeliveryT(manager, delivery, "DHL");
 
         const pkgId = manager.packageId(delivery);
         const estimate = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`);
@@ -1391,7 +1411,7 @@ describe("StateManager", () => {
           timestamp_expected: Math.floor(start.getTime() / 1000),
           timestamp_expected_end: "not-a-number" as unknown as number,
         });
-        await manager.updateDelivery(delivery, "DHL");
+        await updateDeliveryT(manager, delivery, "DHL");
 
         const pkgId = manager.packageId(delivery);
         const window = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
@@ -1402,7 +1422,7 @@ describe("StateManager", () => {
         const delivery = makeDelivery({
           status_code: 4,
         });
-        await manager.updateDelivery(delivery, "DHL");
+        await updateDeliveryT(manager, delivery, "DHL");
 
         const pkgId = manager.packageId(delivery);
         expect(adapter.states.get(`deliveries.${pkgId}.statusCode`)?.val).toBe(4);
@@ -1416,8 +1436,8 @@ describe("StateManager", () => {
       // Create two deliveries
       const d1 = makeDelivery({ tracking_number: "KEEP", status_code: 2 });
       const d2 = makeDelivery({ tracking_number: "REMOVE", status_code: 2 });
-      await manager.updateDelivery(d1, "DHL");
-      await manager.updateDelivery(d2, "DHL");
+      await updateDeliveryT(manager, d1, "DHL");
+      await updateDeliveryT(manager, d2, "DHL");
 
       const keepId = manager.packageId(d1);
       const removeId = manager.packageId(d2);
@@ -1436,8 +1456,8 @@ describe("StateManager", () => {
     it("should not remove anything when all IDs are active", async () => {
       const d1 = makeDelivery({ tracking_number: "A", status_code: 2 });
       const d2 = makeDelivery({ tracking_number: "B", status_code: 4 });
-      await manager.updateDelivery(d1, "DHL");
-      await manager.updateDelivery(d2, "UPS");
+      await updateDeliveryT(manager, d1, "DHL");
+      await updateDeliveryT(manager, d2, "UPS");
 
       const id1 = manager.packageId(d1);
       const id2 = manager.packageId(d2);
@@ -1449,7 +1469,7 @@ describe("StateManager", () => {
 
     it("should handle empty active IDs", async () => {
       const d1 = makeDelivery({ tracking_number: "OLD", status_code: 2 });
-      await manager.updateDelivery(d1, "DHL");
+      await updateDeliveryT(manager, d1, "DHL");
 
       await manager.cleanupDeliveries([]);
 
@@ -1459,28 +1479,29 @@ describe("StateManager", () => {
   });
 
   describe("multilingual labels", () => {
-    const EXPECTED_LANGUAGES = ["de", "en", "ru", "pt", "nl", "fr", "it", "es", "pl", "uk", "zh-cn"];
-
-    it("should cover all 11 ioBroker languages", () => {
-      expect(SUPPORTED_LANGUAGES.sort()).toEqual([...EXPECTED_LANGUAGES].sort());
+    it("should ship i18n files for all 11 ioBroker languages", () => {
+      expect(Object.keys(i18nData).sort()).toEqual([...EXPECTED_LANGUAGES].sort());
     });
 
-    it("should define status codes 0-8 for every language", () => {
+    it("should define status codes 0-8 and packageName for every language", () => {
       for (const lang of EXPECTED_LANGUAGES) {
-        const labels = STATUS_LABELS[lang];
-        expect(labels, `Missing STATUS_LABELS.${lang}`).toBeTypeOf("object");
+        const labels = i18nData[lang];
+        expect(labels, `Missing i18n file for ${lang}`).toBeTypeOf("object");
         for (let code = 0; code <= 8; code++) {
-          expect(labels[code], `${lang} missing code ${code}`).toBeTypeOf("string");
-          expect(labels[code].length).toBeGreaterThan(0);
+          expect(labels[`status_${code}`], `${lang} missing status_${code}`).toBeTypeOf("string");
+          expect(labels[`status_${code}`].length).toBeGreaterThan(0);
         }
+        // v0.10.0 (L18): localized fallback device name with its %s placeholder.
+        expect(labels.packageName, `${lang} missing packageName`).toContain("%s");
       }
     });
 
-    it("should use the selected language for status strings", async () => {
+    it("should use the system language for status strings", async () => {
+      mockLang = "fr";
       adapter = createMockAdapter();
-      manager = new StateManager(adapter as never, "fr");
+      manager = new StateManager(adapter as never);
       const delivery = makeDelivery({ status_code: 2 });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);
       expect(adapter.states.get(`deliveries.${pkgId}.status`)?.val).toBe("En transit");
@@ -1490,7 +1511,7 @@ describe("StateManager", () => {
       for (const lang of EXPECTED_LANGUAGES) {
         mockLang = lang;
         adapter = createMockAdapter();
-        manager = new StateManager(adapter as never, lang);
+        manager = new StateManager(adapter as never);
 
         const now = new Date();
         now.setHours(14, 0, 0, 0);
@@ -1500,7 +1521,7 @@ describe("StateManager", () => {
           tracking_number: `trk_${lang.replace("-", "_")}`,
           timestamp_expected: Math.floor(now.getTime() / 1000),
         });
-        await manager.updateDelivery(delivery, "DHL");
+        await updateDeliveryT(manager, delivery, "DHL");
 
         const pkgId = manager.packageId(delivery);
         const estimate = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`)?.val;
@@ -1510,28 +1531,29 @@ describe("StateManager", () => {
     });
   });
 
-  describe("resolveLanguage", () => {
-    it("should pass through all supported languages", () => {
-      for (const lang of SUPPORTED_LANGUAGES) {
-        expect(resolveLanguage(lang)).toBe(lang);
-      }
+  describe("status label resolution (v0.10.0 — single i18n source)", () => {
+    it("renders 'Unknown (N)' for a status code without a status_* key", async () => {
+      const delivery = makeDelivery({ status_code: 9, tracking_number: "trk_unknown" });
+      await updateDeliveryT(manager, delivery, "DHL");
+      const pkgId = manager.packageId(delivery);
+      expect(adapter.states.get(`deliveries.${pkgId}.status`)?.val).toBe("Unknown (9)");
     });
 
-    it("should fall back to English for unknown language codes", () => {
-      expect(resolveLanguage("jp")).toBe(FALLBACK_LANGUAGE);
-      expect(resolveLanguage("xx")).toBe(FALLBACK_LANGUAGE);
-      expect(resolveLanguage("")).toBe(FALLBACK_LANGUAGE);
-    });
-
-    it("should fall back to English for non-string inputs", () => {
-      expect(resolveLanguage(undefined)).toBe(FALLBACK_LANGUAGE);
-      expect(resolveLanguage(null)).toBe(FALLBACK_LANGUAGE);
-      expect(resolveLanguage(42)).toBe(FALLBACK_LANGUAGE);
-      expect(resolveLanguage({})).toBe(FALLBACK_LANGUAGE);
-    });
-
-    it("FALLBACK_LANGUAGE must itself be a supported language", () => {
-      expect(SUPPORTED_LANGUAGES).toContain(FALLBACK_LANGUAGE);
+    it("interpolates the day count into estimateDays via %s", async () => {
+      mockLang = "en";
+      adapter = createMockAdapter();
+      manager = new StateManager(adapter as never);
+      const inThreeDays = new Date();
+      inThreeDays.setDate(inThreeDays.getDate() + 3);
+      inThreeDays.setHours(12, 0, 0, 0);
+      const delivery = makeDelivery({
+        status_code: 2,
+        tracking_number: "trk_days",
+        timestamp_expected: Math.floor(inThreeDays.getTime() / 1000),
+      });
+      await updateDeliveryT(manager, delivery, "DHL");
+      const pkgId = manager.packageId(delivery);
+      expect(adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`)?.val).toBe("in 3 days");
     });
   });
 
@@ -1540,9 +1562,10 @@ describe("StateManager", () => {
     // filtered by string-matching the estimate against "heute"/"today",
     // so non-DE/EN languages always reported 0.
     it("should count today deliveries for every supported language", async () => {
-      for (const lang of SUPPORTED_LANGUAGES) {
+      for (const lang of EXPECTED_LANGUAGES) {
+        mockLang = lang;
         adapter = createMockAdapter();
-        manager = new StateManager(adapter as never, lang);
+        manager = new StateManager(adapter as never);
 
         const now = new Date();
         now.setHours(15, 0, 0, 0);
@@ -1578,9 +1601,9 @@ describe("StateManager", () => {
 
     it("delivery state common.name is a translation object (en + de)", async () => {
       const adapter = createMockAdapter();
-      const manager = new StateManager(adapter as never, "de");
+      const manager = new StateManager(adapter as never);
       const delivery = makeDelivery();
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
       const pkgId = manager.packageId(delivery);
       const carrier = adapter.objects.get(`deliveries.${pkgId}.carrier`);
       const name = carrier!.common.name as CommonNameTranslated;
@@ -1590,7 +1613,7 @@ describe("StateManager", () => {
 
     it("summary state common.name is a translation object", async () => {
       const adapter = createMockAdapter();
-      const manager = new StateManager(adapter as never, "de");
+      const manager = new StateManager(adapter as never);
       await manager.updateSummary([]);
       const active = adapter.objects.get("summary.activeCount");
       const name = active!.common.name as CommonNameTranslated;
@@ -1600,9 +1623,9 @@ describe("StateManager", () => {
 
     it("statusCode common.name is translated", async () => {
       const adapter = createMockAdapter();
-      const manager = new StateManager(adapter as never, "de");
+      const manager = new StateManager(adapter as never);
       const delivery = makeDelivery();
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
       const pkgId = manager.packageId(delivery);
       const obj = adapter.objects.get(`deliveries.${pkgId}.statusCode`);
       const name = obj!.common.name as CommonNameTranslated;
@@ -1614,12 +1637,12 @@ describe("StateManager", () => {
   describe("createdIds cache (T4 — hot-path performance)", () => {
     it("calls setObjectNotExistsAsync only once per state across repeated updates", async () => {
       const adapter = createMockAdapter();
-      const manager = new StateManager(adapter as never, "en");
+      const manager = new StateManager(adapter as never);
       const delivery = makeDelivery();
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
       const firstPass = adapter.metrics.setObjectNotExistsCalls;
       // Same delivery, second poll cycle — values may change, schema doesn't.
-      await manager.updateDelivery({ ...delivery, status_code: 4 }, "DHL");
+      await updateDeliveryT(manager, { ...delivery, status_code: 4 }, "DHL");
       expect(adapter.metrics.setObjectNotExistsCalls).toBe(firstPass);
       // Value updated:
       const pkgId = manager.packageId(delivery);
@@ -1628,7 +1651,7 @@ describe("StateManager", () => {
 
     it("summary states cache: two updateSummary calls hit setObjectNotExistsAsync only on the first", async () => {
       const adapter = createMockAdapter();
-      const manager = new StateManager(adapter as never, "en");
+      const manager = new StateManager(adapter as never);
       await manager.updateSummary([]);
       const firstPass = adapter.metrics.setObjectNotExistsCalls;
       await manager.updateSummary([]);
@@ -1637,108 +1660,146 @@ describe("StateManager", () => {
 
     it("cleanupDeliveries clears the cache for removed packages so re-add re-creates states", async () => {
       const adapter = createMockAdapter();
-      const manager = new StateManager(adapter as never, "en");
+      const manager = new StateManager(adapter as never);
       const delivery = makeDelivery({ tracking_number: "TRK_REMOVE_ME" });
       const pkgId = manager.packageId(delivery);
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
       const before = adapter.metrics.setObjectNotExistsCalls;
       // Cleanup removes it (passing an empty active list).
       await manager.cleanupDeliveries([]);
       // Re-add: must hit setObjectNotExists again because the cache was cleared.
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
       expect(adapter.metrics.setObjectNotExistsCalls).toBeGreaterThan(before);
       // And the states are back.
       expect(adapter.states.get(`deliveries.${pkgId}.carrier`)?.val).toBe("DHL");
     });
   });
 
-  describe("setStateChanged skips unchanged values (v0.5.3)", () => {
+  describe("identical poll produces zero writes incl. lastUpdated (v0.7.2/v0.10.0)", () => {
     it("re-polling identical data does not re-write unchanged states", async () => {
       const adapter = createMockAdapter();
-      const manager = new StateManager(adapter as never, "en");
+      const manager = new StateManager(adapter as never);
       const delivery = makeDelivery({
         status_code: 2,
         timestamp_expected: Math.floor(Date.now() / 1000) + 3600,
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
       const firstWrites = adapter.metrics.setStateChangedWrites;
       // Second identical poll: every state is unchanged and must be skipped —
       // since v0.7.2 that includes `lastUpdated` (only refreshed on data change).
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
       const secondPassWrites = adapter.metrics.setStateChangedWrites - firstWrites;
       expect(secondPassWrites).toBe(0);
     });
   });
 
-  describe("device-object write cache (v0.7.2)", () => {
-    it("writes the device object only once while description/tracking are unchanged", async () => {
+  describe("device object ensured once per process (v0.10.0, DP-5)", () => {
+    it("extends the device object only once across polls", async () => {
       const adapter = createMockAdapter();
-      const manager = new StateManager(adapter as never, "en");
+      const manager = new StateManager(adapter as never);
       let extendCalls = 0;
-      const origExtend = adapter.extendObjectAsync;
-      adapter.extendObjectAsync = async (...args): Promise<void> => {
+      const origExtend = adapter.extendObject;
+      adapter.extendObject = async (...args): Promise<void> => {
         extendCalls++;
         return origExtend(...args);
       };
       const delivery = makeDelivery();
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
       expect(extendCalls).toBe(1);
-      await manager.updateDelivery({ ...delivery, status_code: 4 }, "DHL");
+      await updateDeliveryT(manager, { ...delivery, status_code: 4 }, "DHL");
       expect(extendCalls).toBe(1); // status change ≠ device re-write
     });
 
-    it("re-writes the device object when the description changed", async () => {
+    it("does NOT re-extend when the description changes — preserve:name made that write a no-op anyway", async () => {
       const adapter = createMockAdapter();
-      const manager = new StateManager(adapter as never, "en");
-      const delivery = makeDelivery({ description: "Old name" });
-      await manager.updateDelivery(delivery, "DHL");
-      await manager.updateDelivery({ ...delivery, description: "New name" }, "DHL");
-      const pkgId = manager.packageId(delivery);
-      expect(adapter.objects.get(`deliveries.${pkgId}`)!.common.name).toBe("New name");
-    });
-
-    it("re-writes after remove + re-add (cache follows lifecycle)", async () => {
-      const adapter = createMockAdapter();
-      const manager = new StateManager(adapter as never, "en");
-      const delivery = makeDelivery();
-      await manager.updateDelivery(delivery, "DHL");
-      await manager.cleanupDeliveries([]); // removes the device
+      const manager = new StateManager(adapter as never);
       let extendCalls = 0;
-      const origExtend = adapter.extendObjectAsync;
-      adapter.extendObjectAsync = async (...args): Promise<void> => {
+      const origExtend = adapter.extendObject;
+      adapter.extendObject = async (...args): Promise<void> => {
         extendCalls++;
         return origExtend(...args);
       };
-      await manager.updateDelivery(delivery, "DHL");
+      const delivery = makeDelivery({ description: "Old name" });
+      await updateDeliveryT(manager, delivery, "DHL");
+      await updateDeliveryT(manager, { ...delivery, description: "New name" }, "DHL");
+      expect(extendCalls).toBe(1);
+      const pkgId = manager.packageId(delivery);
+      // The object name keeps its first value (user renames win via preserve);
+      // the CURRENT description is always available in the description state.
+      expect(adapter.objects.get(`deliveries.${pkgId}`)!.common.name).toBe("Old name");
+      expect(adapter.states.get(`deliveries.${pkgId}.description`)?.val).toBe("New name");
+    });
+
+    it("re-extends after remove + re-add (cache follows lifecycle)", async () => {
+      const adapter = createMockAdapter();
+      const manager = new StateManager(adapter as never);
+      const delivery = makeDelivery();
+      await updateDeliveryT(manager, delivery, "DHL");
+      await manager.cleanupDeliveries([]); // removes the device
+      let extendCalls = 0;
+      const origExtend = adapter.extendObject;
+      adapter.extendObject = async (...args): Promise<void> => {
+        extendCalls++;
+        return origExtend(...args);
+      };
+      await updateDeliveryT(manager, delivery, "DHL");
       expect(extendCalls).toBe(1);
     });
   });
 
-  describe("lastUpdated only on data change (v0.7.2)", () => {
+  describe("lastUpdated only on data change (v0.7.2, notChanged-backed since v0.10.0)", () => {
     it("does not rewrite lastUpdated when nothing changed between polls", async () => {
       const adapter = createMockAdapter();
-      const manager = new StateManager(adapter as never, "en");
+      const manager = new StateManager(adapter as never);
       const delivery = makeDelivery({
         status_code: 2,
         timestamp_expected: Math.floor(Date.now() / 1000) + 3600,
       });
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
       const firstWrites = adapter.metrics.setStateChangedWrites;
-      await manager.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
       // Identical data → ZERO writes on the second poll (lastUpdated included).
       expect(adapter.metrics.setStateChangedWrites).toBe(firstWrites);
     });
 
     it("refreshes lastUpdated when a tracked value changes", async () => {
+      vi.useFakeTimers();
+      try {
+        vi.setSystemTime(new Date("2026-07-08T10:00:00.000Z"));
+        const adapter = createMockAdapter();
+        const manager = new StateManager(adapter as never);
+        const delivery = makeDelivery({ status_code: 2 });
+        await updateDeliveryT(manager, delivery, "DHL");
+        const before = adapter.states.get(`deliveries.${manager.packageId(delivery)}.lastUpdated`)?.val;
+        // Deterministic clock step instead of a wall-clock sleep (L27).
+        vi.setSystemTime(new Date("2026-07-08T10:00:01.000Z"));
+        await updateDeliveryT(manager, { ...delivery, status_code: 4 }, "DHL");
+        const after = adapter.states.get(`deliveries.${manager.packageId(delivery)}.lastUpdated`)?.val;
+        expect(after).not.toBe(before);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("adapter restart does not stamp a fresh lastUpdated for unchanged data (v0.10.0, M5)", async () => {
       const adapter = createMockAdapter();
-      const manager = new StateManager(adapter as never, "en");
-      const delivery = makeDelivery({ status_code: 2 });
-      await manager.updateDelivery(delivery, "DHL");
-      const before = adapter.states.get(`deliveries.${manager.packageId(delivery)}.lastUpdated`)?.val;
-      await new Promise(resolve => setTimeout(resolve, 5));
-      await manager.updateDelivery({ ...delivery, status_code: 4 }, "DHL");
-      const after = adapter.states.get(`deliveries.${manager.packageId(delivery)}.lastUpdated`)?.val;
-      expect(after).not.toBe(before);
+      const managerA = new StateManager(adapter as never);
+      const delivery = makeDelivery({
+        status_code: 2,
+        timestamp_expected: Math.floor(Date.now() / 1000) + 3600,
+      });
+      await updateDeliveryT(managerA, delivery, "DHL");
+      const pkgId = managerA.packageId(delivery);
+      const stamped = adapter.states.get(`deliveries.${pkgId}.lastUpdated`)?.val;
+      const writesAfterFirstRun = adapter.metrics.setStateChangedWrites;
+
+      // Fresh StateManager on the same broker state = adapter restart. The old
+      // in-memory signature map always missed here and re-stamped every
+      // package; the notChanged-backed decision must not.
+      const managerB = new StateManager(adapter as never);
+      await updateDeliveryT(managerB, delivery, "DHL");
+      expect(adapter.states.get(`deliveries.${pkgId}.lastUpdated`)?.val).toBe(stamped);
+      expect(adapter.metrics.setStateChangedWrites).toBe(writesAfterFirstRun);
     });
   });
 
@@ -1751,11 +1812,11 @@ describe("StateManager", () => {
         viewCalls++;
         return origView(...args);
       };
-      const manager = new StateManager(adapter as never, "en");
+      const manager = new StateManager(adapter as never);
       const a = makeDelivery({ tracking_number: "A" });
       const b = makeDelivery({ tracking_number: "B" });
-      await manager.updateDelivery(a, "DHL");
-      await manager.updateDelivery(b, "DHL");
+      await updateDeliveryT(manager, a, "DHL");
+      await updateDeliveryT(manager, b, "DHL");
 
       await manager.cleanupDeliveries(["a", "b"]); // first call seeds via view
       expect(viewCalls).toBe(1);
@@ -1770,18 +1831,18 @@ describe("StateManager", () => {
       const adapter = createMockAdapter();
       // Leftover device from before this adapter start.
       adapter.objects.set("deliveries.ghost", { type: "device", common: { name: "ghost" }, native: {} });
-      const manager = new StateManager(adapter as never, "en");
+      const manager = new StateManager(adapter as never);
       await manager.cleanupDeliveries([]);
       expect(adapter.objects.has("deliveries.ghost")).toBe(false);
     });
   });
 
   describe("preserve option", () => {
-    it("extendObjectAsync is called with preserve for device objects", async () => {
+    it("extendObject is called with preserve for device objects", async () => {
       const calls: { id: string; options: unknown }[] = [];
       const spyAdapter = createMockAdapter();
-      const origExtend = spyAdapter.extendObjectAsync;
-      spyAdapter.extendObjectAsync = async (
+      const origExtend = spyAdapter.extendObject;
+      spyAdapter.extendObject = async (
         id: string,
         obj: Partial<ObjectDef>,
         options?: { preserve?: { common?: string[] } },
@@ -1790,13 +1851,70 @@ describe("StateManager", () => {
         return origExtend(id, obj, options);
       };
 
-      const mgr = new StateManager(spyAdapter as never, "en");
+      const mgr = new StateManager(spyAdapter as never);
       const delivery = makeDelivery({ tracking_number: "PRESERVE1" });
-      await mgr.updateDelivery(delivery, "DHL");
+      await updateDeliveryT(mgr, delivery, "DHL");
 
       const deviceCall = calls.find(c => c.id === "deliveries.preserve1");
       expect(deviceCall).toBeDefined();
       expect(deviceCall!.options).toEqual({ preserve: { common: ["name"] } });
+    });
+  });
+
+  describe("window boundary end == start (v0.10.0, L23)", () => {
+    it("renders just the start time when end equals start", async () => {
+      const start = new Date();
+      start.setHours(14, 0, 0, 0);
+      const ts = Math.floor(start.getTime() / 1000);
+      const delivery = makeDelivery({
+        status_code: 2,
+        tracking_number: "trk_eq_window",
+        timestamp_expected: ts,
+        timestamp_expected_end: ts,
+      });
+      await updateDeliveryT(manager, delivery, "DHL");
+      const pkgId = manager.packageId(delivery);
+      expect(adapter.states.get(`deliveries.${pkgId}.deliveryWindow`)?.val).toBe("14:00");
+    });
+  });
+
+  describe("cleanup delete fan-out is batched (v0.10.0, I2)", () => {
+    it("removes 30 stale deliveries completely across two delete batches", async () => {
+      const adapter = createMockAdapter();
+      const manager = new StateManager(adapter as never);
+      const deliveries = Array.from({ length: 30 }, (_, i) =>
+        makeDelivery({ tracking_number: `BULK${String(i).padStart(2, "0")}` }),
+      );
+      for (const d of deliveries) {
+        await updateDeliveryT(manager, d, "DHL");
+      }
+      const ids = deliveries.map(d => manager.packageId(d));
+      for (const id of ids) {
+        expect(adapter.objects.has(`deliveries.${id}`)).toBe(true);
+      }
+      await manager.cleanupDeliveries([]);
+      for (const id of ids) {
+        expect(adapter.objects.has(`deliveries.${id}`), `stale ${id} must be gone`).toBe(false);
+      }
+    });
+  });
+
+  describe("localized fallback device name (v0.10.0, L18)", () => {
+    it("uses a translated 'Package <tracking>' object when the API sends no description", async () => {
+      const delivery = makeDelivery({ description: undefined, tracking_number: "NONAME1" });
+      await updateDeliveryT(manager, delivery, "DHL");
+      const pkgId = manager.packageId(delivery);
+      const name = adapter.objects.get(`deliveries.${pkgId}`)!.common.name as Record<string, string>;
+      expect(name.en).toBe("Package NONAME1");
+      expect(name.de).toBe("Paket NONAME1");
+      expect(name["zh-cn"]).toBe("包裹 NONAME1");
+    });
+
+    it("keeps the plain description as the name when the API provides one", async () => {
+      const delivery = makeDelivery({ description: "My parcel", tracking_number: "NAMED1" });
+      await updateDeliveryT(manager, delivery, "DHL");
+      const pkgId = manager.packageId(delivery);
+      expect(adapter.objects.get(`deliveries.${pkgId}`)!.common.name).toBe("My parcel");
     });
   });
 });

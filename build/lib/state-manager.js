@@ -18,25 +18,18 @@ var __copyProps = (to, from, except, desc) => {
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var state_manager_exports = {};
 __export(state_manager_exports, {
-  StateManager: () => StateManager,
-  resolveLanguage: () => resolveLanguage
+  StateManager: () => StateManager
 });
 module.exports = __toCommonJS(state_manager_exports);
-var import_adapter_core = require("@iobroker/adapter-core");
 var import_coerce = require("./coerce");
 var import_i18n = require("./i18n");
 var import_types = require("./types");
 const TRACKABLE_STATUSES = /* @__PURE__ */ new Set([2, 4, 8]);
 const ID_RANGE_END = "\uFFFF";
-function resolveLanguage(language) {
-  if (typeof language === "string" && import_types.SUPPORTED_LANGUAGES.includes(language)) {
-    return language;
-  }
-  return import_types.FALLBACK_LANGUAGE;
-}
+const MAX_ID_LENGTH = 50;
+const DELETE_BATCH_SIZE = 25;
 class StateManager {
   adapter;
-  language;
   /**
    * Cache of state IDs that have already passed `setObjectNotExistsAsync`.
    * Skips repeat DB lookups on the hot path — each poll touches ~11 states
@@ -46,22 +39,13 @@ class StateManager {
    */
   createdIds = /* @__PURE__ */ new Set();
   /**
-   * v0.7.2: last-written device-object signature per package id (the name
-   * source: description + tracking number). `updateDelivery` used to
-   * extendObject the device on EVERY poll — one object write + objectChange
-   * event per package per minute for data that practically never changes.
-   * Now the write happens only when the signature differs.
+   * v0.10.0 (DP-5): package ids whose device object was ensured this process.
+   * Replaces the former description+tracking signature map: with
+   * `preserve: { common: ["name"] }` a rewrite never changed an existing
+   * object's name anyway, so ensuring existence ONCE per process is the
+   * honest version of what the signature cache actually did.
    */
-  deviceWritten = /* @__PURE__ */ new Map();
-  /**
-   * v0.7.2: signature of the last-written state values per package id.
-   * `lastUpdated` is only refreshed when at least one sibling value actually
-   * changed — before, a fresh ISO timestamp fired one guaranteed state event
-   * per package per poll, defeating the v0.5.3 skip-unchanged optimization
-   * for that state. Semantics: `lastUpdated` = "when the tracking data last
-   * changed", not "when the adapter last polled".
-   */
-  valuesSig = /* @__PURE__ */ new Map();
+  deviceEnsured = /* @__PURE__ */ new Set();
   /**
    * v0.7.2: package ids known to exist as device objects. Filled from the
    * object view ONCE after adapter start (reconciles leftovers from previous
@@ -70,12 +54,16 @@ class StateManager {
    */
   knownDeliveryIds = null;
   /**
-   * @param adapter The ioBroker adapter instance
-   * @param language Language code from system.config.language (falls back to English)
+   * v0.4.2 (S3): which raw-tracking-key currently "owns" each sanitized id
+   * within the running poll. Cleared via `resetPollState()` between polls so
+   * the same delivery keeps its bare id as long as it's unique.
    */
-  constructor(adapter, language) {
+  idOwner = /* @__PURE__ */ new Map();
+  /**
+   * @param adapter The ioBroker adapter instance
+   */
+  constructor(adapter) {
     this.adapter = adapter;
-    this.language = resolveLanguage(language);
   }
   /**
    * Sanitize a string for use as ioBroker object ID (see adapter.FORBIDDEN_CHARS).
@@ -87,7 +75,7 @@ class StateManager {
     if (typeof name !== "string") {
       return "unknown";
     }
-    return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 50) || "unknown";
+    return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, MAX_ID_LENGTH) || "unknown";
   }
   /**
    * Parse the status code from a delivery. The API sends an int; we also accept
@@ -163,12 +151,6 @@ class StateManager {
     return (h >>> 0).toString(16).padStart(8, "0").slice(0, 6);
   }
   /**
-   * v0.4.2 (S3): which raw-tracking-key currently "owns" each sanitized id
-   * within the running poll. Cleared via `resetPollState()` between polls so
-   * the same delivery keeps its bare id as long as it's unique.
-   */
-  idOwner = /* @__PURE__ */ new Map();
-  /**
    * v0.4.2 (S3): reset the per-poll collision tracker. Call from main.ts
    * before iterating deliveries so the bare id always wins for the first
    * occurrence in each poll.
@@ -177,79 +159,72 @@ class StateManager {
     this.idOwner.clear();
   }
   /**
+   * Extract the package-id segment from a relative object id
+   * (`deliveries.<pkgId>` or `deliveries.<pkgId>.<state>`); "" when the id is
+   * outside the deliveries tree. Single source for the id-schema knowledge
+   * (v0.10.0, L15).
+   *
+   * @param relativeId Object id relative to the adapter namespace
+   */
+  static pkgIdOf(relativeId) {
+    return relativeId.startsWith("deliveries.") ? relativeId.slice("deliveries.".length).split(".")[0] : "";
+  }
+  /**
    * Update or create all states for a delivery.
    *
    * @param delivery The delivery data from API
    * @param carrierName Resolved carrier display name
-   * @param precomputedId Optional package id from the caller's deterministic
-   *   pre-pass. Falls back to computing it here when called directly (tests).
+   * @param pkgId Package id from the caller's deterministic pre-pass — always
+   *   computed via `packageId()` so the collision suffixing stays deterministic
+   *   (v0.10.0, L11: no test-only fallback path anymore).
    */
-  async updateDelivery(delivery, carrierName, precomputedId) {
+  async updateDelivery(delivery, carrierName, pkgId) {
     var _a;
-    const pkgId = precomputedId != null ? precomputedId : this.packageId(delivery);
     const devicePath = `deliveries.${pkgId}`;
     const description = typeof delivery.description === "string" ? delivery.description : "";
     const trackingNumber = typeof delivery.tracking_number === "string" ? delivery.tracking_number : "";
     const extraInfo = typeof delivery.extra_information === "string" ? delivery.extra_information : "";
-    const deviceSig = `${description} ${trackingNumber}`;
-    if (this.deviceWritten.get(pkgId) !== deviceSig) {
-      await this.adapter.extendObjectAsync(
+    if (!this.deviceEnsured.has(pkgId)) {
+      await this.adapter.extendObject(
         devicePath,
         {
           type: "device",
           common: {
-            name: description || `Package ${trackingNumber || pkgId}`
+            name: description || (0, import_i18n.packageName)(trackingNumber || pkgId)
           },
           native: {}
         },
         { preserve: { common: ["name"] } }
       );
-      this.deviceWritten.set(pkgId, deviceSig);
+      this.deviceEnsured.add(pkgId);
     }
     (_a = this.knownDeliveryIds) == null ? void 0 : _a.add(pkgId);
     const statusCode = this.parseStatus(delivery);
-    const labels = import_types.STATUS_LABELS[this.language];
-    let statusText = labels[statusCode];
-    if (!statusText) {
-      this.adapter.log.debug(`status code ${statusCode} not in STATUS_LABELS[${this.language}], using fallback`);
+    let statusText = (0, import_i18n.statusLabel)(statusCode);
+    if (statusText === void 0) {
+      this.adapter.log.debug(`status code ${statusCode} has no status_* label, using fallback`);
       statusText = `Unknown (${statusCode})`;
     }
     const deliveryWindow = this.calculateDeliveryWindow(delivery, statusCode);
     const deliveryEstimate = this.calculateDeliveryEstimate(delivery, statusCode);
     const lastEvent = this.formatLastEvent(delivery);
     const lastLocation = this.extractLastLocation(delivery);
-    await Promise.all([
-      this.createAndSet(`${devicePath}.carrier`, (0, import_i18n.tName)("carrier"), "string", "text", carrierName),
-      this.createAndSet(`${devicePath}.status`, (0, import_i18n.tName)("status"), "string", "text", statusText),
-      this.createAndSet(`${devicePath}.statusCode`, (0, import_i18n.tName)("statusCode"), "number", "value", statusCode),
-      this.createAndSet(`${devicePath}.description`, (0, import_i18n.tName)("description"), "string", "text", description),
-      this.createAndSet(`${devicePath}.trackingNumber`, (0, import_i18n.tName)("trackingNumber"), "string", "text", trackingNumber),
-      this.createAndSet(`${devicePath}.extraInfo`, (0, import_i18n.tName)("extraInfo"), "string", "text", extraInfo),
-      this.createAndSet(`${devicePath}.deliveryWindow`, (0, import_i18n.tName)("deliveryWindow"), "string", "text", deliveryWindow),
-      this.createAndSet(
-        `${devicePath}.deliveryEstimate`,
-        (0, import_i18n.tName)("deliveryEstimate"),
-        "string",
-        "text",
-        deliveryEstimate
-      ),
-      this.createAndSet(`${devicePath}.lastEvent`, (0, import_i18n.tName)("lastEvent"), "string", "text", lastEvent),
-      this.createAndSet(`${devicePath}.lastLocation`, (0, import_i18n.tName)("lastLocation"), "string", "text", lastLocation)
-    ]);
-    const sig = JSON.stringify([
-      carrierName,
-      statusText,
-      statusCode,
-      description,
-      trackingNumber,
-      extraInfo,
-      deliveryWindow,
-      deliveryEstimate,
-      lastEvent,
-      lastLocation
-    ]);
-    if (this.valuesSig.get(pkgId) !== sig) {
-      this.valuesSig.set(pkgId, sig);
+    const stateDefs = [
+      [`${devicePath}.carrier`, (0, import_i18n.tName)("carrier"), "string", "text", carrierName],
+      [`${devicePath}.status`, (0, import_i18n.tName)("status"), "string", "text", statusText],
+      [`${devicePath}.statusCode`, (0, import_i18n.tName)("statusCode"), "number", "value", statusCode],
+      [`${devicePath}.description`, (0, import_i18n.tName)("description"), "string", "text", description],
+      [`${devicePath}.trackingNumber`, (0, import_i18n.tName)("trackingNumber"), "string", "text", trackingNumber],
+      [`${devicePath}.extraInfo`, (0, import_i18n.tName)("extraInfo"), "string", "text", extraInfo],
+      [`${devicePath}.deliveryWindow`, (0, import_i18n.tName)("deliveryWindow"), "string", "text", deliveryWindow],
+      [`${devicePath}.deliveryEstimate`, (0, import_i18n.tName)("deliveryEstimate"), "string", "text", deliveryEstimate],
+      [`${devicePath}.lastEvent`, (0, import_i18n.tName)("lastEvent"), "string", "text", lastEvent],
+      [`${devicePath}.lastLocation`, (0, import_i18n.tName)("lastLocation"), "string", "text", lastLocation]
+    ];
+    const changed = await Promise.all(
+      stateDefs.map(([id, name, type, role, val]) => this.createAndSet(id, name, type, role, val))
+    );
+    if (changed.some(Boolean)) {
       await this.createAndSet(
         `${devicePath}.lastUpdated`,
         (0, import_i18n.tName)("lastUpdated"),
@@ -302,31 +277,29 @@ class StateManager {
       }
       this.knownDeliveryIds = /* @__PURE__ */ new Set();
       for (const row of objects.rows) {
-        const relativeId = row.id.replace(`${this.adapter.namespace}.`, "");
-        if (relativeId.startsWith("deliveries.")) {
-          const pkgId = relativeId.slice("deliveries.".length).split(".")[0];
-          if (pkgId) {
-            this.knownDeliveryIds.add(pkgId);
-          }
+        const pkgId = StateManager.pkgIdOf(row.id.slice(this.adapter.namespace.length + 1));
+        if (pkgId) {
+          this.knownDeliveryIds.add(pkgId);
         }
       }
     }
     const keepSet = new Set(keepIds);
     const toDelete = [...this.knownDeliveryIds].filter((pkgId) => !keepSet.has(pkgId));
     const toDeleteSet = new Set(toDelete);
-    await Promise.all(
-      toDelete.map(async (pkgId) => {
-        const relativeId = `deliveries.${pkgId}`;
-        await this.adapter.delObjectAsync(relativeId, { recursive: true });
-        this.adapter.log.debug(`Removed stale delivery: ${relativeId}`);
-        this.deviceWritten.delete(pkgId);
-        this.valuesSig.delete(pkgId);
-      })
-    );
+    for (let start = 0; start < toDelete.length; start += DELETE_BATCH_SIZE) {
+      const batch = toDelete.slice(start, start + DELETE_BATCH_SIZE);
+      await Promise.all(
+        batch.map(async (pkgId) => {
+          const relativeId = `deliveries.${pkgId}`;
+          await this.adapter.delObjectAsync(relativeId, { recursive: true });
+          this.adapter.log.debug(`Removed stale delivery: ${relativeId}`);
+          this.deviceEnsured.delete(pkgId);
+        })
+      );
+    }
     if (toDeleteSet.size > 0) {
       for (const id of [...this.createdIds]) {
-        const pkgId = id.startsWith("deliveries.") ? id.slice("deliveries.".length).split(".")[0] : "";
-        if (toDeleteSet.has(pkgId)) {
+        if (toDeleteSet.has(StateManager.pkgIdOf(id))) {
           this.createdIds.delete(id);
         }
       }
@@ -486,7 +459,7 @@ class StateManager {
       const parsed = StateManager.parseExpectedToMs(delivery.date_expected);
       expectedDate = parsed ? new Date(parsed.ms) : null;
     }
-    if (!expectedDate || isNaN(expectedDate.getTime())) {
+    if (!expectedDate || Number.isNaN(expectedDate.getTime())) {
       return null;
     }
     const now = /* @__PURE__ */ new Date();
@@ -506,15 +479,15 @@ class StateManager {
       return "";
     }
     if (diffDays < 0) {
-      return import_adapter_core.I18n.translate("estimateOverdue");
+      return (0, import_i18n.tText)("estimateOverdue");
     }
     if (diffDays === 0) {
-      return import_adapter_core.I18n.translate("estimateToday");
+      return (0, import_i18n.tText)("estimateToday");
     }
     if (diffDays === 1) {
-      return import_adapter_core.I18n.translate("estimateTomorrow");
+      return (0, import_i18n.tText)("estimateTomorrow");
     }
-    return import_adapter_core.I18n.translate("estimateDays").replace("%d", String(diffDays));
+    return (0, import_i18n.tText)("estimateDays", diffDays);
   }
   /**
    * Whether the delivery is expected today. Language-agnostic, used by the
@@ -587,6 +560,9 @@ class StateManager {
    * @param type Value type
    * @param role ioBroker role
    * @param val Value to set
+   * @returns true when the broker actually wrote the value (it differed or the
+   *   state was new) — the DB-backed "did anything change" signal driving
+   *   `lastUpdated` (v0.10.0, M5)
    */
   async createAndSet(id, name, type, role, val) {
     if (!this.createdIds.has(id)) {
@@ -597,12 +573,12 @@ class StateManager {
       });
       this.createdIds.add(id);
     }
-    await this.adapter.setStateChangedAsync(id, { val, ack: true });
+    const result = await this.adapter.setStateChangedAsync(id, { val, ack: true });
+    return typeof result === "object" && result !== null && result.notChanged === false;
   }
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  StateManager,
-  resolveLanguage
+  StateManager
 });
 //# sourceMappingURL=state-manager.js.map

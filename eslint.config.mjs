@@ -6,7 +6,7 @@ export default [
     languageOptions: {
       parserOptions: {
         projectService: {
-          allowDefaultProject: ["*.mjs", "vitest.config.ts"],
+          allowDefaultProject: ["vitest.config.ts"],
         },
         tsconfigRootDir: import.meta.dirname,
       },

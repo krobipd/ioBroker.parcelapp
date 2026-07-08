@@ -3,8 +3,6 @@
   "apiKeyInfo": "Wprowadź klucz API parcel.app. Wymagana subskrypcja Premium. Uzyskaj klucz na web.parcelapp.net → panel API.",
   "label_apiKey": "Klucz API",
   "btn_checkConnection": "Testuj połączenie",
-  "msg_connectionOk": "Połączenie udane!",
-  "msg_connectionFailed": "Połączenie nieudane!",
   "header_polling": "Odpytywanie",
   "label_pollInterval": "Interwał odpytywania (minuty)",
   "tooltip_pollInterval": "Jak często pobierać aktualizacje dostaw (5-60 minut, domyślnie: 10). Limit: 20 zapytań/godzinę.",
@@ -36,5 +34,15 @@
   "estimateOverdue": "zaległe",
   "estimateToday": "dzisiaj",
   "estimateTomorrow": "jutro",
-  "estimateDays": "za %d dni"
+  "estimateDays": "za %s dni",
+  "status_0": "Dostarczone",
+  "status_1": "Zamrożone",
+  "status_2": "W drodze",
+  "status_3": "Oczekuje na odbiór",
+  "status_4": "W doręczeniu",
+  "status_5": "Nie znaleziono",
+  "status_6": "Nieudana próba doręczenia",
+  "status_7": "Wyjątek",
+  "status_8": "Zarejestrowane",
+  "packageName": "Paczka %s"
 }

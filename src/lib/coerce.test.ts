@@ -158,4 +158,13 @@ describe("oneLine", () => {
     expect(oneLine("plain text 123")).toBe("plain text 123");
     expect(oneLine("")).toBe("");
   });
+
+  it("flattens NUL / VT / FF and Unicode line separators too (v0.10.0, I10)", () => {
+    expect(oneLine("a\0b")).toBe("a b"); // collision raw-key separator
+    expect(oneLine("a\vb")).toBe("a b");
+    expect(oneLine("a\fb")).toBe("a b");
+    expect(oneLine("a\u2028b")).toBe("a b");
+    expect(oneLine("a\u2029b")).toBe("a b");
+    expect(oneLine("a\0\r\n\u2028b")).toBe("a b"); // mixed run → ONE space
+  });
 });

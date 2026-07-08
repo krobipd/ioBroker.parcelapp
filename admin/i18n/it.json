@@ -3,8 +3,6 @@
   "apiKeyInfo": "Inserisci la tua chiave API parcel.app. È necessario un abbonamento Premium. Ottieni la tua chiave su web.parcelapp.net → pannello API.",
   "label_apiKey": "Chiave API",
   "btn_checkConnection": "Testa connessione",
-  "msg_connectionOk": "Connessione riuscita!",
-  "msg_connectionFailed": "Connessione fallita!",
   "header_polling": "Polling",
   "label_pollInterval": "Intervallo di polling (minuti)",
   "tooltip_pollInterval": "Frequenza di aggiornamento delle consegne (5-60 minuti, predefinito: 10). Limite: 20 richieste/ora.",
@@ -36,5 +34,15 @@
   "estimateOverdue": "in ritardo",
   "estimateToday": "oggi",
   "estimateTomorrow": "domani",
-  "estimateDays": "tra %d giorni"
+  "estimateDays": "tra %s giorni",
+  "status_0": "Consegnato",
+  "status_1": "Congelato",
+  "status_2": "In transito",
+  "status_3": "In attesa di ritiro",
+  "status_4": "In consegna",
+  "status_5": "Non trovato",
+  "status_6": "Consegna fallita",
+  "status_7": "Eccezione",
+  "status_8": "Registrato",
+  "packageName": "Pacco %s"
 }

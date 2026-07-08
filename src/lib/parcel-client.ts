@@ -1,10 +1,31 @@
 import * as http from "node:http";
 import * as https from "node:https";
-import { isTrueish, oneLine } from "./coerce";
-import type { ParcelApiResponse, ParcelDelivery, AddDeliveryRequest, AddDeliveryResponse, CarrierMap } from "./types";
+import { errText, isTrueish, oneLine } from "./coerce";
+import type {
+  ApiError,
+  ApiErrorCode,
+  ParcelApiResponse,
+  ParcelDelivery,
+  AddDeliveryRequest,
+  AddDeliveryResponse,
+  CarrierMap,
+} from "./types";
 
 const API_BASE = "https://api.parcel.app/external";
+/** Socket IDLE timeout — fires only when the connection goes silent. */
 const REQUEST_TIMEOUT = 15_000;
+/**
+ * Hard per-request deadline. The socket idle timeout above never fires against
+ * a trickle response (a byte every few seconds), which would otherwise pin
+ * `isPolling` forever and silently stop the poll loop until a restart. This
+ * timer caps the TOTAL request duration regardless of socket activity.
+ */
+const REQUEST_DEADLINE_MS = 60_000;
+/** Shared Retry-After clamps (used by the client parser and the adapter cooldown). */
+export const RETRY_AFTER_MAX_SEC = 24 * 3600;
+export const RETRY_AFTER_DEFAULT_SEC = 5 * 60;
+/** Max chars of a response body quoted into a debug log line. */
+const BODY_SNIPPET_LEN = 200;
 
 /**
  * v0.4.3: optional logger injected by the adapter so the HTTPS client can
@@ -24,16 +45,17 @@ export interface ParcelClientLogger {
 const MAX_BODY_BYTES = 1 << 20; // 1 MiB
 
 /**
- * Build an `Error` carrying a `code` (and optional extra fields such as
- * `retryAfterSeconds`). Centralizes the `new Error(...) as Error & { code }`
- * + `err.code = …` pattern that was repeated at every throw/reject site.
+ * Build an {@link ApiError} carrying a typed `code` (and optional extra fields
+ * such as `retryAfterSeconds`). Centralizes the `new Error(...)` + `err.code`
+ * pattern; the `ApiErrorCode` union makes a typo on either side of the
+ * client↔adapter contract a compile error.
  *
  * @param message Human-readable error message.
  * @param code Machine-readable error code used by the adapter for classification.
  * @param extra Optional additional own-properties to attach to the error.
  */
-function apiError(message: string, code: string, extra?: Record<string, unknown>): Error & { code: string } {
-  const err = new Error(message) as Error & { code: string };
+function apiError(message: string, code: ApiErrorCode, extra?: Record<string, unknown>): ApiError {
+  const err = new Error(message) as ApiError;
   err.code = code;
   if (extra) {
     Object.assign(err, extra);
@@ -77,12 +99,23 @@ export class ParcelClient {
   }
 
   /**
-   * v0.4.2 (P1): abort every in-flight HTTPS request. Idempotent.
+   * v0.10.0 (L3): once cancelAll ran, the client is terminal — a request
+   * STARTED after the abort (e.g. the carrier fetch kicked off by a poll
+   * batch that was already past getDeliveries at unload) must not open a
+   * fresh HTTPS connection that could outlive js-controller's 4s kill
+   * deadline. `request()` rejects immediately when this is set.
+   */
+  private cancelled = false;
+
+  /**
+   * v0.4.2 (P1): abort every in-flight HTTPS request and refuse new ones.
+   * Idempotent.
    */
   cancelAll(): void {
     // v0.4.3 (A12): trace the shutdown anchor so the adapter log shows
     // exactly how many HTTPS calls were aborted at unload.
     this.log?.debug(`cancelAll: aborting ${this.inflight.size} inflight requests`);
+    this.cancelled = true;
     for (const ctrl of this.inflight) {
       ctrl.abort();
     }
@@ -90,6 +123,9 @@ export class ParcelClient {
 
   /**
    * Fetch deliveries from parcel.app.
+   *
+   * Error style: rejects with a code-bearing {@link ApiError} on every failure
+   * (HTTP status, drift, transport) — callers classify via `error.code`.
    *
    * @param filterMode Filter active or recent deliveries
    */
@@ -104,7 +140,11 @@ export class ParcelClient {
     }
 
     if (!isTrueish(response.success)) {
-      const rawMsg = typeof response.error_message === "string" ? response.error_message : "";
+      // v0.10.0 (M6): the external error_message is flattened + capped before it
+      // reaches any log sink — it bubbles into the poll error-log via the Error
+      // message, and an unsanitized multi-line value would forge log lines.
+      const rawMsg =
+        typeof response.error_message === "string" ? oneLine(response.error_message).slice(0, BODY_SNIPPET_LEN) : "";
       // v0.4.3 (A11b): trace API-side error before throwing. An invalid key is
       // reported via HTTP 401 (handled in request()), not via a body field —
       // so a `success:false` body is always a generic API_ERROR.
@@ -131,6 +171,10 @@ export class ParcelClient {
   /**
    * Add a new delivery to parcel.app.
    *
+   * Error style: transport/HTTP failures reject with {@link ApiError}; a 2xx
+   * body is returned RAW and never validated — `success: false` is passed
+   * through unchanged because sendTo callers receive this object verbatim.
+   *
    * @param delivery The delivery to add
    */
   async addDelivery(delivery: AddDeliveryRequest): Promise<AddDeliveryResponse> {
@@ -152,7 +196,12 @@ export class ParcelClient {
     return this.carrierFetchInFlight;
   }
 
-  /** One actual carrier-list fetch. Failure → empty map, NOT cached (retry next poll). */
+  /**
+   * One actual carrier-list fetch. Failure → empty map, NOT cached — retried by
+   * the next update batch (the mutex above only dedupes CONCURRENT callers, so
+   * a poll with several 25er batches may retry once per batch; the endpoint is
+   * a static, unauthenticated file without a rate limit).
+   */
   private async fetchCarrierNames(): Promise<CarrierMap> {
     try {
       const raw = await this.request<unknown>("GET", "/supported_carriers.json", false);
@@ -184,8 +233,7 @@ export class ParcelClient {
       // silent. NOT cached — next poll retries; the trace then shows the
       // retry, too. Without this the user sees carrier codes instead of
       // names with no log entry explaining why.
-      const msg = err instanceof Error ? err.message : String(err);
-      this.log?.debug(`carriers: fetch failed (kept empty, will retry): ${msg}`);
+      this.log?.debug(`carriers: fetch failed (kept empty, will retry): ${errText(err)}`);
       // Return empty map but don't cache it — allow retry next time
       return {};
     }
@@ -209,7 +257,12 @@ export class ParcelClient {
     return typeof mapped === "string" && mapped.length > 0 ? mapped : carrierCode.toUpperCase();
   }
 
-  /** Test if the API key is valid */
+  /**
+   * Test if the API key is valid.
+   *
+   * Error style: never throws — failures are folded into the returned
+   * `{ success: false, message }` result object.
+   */
   async testConnection(): Promise<{ success: boolean; message: string }> {
     try {
       await this.getDeliveries("active");
@@ -239,6 +292,13 @@ export class ParcelClient {
     // poll interval — acceptable at debug.
     this.log?.debug(`HTTP ${method} ${path}`);
     return new Promise((resolve, reject) => {
+      // v0.10.0 (L3): terminal after cancelAll — a request started AFTER the
+      // shutdown abort must not open a fresh connection.
+      if (this.cancelled) {
+        this.log?.debug(`HTTP ${method} ${path} refused — client cancelled`);
+        reject(apiError("Client cancelled", "ABORTED"));
+        return;
+      }
       // v0.4.2 (E3): URL-shape validation defensive — paths are hardcoded
       // upstream but a future caller could pass garbage; surface a clear
       // error class instead of a TypeError thrown sync from the executor.
@@ -274,8 +334,16 @@ export class ParcelClient {
       // the configured timeout.
       const ctrl = new AbortController();
       this.inflight.add(ctrl);
+      // v0.10.0 (M4): hard per-request deadline (armed after `req` exists).
+      // Native timer is fine here (library code, no adapter context) — every
+      // terminal path runs cleanup(), which clears it.
+      let deadlineTimer: NodeJS.Timeout | undefined;
       const cleanup = (): void => {
         this.inflight.delete(ctrl);
+        if (deadlineTimer !== undefined) {
+          clearTimeout(deadlineTimer);
+          deadlineTimer = undefined;
+        }
       };
 
       // Pick transport from the URL protocol so tests can run the real
@@ -325,28 +393,18 @@ export class ParcelClient {
           const raw = Buffer.concat(chunks).toString("utf-8");
 
           if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
-            if (res.statusCode === 429) {
-              // v0.4.2 (P6): clamp Retry-After parser. Bogus values (0,
-              // negative, NaN) used to fall through `>0` and default to
-              // 5 min — keep that, but also reject infinity/extreme.
-              const retryAfter = parseInt(res.headers["retry-after"] || "", 10);
-              const retryAfterSeconds =
-                Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(24 * 3600, retryAfter) : 5 * 60;
-              // v0.4.3 (A4): trace 429 with the parsed retry-after.
-              this.log?.debug(`HTTP 429 ${path} → retry-after=${retryAfterSeconds}s`);
-              reject(apiError("Rate limit exceeded", "RATE_LIMITED", { retryAfterSeconds }));
-              return;
-            }
-            // v0.4.2 (P3): split 401 (invalid key) from 403 (permission /
-            // no premium). Adapter treats them differently — INVALID_API_KEY
-            // says "fix the key", FORBIDDEN says "fix the account".
-            const code =
-              res.statusCode === 401 ? "INVALID_API_KEY" : res.statusCode === 403 ? "FORBIDDEN" : "HTTP_ERROR";
-            // v0.4.3 (A3): trace 4xx/5xx with body-snippet for diagnosis.
-            this.log?.debug(
-              `HTTP ${method} ${path} → ${res.statusCode} ${code} (body=${oneLine(raw.substring(0, 200))})`,
+            const httpError = ParcelClient.mapHttpStatusError(
+              res.statusCode,
+              res.statusMessage,
+              res.headers["retry-after"],
             );
-            reject(apiError(`HTTP ${res.statusCode}: ${res.statusMessage}`, code));
+            // v0.4.3 (A3/A4): trace 4xx/5xx with code, retry-after and body-snippet.
+            this.log?.debug(
+              `HTTP ${method} ${path} → ${res.statusCode} ${httpError.code}` +
+                `${httpError.retryAfterSeconds !== undefined ? ` retry-after=${httpError.retryAfterSeconds}s` : ""}` +
+                ` (body=${oneLine(raw.substring(0, BODY_SNIPPET_LEN))})`,
+            );
+            reject(httpError);
             return;
           }
 
@@ -357,19 +415,30 @@ export class ParcelClient {
             resolve(parsed);
           } catch {
             // v0.4.3 (A8): trace JSON parse-fail with snippet (debug only).
-            this.log?.debug(`HTTP JSON parse fail ${path}: ${oneLine(raw.substring(0, 200))}`);
+            this.log?.debug(`HTTP JSON parse fail ${path}: ${oneLine(raw.substring(0, BODY_SNIPPET_LEN))}`);
             // v0.9.0 (S1): keep the raw body OUT of the Error message — it
             // bubbles to a poll error-log; a malformed PII-bearing body must
             // not reach error level. The snippet stays in the debug line above.
-            reject(new Error(`JSON parse error (${raw.length} bytes)`));
+            reject(apiError(`JSON parse error (${raw.length} bytes)`, "PARSE_ERROR"));
           }
         });
       });
 
+      // v0.10.0 (M4): arm the hard deadline. Destroying with a TIMEOUT-coded
+      // ApiError routes through req.on("error") below, which rejects + cleans
+      // up — a trickle response (a byte every few seconds) can no longer pin
+      // the poll loop forever.
+      deadlineTimer = setTimeout(() => {
+        this.log?.debug(`HTTP deadline ${method} ${path} (${Date.now() - startedAt}ms > ${REQUEST_DEADLINE_MS}ms)`);
+        req.destroy(apiError(`Request deadline exceeded (${REQUEST_DEADLINE_MS / 1000}s)`, "TIMEOUT"));
+      }, REQUEST_DEADLINE_MS);
+
       ctrl.signal.addEventListener("abort", () => {
         // v0.4.3: A6 deliberately omitted — `req.destroy(Error)` propagates
         // through `req.on("error")` below where A7 already logs it.
-        req.destroy(new Error("Request aborted"));
+        // v0.10.0 (M1): carries the ABORTED code so the adapter routes an
+        // expected shutdown-abort to debug instead of an error log line.
+        req.destroy(apiError("Request aborted", "ABORTED"));
       });
 
       req.on("timeout", () => {
@@ -377,22 +446,61 @@ export class ParcelClient {
         cleanup();
         // v0.4.3 (A5): trace timeout with elapsed-ms.
         this.log?.debug(`HTTP timeout ${method} ${path} (${Date.now() - startedAt}ms)`);
-        reject(new Error("Request timeout"));
+        reject(apiError("Request timeout", "TIMEOUT"));
       });
 
       req.on("error", err => {
         cleanup();
         // v0.4.3 (A7): trace network / abort / TLS / DNS errors with elapsed.
-        // Also catches the abort case (req.destroy(Error("Request aborted")))
-        // — A6 deliberately not emitted to avoid double-log.
+        // Also catches the abort case (req.destroy(ApiError)) — A6 deliberately
+        // not emitted to avoid double-log.
         this.log?.debug(`HTTP error ${method} ${path} (${Date.now() - startedAt}ms): ${err.message}`);
         reject(err);
       });
 
-      if (body) {
-        req.write(JSON.stringify(body));
+      // v0.10.0 (I8): a synchronous throw from stringify/write/end (circular
+      // body, stream state) must not strand the AbortController in `inflight`
+      // — cancelAll's invariant is "inflight mirrors live requests exactly".
+      try {
+        if (body) {
+          req.write(JSON.stringify(body));
+        }
+        req.end();
+      } catch (err) {
+        cleanup();
+        req.destroy();
+        reject(apiError(`Request write failed: ${errText(err)}`, "API_ERROR"));
       }
-      req.end();
     });
+  }
+
+  /**
+   * Map a non-2xx HTTP status to its {@link ApiError}. Pure — extracted from
+   * the end-handler so the 401/403/429 rules read in isolation (v0.10.0, L17).
+   *
+   * @param statusCode HTTP status code (non-2xx)
+   * @param statusMessage HTTP status message
+   * @param retryAfterHeader Raw Retry-After header value (429 only)
+   */
+  private static mapHttpStatusError(
+    statusCode: number,
+    statusMessage: string | undefined,
+    retryAfterHeader: string | undefined,
+  ): ApiError {
+    if (statusCode === 429) {
+      // v0.4.2 (P6): clamp Retry-After. Bogus values (0, negative, NaN) fall
+      // back to the default; extreme values are capped.
+      const retryAfter = parseInt(retryAfterHeader || "", 10);
+      const retryAfterSeconds =
+        Number.isFinite(retryAfter) && retryAfter > 0
+          ? Math.min(RETRY_AFTER_MAX_SEC, retryAfter)
+          : RETRY_AFTER_DEFAULT_SEC;
+      return apiError("Rate limit exceeded", "RATE_LIMITED", { retryAfterSeconds });
+    }
+    // v0.4.2 (P3): split 401 (invalid key) from 403 (permission / no premium).
+    // Adapter treats them differently — INVALID_API_KEY says "fix the key",
+    // FORBIDDEN says "fix the account".
+    const code: ApiErrorCode = statusCode === 401 ? "INVALID_API_KEY" : statusCode === 403 ? "FORBIDDEN" : "HTTP_ERROR";
+    return apiError(`HTTP ${statusCode}: ${statusMessage}`, code);
   }
 }

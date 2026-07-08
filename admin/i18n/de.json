@@ -3,8 +3,6 @@
   "apiKeyInfo": "Gib deinen parcel.app API-Schlüssel ein. Ein Premium-Abo wird benötigt. Den Schlüssel findest du unter web.parcelapp.net → API-Bereich.",
   "label_apiKey": "API-Schlüssel",
   "btn_checkConnection": "Verbindung testen",
-  "msg_connectionOk": "Verbindung erfolgreich!",
-  "msg_connectionFailed": "Verbindung fehlgeschlagen!",
   "header_polling": "Abfrage",
   "label_pollInterval": "Abfrageintervall (Minuten)",
   "tooltip_pollInterval": "Wie oft Lieferupdates abgefragt werden (5-60 Minuten, Standard: 10). Rate-Limit: 20 Anfragen/Stunde.",
@@ -36,5 +34,15 @@
   "estimateOverdue": "überfällig",
   "estimateToday": "heute",
   "estimateTomorrow": "morgen",
-  "estimateDays": "in %d Tagen"
+  "estimateDays": "in %s Tagen",
+  "status_0": "Zugestellt",
+  "status_1": "Eingefroren",
+  "status_2": "Unterwegs",
+  "status_3": "Abholung erwartet",
+  "status_4": "In Zustellung",
+  "status_5": "Nicht gefunden",
+  "status_6": "Zustellversuch gescheitert",
+  "status_7": "Ausnahme",
+  "status_8": "Registriert",
+  "packageName": "Paket %s"
 }

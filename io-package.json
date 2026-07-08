@@ -3,6 +3,19 @@
     "name": "parcelapp",
     "version": "0.9.0",
     "news": {
+      "NEXT": {
+        "en": "Admin connection test reports real errors now.\nQuieter logs, steadier connection state and automatic recovery from stalled requests or failed starts.",
+        "de": "Der Verbindungstest im Admin meldet jetzt echte Fehler.\nRuhigere Logs, stabile Verbindungsanzeige, automatische Erholung bei hängenden Anfragen und Startfehlern.",
+        "ru": "Тест подключения в админке теперь показывает реальные ошибки.\nМеньше повторов в логе, стабильный индикатор связи, автоматическое восстановление при сбоях.",
+        "pt": "O teste de ligação no admin mostra agora erros reais.\nMenos repetições no registo, indicador de ligação estável e recuperação automática de falhas.",
+        "nl": "De verbindingstest in de admin meldt nu echte fouten.\nRustigere logs, stabiele verbindingsindicator en automatisch herstel na fouten.",
+        "fr": "Le test de connexion dans l'admin signale désormais les vraies erreurs.\nJournaux plus calmes, indicateur de connexion stable et reprise automatique après incident.",
+        "it": "Il test di connessione nell'admin ora segnala gli errori reali.\nLog più tranquilli, indicatore di connessione stabile e ripristino automatico dopo i guasti.",
+        "es": "La prueba de conexión del admin ahora muestra errores reales.\nRegistros más tranquilos, indicador de conexión estable y recuperación automática tras fallos.",
+        "pl": "Test połączenia w adminie zgłasza teraz prawdziwe błędy.\nSpokojniejsze logi, stabilny wskaźnik połączenia i automatyczne odzyskiwanie po błędach.",
+        "uk": "Тест з'єднання в адмінці тепер показує реальні помилки.\nМенше повторів у лозі, стабільний індикатор зв'язку, автоматичне відновлення після збоїв.",
+        "zh-cn": "管理界面的连接测试现在会报告真实错误。\n日志更安静，连接状态更稳定，请求卡住或启动失败后可自动恢复。"
+      },
       "0.9.0": {
         "en": "Tracked packages no longer disappear after a temporary error or an unexpected API response, and multi-day delivery windows now show the date on each side.",
         "de": "Verfolgte Pakete verschwinden nicht mehr nach einem vorübergehenden Fehler oder einer unerwarteten API-Antwort, und mehrtägige Zustellfenster zeigen jetzt auf beiden Seiten das Datum.",
@@ -80,19 +93,6 @@
         "pl": "Poprawki: poprawne łączone okno dostawy, paczki o nieznanym statusie pozostają widoczne, a nowe przesyłki pojawiają się natychmiast.",
         "uk": "Виправлення: коректне об'єднане вікно доставки, посилки з невідомим статусом залишаються видимими, нові посилки з'являються одразу.",
         "zh-cn": "错误修复：合并送达窗口计算正确，状态未知的包裹保持可见，新添加的包裹立即显示。"
-      },
-      "0.5.3": {
-        "en": "Reduced unnecessary state-change events by skipping writes when the value has not changed.",
-        "de": "Unnötige State-Change-Events reduziert, indem Schreibvorgänge bei unverändertem Wert übersprungen werden.",
-        "ru": "Сокращены ненужные события изменения состояний путём пропуска записи при неизменённом значении.",
-        "pt": "Eventos de mudança de estado desnecessários reduzidos ao ignorar escritas quando o valor não mudou.",
-        "nl": "Onnodige state-change-events verminderd door schrijfacties over te slaan als de waarde niet is gewijzigd.",
-        "fr": "Réduction des événements de changement d'état inutiles en ignorant les écritures lorsque la valeur n'a pas changé.",
-        "it": "Ridotti gli eventi di cambio stato non necessari saltando le scritture quando il valore non è cambiato.",
-        "es": "Reducidos los eventos de cambio de estado innecesarios omitiendo escrituras cuando el valor no ha cambiado.",
-        "pl": "Zmniejszono niepotrzebne zdarzenia zmiany stanu, pomijając zapisy gdy wartość się nie zmieniła.",
-        "uk": "Зменшено непотрібні події зміни стану шляхом пропуску запису при незміненому значенні.",
-        "zh-cn": "通过在值未更改时跳过写入来减少不必要的状态变更事件。"
       }
     },
     "plugins": {
@@ -150,7 +150,7 @@
     "loglevel": "info",
     "mode": "daemon",
     "messagebox": true,
-    "type": "infrastructure",
+    "type": "misc-data",
     "compact": true,
     "connectionType": "cloud",
     "dataSource": "poll",

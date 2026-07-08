@@ -79,7 +79,7 @@ function coerceClampedInt(raw, min, max, defaultValue) {
   return Math.max(min, Math.min(max, Math.floor(n)));
 }
 function oneLine(value) {
-  return value.replace(/[\r\n\t]+/g, " ");
+  return value.replace(/[\r\n\t\0\v\f\u2028\u2029]+/g, " ");
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {

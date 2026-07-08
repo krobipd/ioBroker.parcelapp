@@ -3,8 +3,6 @@
   "apiKeyInfo": "Введите API-ключ parcel.app. Требуется Premium-подписка. Получите ключ на web.parcelapp.net → раздел API.",
   "label_apiKey": "API-ключ",
   "btn_checkConnection": "Проверить соединение",
-  "msg_connectionOk": "Соединение успешно!",
-  "msg_connectionFailed": "Ошибка соединения!",
   "header_polling": "Опрос",
   "label_pollInterval": "Интервал опроса (минуты)",
   "tooltip_pollInterval": "Как часто получать обновления доставки (5-60 минут, по умолчанию: 10). Лимит: 20 запросов/час.",
@@ -36,5 +34,15 @@
   "estimateOverdue": "просрочено",
   "estimateToday": "сегодня",
   "estimateTomorrow": "завтра",
-  "estimateDays": "через %d дн."
+  "estimateDays": "через %s дн.",
+  "status_0": "Доставлено",
+  "status_1": "Заморожено",
+  "status_2": "В пути",
+  "status_3": "Ожидает получения",
+  "status_4": "Доставляется",
+  "status_5": "Не найдено",
+  "status_6": "Неудачная доставка",
+  "status_7": "Исключение",
+  "status_8": "Зарегистрировано",
+  "packageName": "Посылка %s"
 }

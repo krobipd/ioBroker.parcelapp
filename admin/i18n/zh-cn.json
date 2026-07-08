@@ -3,8 +3,6 @@
   "apiKeyInfo": "输入你的 parcel.app API 密钥。需要 Premium 订阅。在 web.parcelapp.net → API 面板获取密钥。",
   "label_apiKey": "API 密钥",
   "btn_checkConnection": "测试连接",
-  "msg_connectionOk": "连接成功！",
-  "msg_connectionFailed": "连接失败！",
   "header_polling": "轮询",
   "label_pollInterval": "轮询间隔（分钟）",
   "tooltip_pollInterval": "多久获取一次快递更新（5-60分钟，默认：10）。速率限制：20次请求/小时。",
@@ -36,5 +34,15 @@
   "estimateOverdue": "已逾期",
   "estimateToday": "今天",
   "estimateTomorrow": "明天",
-  "estimateDays": "%d 天后"
+  "estimateDays": "%s 天后",
+  "status_0": "已送达",
+  "status_1": "已冻结",
+  "status_2": "运输中",
+  "status_3": "等待取件",
+  "status_4": "派送中",
+  "status_5": "未找到",
+  "status_6": "派送失败",
+  "status_7": "异常",
+  "status_8": "已登记",
+  "packageName": "包裹 %s"
 }
