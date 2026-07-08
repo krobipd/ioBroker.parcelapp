@@ -291,9 +291,7 @@ class ParcelappAdapter extends utils.Adapter {
     const nowMs = Date.now();
     this.addTimestamps = this.addTimestamps.filter((t) => nowMs - t < ADD_WINDOW_MS);
     if (this.addTimestamps.length >= MAX_ADDS_PER_WINDOW) {
-      this.log.warn(
-        `addDelivery throttled: more than ${MAX_ADDS_PER_WINDOW} requests within ${ADD_WINDOW_MS / 1e3}s`
-      );
+      this.log.warn(`addDelivery throttled: more than ${MAX_ADDS_PER_WINDOW} requests within ${ADD_WINDOW_MS / 1e3}s`);
       this.replyAddError(obj, `too many addDelivery requests; max ${MAX_ADDS_PER_WINDOW} per ${ADD_WINDOW_MS / 1e3}s`);
       return;
     }

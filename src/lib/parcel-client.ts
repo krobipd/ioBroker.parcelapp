@@ -334,16 +334,12 @@ export class ParcelClient {
       // the configured timeout.
       const ctrl = new AbortController();
       this.inflight.add(ctrl);
-      // v0.10.0 (M4): hard per-request deadline (armed after `req` exists).
-      // Native timer is fine here (library code, no adapter context) — every
-      // terminal path runs cleanup(), which clears it.
-      let deadlineTimer: NodeJS.Timeout | undefined;
+      // Marks the request as finished for the deadline listener below —
+      // every terminal path runs cleanup().
+      let settled = false;
       const cleanup = (): void => {
+        settled = true;
         this.inflight.delete(ctrl);
-        if (deadlineTimer !== undefined) {
-          clearTimeout(deadlineTimer);
-          deadlineTimer = undefined;
-        }
       };
 
       // Pick transport from the URL protocol so tests can run the real
@@ -424,14 +420,18 @@ export class ParcelClient {
         });
       });
 
-      // v0.10.0 (M4): arm the hard deadline. Destroying with a TIMEOUT-coded
-      // ApiError routes through req.on("error") below, which rejects + cleans
-      // up — a trickle response (a byte every few seconds) can no longer pin
-      // the poll loop forever.
-      deadlineTimer = setTimeout(() => {
+      // v0.10.0 (M4): arm the hard deadline via AbortSignal.timeout — an
+      // unref'd platform timer (never keeps the process alive, no adapter
+      // context needed). Destroying with a TIMEOUT-coded ApiError routes
+      // through req.on("error") below, which rejects + cleans up — a trickle
+      // response (a byte every few seconds) can no longer pin the poll loop.
+      AbortSignal.timeout(REQUEST_DEADLINE_MS).addEventListener("abort", () => {
+        if (settled) {
+          return; // request finished long ago — nothing to kill, nothing to log
+        }
         this.log?.debug(`HTTP deadline ${method} ${path} (${Date.now() - startedAt}ms > ${REQUEST_DEADLINE_MS}ms)`);
         req.destroy(apiError(`Request deadline exceeded (${REQUEST_DEADLINE_MS / 1000}s)`, "TIMEOUT"));
-      }, REQUEST_DEADLINE_MS);
+      });
 
       ctrl.signal.addEventListener("abort", () => {
         // v0.4.3: A6 deliberately omitted — `req.destroy(Error)` propagates

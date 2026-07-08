@@ -263,13 +263,10 @@ class ParcelClient {
       };
       const ctrl = new AbortController();
       this.inflight.add(ctrl);
-      let deadlineTimer;
+      let settled = false;
       const cleanup = () => {
+        settled = true;
         this.inflight.delete(ctrl);
-        if (deadlineTimer !== void 0) {
-          clearTimeout(deadlineTimer);
-          deadlineTimer = void 0;
-        }
       };
       const transportRequest = url.protocol === "http:" ? http.request : https.request;
       const req = transportRequest(options, (res) => {
@@ -304,7 +301,11 @@ class ParcelClient {
           cleanup();
           const raw = Buffer.concat(chunks).toString("utf-8");
           if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
-            const httpError = ParcelClient.mapHttpStatusError(res.statusCode, res.statusMessage, res.headers["retry-after"]);
+            const httpError = ParcelClient.mapHttpStatusError(
+              res.statusCode,
+              res.statusMessage,
+              res.headers["retry-after"]
+            );
             (_a3 = this.log) == null ? void 0 : _a3.debug(
               `HTTP ${method} ${path} \u2192 ${res.statusCode} ${httpError.code}${httpError.retryAfterSeconds !== void 0 ? ` retry-after=${httpError.retryAfterSeconds}s` : ""} (body=${(0, import_coerce.oneLine)(raw.substring(0, BODY_SNIPPET_LEN))})`
             );
@@ -321,11 +322,14 @@ class ParcelClient {
           }
         });
       });
-      deadlineTimer = setTimeout(() => {
+      AbortSignal.timeout(REQUEST_DEADLINE_MS).addEventListener("abort", () => {
         var _a3;
+        if (settled) {
+          return;
+        }
         (_a3 = this.log) == null ? void 0 : _a3.debug(`HTTP deadline ${method} ${path} (${Date.now() - startedAt}ms > ${REQUEST_DEADLINE_MS}ms)`);
         req.destroy(apiError(`Request deadline exceeded (${REQUEST_DEADLINE_MS / 1e3}s)`, "TIMEOUT"));
-      }, REQUEST_DEADLINE_MS);
+      });
       ctrl.signal.addEventListener("abort", () => {
         req.destroy(apiError("Request aborted", "ABORTED"));
       });

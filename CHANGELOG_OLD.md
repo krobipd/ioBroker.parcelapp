@@ -1,4 +1,8 @@
 # Older Changes
+## 0.7.0 (2026-06-07)
+
+- Added optional Sentry error reporting: crashes are sent to the developer so issues get fixed faster. Active only with ioBroker diagnostics enabled; anonymous.
+
 ## 0.6.0 (2026-05-31)
 
 - The summary delivery window now covers the full time range when several packages are expected the same day — previously an overlapping window could be cut short.
