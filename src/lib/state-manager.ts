@@ -60,6 +60,17 @@ export class StateManager {
   private readonly idOwner = new Map<string, string>();
 
   /**
+   * L1: per-delivery-object memo for `parseStatus`. A poll parses the SAME
+   * delivery object at up to four sites (active filter, updateDelivery,
+   * updateSummary's isToday filter, combined window); memoizing keyed by the
+   * object means the parse — and its drift debug line — runs ONCE per delivery
+   * instead of per site. No reset needed: each poll's deliveries are fresh
+   * objects (JSON.parse) and GC'd afterwards, and nothing holds a long-lived
+   * delivery reference (idOwner/failedDeliveries/knownDeliveryIds store strings).
+   */
+  private readonly statusMemo = new WeakMap<ParcelDelivery, number>();
+
+  /**
    * @param adapter The ioBroker adapter instance
    */
   constructor(adapter: AdapterInstance) {
@@ -92,6 +103,25 @@ export class StateManager {
    * @param delivery The delivery to parse
    */
   parseStatus(delivery: ParcelDelivery): number {
+    // L1: memoize per delivery object so the parse (and its drift log) runs
+    // once per delivery per poll, not once per call site.
+    const memoized = this.statusMemo.get(delivery);
+    if (memoized !== undefined) {
+      return memoized;
+    }
+    const code = this.computeStatus(delivery);
+    this.statusMemo.set(delivery, code);
+    return code;
+  }
+
+  /**
+   * Parse the status code without memoization. Split from {@link parseStatus}
+   * (L1) so the memo wraps a single pure computation — including the one-per-
+   * delivery drift log.
+   *
+   * @param delivery The delivery to parse
+   */
+  private computeStatus(delivery: ParcelDelivery): number {
     const raw = delivery.status_code;
     if (typeof raw === "number" && Number.isFinite(raw)) {
       return Math.trunc(raw);
@@ -646,8 +676,15 @@ export class StateManager {
       return "";
     }
 
-    const minStart = Math.min(...bounds.map(b => b.start));
-    const maxEnd = Math.max(...bounds.map(b => b.end ?? b.start));
+    // L3: fold instead of Math.min/max(...spread). The bounds array is capped
+    // by the 1 MiB response limit, but a spread over a large array can still hit
+    // V8's argument-count limit (RangeError); reduce is O(n) and unbounded-safe
+    // — consistent with beszel's computeMaxTemp hardening.
+    const minStart = bounds.reduce((m, b) => (b.start < m ? b.start : m), bounds[0].start);
+    const maxEnd = bounds.reduce((m, b) => {
+      const e = b.end ?? b.start;
+      return e > m ? e : m;
+    }, bounds[0].end ?? bounds[0].start);
     return StateManager.formatWindow(minStart, maxEnd);
   }
 

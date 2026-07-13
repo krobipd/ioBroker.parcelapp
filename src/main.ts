@@ -102,6 +102,13 @@ export class ParcelappAdapter extends utils.Adapter {
   /** Timestamps of recent addDelivery POSTs — the S4 throttle window. */
   private addTimestamps: number[] = [];
   /**
+   * L2: true while a checkConnection test GET is in flight. A test hits the same
+   * 20/hour GET budget as polling; this guards against a concurrent second test
+   * (double-click / admin re-render) stacking a redundant GET. A sequential
+   * re-test after the current one settles runs normally.
+   */
+  private testConnectionInFlight = false;
+  /**
    * v0.4.4: short-lived test-clients spawned from `checkConnection` admin
    * messages. The prod-`this.client` is what `onUnload` cancels, so these
    * need their own registry to be reachable at shutdown. Without this, an
@@ -292,6 +299,17 @@ export class ParcelappAdapter extends utils.Adapter {
       this.sendTo(obj.from, obj.command, { error: "API key is too short" }, obj.callback);
       return;
     }
+    // L2: a Test-Connection GET counts against the same 20/hour budget as
+    // polling. Guard against a concurrent second test (double-click / admin
+    // re-render) so stacked clicks can't each burn a GET (which could later trip
+    // the poll's rate-limit cooldown). Set BEFORE the await so the check is
+    // synchronous against a still-in-flight first test.
+    if (this.testConnectionInFlight) {
+      this.log.debug("checkConnection: a test is already running");
+      this.sendTo(obj.from, obj.command, { error: "A connection test is already running — please wait" }, obj.callback);
+      return;
+    }
+    this.testConnectionInFlight = true;
     // v0.4.3: same debug-logger as the prod client so checkConnection
     // failures get the same HTTPS-layer trace (via the makeClient seam).
     const testClient = this.makeClient(key);
@@ -311,6 +329,7 @@ export class ParcelappAdapter extends utils.Adapter {
       );
     } finally {
       this.testClients.delete(testClient);
+      this.testConnectionInFlight = false;
     }
   }
 

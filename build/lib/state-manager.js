@@ -60,6 +60,16 @@ class StateManager {
    */
   idOwner = /* @__PURE__ */ new Map();
   /**
+   * L1: per-delivery-object memo for `parseStatus`. A poll parses the SAME
+   * delivery object at up to four sites (active filter, updateDelivery,
+   * updateSummary's isToday filter, combined window); memoizing keyed by the
+   * object means the parse — and its drift debug line — runs ONCE per delivery
+   * instead of per site. No reset needed: each poll's deliveries are fresh
+   * objects (JSON.parse) and GC'd afterwards, and nothing holds a long-lived
+   * delivery reference (idOwner/failedDeliveries/knownDeliveryIds store strings).
+   */
+  statusMemo = /* @__PURE__ */ new WeakMap();
+  /**
    * @param adapter The ioBroker adapter instance
    */
   constructor(adapter) {
@@ -84,6 +94,22 @@ class StateManager {
    * @param delivery The delivery to parse
    */
   parseStatus(delivery) {
+    const memoized = this.statusMemo.get(delivery);
+    if (memoized !== void 0) {
+      return memoized;
+    }
+    const code = this.computeStatus(delivery);
+    this.statusMemo.set(delivery, code);
+    return code;
+  }
+  /**
+   * Parse the status code without memoization. Split from {@link parseStatus}
+   * (L1) so the memo wraps a single pure computation — including the one-per-
+   * delivery drift log.
+   *
+   * @param delivery The delivery to parse
+   */
+  computeStatus(delivery) {
     const raw = delivery.status_code;
     if (typeof raw === "number" && Number.isFinite(raw)) {
       return Math.trunc(raw);
@@ -539,15 +565,17 @@ class StateManager {
    * @param todayDeliveries Deliveries expected today
    */
   calculateCombinedWindow(todayDeliveries) {
+    var _a;
     const bounds = todayDeliveries.map((d) => this.windowBoundsMs(d, this.parseStatus(d))).filter((b) => b !== null);
     if (bounds.length === 0) {
       return "";
     }
-    const minStart = Math.min(...bounds.map((b) => b.start));
-    const maxEnd = Math.max(...bounds.map((b) => {
-      var _a;
-      return (_a = b.end) != null ? _a : b.start;
-    }));
+    const minStart = bounds.reduce((m, b) => b.start < m ? b.start : m, bounds[0].start);
+    const maxEnd = bounds.reduce((m, b) => {
+      var _a2;
+      const e = (_a2 = b.end) != null ? _a2 : b.start;
+      return e > m ? e : m;
+    }, (_a = bounds[0].end) != null ? _a : bounds[0].start);
     return StateManager.formatWindow(minStart, maxEnd);
   }
   /**

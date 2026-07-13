@@ -1257,6 +1257,20 @@ describe("StateManager", () => {
         const delivery = makeDelivery({ status_code: "abc" as unknown as number });
         expect(manager.parseStatus(delivery)).toBe(-1);
       });
+
+      it("L1: logs the parseStatus drift exactly once per delivery across a poll's call sites", async () => {
+        // A poll parses the SAME delivery object at up to four sites (active
+        // filter, updateDelivery, updateSummary's isToday filter, combined
+        // window). The drift debug line must fire ONCE per delivery, not per site.
+        const drifted = makeDelivery({ status_code: {} as unknown as number });
+        const driftLog = vi.fn();
+        adapter.log.debug = driftLog;
+        manager.parseStatus(drifted); // active filter (main.ts)
+        await updateDeliveryT(manager, drifted, "DHL"); // per-delivery update
+        await manager.updateSummary([drifted]); // summary (isToday filter)
+        const driftLines = driftLog.mock.calls.filter(c => String(c[0]).includes("parseStatus drift"));
+        expect(driftLines.length).toBe(1);
+      });
     });
 
     describe("packageId", () => {

@@ -680,6 +680,39 @@ describe("ParcelappAdapter onMessage", () => {
     );
   });
 
+  it("L2: a concurrent second Test-Connection is guarded — one API call, not two", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    client.testConnection.mockClear();
+    i.sendTo.mockClear();
+    // Make the first test hang so the second arrives while it is still in flight.
+    let release: (v: { success: boolean; message: string }) => void = () => {};
+    client.testConnection.mockReturnValueOnce(
+      new Promise<{ success: boolean; message: string }>(r => {
+        release = r;
+      }),
+    );
+    const msg = (): unknown => ({
+      command: "checkConnection",
+      from: "system.adapter.admin.0",
+      callback: { id: 1 },
+      message: { apiKey: "0123456789abcdef" },
+    });
+    const first = i.onMessage(msg()); // hangs in testConnection
+    await i.onMessage(msg()); // arrives while the first is in flight → must be guarded
+    // The guarded second call must NOT fire another API request and must reply
+    // with an explicit "already running" error rather than burning a GET.
+    expect(client.testConnection).toHaveBeenCalledTimes(1);
+    expect(i.sendTo).toHaveBeenCalledWith(
+      "system.adapter.admin.0",
+      "checkConnection",
+      { error: expect.stringContaining("already running") },
+      expect.anything(),
+    );
+    release({ success: true, message: "ok" });
+    await first;
+  });
+
   it("addDelivery: adds and triggers an immediate follow-up poll (gap already elapsed)", async () => {
     const { adapter, client } = await setupReady();
     const i = internalOf(adapter);
