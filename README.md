@@ -140,7 +140,7 @@ sendTo("parcelapp.0", "addDelivery", {
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
-### 0.10.1 (2026-07-13)
+### 0.10.1 (2026-07-13) — stable
 
 - Internal refactoring. No user-facing changes.
 
