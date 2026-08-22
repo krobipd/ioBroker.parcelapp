@@ -50,6 +50,7 @@ function isTrueish(v) {
   return false;
 }
 function errText(err) {
+  var _a;
   if (err instanceof Error) {
     return err.message;
   }
@@ -65,8 +66,11 @@ function errText(err) {
   if (typeof err === "number" || typeof err === "boolean" || typeof err === "bigint") {
     return String(err);
   }
+  if (typeof err === "symbol") {
+    return String(err);
+  }
   try {
-    return JSON.stringify(err);
+    return (_a = JSON.stringify(err)) != null ? _a : Object.prototype.toString.call(err);
   } catch {
     return Object.prototype.toString.call(err);
   }

@@ -28,7 +28,7 @@
 src/main.ts              → Adapter (Polling, Lifecycle, sendTo-Handler, handlePollError, Pick<>-Seams)
 src/lib/types.ts         → API-Interfaces + ApiErrorCode/ApiError (Fehler-Vertrag) + DELIVERED/UNKNOWN_STATUS_CODE
 src/lib/coerce.ts        → errText, coerceFiniteNumber strict, coerceClampedInt, isTrueish, oneLine (inkl. NUL/U+2028)
-src/lib/parcel-client.ts → HTTPS-Client (Node.js built-in); baseUrl-Seam (Tests), apiError (typisiert), 60s-Deadline, cancelled-Flag, RETRY_AFTER_*-Konstanten
+src/lib/parcel-client.ts → HTTPS-Client (Node.js built-in); baseUrl- + Timeout-Seams (Tests), apiError (typisiert), 15s-Leerlauf + 60s-Deadline, cancelled-Flag, RETRY_AFTER_*-Konstanten
 src/lib/state-manager.ts → State CRUD + Cleanup + Berechnungen; createdIds/deviceEnsured-Caches; lastUpdated via setStateChangedAsync-notChanged
 src/lib/i18n.ts          → tName/tText/statusLabel/packageName: type-safe Wrapper (keys aus admin/i18n/en.json; Status-Labels status_0…status_8)
 ../scripts/sync-iopackage-from-i18n.py → hält io-package.json:instanceObjects synchron mit admin/i18n (zentral, source: admin-i18n)
@@ -52,15 +52,23 @@ src/lib/i18n.ts          → tName/tText/statusLabel/packageName: type-safe Wrap
 
 Unparsebarer/driftender `status_code` → `-1` (`UNKNOWN_STATUS_CODE`): bleibt sichtbar (Aktiv-Filter ist `status !== 0`), rendert als „Unknown (-1)" — wird NICHT fälschlich als „zugestellt" versteckt und im autoRemove-Modus gelöscht.
 
-## Tests (284 unit + 57 package + 1 integration = 342)
+## Tests (310 unit + 57 package + 1 integration = 368)
 
-Run: `npm test` (vitest unit + mocha @iobroker/testing packageFiles). CI: `test:unit`-Alias triggert die vitest-Suite in testing-action-adapter@v1 (H2).
+Run: `npm test` (vitest unit + mocha @iobroker/testing packageFiles). CI: `test:unit`-Alias triggert die vitest-Suite in testing-action-adapter@v1 (H2). Abdeckung 99,3 % Statements / 97,0 % Branches.
+
+**Konventionen der Suite (aus dem Test-Audit 2026-08-22 — `Ressourcen/parcelapp/test-audit-2026-08-22.md`):**
+- **Ein Test muss FALLEN können.** Der Audit fand drei Tests, die eine Regel nur scheinbar prüften. Neue Tests werden per **Mutation** gegengeprüft: Regel im Quellcode kaputtmachen → der Test MUSS rot werden. Das Protokoll der 12 belegten Mutationen steht im Audit-Report.
+- **`state-manager.test.ts` friert die Uhr** (`FIXED_NOW`, Mitte Juni, mittags — kein Sommerzeit-Wechsel, keine Monatsgrenze). Wer `lastUpdated`-Verhalten testet, muss die Uhr **bewusst vorstellen**: zwei Polls in derselben Millisekunde erzeugen denselben Zeitstempel, und dann meldet der Broker-Mock „unverändert" — ein kaputtes Verhalten sähe identisch aus.
+- **`parcel-client.test.ts` schaltet die Verbindungswiederverwendung ab** (`globalAgent.keepAlive = false` + `destroy()` nach jedem Test). Sonst kann ein Aufruf einen Socket erwischen, den der Wegwerf-Server gerade geschlossen hat → falsch-rot (einmal live passiert, 2026-08-21).
+- **Zeitgrenzen sind injizierbar** (`ParcelClientTimeouts`, 4. Konstruktor-Parameter): Leerlauf-Abbruch und harte Zeitgrenze laufen im Test mit Millisekunden statt 15/60 Sekunden. Produktiv immer die Vorgabewerte.
+- **Kein Unit-Test geht ins echte Netz** — alles gegen lokale Wegwerf-Server; die produktiven Fabriken werden direkt aufgerufen, nie über `onReady`.
+- **`npm run format` NICHT blind fahren** — der committete Stand ist nicht prettier-CLI-sauber (13 Dateien schon vor jeder Änderung), das echte Gate ist `npm run lint`.
 
 ## Befehle
 
 ```bash
 npm run build        # Production (esbuild)
-npm test             # vitest run (284 unit) + mocha (57 package)
+npm test             # vitest run (310 unit) + mocha (57 package)
 npm run lint         # ESLint + Prettier
 npm run check        # tsc --noEmit (TS 6)
 npm run coverage     # vitest coverage report

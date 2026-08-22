@@ -715,6 +715,10 @@ export class ParcelappAdapter extends utils.Adapter {
   }
 }
 
+// Process entry point. Not reachable from the unit tests (they import the class
+// instead of running the file as a process), but NOT untested: `npm run
+// test:integration` boots the adapter through exactly this branch inside a real
+// js-controller, which is what catches module-scope startup crashes.
 if (require.main !== module) {
   module.exports = (options: Partial<utils.AdapterOptions> | undefined) => new ParcelappAdapter(options);
 } else {

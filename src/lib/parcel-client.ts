@@ -37,6 +37,21 @@ export interface ParcelClientLogger {
   /** Adapter debug log. Called per request/response outcome (drift, status, parse, oversize) — low-frequency tracing. */
   debug(message: string): void;
 }
+
+/**
+ * Timeout overrides. Production never passes these — the defaults
+ * ({@link REQUEST_TIMEOUT} / {@link REQUEST_DEADLINE_MS}) apply. Same seam idea
+ * as the `baseUrl` parameter: without it the two watchdogs below could only be
+ * exercised by a test that waits 15 respectively 60 seconds, so they stayed
+ * untested — and an untested watchdog is exactly the one that silently stops
+ * working (test audit 2026-08-22, finding C14).
+ */
+export interface ParcelClientTimeouts {
+  /** Socket idle timeout (ms). */
+  idleMs?: number;
+  /** Hard per-request deadline (ms). */
+  deadlineMs?: number;
+}
 /**
  * v0.4.2 (P9): hard cap on response body size. parcel.app deliveries lists
  * are tiny (~1 kB per package, max ~50 packages = 50 kB), so a 1 MiB cap is
@@ -86,16 +101,28 @@ export class ParcelClient {
   private readonly log?: ParcelClientLogger;
   /** API base URL. Overridable so tests can run the real `request()` against a local mock server. */
   private readonly baseUrl: string;
+  /** Socket idle timeout in ms — same seam idea as {@link baseUrl}, see {@link ParcelClientTimeouts}. */
+  private readonly idleTimeoutMs: number;
+  /** Hard per-request deadline in ms — see {@link ParcelClientTimeouts}. */
+  private readonly deadlineMs: number;
 
   /**
    * @param apiKey The parcel.app API key
    * @param log Optional adapter logger for HTTPS-layer trace (v0.4.3)
    * @param baseUrl API base URL — defaults to the production endpoint; overridden in tests
+   * @param timeouts Timeout overrides — production always uses the defaults
    */
-  constructor(apiKey: string, log?: ParcelClientLogger, baseUrl: string = API_BASE) {
+  constructor(
+    apiKey: string,
+    log?: ParcelClientLogger,
+    baseUrl: string = API_BASE,
+    timeouts: ParcelClientTimeouts = {},
+  ) {
     this.apiKey = apiKey;
     this.log = log;
     this.baseUrl = baseUrl;
+    this.idleTimeoutMs = timeouts.idleMs ?? REQUEST_TIMEOUT;
+    this.deadlineMs = timeouts.deadlineMs ?? REQUEST_DEADLINE_MS;
   }
 
   /**
@@ -326,7 +353,7 @@ export class ParcelClient {
         path: url.pathname + url.search,
         method,
         headers,
-        timeout: REQUEST_TIMEOUT,
+        timeout: this.idleTimeoutMs,
       };
 
       // v0.4.2 (P1): per-request AbortController. `cancelAll()` (called
@@ -359,6 +386,11 @@ export class ParcelClient {
           reject(err);
         });
         res.on("data", (chunk: Buffer) => {
+          // Not covered by a test on purpose: this branch only runs for a chunk
+          // that was already buffered when `req.destroy()` below fired, i.e. a
+          // delivery race no test can trigger deterministically. A test that
+          // hits it "usually" would be exactly the kind of flaky check the
+          // 2026-08-22 audit removed elsewhere.
           if (oversized) {
             return;
           }
@@ -425,12 +457,12 @@ export class ParcelClient {
       // context needed). Destroying with a TIMEOUT-coded ApiError routes
       // through req.on("error") below, which rejects + cleans up — a trickle
       // response (a byte every few seconds) can no longer pin the poll loop.
-      AbortSignal.timeout(REQUEST_DEADLINE_MS).addEventListener("abort", () => {
+      AbortSignal.timeout(this.deadlineMs).addEventListener("abort", () => {
         if (settled) {
           return; // request finished long ago — nothing to kill, nothing to log
         }
-        this.log?.debug(`HTTP deadline ${method} ${path} (${Date.now() - startedAt}ms > ${REQUEST_DEADLINE_MS}ms)`);
-        req.destroy(apiError(`Request deadline exceeded (${REQUEST_DEADLINE_MS / 1000}s)`, "TIMEOUT"));
+        this.log?.debug(`HTTP deadline ${method} ${path} (${Date.now() - startedAt}ms > ${this.deadlineMs}ms)`);
+        req.destroy(apiError(`Request deadline exceeded (${this.deadlineMs / 1000}s)`, "TIMEOUT"));
       });
 
       ctrl.signal.addEventListener("abort", () => {

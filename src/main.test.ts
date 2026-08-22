@@ -200,6 +200,36 @@ describe("ParcelappAdapter classifyError", () => {
   }
 });
 
+describe("ParcelappAdapter default factories (the seams' production side)", () => {
+  it("builds a real client and state manager when no test seam replaces them", () => {
+    // Every other test injects fakes here, so the production factories — the
+    // ONLY place the adapter wires up its real client — had no coverage at all.
+    // The factories are called DIRECTLY: driving them through onReady would fire
+    // a real request at api.parcel.app, which no unit test may ever do.
+    const adapter = new ParcelappAdapter();
+    const i = internalOf(adapter) as unknown as {
+      makeClient: (apiKey: string) => Record<string, unknown>;
+      makeStateManager: () => Record<string, unknown>;
+      log: { debug: ReturnType<typeof vi.fn> };
+    };
+
+    const client = i.makeClient("0123456789abcdef");
+    // The real client carries the five members main.ts declares it needs.
+    for (const member of ["getDeliveries", "getCarrierName", "addDelivery", "testConnection", "cancelAll"]) {
+      expect(typeof client[member], member).toBe("function");
+    }
+    // cancelAll on a fresh client is a no-op that must not throw, and it proves
+    // the debug logger handed to the client really reaches the adapter log.
+    expect(() => (client.cancelAll as () => void)()).not.toThrow();
+    expect(i.log.debug).toHaveBeenCalledWith(expect.stringContaining("cancelAll"));
+
+    const stateManager = i.makeStateManager();
+    for (const member of ["resetPollState", "packageId", "parseStatus", "updateDelivery", "updateSummary"]) {
+      expect(typeof stateManager[member], member).toBe("function");
+    }
+  });
+});
+
 describe("ParcelappAdapter onReady", () => {
   it("refuses to start without a plausible API key", async () => {
     const { adapter, client } = setup({ apiKey: "short" });
@@ -264,6 +294,76 @@ describe("ParcelappAdapter onReady", () => {
     expect(i.log.info).not.toHaveBeenCalledWith(expect.stringContaining("Parcel tracking started"));
   });
 
+  it("the armed interval actually polls — the adapter's recurring work (C10)", async () => {
+    // Until 2026-08-22 nothing drove this callback: emptying it left all tests
+    // green while the adapter would have polled ONCE at startup and then never
+    // again, still logging "polling every 10 minutes". The interval callback is
+    // the only place that recurring poll lives.
+    const { adapter, client } = setup();
+    const i = internalOf(adapter);
+    await i.onReady();
+    const scheduled = i.setInterval.mock.calls[0][0] as () => void;
+    expect(typeof scheduled).toBe("function");
+    // Argument two is the resolved interval in milliseconds.
+    expect(i.setInterval.mock.calls[0][1]).toBe(10 * 60 * 1000);
+
+    client.getDeliveries.mockClear();
+    i.lastPollTime = 0; // the 60s gap has elapsed
+    scheduled();
+    await new Promise(resolve => setImmediate(resolve));
+    expect(client.getDeliveries).toHaveBeenCalledTimes(1);
+  });
+
+  it("a failing scheduled poll is caught and logged, never left unhandled", async () => {
+    // The callback is fire-and-forget: without its .catch a rejected poll would
+    // surface as an unhandled rejection and (js-controller ≥7) can kill the
+    // process. handlePollError swallows client errors, so the rejection has to
+    // come from the layer below it.
+    const { adapter, client } = setup();
+    const i = internalOf(adapter);
+    await i.onReady();
+    const scheduled = i.setInterval.mock.calls[0][0] as () => void;
+    i.lastPollTime = 0;
+    // poll() catches everything the API can do to it, so the rejection has to
+    // come from the error handling itself. A failure whose `code` cannot even
+    // be read stands in for "something in handlePollError went wrong".
+    const hostile = new Error("unreadable");
+    Object.defineProperty(hostile, "code", {
+      get() {
+        throw new Error("broker exploded");
+      },
+    });
+    client.getDeliveries.mockRejectedValueOnce(hostile);
+    expect(() => scheduled()).not.toThrow();
+    await new Promise(resolve => setImmediate(resolve));
+    expect(i.log.error).toHaveBeenCalledWith(expect.stringContaining("Scheduled poll failed"));
+  });
+
+  it("clamps the configured poll interval into [5, 60] minutes and defaults sanely (C13)", async () => {
+    // Only the pass-through case (10) was covered; the bounds that stop a
+    // 1-minute hammer or a NaN-fed setInterval were not.
+    const cases: [unknown, number][] = [
+      [1, 5], // below minimum → clamped up
+      [5, 5],
+      [60, 60],
+      [999, 60], // above maximum → clamped down
+      ["15", 15], // admin may hand over a string
+      ["abc", 10], // unparseable → default
+      [undefined, 10],
+      [null, 10],
+      [12.9, 12], // floored, not rounded
+    ];
+    for (const [raw, expectedMinutes] of cases) {
+      const { adapter } = setup({ pollInterval: raw });
+      const i = internalOf(adapter);
+      await i.onReady();
+      expect(i.setInterval.mock.calls[0][1], `pollInterval=${JSON.stringify(raw)}`).toBe(
+        expectedMinutes * 60 * 1000,
+      );
+      expect(i.log.info).toHaveBeenCalledWith(expect.stringContaining(`every ${expectedMinutes} minutes`));
+    }
+  });
+
   it("removes the obsolete summary.json state from pre-0.2.0 installs", async () => {
     const { adapter } = setup();
     const i = internalOf(adapter);
@@ -319,6 +419,28 @@ describe("ParcelappAdapter onUnload", () => {
     i.onUnload(callback);
     expect(callback).toHaveBeenCalledTimes(1);
     expect(i.log.debug).toHaveBeenCalledWith(expect.stringContaining("onUnload error"));
+  });
+
+  it("reports the instance as disconnected on the way out", async () => {
+    // The red/green dot in the admin instance list has to go grey on a stop —
+    // otherwise a stopped instance keeps claiming a live connection.
+    const { adapter } = await setupReady();
+    const i = internalOf(adapter);
+    i.setState.mockClear();
+    i.onUnload(vi.fn());
+    expect(i.setState).toHaveBeenCalledWith("info.connection", { val: false, ack: true });
+  });
+
+  it("survives a broker that is already gone while writing the disconnect", async () => {
+    // The fire-and-forget write must not surface as an unhandled rejection
+    // during shutdown, and the callback still has to run exactly once.
+    const { adapter } = await setupReady();
+    const i = internalOf(adapter);
+    i.setState.mockRejectedValueOnce(new Error("broker down"));
+    const callback = vi.fn();
+    expect(() => i.onUnload(callback)).not.toThrow();
+    await new Promise(resolve => setImmediate(resolve));
+    expect(callback).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -610,6 +732,64 @@ describe("ParcelappAdapter poll — error routing", () => {
     client.getDeliveries.mockRejectedValueOnce(codeError("Request timeout", "TIMEOUT"));
     await i.poll();
     expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("timeout"));
+  });
+
+  it("FORBIDDEN repeats demote to debug — not 144 identical error lines a day (M3)", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    client.getDeliveries.mockRejectedValue(codeError("403", "FORBIDDEN"));
+    await i.poll();
+    expect(i.log.error).toHaveBeenCalledWith(expect.stringContaining("Premium subscription"));
+
+    i.lastPollTime = 0;
+    i.log.error.mockClear();
+    await i.poll();
+    expect(i.log.error).not.toHaveBeenCalled();
+    expect(i.log.debug).toHaveBeenCalledWith(expect.stringContaining("Premium subscription"));
+  });
+
+  it("TIMEOUT repeats demote to debug as well", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    client.getDeliveries.mockRejectedValue(codeError("Request timeout", "TIMEOUT"));
+    await i.poll();
+    expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("timeout"));
+
+    i.lastPollTime = 0;
+    i.log.warn.mockClear();
+    await i.poll();
+    expect(i.log.warn).not.toHaveBeenCalled();
+    expect(i.log.debug).toHaveBeenCalledWith(expect.stringContaining("Poll failed (ongoing)"));
+  });
+
+  it("an unclassified failure errors once, then repeats at debug (default branch)", async () => {
+    // Everything without a known code — e.g. a PARSE_ERROR from the client or a
+    // foreign error — takes the default branch, which had no coverage at all.
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    client.getDeliveries.mockRejectedValue(codeError("JSON parse error (12 bytes)", "PARSE_ERROR"));
+    await i.poll();
+    expect(i.log.error).toHaveBeenCalledWith(expect.stringContaining("Poll failed: JSON parse error"));
+    expect(i.lastErrorCode).toBe("PARSE_ERROR");
+
+    i.lastPollTime = 0;
+    i.log.error.mockClear();
+    await i.poll();
+    expect(i.log.error).not.toHaveBeenCalled();
+    expect(i.log.debug).toHaveBeenCalledWith(expect.stringContaining("Poll failed (ongoing)"));
+  });
+
+  it("a per-delivery failure during shutdown stays at debug — teardown noise is not a warning (L2)", async () => {
+    const { adapter, stateMgr } = await setupReady();
+    const i = internalOf(adapter);
+    stateMgr.updateDelivery.mockRejectedValue(new Error("broker closed"));
+    i.unloaded = true; // stop arrived while the batch was in flight
+    await i.poll();
+    expect(i.log.warn).not.toHaveBeenCalledWith(expect.stringContaining("Failed to update"));
+    expect(i.log.debug).toHaveBeenCalledWith(expect.stringContaining("during shutdown"));
+    // A shutdown failure must not be remembered as a per-package failure:
+    // the next regular poll should warn normally rather than silently skip.
+    expect(i.failedDeliveries.size).toBe(0);
   });
 
   it("a shutdown abort routes to debug — no red error line on a deliberate stop (M1)", async () => {
@@ -955,6 +1135,18 @@ describe("ParcelappAdapter onMessage", () => {
     });
     expect(i.sendTo).toHaveBeenCalledWith("x", "checkConnection", { error: "boom" }, expect.anything());
     expect(i.testClients.size).toBe(0); // finally cleaned up
+  });
+
+  it("ignores broadcasts without a callback instead of answering into the void", async () => {
+    // A message without callback (broadcast) must be traced and dropped — any
+    // sendTo reply would go nowhere and a throw would escape the handler.
+    const { adapter } = await setupReady();
+    const i = internalOf(adapter);
+    i.sendTo.mockClear();
+    await expect(i.onMessage({ command: "addDelivery", from: "x", message: {} })).resolves.toBeUndefined();
+    await expect(i.onMessage({ from: "x", callback: { id: 1 } })).resolves.toBeUndefined();
+    await expect(i.onMessage(null)).resolves.toBeUndefined();
+    expect(i.sendTo).not.toHaveBeenCalled();
   });
 
   it("a throwing addDelivery handler keeps the documented script envelope", async () => {

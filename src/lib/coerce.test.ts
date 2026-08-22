@@ -37,6 +37,19 @@ describe("coerceFiniteNumber", () => {
     expect(coerceFiniteNumber("2.5E-3")).toBeNull();
   });
 
+  it("rejects a digit string so long that it parses to Infinity", () => {
+    // The regex only checks the SHAPE (digits, optional fraction); a 400-digit
+    // number still passes it and then overflows to Infinity. Without the
+    // isFinite check that Infinity would land in an ioBroker state.
+    expect(coerceFiniteNumber("9".repeat(400))).toBeNull();
+    expect(coerceFiniteNumber(`-${"9".repeat(400)}`)).toBeNull();
+    // A long-but-finite value must still pass (loses precision like any JS
+    // number, but stays a usable finite number rather than being dropped).
+    const long = coerceFiniteNumber("12345678901234567890");
+    expect(long).not.toBeNull();
+    expect(Number.isFinite(long)).toBe(true);
+  });
+
   it("rejects strings with leading/trailing whitespace or signs", () => {
     expect(coerceFiniteNumber(" 42")).toBeNull();
     expect(coerceFiniteNumber("42 ")).toBeNull();
@@ -109,6 +122,55 @@ describe("errText", () => {
       }
     }
     expect(errText(new MyErr())).toBe("custom");
+  });
+
+  // The contract this whole helper exists for: it is interpolated into log
+  // lines, so it must ALWAYS return a string. Every branch below used to be
+  // unreachable for the tests (coverage gap, audit 2026-08-22 C12/D15) and one
+  // of them was genuinely broken.
+  it("falls back to the object tag for a circular structure (JSON.stringify throws)", () => {
+    const circular: Record<string, unknown> = { code: "ECONN" };
+    circular.self = circular;
+    expect(errText(circular)).toBe("[object Object]");
+  });
+
+  it("returns a string for a thrown symbol (JSON.stringify yields undefined, it does NOT throw)", () => {
+    // Regression guard: the catch never runs for a symbol, so the old code
+    // returned `undefined` while declaring `string` — the log line read
+    // "Poll failed: undefined".
+    const result = errText(Symbol("boom"));
+    expect(typeof result).toBe("string");
+    expect(result).toContain("boom");
+  });
+
+  it("returns a string for a thrown function (JSON.stringify yields undefined too)", () => {
+    const result = errText(() => 42);
+    expect(typeof result).toBe("string");
+    expect(result).toBe("[object Function]");
+  });
+
+  it("never returns a non-string, whatever it is handed", () => {
+    const circular: Record<string, unknown> = {};
+    circular.self = circular;
+    const inputs: unknown[] = [
+      new Error("e"),
+      null,
+      undefined,
+      "text",
+      42,
+      true,
+      10n,
+      Symbol("s"),
+      { a: 1 },
+      [1, 2],
+      () => 0,
+      circular,
+      new Date(0),
+      NaN,
+    ];
+    for (const input of inputs) {
+      expect(typeof errText(input), `errText(${String(typeof input)})`).toBe("string");
+    }
   });
 });
 

@@ -176,14 +176,32 @@ async function updateDeliveryT(mgr: StateManager, d: ParcelDelivery, carrier: st
   return mgr.updateDelivery(d, carrier, mgr.packageId(d));
 }
 
+/**
+ * Fixed wall clock for the whole suite. Two reasons:
+ *  1. Every "today / tomorrow / overdue" test builds its expectation from
+ *     `new Date()`. With a live clock a day rollover between building the
+ *     fixture and evaluating it flips the result — a rare but real false red.
+ *  2. The clock stands still unless a test moves it on purpose, which is what
+ *     makes the `lastUpdated` tests below able to see a new timestamp at all
+ *     (see the note there).
+ * A mid-June midday is deliberate: no DST switch, no month or year boundary.
+ */
+const FIXED_NOW = new Date(2026, 5, 15, 12, 0, 0);
+
 describe("StateManager", () => {
   let adapter: MockAdapter;
   let manager: StateManager;
 
   beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(FIXED_NOW);
     mockLang = "de";
     adapter = createMockAdapter();
     manager = new StateManager(adapter as never);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   describe("sanitize", () => {
@@ -1145,6 +1163,39 @@ describe("StateManager", () => {
       expect(state?.val).toBe("08:00 - 18:00");
     });
 
+    it("finds the earliest start even when it arrives LAST in the list", async () => {
+      // Mirror image of the test above: there the widest window came first, so
+      // the "is this start earlier than the current minimum" comparison was
+      // never actually true. Order matters for a fold — both directions needed.
+      const today = new Date();
+      const lateStart = new Date(today);
+      lateStart.setHours(16, 0, 0, 0);
+      const lateEnd = new Date(today);
+      lateEnd.setHours(17, 0, 0, 0);
+      const earlyStart = new Date(today);
+      earlyStart.setHours(7, 0, 0, 0);
+      const earlyEnd = new Date(today);
+      earlyEnd.setHours(8, 0, 0, 0);
+
+      const deliveries = [
+        makeDelivery({
+          status_code: 2,
+          tracking_number: "LATE",
+          timestamp_expected: Math.floor(lateStart.getTime() / 1000),
+          timestamp_expected_end: Math.floor(lateEnd.getTime() / 1000),
+        }),
+        makeDelivery({
+          status_code: 4,
+          tracking_number: "EARLY",
+          timestamp_expected: Math.floor(earlyStart.getTime() / 1000),
+          timestamp_expected_end: Math.floor(earlyEnd.getTime() / 1000),
+        }),
+      ];
+      await manager.updateSummary(deliveries);
+
+      expect(adapter.states.get("summary.deliveryWindow")?.val).toBe("07:00 - 17:00");
+    });
+
     it("includes date-string windows (no timestamps) in the combined window", async () => {
       const today = new Date();
       const y = today.getFullYear();
@@ -1211,11 +1262,26 @@ describe("StateManager", () => {
     });
 
     describe("parseStatus", () => {
-      it("should accept number status_code (API drift)", () => {
-        const delivery = makeDelivery({
-          status_code: 2,
-        });
-        expect(manager.parseStatus(delivery)).toBe(2);
+      // (A plain numeric status_code is the NORMAL case, not drift — it is
+      // covered by "should set statusCode as number" and the 0-8 sweep above.)
+
+      it("accepts a numeric STRING status code — the documented drift shape", () => {
+        // Was uncovered until 2026-08-22: removing this branch from the source
+        // left all 286 tests green, while in production every package would
+        // have flipped to "Unknown (-1)" as soon as the API sent "2" instead
+        // of 2 — the very drift the branch exists for.
+        expect(manager.parseStatus(makeDelivery({ status_code: "2" as unknown as number }))).toBe(2);
+        expect(manager.parseStatus(makeDelivery({ status_code: "0" as unknown as number }))).toBe(0);
+        // parseInt semantics: a trailing suffix is tolerated, the number wins.
+        expect(manager.parseStatus(makeDelivery({ status_code: "4 " as unknown as number }))).toBe(4);
+      });
+
+      it("keeps a numeric-string status code visible end-to-end (label + code state)", async () => {
+        const delivery = makeDelivery({ status_code: "2" as unknown as number, tracking_number: "STRSTATUS" });
+        await updateDeliveryT(manager, delivery, "DHL");
+        const pkgId = manager.packageId(delivery);
+        expect(adapter.states.get(`deliveries.${pkgId}.statusCode`)?.val).toBe(2);
+        expect(adapter.states.get(`deliveries.${pkgId}.status`)?.val).toBe(i18nData.de.status_2);
       });
 
       it("should truncate fractional numbers", () => {
@@ -1392,6 +1458,20 @@ describe("StateManager", () => {
         expect(window?.val).toBe("11:15");
       });
 
+      it("rejects a timestamp so large that it leaves the representable date range", async () => {
+        // A finite but absurd Unix timestamp (drifted milliseconds-as-seconds,
+        // or garbage) becomes an Invalid Date once multiplied by 1000. Without
+        // the range check the window would render from a broken date.
+        const delivery = makeDelivery({
+          status_code: 2,
+          timestamp_expected: 9e15 as unknown as number,
+        });
+        await updateDeliveryT(manager, delivery, "DHL");
+
+        const pkgId = manager.packageId(delivery);
+        expect(adapter.states.get(`deliveries.${pkgId}.deliveryWindow`)?.val).toBe("");
+      });
+
       it("should handle timestamp_expected as non-finite value", async () => {
         const delivery = makeDelivery({
           status_code: 2,
@@ -1432,16 +1512,9 @@ describe("StateManager", () => {
         expect(window?.val).toBe("09:00");
       });
 
-      it("should handle numeric status_code (API drift)", async () => {
-        const delivery = makeDelivery({
-          status_code: 4,
-        });
-        await updateDeliveryT(manager, delivery, "DHL");
-
-        const pkgId = manager.packageId(delivery);
-        expect(adapter.states.get(`deliveries.${pkgId}.statusCode`)?.val).toBe(4);
-        expect(adapter.states.get(`deliveries.${pkgId}.status`)?.val).toBe("In Zustellung");
-      });
+      // (A plain numeric status_code was asserted here a third time under a
+      // "drift" heading — removed 2026-08-22, it is the normal case and already
+      // covered by "should set statusCode as number" plus the 0-8 sweep.)
     });
   });
 
@@ -1492,24 +1565,11 @@ describe("StateManager", () => {
     });
   });
 
+  // The inventory of the i18n files themselves (11 languages present, identical
+  // keysets, no empty value, every %s intact) belongs to the i18n unit and lives
+  // in i18n.test.ts — it was duplicated here until 2026-08-22 (finding B9).
+  // What stays here is what the StateManager actually does with those files.
   describe("multilingual labels", () => {
-    it("should ship i18n files for all 11 ioBroker languages", () => {
-      expect(Object.keys(i18nData).sort()).toEqual([...EXPECTED_LANGUAGES].sort());
-    });
-
-    it("should define status codes 0-8 and packageName for every language", () => {
-      for (const lang of EXPECTED_LANGUAGES) {
-        const labels = i18nData[lang];
-        expect(labels, `Missing i18n file for ${lang}`).toBeTypeOf("object");
-        for (let code = 0; code <= 8; code++) {
-          expect(labels[`status_${code}`], `${lang} missing status_${code}`).toBeTypeOf("string");
-          expect(labels[`status_${code}`].length).toBeGreaterThan(0);
-        }
-        // v0.10.0 (L18): localized fallback device name with its %s placeholder.
-        expect(labels.packageName, `${lang} missing packageName`).toContain("%s");
-      }
-    });
-
     it("should use the system language for status strings", async () => {
       mockLang = "fr";
       adapter = createMockAdapter();
@@ -1521,7 +1581,12 @@ describe("StateManager", () => {
       expect(adapter.states.get(`deliveries.${pkgId}.status`)?.val).toBe("En transit");
     });
 
-    it("should localize the today estimate in every language", async () => {
+    it("writes the today estimate in the ACTUAL language, not just some non-empty string", async () => {
+      // Was a pure "is a non-empty string" check until 2026-08-22 and therefore
+      // blind: swapping the today text for the tomorrow text kept it green.
+      // Now every language is pinned to its own translation, and the languages
+      // are proven to differ so a collapse to English cannot pass either.
+      const written = new Map<string, string>();
       for (const lang of EXPECTED_LANGUAGES) {
         mockLang = lang;
         adapter = createMockAdapter();
@@ -1539,9 +1604,12 @@ describe("StateManager", () => {
 
         const pkgId = manager.packageId(delivery);
         const estimate = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`)?.val;
-        expect(estimate, `today label in ${lang}`).toBeTypeOf("string");
-        expect((estimate as string).length, `today label in ${lang}`).toBeGreaterThan(0);
+        expect(estimate, `today label in ${lang}`).toBe(i18nData[lang].estimateToday);
+        written.set(lang, estimate as string);
       }
+      // Sanity on the premise: de/en/fr really are three different strings, so
+      // the per-language assertion above can actually fail.
+      expect(new Set([written.get("de"), written.get("en"), written.get("fr")]).size).toBe(3);
     });
   });
 
@@ -1689,23 +1757,9 @@ describe("StateManager", () => {
     });
   });
 
-  describe("identical poll produces zero writes incl. lastUpdated (v0.7.2/v0.10.0)", () => {
-    it("re-polling identical data does not re-write unchanged states", async () => {
-      const adapter = createMockAdapter();
-      const manager = new StateManager(adapter as never);
-      const delivery = makeDelivery({
-        status_code: 2,
-        timestamp_expected: Math.floor(Date.now() / 1000) + 3600,
-      });
-      await updateDeliveryT(manager, delivery, "DHL");
-      const firstWrites = adapter.metrics.setStateChangedWrites;
-      // Second identical poll: every state is unchanged and must be skipped —
-      // since v0.7.2 that includes `lastUpdated` (only refreshed on data change).
-      await updateDeliveryT(manager, delivery, "DHL");
-      const secondPassWrites = adapter.metrics.setStateChangedWrites - firstWrites;
-      expect(secondPassWrites).toBe(0);
-    });
-  });
+  // The former "identical poll produces zero writes" block lived here. It made
+  // the same assertion as the first test of the `lastUpdated` block below, so
+  // the two were merged there (audit 2026-08-22, finding B7).
 
   describe("device object ensured once per process (v0.10.0, DP-5)", () => {
     it("extends the device object only once across polls", async () => {
@@ -1761,8 +1815,22 @@ describe("StateManager", () => {
     });
   });
 
+  /**
+   * ⚠️ The clock MUST move between the two polls in these tests. `lastUpdated`
+   * is written as `new Date().toISOString()`; two polls inside the same
+   * millisecond produce the SAME string, so the mock broker answers
+   * "unchanged" and counts no write — a broken implementation that stamps on
+   * every poll would look identical to a correct one. Measured on 2026-08-22:
+   * with the clock standing still, replacing the change-check with `if (true)`
+   * left all 286 tests green; with the advance below, all three go red.
+   */
   describe("lastUpdated only on data change (v0.7.2, notChanged-backed since v0.10.0)", () => {
-    it("does not rewrite lastUpdated when nothing changed between polls", async () => {
+    /** Move the wall clock so a re-stamped lastUpdated would be a NEW value. */
+    const advanceClock = (): void => {
+      vi.setSystemTime(new Date(Date.now() + 5_000));
+    };
+
+    it("re-polling identical data writes nothing at all — lastUpdated included", async () => {
       const adapter = createMockAdapter();
       const manager = new StateManager(adapter as never);
       const delivery = makeDelivery({
@@ -1771,28 +1839,27 @@ describe("StateManager", () => {
       });
       await updateDeliveryT(manager, delivery, "DHL");
       const firstWrites = adapter.metrics.setStateChangedWrites;
+      const stamped = adapter.states.get(`deliveries.${manager.packageId(delivery)}.lastUpdated`)?.val;
+
+      advanceClock();
       await updateDeliveryT(manager, delivery, "DHL");
-      // Identical data → ZERO writes on the second poll (lastUpdated included).
+
       expect(adapter.metrics.setStateChangedWrites).toBe(firstWrites);
+      expect(adapter.states.get(`deliveries.${manager.packageId(delivery)}.lastUpdated`)?.val).toBe(stamped);
     });
 
     it("refreshes lastUpdated when a tracked value changes", async () => {
-      vi.useFakeTimers();
-      try {
-        vi.setSystemTime(new Date("2026-07-08T10:00:00.000Z"));
-        const adapter = createMockAdapter();
-        const manager = new StateManager(adapter as never);
-        const delivery = makeDelivery({ status_code: 2 });
-        await updateDeliveryT(manager, delivery, "DHL");
-        const before = adapter.states.get(`deliveries.${manager.packageId(delivery)}.lastUpdated`)?.val;
-        // Deterministic clock step instead of a wall-clock sleep (L27).
-        vi.setSystemTime(new Date("2026-07-08T10:00:01.000Z"));
-        await updateDeliveryT(manager, { ...delivery, status_code: 4 }, "DHL");
-        const after = adapter.states.get(`deliveries.${manager.packageId(delivery)}.lastUpdated`)?.val;
-        expect(after).not.toBe(before);
-      } finally {
-        vi.useRealTimers();
-      }
+      const adapter = createMockAdapter();
+      const manager = new StateManager(adapter as never);
+      const delivery = makeDelivery({ status_code: 2 });
+      await updateDeliveryT(manager, delivery, "DHL");
+      const before = adapter.states.get(`deliveries.${manager.packageId(delivery)}.lastUpdated`)?.val;
+
+      advanceClock();
+      await updateDeliveryT(manager, { ...delivery, status_code: 4 }, "DHL");
+
+      const after = adapter.states.get(`deliveries.${manager.packageId(delivery)}.lastUpdated`)?.val;
+      expect(after).not.toBe(before);
     });
 
     it("adapter restart does not stamp a fresh lastUpdated for unchanged data (v0.10.0, M5)", async () => {
@@ -1810,6 +1877,7 @@ describe("StateManager", () => {
       // Fresh StateManager on the same broker state = adapter restart. The old
       // in-memory signature map always missed here and re-stamped every
       // package; the notChanged-backed decision must not.
+      advanceClock();
       const managerB = new StateManager(adapter as never);
       await updateDeliveryT(managerB, delivery, "DHL");
       expect(adapter.states.get(`deliveries.${pkgId}.lastUpdated`)?.val).toBe(stamped);
@@ -1841,6 +1909,34 @@ describe("StateManager", () => {
       expect(adapter.objects.has("deliveries.a")).toBe(true);
     });
 
+    it("skips (and traces) when the object view is unavailable, and retries next poll", async () => {
+      // A broker that answers without rows must not be read as "no packages
+      // exist" — that would delete every device. The known-set stays unseeded
+      // so the NEXT cleanup queries again.
+      const adapter = createMockAdapter();
+      const debugLines: string[] = [];
+      adapter.log.debug = (msg: string): void => {
+        debugLines.push(msg);
+      };
+      let viewCalls = 0;
+      const origView = adapter.getObjectViewAsync;
+      adapter.getObjectViewAsync = async (...args): Promise<{ rows: ObjectViewRow[] }> => {
+        viewCalls++;
+        return (viewCalls === 1 ? undefined : await origView(...args)) as { rows: ObjectViewRow[] };
+      };
+      const manager = new StateManager(adapter as never);
+      const delivery = makeDelivery({ tracking_number: "SURVIVOR" });
+      await updateDeliveryT(manager, delivery, "DHL");
+
+      await manager.cleanupDeliveries([]); // view unavailable → must delete nothing
+      expect(adapter.objects.has(`deliveries.${manager.packageId(delivery)}`)).toBe(true);
+      expect(debugLines.some(l => l.includes("no objects view available"))).toBe(true);
+
+      await manager.cleanupDeliveries([manager.packageId(delivery)]); // retry works
+      expect(viewCalls).toBe(2);
+      expect(adapter.objects.has(`deliveries.${manager.packageId(delivery)}`)).toBe(true);
+    });
+
     it("still reconciles zombies from a previous run on the first cleanup", async () => {
       const adapter = createMockAdapter();
       // Leftover device from before this adapter start.
@@ -1848,6 +1944,45 @@ describe("StateManager", () => {
       const manager = new StateManager(adapter as never);
       await manager.cleanupDeliveries([]);
       expect(adapter.objects.has("deliveries.ghost")).toBe(false);
+    });
+
+    it("ignores view rows outside the deliveries tree instead of treating them as packages", async () => {
+      // Defensive: the range query should only ever return deliveries.*, but a
+      // row from elsewhere (or the bare `deliveries` folder) must not be read as
+      // a package id. Asserting "the foreign object still exists" would prove
+      // nothing — the delete path always prefixes `deliveries.`, so a foreign
+      // object survives even when the id extraction is broken. What has to be
+      // watched is the DELETE CALL itself.
+      const adapter = createMockAdapter();
+      const manager = new StateManager(adapter as never);
+      const deleted: string[] = [];
+      const origDel = adapter.delObjectAsync;
+      adapter.delObjectAsync = async (id: string, opts?: { recursive: boolean }): Promise<void> => {
+        deleted.push(id);
+        return origDel(id, opts);
+      };
+      const origView = adapter.getObjectViewAsync;
+      adapter.getObjectViewAsync = async (...args): Promise<{ rows: ObjectViewRow[] }> => {
+        const real = await origView(...args);
+        return {
+          rows: [
+            ...real.rows,
+            { id: "parcelapp.0.somewhereElse", value: { type: "device", common: {}, native: {} } },
+            { id: "parcelapp.0.deliveries", value: { type: "device", common: {}, native: {} } },
+          ],
+        };
+      };
+      const real = makeDelivery({ tracking_number: "REALPKG" });
+      await updateDeliveryT(manager, real, "DHL");
+
+      await manager.cleanupDeliveries([]);
+
+      // The genuine package is pruned...
+      expect(deleted).toContain(`deliveries.${manager.packageId(real)}`);
+      // ...and nothing was derived from the two foreign rows.
+      expect(deleted).not.toContain("deliveries.somewhereElse");
+      expect(deleted).not.toContain("deliveries.deliveries");
+      expect(deleted).toHaveLength(1);
     });
   });
 

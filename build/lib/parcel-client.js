@@ -73,15 +73,23 @@ class ParcelClient {
   log;
   /** API base URL. Overridable so tests can run the real `request()` against a local mock server. */
   baseUrl;
+  /** Socket idle timeout in ms — same seam idea as {@link baseUrl}, see {@link ParcelClientTimeouts}. */
+  idleTimeoutMs;
+  /** Hard per-request deadline in ms — see {@link ParcelClientTimeouts}. */
+  deadlineMs;
   /**
    * @param apiKey The parcel.app API key
    * @param log Optional adapter logger for HTTPS-layer trace (v0.4.3)
    * @param baseUrl API base URL — defaults to the production endpoint; overridden in tests
+   * @param timeouts Timeout overrides — production always uses the defaults
    */
-  constructor(apiKey, log, baseUrl = API_BASE) {
+  constructor(apiKey, log, baseUrl = API_BASE, timeouts = {}) {
+    var _a, _b;
     this.apiKey = apiKey;
     this.log = log;
     this.baseUrl = baseUrl;
+    this.idleTimeoutMs = (_a = timeouts.idleMs) != null ? _a : REQUEST_TIMEOUT;
+    this.deadlineMs = (_b = timeouts.deadlineMs) != null ? _b : REQUEST_DEADLINE_MS;
   }
   /**
    * v0.10.0 (L3): once cancelAll ran, the client is terminal — a request
@@ -259,7 +267,7 @@ class ParcelClient {
         path: url.pathname + url.search,
         method,
         headers,
-        timeout: REQUEST_TIMEOUT
+        timeout: this.idleTimeoutMs
       };
       const ctrl = new AbortController();
       this.inflight.add(ctrl);
@@ -322,13 +330,13 @@ class ParcelClient {
           }
         });
       });
-      AbortSignal.timeout(REQUEST_DEADLINE_MS).addEventListener("abort", () => {
+      AbortSignal.timeout(this.deadlineMs).addEventListener("abort", () => {
         var _a3;
         if (settled) {
           return;
         }
-        (_a3 = this.log) == null ? void 0 : _a3.debug(`HTTP deadline ${method} ${path} (${Date.now() - startedAt}ms > ${REQUEST_DEADLINE_MS}ms)`);
-        req.destroy(apiError(`Request deadline exceeded (${REQUEST_DEADLINE_MS / 1e3}s)`, "TIMEOUT"));
+        (_a3 = this.log) == null ? void 0 : _a3.debug(`HTTP deadline ${method} ${path} (${Date.now() - startedAt}ms > ${this.deadlineMs}ms)`);
+        req.destroy(apiError(`Request deadline exceeded (${this.deadlineMs / 1e3}s)`, "TIMEOUT"));
       });
       ctrl.signal.addEventListener("abort", () => {
         req.destroy(apiError("Request aborted", "ABORTED"));

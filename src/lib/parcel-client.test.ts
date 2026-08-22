@@ -3,6 +3,29 @@ import type { AddressInfo } from "node:net";
 import { ParcelClient } from "./parcel-client";
 
 /**
+ * Node's global agent keeps sockets alive (measured: ONE TCP connection serves
+ * two sequential requests). Against a throw-away mock server that is a race:
+ * a pooled socket the server has just dropped can be picked for the next
+ * request, which then fails with a transport error — the test reads that as
+ * "the client returned nothing" and goes red for a reason that has nothing to
+ * do with the code under test. It bit us once on a slow Windows runner
+ * (2026-08-21). Production is unaffected (a poll every 10 minutes never reuses
+ * a socket), so the fix belongs here, not in the client.
+ */
+beforeAll(() => {
+  // `keepAlive` is a real runtime property of the agent (verified: the default
+  // agent reports true) but the bundled @types/node only declares it as a
+  // constructor option — narrow locally instead of trusting the stale type,
+  // the same way parcel-client.ts does for setStateChangedAsync's result.
+  (http.globalAgent as http.Agent & { keepAlive: boolean }).keepAlive = false;
+});
+afterEach(() => {
+  // Drop any socket still pooled from the test that just finished, so the next
+  // test cannot inherit a connection to a server that is already closed.
+  http.globalAgent.destroy();
+});
+
+/**
  * Helper: start a local HTTP server that returns predefined responses.
  * Returns the server and its base URL (http://127.0.0.1:<port>).
  */
@@ -411,34 +434,10 @@ describe("ParcelClient", () => {
       }
     });
 
-    it("should return empty map on error without caching", async () => {
-      let callCount = 0;
-      const { server, port } = await startMockServer((_req, res) => {
-        callCount++;
-        if (callCount === 1) {
-          res.writeHead(500, { "Content-Type": "text/plain" });
-          res.end("Error");
-        } else {
-          res.writeHead(200, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ dhl: "DHL" }));
-        }
-      });
-
-      try {
-        const client = createTestClient("key", port);
-
-        // First call fails — should return empty map
-        const result1 = await client.getCarrierNames();
-        expect(result1).toEqual({});
-
-        // Second call succeeds — not cached from failure
-        const result2 = await client.getCarrierNames();
-        expect(result2).toEqual({ dhl: "DHL" });
-        expect(callCount).toBe(2);
-      } finally {
-        await stopServer(server);
-      }
-    });
+    // The former "should return empty map on error without caching" lived here.
+    // Removed 2026-08-22: a mutation test (cache the failure ⇒ no retry) turned
+    // BOTH it and the v0.7.2 test above red, while removing the mutex turned only
+    // the v0.7.2 one red — it was a strict subset with no defect of its own.
 
     it("should not send api-key header for carrier names", async () => {
       let receivedApiKey: string | undefined;
@@ -823,8 +822,12 @@ describe("ParcelClient", () => {
   describe("cancelAll (P1 v0.4.2)", () => {
     it("is idempotent and safe on an empty in-flight set", () => {
       const client = createTestClient("key", 0);
-      client.cancelAll();
-      client.cancelAll();
+      // Stated explicitly: the contract is "never throws", however often it runs
+      // and whether or not anything is in flight (onUnload may call it twice).
+      expect(() => {
+        client.cancelAll();
+        client.cancelAll();
+      }).not.toThrow();
     });
 
     it("aborts an in-flight request with the ABORTED code (M1)", async () => {
@@ -941,6 +944,33 @@ describe("ParcelClient", () => {
       }
     });
 
+    it("rejects an oversized body EXACTLY ONCE even if more chunks keep arriving (P9)", async () => {
+      // A streaming endpoint keeps sending after the cap is hit. The already-
+      // rejected promise must not be settled a second time and no further chunk
+      // may be buffered — otherwise the memory guard would be pointless.
+      const { server, port } = await startMockServer((_req, res) => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        const chunk = "x".repeat(256 * 1024);
+        for (let i = 0; i < 8; i++) {
+          res.write(chunk); // crosses 1 MiB on the fifth chunk, keeps going
+        }
+        res.end();
+      });
+      try {
+        const client = createTestClient("key", port);
+        const outcomes: string[] = [];
+        await client
+          .getDeliveries("active")
+          .then(() => outcomes.push("resolved"))
+          .catch((err: Error & { code: string }) => outcomes.push(err.code));
+        // Give the socket a moment to deliver any further chunk.
+        await new Promise(resolve => setTimeout(resolve, 60));
+        expect(outcomes).toEqual(["BODY_TOO_LARGE"]);
+      } finally {
+        await stopServer(server);
+      }
+    });
+
     it("rejects a malformed base URL with INVALID_URL (E3)", async () => {
       const client = new ParcelClient("key", undefined, "not-a-valid-url");
       try {
@@ -948,6 +978,113 @@ describe("ParcelClient", () => {
         throw new Error("Should have thrown");
       } catch (err) {
         expect((err as Error & { code: string }).code).toBe("INVALID_URL");
+      }
+    });
+
+    it("propagates a synchronous write failure as API_ERROR instead of stranding the request (I8)", async () => {
+      // A body that JSON.stringify cannot serialize makes req.write throw
+      // synchronously. Without the try/catch around write/end the rejection
+      // would never happen AND the AbortController would stay in `inflight`,
+      // breaking cancelAll's "inflight mirrors live requests" invariant.
+      const { server, port } = await startMockServer((_req, res) => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end("{}");
+      });
+      try {
+        const client = createTestClient("key", port);
+        const circular: Record<string, unknown> = {};
+        circular.self = circular;
+        await expect(client.addDelivery(circular as never)).rejects.toMatchObject({ code: "API_ERROR" });
+        // The failed request must not linger: a following cancelAll has nothing
+        // left to abort, and a fresh request still works.
+        client.cancelAll();
+      } finally {
+        await stopServer(server);
+      }
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // The two watchdogs against a request that never finishes. Both used to be
+  // untestable (15 s / 60 s) and therefore untested; the constructor now takes
+  // millisecond overrides so a real server can drive both paths in <1 s.
+  // -----------------------------------------------------------------------
+
+  describe("request watchdogs", () => {
+    it("aborts a silent connection with TIMEOUT once the socket idle timeout elapses", async () => {
+      // Server accepts the request and then says nothing at all — the socket
+      // goes quiet, which is exactly what the idle timeout is for.
+      const { server, port } = await startMockServer(() => {
+        /* deliberately never responds */
+      });
+      try {
+        const client = new ParcelClient("key", undefined, `http://127.0.0.1:${port}/external`, { idleMs: 120 });
+        await expect(client.getDeliveries("active")).rejects.toMatchObject({
+          code: "TIMEOUT",
+          message: "Request timeout",
+        });
+      } finally {
+        await stopServer(server);
+      }
+    });
+
+    it("caps the TOTAL duration of a trickling response the idle timeout never sees (M4)", async () => {
+      // A byte every 40 ms keeps resetting the socket idle timer, so only the
+      // hard deadline can end this. Without it a trickling endpoint pins
+      // `isPolling` forever and the poll loop stops silently until a restart.
+      const timers: NodeJS.Timeout[] = [];
+      const { server, port } = await startMockServer((_req, res) => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        for (let i = 0; i < 40; i++) {
+          timers.push(setTimeout(() => res.write(" "), i * 40));
+        }
+      });
+      try {
+        const client = new ParcelClient("key", undefined, `http://127.0.0.1:${port}/external`, {
+          idleMs: 5_000, // deliberately far above the trickle interval
+          deadlineMs: 250,
+        });
+        const started = Date.now();
+        await expect(client.getDeliveries("active")).rejects.toMatchObject({ code: "TIMEOUT" });
+        // Ended by the deadline, not by the idle timer.
+        expect(Date.now() - started).toBeLessThan(4_000);
+      } finally {
+        for (const t of timers) {
+          clearTimeout(t);
+        }
+        await stopServer(server);
+      }
+    });
+
+    it("the deadline stays silent once the request has finished (the `settled` guard)", async () => {
+      // The guard's observable effect is the LOG: without it every fast request
+      // still writes a "HTTP deadline …" line once its timer elapses, which
+      // reads like a timeout that never happened. (`req.destroy()` on a finished
+      // request is a no-op, so watching for a late rejection proves nothing —
+      // that version of this test was itself blind, found by mutation.)
+      const lines: string[] = [];
+      const { server, port } = await startMockServer((_req, res) => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ success: true, deliveries: [] }));
+      });
+      try {
+        // 400 ms is deliberately generous: the local mock answers in single-digit
+        // milliseconds, so even a heavily loaded CI runner finishes long before
+        // the deadline — a tighter value would make THIS test the flaky one.
+        const client = new ParcelClient(
+          "key",
+          { debug: (m: string) => lines.push(m) },
+          `http://127.0.0.1:${port}/external`,
+          { deadlineMs: 400 },
+        );
+        await expect(client.getDeliveries("active")).resolves.toEqual([]);
+        // Outlive the deadline, then look at what it logged.
+        await new Promise(resolve => setTimeout(resolve, 500));
+        expect(lines.filter(l => l.includes("HTTP deadline"))).toEqual([]);
+        // And the client is still fully usable afterwards.
+        await expect(client.getDeliveries("active")).resolves.toEqual([]);
+      } finally {
+        await stopServer(server);
       }
     });
   });
