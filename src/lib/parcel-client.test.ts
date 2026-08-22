@@ -12,12 +12,23 @@ import { ParcelClient } from "./parcel-client";
  * (2026-08-21). Production is unaffected (a poll every 10 minutes never reuses
  * a socket), so the fix belongs here, not in the client.
  */
+// `keepAlive` is a real runtime property of the agent (verified: the default
+// agent reports true) but the bundled @types/node only declares it as a
+// constructor option — narrow locally instead of trusting the stale type, the
+// same way parcel-client.ts does for setStateChangedAsync's result.
+const agent = http.globalAgent as http.Agent & { keepAlive: boolean };
+let keepAliveBefore = false;
+
 beforeAll(() => {
-  // `keepAlive` is a real runtime property of the agent (verified: the default
-  // agent reports true) but the bundled @types/node only declares it as a
-  // constructor option — narrow locally instead of trusting the stale type,
-  // the same way parcel-client.ts does for setStateChangedAsync's result.
-  (http.globalAgent as http.Agent & { keepAlive: boolean }).keepAlive = false;
+  keepAliveBefore = agent.keepAlive;
+  agent.keepAlive = false;
+});
+afterAll(() => {
+  // The agent is process-global and vitest reuses worker processes across
+  // files — hand it back the way we found it instead of leaving a flipped
+  // switch behind for whatever runs next.
+  agent.keepAlive = keepAliveBefore;
+  agent.destroy();
 });
 afterEach(() => {
   // Drop any socket still pooled from the test that just finished, so the next

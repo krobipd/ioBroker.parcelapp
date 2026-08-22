@@ -52,9 +52,11 @@ src/lib/i18n.ts          → tName/tText/statusLabel/packageName: type-safe Wrap
 
 Unparsebarer/driftender `status_code` → `-1` (`UNKNOWN_STATUS_CODE`): bleibt sichtbar (Aktiv-Filter ist `status !== 0`), rendert als „Unknown (-1)" — wird NICHT fälschlich als „zugestellt" versteckt und im autoRemove-Modus gelöscht.
 
-## Tests (310 unit + 57 package + 1 integration = 368)
+## Tests
 
-Run: `npm test` (vitest unit + mocha @iobroker/testing packageFiles). CI: `test:unit`-Alias triggert die vitest-Suite in testing-action-adapter@v1 (H2). Abdeckung 99,3 % Statements / 97,0 % Branches.
+Drei Ebenen: **vitest** (`src/**/*.test.ts`) · **Paket-Prüfung** (mocha, `@iobroker/testing` packageFiles) · **Integration** (startet den Adapter in einem echten js-controller — fängt Modul-Scope-Startcrashes, die keine Unit-Suite sieht).
+
+Run: `npm test` (vitest + Paket-Prüfung), `npm run test:integration` (Boot), `npm run coverage` (Abdeckung). CI: `test:unit`-Alias triggert die vitest-Suite in testing-action-adapter@v1 (H2). **Aktuelle Zahlen immer live ziehen, nie hier pinnen** — eine hier notierte Testzahl ist beim nächsten Test veraltet (Fleet-Lehre aus dem govee-CLAUDE.md-Drift).
 
 **Konventionen der Suite (aus dem Test-Audit 2026-08-22 — `Ressourcen/parcelapp/test-audit-2026-08-22.md`):**
 - **Ein Test muss FALLEN können.** Der Audit fand drei Tests, die eine Regel nur scheinbar prüften. Neue Tests werden per **Mutation** gegengeprüft: Regel im Quellcode kaputtmachen → der Test MUSS rot werden. Das Protokoll der 12 belegten Mutationen steht im Audit-Report.
@@ -68,7 +70,7 @@ Run: `npm test` (vitest unit + mocha @iobroker/testing packageFiles). CI: `test:
 
 ```bash
 npm run build        # Production (esbuild)
-npm test             # vitest run (310 unit) + mocha (57 package)
+npm test             # vitest (unit) + mocha (package files)
 npm run lint         # ESLint + Prettier
 npm run check        # tsc --noEmit (TS 6)
 npm run coverage     # vitest coverage report
