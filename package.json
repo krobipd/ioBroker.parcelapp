@@ -76,5 +76,12 @@
   "bugs": {
     "url": "https://github.com/krobipd/ioBroker.parcelapp/issues"
   },
-  "main": "build/main.js"
+  "main": "build/main.js",
+  "overrides": {
+    "mocha": {
+      "diff": "^8.0.3",
+      "serialize-javascript": "^7.0.5"
+    },
+    "esbuild": ">=0.25.0"
+  }
 }
