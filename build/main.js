@@ -116,8 +116,43 @@ class ParcelappAdapter extends utils.Adapter {
     this.on("unload", this.onUnload.bind(this));
     this.on("message", this.onMessage.bind(this));
   }
+  /**
+   * Switch off `supportedMessages.stopInstance` on this instance's own object.
+   *
+   * The entry was dropped from the manifest, which only helps a FRESH install: an upgrade
+   * merges the manifest into the existing instance object and never removes a key, so the old
+   * `true` survives in the database — and that is what the host reads. With it the host kills
+   * the process one second after asking it to stop, `onUnload` never runs, and the
+   * `info.connection=false` write on the way out never reaches the database.
+   *
+   * Only written when it is actually still on: every instance-object change restarts the
+   * instance, so doing it unconditionally would be a restart loop.
+   *
+   * @returns true when the correction was written and the restart is coming — the caller has
+   *   to stop right there instead of polling in a process that is going down.
+   */
+  async clearStopInstanceFlag() {
+    var _a;
+    const id = `system.adapter.${this.namespace}`;
+    try {
+      const obj = await this.getForeignObjectAsync(id);
+      const supported = (_a = obj == null ? void 0 : obj.common) == null ? void 0 : _a.supportedMessages;
+      if (!(supported == null ? void 0 : supported.stopInstance)) {
+        return false;
+      }
+      this.log.info("Correcting a leftover setting from an earlier version \u2014 this instance restarts once");
+      await this.extendForeignObjectAsync(id, { common: { supportedMessages: { stopInstance: false } } });
+      return true;
+    } catch (err) {
+      this.log.debug(`Could not check the instance object ${id}: ${(0, import_coerce.errText)(err)}`);
+      return false;
+    }
+  }
   async onReady() {
     try {
+      if (await this.clearStopInstanceFlag()) {
+        return;
+      }
       await import_adapter_core.I18n.init((0, import_node_path.join)(this.adapterDir, "admin"), this);
       this.log.debug(`onReady: starting (autoRemoveDelivered=${this.config.autoRemoveDelivered})`);
       await this.setState("info.connection", { val: false, ack: true });
@@ -173,13 +208,13 @@ class ParcelappAdapter extends utils.Adapter {
       }
       this.testClients.clear();
       void this.setState("info.connection", { val: false, ack: true }).catch(() => {
-      });
+      }).finally(callback);
+      return;
     } catch (err) {
       try {
         this.log.debug(`onUnload error (ignored): ${(0, import_coerce.errText)(err)}`);
       } catch {
       }
-    } finally {
       callback();
     }
   }
