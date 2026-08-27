@@ -128,8 +128,46 @@ export class ParcelappAdapter extends utils.Adapter {
     this.on("message", this.onMessage.bind(this));
   }
 
+  /**
+   * Switch off `supportedMessages.stopInstance` on this instance's own object.
+   *
+   * The entry was dropped from the manifest, which only helps a FRESH install: an upgrade
+   * merges the manifest into the existing instance object and never removes a key, so the old
+   * `true` survives in the database — and that is what the host reads. With it the host kills
+   * the process one second after asking it to stop, `onUnload` never runs, and the
+   * `info.connection=false` write on the way out never reaches the database.
+   *
+   * Only written when it is actually still on: every instance-object change restarts the
+   * instance, so doing it unconditionally would be a restart loop.
+   *
+   * @returns true when the correction was written and the restart is coming — the caller has
+   *   to stop right there instead of polling in a process that is going down.
+   */
+  private async clearStopInstanceFlag(): Promise<boolean> {
+    const id = `system.adapter.${this.namespace}`;
+    try {
+      const obj = await this.getForeignObjectAsync(id);
+      const supported = obj?.common?.supportedMessages as { stopInstance?: unknown } | undefined;
+      if (!supported?.stopInstance) {
+        return false;
+      }
+      this.log.info("Correcting a leftover setting from an earlier version — this instance restarts once");
+      await this.extendForeignObjectAsync(id, { common: { supportedMessages: { stopInstance: false } } });
+      return true;
+    } catch (err) {
+      // Objects DB unreachable — not worth failing the start over; the next start retries.
+      this.log.debug(`Could not check the instance object ${id}: ${errText(err)}`);
+      return false;
+    }
+  }
+
   private async onReady(): Promise<void> {
     try {
+      // First: without this the whole shutdown path stays dead on an updated install.
+      // A correction means the host is restarting us — no point starting a poll cycle.
+      if (await this.clearStopInstanceFlag()) {
+        return;
+      }
       // I18n.init resolves system.config.language itself (adapter-core reads
       // the foreign object internally; unknown languages fall back to English)
       // — the former separate getForeignObject round-trip and the local
@@ -215,11 +253,17 @@ export class ParcelappAdapter extends utils.Adapter {
         tc.cancelAll();
       }
       this.testClients.clear();
-      // v0.4.2 (M10): explicit `.catch(() => {})` on the fire-and-forget so
-      // a broker-already-down doesn't leak as an unhandled rejection.
-      void this.setState("info.connection", { val: false, ack: true }).catch(() => {
-        /* broker is shutting down — ignore */
-      });
+      // v0.10.3: report done only once the disconnect write landed. Calling back
+      // first means the host tears the process down while the write is still in
+      // flight and the instance keeps claiming a live connection. No own deadline
+      // needed — the host already has one (`common.stopTimeout`), and
+      // `this.setTimeout` refuses during shutdown anyway.
+      void this.setState("info.connection", { val: false, ack: true })
+        .catch(() => {
+          /* broker is shutting down — ignore */
+        })
+        .finally(callback);
+      return;
     } catch (err) {
       // v0.4.3 (G4): replace silent `// ignore` with a trace so shutdown
       // errors leave a debug breadcrumb. Broker-already-down errors here
@@ -229,9 +273,9 @@ export class ParcelappAdapter extends utils.Adapter {
       } catch {
         /* logger already gone — nothing left to report to */
       }
-    } finally {
-      // v0.10.0 (I7): the callback is the contract with js-controller —
-      // structurally guaranteed exactly once, even if the catch-path throws.
+      // v0.10.0 (I7): the callback is the contract with js-controller — exactly
+      // once. v0.10.3: the happy path returns above with the callback chained to
+      // the disconnect write, so this catch is the only other exit.
       callback();
     }
   }

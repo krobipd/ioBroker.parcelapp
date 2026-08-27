@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.10.2",
+    "version": "0.10.3",
     "news": {
+      "0.10.3": {
+        "en": "Stopping or restarting the adapter was cut short — the stopped instance kept claiming a live connection to parcel.app instead of showing as disconnected.",
+        "de": "Beenden oder Neustart des Adapters brach vorzeitig ab — die gestoppte Instanz meldete weiterhin eine bestehende Verbindung zu parcel.app statt getrennt zu sein.",
+        "ru": "Остановка или перезапуск адаптера обрывались — остановленный экземпляр продолжал сообщать о действующем соединении с parcel.app вместо разрыва.",
+        "pt": "Parar ou reiniciar o adaptador era interrompido — a instância parada continuava a indicar uma ligação ativa ao parcel.app em vez de aparecer desligada.",
+        "nl": "Stoppen of herstarten van de adapter werd afgebroken — de gestopte instantie meldde nog steeds een actieve verbinding met parcel.app in plaats van verbroken.",
+        "fr": "L'arrêt ou le redémarrage de l'adaptateur était interrompu — l'instance arrêtée indiquait toujours une connexion active à parcel.app au lieu d'être déconnectée.",
+        "it": "L'arresto o il riavvio dell'adattatore veniva interrotto — l'istanza fermata continuava a segnalare una connessione attiva a parcel.app invece di risultare disconnessa.",
+        "es": "Detener o reiniciar el adaptador se interrumpía — la instancia detenida seguía indicando una conexión activa con parcel.app en lugar de aparecer desconectada.",
+        "pl": "Zatrzymanie lub restart adaptera był przerywany — zatrzymana instancja nadal zgłaszała aktywne połączenie z parcel.app zamiast rozłączenia.",
+        "uk": "Зупинка або перезапуск адаптера обривалися — зупинений екземпляр далі повідомляв про активне з'єднання з parcel.app замість роз'єднання.",
+        "zh-cn": "停止或重启适配器时过程被中断——已停止的实例仍显示与 parcel.app 保持连接，而不是显示为已断开。"
+      },
       "0.10.2": {
         "en": "Internal cleanup. No user-facing changes.",
         "de": "Interne Aufräumarbeiten. Keine Änderungen für Nutzer.",
@@ -80,19 +93,6 @@
         "pl": "Spokojniejsze aktualizacje: znacznik ostatniej aktualizacji paczki zmienia się tylko przy realnej zmianie danych, wpisy urządzeń nie są przepisywane przy każdym odpytaniu.",
         "uk": "Спокійніші оновлення: мітка останнього оновлення посилки змінюється лише за реальної зміни даних, записи пристроїв не перезаписуються щоопитування.",
         "zh-cn": "状态更新更安静：包裹的最后更新时间戳仅在跟踪数据真正变化时才更新，设备条目不再每次轮询都被重写。"
-      },
-      "0.7.1": {
-        "en": "Fixed a timezone edge case in delivery estimates: when the API reports only a calendar date, the estimate could be off by a day in time zones west of UTC — now stable.",
-        "de": "Zeitzonen-Randfall bei Lieferschätzungen behoben: Wenn die API nur ein Kalenderdatum liefert, konnte die Schätzung in Zeitzonen westlich von UTC einen Tag danebenliegen — jetzt stabil.",
-        "ru": "Исправлен пограничный случай с часовым поясом в оценках доставки: если API возвращает только дату, оценка могла отличаться на день в зонах западнее UTC — теперь стабильно.",
-        "pt": "Corrigido um caso-limite de fuso horário nas estimativas de entrega: quando a API fornece apenas uma data, a estimativa podia falhar por um dia em fusos a oeste de UTC — agora estável.",
-        "nl": "Tijdzone-randgeval in bezorgschattingen opgelost: als de API alleen een kalenderdatum geeft, kon de schatting in tijdzones ten westen van UTC een dag afwijken — nu stabiel.",
-        "fr": "Correction d'un cas limite de fuseau horaire dans les estimations de livraison : quand l'API ne fournit qu'une date, l'estimation pouvait décaler d'un jour à l'ouest d'UTC — désormais stable.",
-        "it": "Corretto un caso limite di fuso orario nelle stime di consegna: quando l'API fornisce solo una data, la stima poteva sbagliare di un giorno nei fusi a ovest di UTC — ora stabile.",
-        "es": "Corregido un caso límite de zona horaria en las estimaciones de entrega: cuando la API solo da una fecha, la estimación podía fallar por un día en zonas al oeste de UTC — ahora estable.",
-        "pl": "Naprawiono przypadek brzegowy strefy czasowej w szacowanym czasie dostawy: gdy API podaje tylko datę, szacunek mógł różnić się o dzień w strefach na zachód od UTC — teraz stabilny.",
-        "uk": "Виправлено граничний випадок часового поясу в оцінках доставки: коли API повертає лише дату, оцінка могла відрізнятися на день у зонах на захід від UTC — тепер стабільно.",
-        "zh-cn": "修复了配送预计时间的时区边界问题：当 API 仅提供日期时，在 UTC 以西时区的预计可能相差一天，现在已稳定。"
       }
     },
     "plugins": {
@@ -156,9 +156,6 @@
     "dataSource": "poll",
     "adminUI": {
       "config": "json"
-    },
-    "supportedMessages": {
-      "stopInstance": true
     },
     "dependencies": [
       {

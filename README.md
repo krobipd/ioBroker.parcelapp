@@ -140,6 +140,10 @@ sendTo("parcelapp.0", "addDelivery", {
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+### 0.10.3 (2026-08-27)
+
+- Fixed: Stopping or restarting the adapter was cut short — the stopped instance kept claiming a live connection to parcel.app instead of showing as disconnected.
+
 ### 0.10.2 (2026-08-22)
 
 - Changed: Internal cleanup. No user-facing changes.
@@ -163,11 +167,6 @@ sendTo("parcelapp.0", "addDelivery", {
 
 - Fixed: tracked packages could disappear from the object tree after a temporary update error or an unexpected API response — a package is now kept until parcel.app actually stops returning it.
 - Changed: multi-day delivery windows now show the date on each side (e.g. `12-06 14:30 - 12-08 18:30`) instead of looking same-day; out-of-range or reversed dates no longer produce a misleading window.
-
-### 0.8.0 (2026-06-19)
-
-- The delivery window is now also shown for carriers that report it only as a date/time range, not just when the API provides a Unix timestamp.
-- When adding a delivery via script, you can now set an optional tracking language and request a push confirmation.
 
 [Older changelogs can be found there](CHANGELOG_OLD.md)
 

@@ -18,6 +18,16 @@ vi.mock("@iobroker/adapter-core", () => {
     public terminate = vi.fn();
     public getObjectAsync = vi.fn(async () => null);
     public delObjectAsync = vi.fn(async () => {});
+    // Instance object of this very instance — the stopInstance self-correction
+    // reads and rewrites it. Default: no supportedMessages (a clean install).
+    public instanceObject: { common?: Record<string, unknown> } | null = { common: {} };
+    public getForeignObjectAsync = vi.fn(async () => this.instanceObject);
+    public extendForeignObjectAsync = vi.fn(async (_id: string, patch: { common?: Record<string, unknown> }) => {
+      this.instanceObject = {
+        ...(this.instanceObject ?? {}),
+        common: { ...(this.instanceObject?.common ?? {}), ...(patch.common ?? {}) },
+      };
+    });
     constructor(_opts: unknown) {}
   }
   return {
@@ -97,6 +107,9 @@ function internalOf(adapter: ParcelappAdapter): {
   sendTo: ReturnType<typeof vi.fn>;
   terminate: ReturnType<typeof vi.fn>;
   classifyError: (err: Error & { code?: string }) => string;
+  instanceObject: { common?: Record<string, unknown> } | null;
+  getForeignObjectAsync: ReturnType<typeof vi.fn>;
+  extendForeignObjectAsync: ReturnType<typeof vi.fn>;
   onReady: () => Promise<void>;
   onUnload: (cb: () => void) => void;
   onMessage: (obj: unknown) => Promise<void>;
@@ -406,7 +419,24 @@ describe("ParcelappAdapter onUnload", () => {
     expect(testClient.cancelAll).toHaveBeenCalled();
     expect(i.testClients.size).toBe(0);
     expect(i.unloaded).toBe(true);
-    expect(callback).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => expect(callback).toHaveBeenCalledTimes(1));
+  });
+
+  it("reports done only after the disconnect write landed", async () => {
+    // Calling back first lets the host tear the process down mid-write, and the
+    // instance keeps claiming a live connection until someone starts it again.
+    const { adapter } = await setupReady();
+    const i = internalOf(adapter);
+    let releaseWrite = (): void => {};
+    i.setState.mockImplementationOnce(() => new Promise<void>(resolve => (releaseWrite = resolve)));
+    const callback = vi.fn();
+
+    i.onUnload(callback);
+    await new Promise(resolve => setImmediate(resolve));
+    expect(callback).not.toHaveBeenCalled();
+
+    releaseWrite();
+    await vi.waitFor(() => expect(callback).toHaveBeenCalledTimes(1));
   });
 
   it("still calls back when cleanup throws", async () => {
@@ -417,7 +447,7 @@ describe("ParcelappAdapter onUnload", () => {
     });
     const callback = vi.fn();
     i.onUnload(callback);
-    expect(callback).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => expect(callback).toHaveBeenCalledTimes(1));
     expect(i.log.debug).toHaveBeenCalledWith(expect.stringContaining("onUnload error"));
   });
 
@@ -441,6 +471,52 @@ describe("ParcelappAdapter onUnload", () => {
     expect(() => i.onUnload(callback)).not.toThrow();
     await new Promise(resolve => setImmediate(resolve));
     expect(callback).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("ParcelappAdapter stopInstance self-correction", () => {
+  it("switches the leftover flag off and aborts the start (the host restarts us)", async () => {
+    // With the flag set the host kills the process a second after asking it to
+    // stop, so onUnload never runs. An upgrade does NOT remove it from the
+    // instance object — the adapter has to correct it itself, then stand down.
+    const { adapter, client } = setup();
+    const i = internalOf(adapter);
+    i.instanceObject = { common: { supportedMessages: { stopInstance: true } } };
+
+    await i.onReady();
+
+    expect(i.extendForeignObjectAsync).toHaveBeenCalledWith("system.adapter.parcelapp.0", {
+      common: { supportedMessages: { stopInstance: false } },
+    });
+    expect(i.instanceObject?.common?.supportedMessages).toEqual({ stopInstance: false });
+    expect(client.getDeliveries).not.toHaveBeenCalled();
+    expect(i.setInterval).not.toHaveBeenCalled();
+    expect(i.log.info).toHaveBeenCalledWith(expect.stringContaining("restarts once"));
+  });
+
+  it("leaves a healthy instance object alone and starts normally", async () => {
+    const { adapter, client } = setup();
+    const i = internalOf(adapter);
+    i.instanceObject = { common: { name: "parcelapp" } };
+
+    await i.onReady();
+
+    expect(i.extendForeignObjectAsync).not.toHaveBeenCalled();
+    expect(client.getDeliveries).toHaveBeenCalledTimes(1);
+    expect(i.setInterval).toHaveBeenCalledTimes(1);
+  });
+
+  it("starts normally when the instance object cannot be read", async () => {
+    // A broker hiccup at startup must not stop the adapter from polling — the
+    // next start retries the correction.
+    const { adapter, client } = setup();
+    const i = internalOf(adapter);
+    i.getForeignObjectAsync.mockRejectedValueOnce(new Error("objects db down"));
+
+    await i.onReady();
+
+    expect(client.getDeliveries).toHaveBeenCalledTimes(1);
+    expect(i.setInterval).toHaveBeenCalledTimes(1);
   });
 });
 
