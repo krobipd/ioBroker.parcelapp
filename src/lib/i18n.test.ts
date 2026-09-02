@@ -16,6 +16,9 @@ let mockLang = "en";
  * tell "argument passed through" from "argument dropped", and the tracking
  * number in packageName never had to appear anywhere. Proven by mutation on
  * 2026-08-22 — dropping the `%s` args left this file entirely green.
+ *
+ * @param text Translated text with %s placeholders
+ * @param args Values substituted for the placeholders in order
  */
 const fillArgs = (text: string, args: (string | number | boolean | null)[]): string => {
   for (const arg of args) {

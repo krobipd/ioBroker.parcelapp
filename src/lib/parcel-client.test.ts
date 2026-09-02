@@ -39,6 +39,8 @@ afterEach(() => {
 /**
  * Helper: start a local HTTP server that returns predefined responses.
  * Returns the server and its base URL (http://127.0.0.1:<port>).
+ *
+ * @param handler Request handler that writes the canned response
  */
 function startMockServer(
   handler: (req: http.IncomingMessage, res: http.ServerResponse) => void,
@@ -64,6 +66,9 @@ function stopServer(server: http.Server): Promise<void> {
  * production transport hardening — AbortController/cancelAll, body-size cap,
  * retry-after clamp, status→code mapping, URL validation — is what these
  * tests exercise. No reimplementation, no monkey-patch.
+ *
+ * @param apiKey API key the client sends
+ * @param port Port of the local mock server
  */
 function createTestClient(apiKey: string, port: number): ParcelClient {
   return new ParcelClient(apiKey, undefined, `http://127.0.0.1:${port}/external`);
@@ -898,9 +903,7 @@ describe("ParcelClient", () => {
     it("flattens and caps a hostile error_message before it reaches the Error (M6)", async () => {
       const { server, port } = await startMockServer((_req, res) => {
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(
-          JSON.stringify({ success: false, error_message: `line1\nFORGED second log line\n${"x".repeat(500)}` }),
-        );
+        res.end(JSON.stringify({ success: false, error_message: `line1\nFORGED second log line\n${"x".repeat(500)}` }));
       });
       try {
         const client = createTestClient("key", port);

@@ -65,11 +65,7 @@ interface MockAdapter {
   states: Map<string, StateValue>;
   metrics: MockAdapterMetrics;
   log: { debug: (msg: string) => void };
-  extendObject: (
-    id: string,
-    obj: Partial<ObjectDef>,
-    options?: { preserve?: { common?: string[] } },
-  ) => Promise<void>;
+  extendObject: (id: string, obj: Partial<ObjectDef>, options?: { preserve?: { common?: string[] } }) => Promise<void>;
   setObjectNotExistsAsync: (id: string, obj: ObjectDef) => Promise<void>;
   setStateChangedAsync: (id: string, state: StateValue) => Promise<{ id: string; notChanged: boolean }>;
   delObjectAsync: (id: string, opts?: { recursive: boolean }) => Promise<void>;
@@ -97,7 +93,7 @@ function createMockAdapter(): MockAdapter {
         debugMessages.push(msg);
       },
     },
-    extendObject: async (
+    extendObject: (
       id: string,
       obj: Partial<ObjectDef>,
       _options?: { preserve?: { common?: string[] } },
@@ -108,26 +104,28 @@ function createMockAdapter(): MockAdapter {
         common: { ...existing.common, ...(obj.common || {}) },
         native: { ...existing.native, ...(obj.native || {}) },
       });
+      return Promise.resolve();
     },
-    setObjectNotExistsAsync: async (id: string, obj: ObjectDef): Promise<void> => {
+    setObjectNotExistsAsync: (id: string, obj: ObjectDef): Promise<void> => {
       metrics.setObjectNotExistsCalls++;
       if (!objects.has(id)) {
         objects.set(id, obj);
       }
+      return Promise.resolve();
     },
-    setStateChangedAsync: async (id: string, state: StateValue): Promise<{ id: string; notChanged: boolean }> => {
+    setStateChangedAsync: (id: string, state: StateValue): Promise<{ id: string; notChanged: boolean }> => {
       // Mirror js-controller ≥7.2.2: only write (and count) when the value
       // changed, and resolve { id, notChanged } — the DB-backed signal the
       // v0.10.0 lastUpdated decision rides on.
       const existing = states.get(id);
       if (existing && existing.val === state.val) {
-        return { id, notChanged: true };
+        return Promise.resolve({ id, notChanged: true });
       }
       metrics.setStateChangedWrites++;
       states.set(id, state);
-      return { id, notChanged: false };
+      return Promise.resolve({ id, notChanged: false });
     },
-    delObjectAsync: async (id: string, _opts?: { recursive: boolean }): Promise<void> => {
+    delObjectAsync: (id: string, _opts?: { recursive: boolean }): Promise<void> => {
       for (const key of objects.keys()) {
         if (key === id || key.startsWith(`${id}.`)) {
           objects.delete(key);
@@ -138,8 +136,9 @@ function createMockAdapter(): MockAdapter {
           states.delete(key);
         }
       }
+      return Promise.resolve();
     },
-    getObjectViewAsync: async (
+    getObjectViewAsync: (
       _design: string,
       _search: string,
       params: { startkey: string; endkey: string },
@@ -153,7 +152,7 @@ function createMockAdapter(): MockAdapter {
           rows.push({ id: fullId, value });
         }
       }
-      return { rows };
+      return Promise.resolve({ rows });
     },
   };
 }
@@ -171,6 +170,10 @@ function makeDelivery(overrides: Partial<ParcelDelivery> = {}): ParcelDelivery {
 /**
  * Calls updateDelivery the way main.ts does: with the pkgId from the
  * deterministic pre-pass (the parameter is required since v0.10.0, L11).
+ *
+ * @param mgr State manager under test
+ * @param d Delivery as the API returns it
+ * @param carrier Carrier code of the delivery
  */
 async function updateDeliveryT(mgr: StateManager, d: ParcelDelivery, carrier: string): Promise<void> {
   return mgr.updateDelivery(d, carrier, mgr.packageId(d));
@@ -1241,7 +1244,7 @@ describe("StateManager", () => {
   describe("API-drift guards", () => {
     describe("sanitize", () => {
       it("should return 'unknown' for null", () => {
-        expect(manager.sanitize(null as unknown as string)).toBe("unknown");
+        expect(manager.sanitize(null)).toBe("unknown");
       });
 
       it("should return 'unknown' for undefined", () => {
@@ -1249,15 +1252,15 @@ describe("StateManager", () => {
       });
 
       it("should return 'unknown' for number", () => {
-        expect(manager.sanitize(42 as unknown as string)).toBe("unknown");
+        expect(manager.sanitize(42)).toBe("unknown");
       });
 
       it("should return 'unknown' for object", () => {
-        expect(manager.sanitize({} as unknown as string)).toBe("unknown");
+        expect(manager.sanitize({})).toBe("unknown");
       });
 
       it("should return 'unknown' for array", () => {
-        expect(manager.sanitize([] as unknown as string)).toBe("unknown");
+        expect(manager.sanitize([] as unknown)).toBe("unknown");
       });
     });
 
@@ -1475,7 +1478,7 @@ describe("StateManager", () => {
       it("should handle timestamp_expected as non-finite value", async () => {
         const delivery = makeDelivery({
           status_code: 2,
-          timestamp_expected: NaN as unknown as number,
+          timestamp_expected: NaN,
         });
         await updateDeliveryT(manager, delivery, "DHL");
 

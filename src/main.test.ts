@@ -10,23 +10,24 @@ vi.mock("@iobroker/adapter-core", () => {
     public adapterDir = "/tmp";
     public config: Record<string, unknown> = {};
     public on = vi.fn();
-    public setStateChangedAsync = vi.fn(async () => ({ id: "", notChanged: false }));
+    public setStateChangedAsync = vi.fn(() => Promise.resolve({ id: "", notChanged: false }));
     public setState = vi.fn(async () => {});
-    public setInterval = vi.fn(() => ({}) as unknown);
+    public setInterval = vi.fn(() => ({}));
     public clearInterval = vi.fn();
     public sendTo = vi.fn();
     public terminate = vi.fn();
-    public getObjectAsync = vi.fn(async () => null);
+    public getObjectAsync = vi.fn(() => Promise.resolve(null));
     public delObjectAsync = vi.fn(async () => {});
     // Instance object of this very instance — the stopInstance self-correction
     // reads and rewrites it. Default: no supportedMessages (a clean install).
     public instanceObject: { common?: Record<string, unknown> } | null = { common: {} };
-    public getForeignObjectAsync = vi.fn(async () => this.instanceObject);
-    public extendForeignObjectAsync = vi.fn(async (_id: string, patch: { common?: Record<string, unknown> }) => {
+    public getForeignObjectAsync = vi.fn(() => Promise.resolve(this.instanceObject));
+    public extendForeignObjectAsync = vi.fn((_id: string, patch: { common?: Record<string, unknown> }) => {
       this.instanceObject = {
         ...(this.instanceObject ?? {}),
         common: { ...(this.instanceObject?.common ?? {}), ...(patch.common ?? {}) },
       };
+      return Promise.resolve();
     });
     constructor(_opts: unknown) {}
   }
@@ -80,7 +81,11 @@ function codeError(message: string, code: string, extra?: Record<string, unknown
   return err;
 }
 
-/** Typed access to the private fields/methods the orchestration tests drive. */
+/**
+ * Typed access to the private fields/methods the orchestration tests drive.
+ *
+ * @param adapter Adapter instance under test
+ */
 function internalOf(adapter: ParcelappAdapter): {
   client: FakeClient | null;
   stateManager: FakeStateMgr | null;
@@ -118,7 +123,11 @@ function internalOf(adapter: ParcelappAdapter): {
   return adapter as unknown as ReturnType<typeof internalOf>;
 }
 
-/** Build an adapter with fake client/stateManager factories + valid config. */
+/**
+ * Build an adapter with fake client/stateManager factories + valid config.
+ *
+ * @param configOverrides Instance settings that replace the valid defaults
+ */
 function setup(configOverrides: Record<string, unknown> = {}): {
   adapter: ParcelappAdapter;
   client: FakeClient;
@@ -132,10 +141,10 @@ function setup(configOverrides: Record<string, unknown> = {}): {
   Object.assign(i.config, configOverrides);
 
   const client: FakeClient = {
-    getDeliveries: vi.fn(async () => [makeDelivery()]),
-    getCarrierName: vi.fn(async () => "DHL"),
-    addDelivery: vi.fn(async () => ({ success: true })),
-    testConnection: vi.fn(async () => ({ success: true, message: "Connection successful" })),
+    getDeliveries: vi.fn(() => Promise.resolve([makeDelivery()])),
+    getCarrierName: vi.fn(() => Promise.resolve("DHL")),
+    addDelivery: vi.fn(() => Promise.resolve({ success: true })),
+    testConnection: vi.fn(() => Promise.resolve({ success: true, message: "Connection successful" })),
     cancelAll: vi.fn(),
   };
   // Fake mirrors the REAL StateManager contract (v0.10.0, L21): drift status
@@ -165,7 +174,11 @@ function setup(configOverrides: Record<string, unknown> = {}): {
   return { adapter, client, stateMgr };
 }
 
-/** setup() + onReady() so client/stateManager are wired like in production. */
+/**
+ * setup() + onReady() so client/stateManager are wired like in production.
+ *
+ * @param configOverrides Instance settings that replace the valid defaults
+ */
 async function setupReady(configOverrides: Record<string, unknown> = {}): Promise<{
   adapter: ParcelappAdapter;
   client: FakeClient;
@@ -286,9 +299,9 @@ describe("ParcelappAdapter onReady", () => {
   it("does not terminate when the failure happened because of an unload mid-start (L2)", async () => {
     const { adapter, client } = setup();
     const i = internalOf(adapter);
-    client.getDeliveries.mockImplementationOnce(async () => {
+    client.getDeliveries.mockImplementationOnce(() => {
       i.onUnload(vi.fn());
-      throw codeError("Request aborted", "ABORTED");
+      return Promise.reject(codeError("Request aborted", "ABORTED"));
     });
     await i.onReady();
     expect(i.terminate).not.toHaveBeenCalled();
@@ -297,10 +310,10 @@ describe("ParcelappAdapter onReady", () => {
   it("a stop during the first poll does not arm the timer afterwards (L2)", async () => {
     const { adapter, client } = setup();
     const i = internalOf(adapter);
-    client.getDeliveries.mockImplementationOnce(async () => {
+    client.getDeliveries.mockImplementationOnce(() => {
       // Unload arrives while the first poll is in flight.
       i.onUnload(vi.fn());
-      return [];
+      return Promise.resolve([]);
     });
     await i.onReady();
     expect(i.setInterval).not.toHaveBeenCalled();
@@ -370,9 +383,7 @@ describe("ParcelappAdapter onReady", () => {
       const { adapter } = setup({ pollInterval: raw });
       const i = internalOf(adapter);
       await i.onReady();
-      expect(i.setInterval.mock.calls[0][1], `pollInterval=${JSON.stringify(raw)}`).toBe(
-        expectedMinutes * 60 * 1000,
-      );
+      expect(i.setInterval.mock.calls[0][1], `pollInterval=${JSON.stringify(raw)}`).toBe(expectedMinutes * 60 * 1000);
       expect(i.log.info).toHaveBeenCalledWith(expect.stringContaining(`every ${expectedMinutes} minutes`));
     }
   });
@@ -628,7 +639,9 @@ describe("ParcelappAdapter poll — happy path", () => {
     // The only index arithmetic in the poll path is pkgIds[start + offset] —
     // every call must carry ITS OWN delivery paired with ITS OWN pkgId.
     for (const call of stateMgr.updateDelivery.mock.calls as [ParcelDelivery, string, string][]) {
-      expect(call[2], `pkgId pairing for ${call[0].tracking_number}`).toBe(String(call[0].tracking_number).toLowerCase());
+      expect(call[2], `pkgId pairing for ${call[0].tracking_number}`).toBe(
+        String(call[0].tracking_number).toLowerCase(),
+      );
     }
     // The keep-set contains ALL 30 ids — nothing dropped by the batching.
     const keepSet = stateMgr.cleanupDeliveries.mock.calls[0][0] as string[];
@@ -664,10 +677,11 @@ describe("ParcelappAdapter poll — per-delivery failure dedup", () => {
     const ok = makeDelivery({ tracking_number: "OK" });
     const bad = makeDelivery({ tracking_number: "BAD" });
     client.getDeliveries.mockResolvedValue([ok, bad]);
-    stateMgr.updateDelivery.mockImplementation(async (d: ParcelDelivery) => {
+    stateMgr.updateDelivery.mockImplementation((d: ParcelDelivery) => {
       if (d.tracking_number === "BAD") {
-        throw new Error("boom");
+        return Promise.reject(new Error("boom"));
       }
+      return Promise.resolve();
     });
 
     await i.poll();
