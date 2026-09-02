@@ -35,7 +35,7 @@ For details and how to disable it, see the [Sentry plugin documentation](https:/
 
 - **Node.js >= 22**
 - **ioBroker js-controller >= 7.2.2**
-- **ioBroker Admin >= 7.8.23**
+- **ioBroker Admin >= 8.0.11**
 - **parcel.app Premium subscription** — required for API access
 
 ---
