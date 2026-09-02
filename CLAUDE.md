@@ -60,13 +60,14 @@ Drei Ebenen: **vitest** (`src/**/*.test.ts`) · **Paket-Prüfung** (mocha, `@iob
 Run: `npm test` (vitest + Paket-Prüfung), `npm run test:integration` (Boot), `npm run coverage` (Abdeckung). CI: `test:unit`-Alias triggert die vitest-Suite in testing-action-adapter@v1 (H2). **Aktuelle Zahlen immer live ziehen, nie hier pinnen** — eine hier notierte Testzahl ist beim nächsten Test veraltet (Fleet-Lehre aus dem govee-CLAUDE.md-Drift).
 
 **Konventionen der Suite (aus den Test-Audits 2026-08-22 + 2026-09-02 — `Ressourcen/parcelapp/test-audit-2026-08-22.md`, `…/test-audit-2026-09-02.md`):**
+
 - **Ein Test muss FALLEN können.** Der Audit fand drei Tests, die eine Regel nur scheinbar prüften. Neue Tests werden per **Mutation** gegengeprüft: Regel im Quellcode kaputtmachen → der Test MUSS rot werden. Seit 2026-09-02 gibt es dafür eine Tabelle: `Ressourcen/iobroker-entwicklung/mutation-testing/mutations_parcelapp_2026-09-02.py` (77 Regelbrüche über main/state-manager/parcel-client/coerce/i18n; Läufer `mutation-test.py`, Ergebnis `matrix_parcelapp_2026-09-02.json`). Nadeln sind exakte Quellzeilen — nach Prettier-Umbrüchen oder Refactorings zuerst den Nadel-Vorab-Check fahren (jede Nadel genau 1×), sonst misst der Lauf nichts.
 - **Broker ≠ API im Poll:** ALLE Schreibvorgänge ins ioBroker-Objektsystem innerhalb von `poll()` (connection=true, Paket-States, Aufräumen, Summary) stehen in eigenen Fängen mit `State maintenance failed … API connection is fine` auf Warnstufe. Nur der API-Aufruf selbst läuft in `handlePollError`/`classifyError`. Ein neuer Schreibvorgang im Poll bekommt denselben Fang, sonst färbt ein Broker-Schluckauf die Verbindungsanzeige rot und vergiftet die Fehler-Entprellung (Fund A4, 2026-09-02).
 - **`state-manager.test.ts` friert die Uhr** (`FIXED_NOW`, Mitte Juni, mittags — kein Sommerzeit-Wechsel, keine Monatsgrenze). Wer `lastUpdated`-Verhalten testet, muss die Uhr **bewusst vorstellen**: zwei Polls in derselben Millisekunde erzeugen denselben Zeitstempel, und dann meldet der Broker-Mock „unverändert" — ein kaputtes Verhalten sähe identisch aus.
 - **`parcel-client.test.ts` schaltet die Verbindungswiederverwendung ab** (`globalAgent.keepAlive = false` + `destroy()` nach jedem Test). Sonst kann ein Aufruf einen Socket erwischen, den der Wegwerf-Server gerade geschlossen hat → falsch-rot (einmal live passiert, 2026-08-21).
 - **Zeitgrenzen sind injizierbar** (`ParcelClientTimeouts`, 4. Konstruktor-Parameter): Leerlauf-Abbruch und harte Zeitgrenze laufen im Test mit Millisekunden statt 15/60 Sekunden. Produktiv immer die Vorgabewerte.
 - **Kein Unit-Test geht ins echte Netz** — alles gegen lokale Wegwerf-Server; die produktiven Fabriken werden direkt aufgerufen, nie über `onReady`.
-- **`npm run format` NICHT blind fahren** — der committete Stand ist nicht prettier-CLI-sauber (13 Dateien schon vor jeder Änderung), das echte Gate ist `npm run lint`.
+- **Formatierung: das Repo ist seit 2026-09-02 prettier-sauber** (`npm run format:check` = 0 Beanstandungen) und soll es bleiben — `npm run format` ist damit wieder gefahrlos. Drei Dateiklassen stehen bewusst in `.prettierignore` (Grund steht jeweils dabei): `build/` (Compiler-Ausgabe), `io-package.json` (wird von Release-Skript, i18n-Sync und Konsistenz-Autofix im aufgeklappten JSON-Stil geschrieben — Handformat wäre beim nächsten Release wieder weg), `.github/dependabot.yml` (Bot-Format mit einfachen Anführungszeichen, Flottenentscheid 2026-07-01). `.releaseconfig.json` kommt 1:1 aus dem Konsistenz-Master; der Master ist seit 2026-09-02 mit der Adapter-Prettier-Konfiguration (Zeilenbreite 120) formatiert, sonst würde jeder Release-Sync die Formatierung zurückdrehen. CI-Gate bleibt `npm run lint`.
 
 ## Befehle
 
@@ -76,4 +77,5 @@ npm test             # vitest (unit) + mocha (package files)
 npm run lint         # ESLint + Prettier
 npm run check        # tsc --noEmit (TS 6)
 npm run coverage     # vitest coverage report
+npm run format:check # Prettier — muss 0 Beanstandungen liefern (seit 2026-09-02)
 ```

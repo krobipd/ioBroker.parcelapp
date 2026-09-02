@@ -42,11 +42,11 @@ For details and how to disable it, see the [Sentry plugin documentation](https:/
 
 ## Configuration
 
-| Option                    | Description                                                                                                | Default |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------- | ------- |
-| **API Key**               | Your parcel.app API key (get it at [web.parcelapp.net](https://web.parcelapp.net))                         | —       |
+| Option                    | Description                                                                                                                                                               | Default |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| **API Key**               | Your parcel.app API key (get it at [web.parcelapp.net](https://web.parcelapp.net))                                                                                        | —       |
 | **Poll Interval**         | How often to fetch updates (minutes). parcel.app serves the list from a ~45–90 min server cache, so shorter intervals mostly reduce the delay until a refresh is noticed. | 10      |
-| **Auto-remove delivered** | Remove delivered packages from states automatically. When disabled, they stay until deleted in parcel.app. | Yes     |
+| **Auto-remove delivered** | Remove delivered packages from states automatically. When disabled, they stay until deleted in parcel.app.                                                                | Yes     |
 
 Status labels (`Delivered`, `In Transit`, …) and delivery estimates (`today`, `tomorrow`, `in X days`) are rendered in the ioBroker system language.
 
@@ -78,13 +78,13 @@ parcelapp.0.
 
 **Status codes** (`statusCode` — the primary datapoint for automations):
 
-| Code | Meaning         | Code | Meaning                 |
-| ---- | --------------- | ---- | ----------------------- |
-| 0    | Delivered       | 5    | Not Found               |
-| 1    | Frozen          | 6    | Delivery Attempt Failed |
-| 2    | In Transit      | 7    | Exception               |
-| 3    | Awaiting Pickup | 8    | Info Received           |
-| 4    | Out for Delivery | -1  | Unknown (unexpected API value — package stays visible) |
+| Code | Meaning          | Code | Meaning                                                |
+| ---- | ---------------- | ---- | ------------------------------------------------------ |
+| 0    | Delivered        | 5    | Not Found                                              |
+| 1    | Frozen           | 6    | Delivery Attempt Failed                                |
+| 2    | In Transit       | 7    | Exception                                              |
+| 3    | Awaiting Pickup  | 8    | Info Received                                          |
+| 4    | Out for Delivery | -1   | Unknown (unexpected API value — package stays visible) |
 
 ---
 
@@ -140,6 +140,7 @@ sendTo("parcelapp.0", "addDelivery", {
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+
 ### **WORK IN PROGRESS**
 
 - Fixed: A malformed reply from parcel.app (empty body or a broken delivery entry) no longer aborts the poll with a cryptic internal message — it is reported as an API problem and retried next poll.
