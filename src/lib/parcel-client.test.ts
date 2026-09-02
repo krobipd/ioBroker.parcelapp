@@ -880,6 +880,75 @@ describe("ParcelClient", () => {
     });
   });
 
+  describe("API-drift guards (2026-09-02 audit: entries and the add-delivery body)", () => {
+    it.each([
+      ["null entry", "[null]"],
+      ["number entry", "[1]"],
+      ["string entry", '["x"]'],
+      ["nested array entry", "[[]]"],
+    ])(
+      "rejects a deliveries list with a non-object %s as API_ERROR instead of a TypeError deep in the poll",
+      async (_label, entries) => {
+        const { server, port } = await startMockServer((_req, res) => {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(`{"success":true,"deliveries":${entries}}`);
+        });
+        try {
+          const client = createTestClient("key", port);
+          await expect(client.getDeliveries("active")).rejects.toMatchObject({
+            code: "API_ERROR",
+            message: "API error: malformed delivery entry",
+          });
+        } finally {
+          await stopServer(server);
+        }
+      },
+    );
+
+    it("keeps a well-formed list with several entries intact (the entry guard has no false positive)", async () => {
+      const deliveries = [
+        { carrier_code: "dhl", status_code: 2, tracking_number: "A" },
+        { carrier_code: "ups", status_code: 4, tracking_number: "B" },
+      ];
+      const { server, port } = await startMockServer((_req, res) => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ success: true, deliveries }));
+      });
+      try {
+        const client = createTestClient("key", port);
+        await expect(client.getDeliveries("active")).resolves.toEqual(deliveries);
+      } finally {
+        await stopServer(server);
+      }
+    });
+
+    it.each([
+      ["null", "null"],
+      ["string", '"ok"'],
+      ["array", "[]"],
+      ["number", "1"],
+    ])(
+      "addDelivery rejects a %s body as API_ERROR — the script gets a clear error, not a TypeError",
+      async (_label, body) => {
+        const { server, port } = await startMockServer((req, res) => {
+          req.on("data", () => {});
+          req.on("end", () => {
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(body);
+          });
+        });
+        try {
+          const client = createTestClient("key", port);
+          await expect(
+            client.addDelivery({ tracking_number: "1", carrier_code: "dhl", description: "d" }),
+          ).rejects.toMatchObject({ code: "API_ERROR", message: "API error: malformed response" });
+        } finally {
+          await stopServer(server);
+        }
+      },
+    );
+  });
+
   describe("API-drift guards (v0.10.0 additions)", () => {
     it("should throw API_ERROR when deliveries is a plain object (L22)", async () => {
       const { server, port } = await startMockServer((_req, res) => {

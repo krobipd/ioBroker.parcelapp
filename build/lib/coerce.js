@@ -83,7 +83,22 @@ function coerceClampedInt(raw, min, max, defaultValue) {
   return Math.max(min, Math.min(max, Math.floor(n)));
 }
 function oneLine(value) {
-  return value.replace(/[\r\n\t\0\v\f\u2028\u2029]+/g, " ");
+  var _a;
+  let out = "";
+  let inRun = false;
+  for (const ch of value) {
+    const code = (_a = ch.codePointAt(0)) != null ? _a : 0;
+    if (code < 32 || code === 127 || code === 8232 || code === 8233) {
+      if (!inRun) {
+        out += " ";
+        inRun = true;
+      }
+    } else {
+      out += ch;
+      inRun = false;
+    }
+  }
+  return out;
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {

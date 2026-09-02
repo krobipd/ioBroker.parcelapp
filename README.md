@@ -140,6 +140,13 @@ sendTo("parcelapp.0", "addDelivery", {
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+
+- Fixed: A malformed reply from parcel.app (empty body or a broken delivery entry) no longer aborts the poll with a cryptic internal message — it is reported as an API problem and retried next poll.
+- Fixed: A brief ioBroker database hiccup while marking the connection as online was mistaken for a parcel.app failure and switched the connection indicator to red.
+- Fixed: Scripts that call checkConnection with a non-text API key now receive the regular "API key is too short" reply instead of an internal failure.
+- Improved: Control characters in texts coming from parcel.app (carrier names, status notes) are now stripped completely before they reach the states.
+
 ### 0.10.3 (2026-08-27) — stable
 
 - Fixed: Stopping or restarting the adapter was cut short — the stopped instance kept claiming a live connection to parcel.app instead of showing as disconnected.

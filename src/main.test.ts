@@ -297,13 +297,18 @@ describe("ParcelappAdapter onReady", () => {
   });
 
   it("does not terminate when the failure happened because of an unload mid-start (L2)", async () => {
-    const { adapter, client } = setup();
+    const { adapter } = setup();
     const i = internalOf(adapter);
-    client.getDeliveries.mockImplementationOnce(() => {
+    // A rejected getDeliveries never reaches onReady's catch (poll handles it
+    // itself), so make the start step itself fail AFTER the unload arrived —
+    // that is the only way into the `if (!this.unloaded)` guard around terminate.
+    // Mutation-checked 2026-09-02 (P8): guard removed → terminate called → red.
+    vi.spyOn(i, "poll").mockImplementationOnce(() => {
       i.onUnload(vi.fn());
-      return Promise.reject(codeError("Request aborted", "ABORTED"));
+      return Promise.reject(new Error("host is gone"));
     });
     await i.onReady();
+    expect(i.log.error).toHaveBeenCalledWith(expect.stringContaining("onReady failed"));
     expect(i.terminate).not.toHaveBeenCalled();
   });
 
@@ -713,6 +718,26 @@ describe("ParcelappAdapter poll — per-delivery failure dedup", () => {
     expect(i.failedDeliveries.has("GONE")).toBe(false);
   });
 
+  it("a broker failure on the connection=true write is not an API failure — warn, keep polling, no red line (2026-09-02)", async () => {
+    // The GET succeeded; only the broker hiccuped while acknowledging it. Before
+    // the fence this went through handlePollError: "Poll failed" at error level,
+    // info.connection flipped to false and the dedup remembered a bogus code.
+    const { adapter, stateMgr } = await setupReady();
+    const i = internalOf(adapter);
+    stateMgr.updateDelivery.mockClear();
+    i.log.error.mockClear();
+    i.setStateChangedAsync.mockRejectedValueOnce(new Error("db hiccup"));
+
+    await i.poll();
+
+    expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("State maintenance failed"));
+    expect(i.log.error).not.toHaveBeenCalled();
+    expect(i.lastErrorCode).toBe("");
+    // The poll went on: deliveries were still written after the failed acknowledge.
+    expect(stateMgr.updateDelivery).toHaveBeenCalled();
+    expect(i.setStateChangedAsync).not.toHaveBeenCalledWith("info.connection", { val: false, ack: true });
+  });
+
   it("broker failures in cleanup/summary warn but keep info.connection green (M2)", async () => {
     const { adapter, stateMgr } = await setupReady();
     const i = internalOf(adapter);
@@ -739,6 +764,15 @@ describe("ParcelappAdapter poll — error routing", () => {
     expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("Rate limit hit"));
     expect(i.rateLimitedUntil).toBeGreaterThan(Date.now() + 100_000);
     expect(i.rateLimitedUntil).toBeLessThanOrEqual(Date.now() + 121_000);
+  });
+
+  it("RATE_LIMITED clamps a tiny retry-after UP to the 60 s floor (never a cooldown of a few seconds)", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    client.getDeliveries.mockRejectedValueOnce(codeError("429", "RATE_LIMITED", { retryAfterSeconds: 5 }));
+    await i.poll();
+    expect(i.rateLimitedUntil).toBeGreaterThanOrEqual(Date.now() + 59_000);
+    expect(i.rateLimitedUntil).toBeLessThanOrEqual(Date.now() + 61_000);
   });
 
   it("RATE_LIMITED with a bogus retry-after falls back to 5 minutes", async () => {
@@ -911,6 +945,28 @@ describe("ParcelappAdapter onMessage", () => {
       { error: "API key is too short" },
       expect.anything(),
     );
+  });
+
+  it("checkConnection: a non-string apiKey is rejected like a short one — no 'trim is not a function' (2026-09-02)", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    client.testConnection.mockClear();
+    for (const apiKey of [12345, null, { key: "x" }, ["k"]]) {
+      i.sendTo.mockClear();
+      await i.onMessage({
+        command: "checkConnection",
+        from: "system.adapter.admin.0",
+        callback: { id: 1 },
+        message: { apiKey },
+      });
+      expect(i.sendTo, `apiKey=${JSON.stringify(apiKey)}`).toHaveBeenCalledWith(
+        "system.adapter.admin.0",
+        "checkConnection",
+        { error: "API key is too short" },
+        expect.anything(),
+      );
+    }
+    expect(client.testConnection).not.toHaveBeenCalled();
   });
 
   it("checkConnection: success maps to {result} — the shape ConfigSendto actually reads (H1)", async () => {

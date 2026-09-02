@@ -3,6 +3,19 @@
     "name": "parcelapp",
     "version": "0.10.3",
     "news": {
+      "NEXT": {
+        "en": "Malformed parcel.app replies and odd checkConnection input get a clear answer; a brief database hiccup no longer turns the connection indicator red.",
+        "de": "Fehlerhafte parcel.app-Antworten und unpassende checkConnection-Eingaben bekommen eine klare Antwort; ein kurzer Datenbank-Aussetzer färbt die Verbindungsanzeige nicht mehr rot.",
+        "ru": "Некорректные ответы parcel.app и неверный ввод в checkConnection получают понятный ответ; короткий сбой базы данных больше не делает индикатор связи красным.",
+        "pt": "Respostas malformadas do parcel.app e entradas estranhas em checkConnection recebem uma resposta clara; uma breve falha da base de dados já não põe o indicador de ligação a vermelho.",
+        "nl": "Misvormde parcel.app-antwoorden en vreemde checkConnection-invoer krijgen een duidelijk antwoord; een korte databasehik maakt de verbindingsindicator niet meer rood.",
+        "fr": "Les réponses malformées de parcel.app et les entrées inattendues de checkConnection reçoivent une réponse claire ; un bref raté de la base de données ne rend plus l'indicateur de connexion rouge.",
+        "it": "Risposte malformate di parcel.app e input anomali di checkConnection ricevono una risposta chiara; un breve inciampo del database non rende più rosso l'indicatore di connessione.",
+        "es": "Respuestas malformadas de parcel.app y entradas extrañas en checkConnection reciben una respuesta clara; un breve tropiezo de la base de datos ya no pone en rojo el indicador de conexión.",
+        "pl": "Wadliwe odpowiedzi parcel.app i nietypowe dane w checkConnection dostają jasną odpowiedź; krótka czkawka bazy danych nie zmienia już wskaźnika połączenia na czerwony.",
+        "uk": "Некоректні відповіді parcel.app і неправильний ввід у checkConnection отримують зрозумілу відповідь; короткий збій бази даних більше не робить індикатор з'єднання червоним.",
+        "zh-cn": "parcel.app 的异常回复和 checkConnection 的异常输入会得到明确回应；数据库的短暂中断不再使连接指示变红。"
+      },
       "0.10.3": {
         "en": "Stopping or restarting the adapter was cut short — the stopped instance kept claiming a live connection to parcel.app instead of showing as disconnected.",
         "de": "Beenden oder Neustart des Adapters brach vorzeitig ab — die gestoppte Instanz meldete weiterhin eine bestehende Verbindung zu parcel.app statt getrennt zu sein.",
@@ -80,19 +93,6 @@
         "pl": "Okno dostawy jest teraz pokazywane także dla przewoźników, którzy podają je tylko jako zakres daty/godziny, a nie jako znacznik czasu Unix.",
         "uk": "Вікно доставки тепер показується й для перевізників, які повідомляють його лише як діапазон дати/часу, а не як позначку часу Unix.",
         "zh-cn": "现在，对于仅以日期/时间范围（而非 Unix 时间戳）报告的承运商，也会显示派送时段。"
-      },
-      "0.7.2": {
-        "en": "Much quieter state updates: a package's last-updated timestamp only changes when its tracking data actually changed, and device entries are no longer rewritten on every poll.",
-        "de": "Deutlich ruhigere State-Updates: der Zuletzt-aktualisiert-Zeitstempel eines Pakets ändert sich nur noch bei echten Datenänderungen, Geräte-Einträge werden nicht mehr jeden Poll neu geschrieben.",
-        "ru": "Обновления стали спокойнее: метка последнего обновления посылки меняется только при реальном изменении данных, записи устройств не перезаписываются при каждом опросе.",
-        "pt": "Atualizações muito mais calmas: o carimbo de última atualização de um pacote só muda quando os dados realmente mudam e as entradas de dispositivos não são mais reescritas a cada sondagem.",
-        "nl": "Veel rustigere updates: het laatst-bijgewerkt-tijdstempel van een pakket verandert alleen bij echte datawijzigingen en apparaatvermeldingen worden niet meer bij elke poll herschreven.",
-        "fr": "Mises à jour plus calmes : l'horodatage de dernière mise à jour d'un colis ne change que si ses données changent réellement, les entrées d'appareils ne sont plus réécrites à chaque cycle.",
-        "it": "Aggiornamenti più tranquilli: il timestamp di ultimo aggiornamento di un pacco cambia solo quando i dati cambiano davvero, le voci dei dispositivi non vengono più riscritte a ogni ciclo.",
-        "es": "Actualizaciones más tranquilas: la marca de última actualización de un paquete solo cambia cuando sus datos realmente cambian y las entradas ya no se reescriben en cada sondeo.",
-        "pl": "Spokojniejsze aktualizacje: znacznik ostatniej aktualizacji paczki zmienia się tylko przy realnej zmianie danych, wpisy urządzeń nie są przepisywane przy każdym odpytaniu.",
-        "uk": "Спокійніші оновлення: мітка останнього оновлення посилки змінюється лише за реальної зміни даних, записи пристроїв не перезаписуються щоопитування.",
-        "zh-cn": "状态更新更安静：包裹的最后更新时间戳仅在跟踪数据真正变化时才更新，设备条目不再每次轮询都被重写。"
       }
     },
     "plugins": {

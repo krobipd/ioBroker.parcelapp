@@ -335,8 +335,10 @@ export class ParcelappAdapter extends utils.Adapter {
    * @param obj The sendTo message (validated: command + callback present)
    */
   private async handleCheckConnection(obj: ioBroker.Message): Promise<void> {
-    const msg = obj.message as { apiKey?: string };
-    const key = msg?.apiKey?.trim() || "";
+    const msg = obj.message as { apiKey?: unknown } | null | undefined;
+    // API-boundary guard: a script may put anything here — a number used to
+    // surface as "trim is not a function" instead of the plain rejection.
+    const key = typeof msg?.apiKey === "string" ? msg.apiKey.trim() : "";
     if (!key || key.length < MIN_API_KEY_LENGTH) {
       // v0.4.3 (F2): trace the reject before sendTo.
       this.log.debug("checkConnection: apiKey too short");
@@ -568,7 +570,15 @@ export class ParcelappAdapter extends utils.Adapter {
         this.log.info("Connection restored");
         this.lastErrorCode = "";
       }
-      await this.setStateChangedAsync("info.connection", { val: true, ack: true });
+      // The GET succeeded — from here on a failure is the broker's, not the
+      // API's. v0.10.0 (M2) fenced cleanup/summary that way but left this write
+      // outside: a broker hiccup here painted a "Poll failed" error line, flipped
+      // the indicator to false and poisoned the error dedup.
+      try {
+        await this.setStateChangedAsync("info.connection", { val: true, ack: true });
+      } catch (err) {
+        this.log.warn(`State maintenance failed (API connection is fine, retrying next poll): ${errText(err)}`);
+      }
 
       // Split into active (non-delivered) and visible (what gets states)
       const activeDeliveries = deliveries.filter(d => stateManager.parseStatus(d) !== DELIVERED_STATUS_CODE);

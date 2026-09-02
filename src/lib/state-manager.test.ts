@@ -234,8 +234,11 @@ describe("StateManager", () => {
       expect(manager.sanitize("PKG#2024/01@DE")).toBe("pkg_2024_01_de");
     });
 
-    it("should handle unicode characters", () => {
-      expect(manager.sanitize("Paket-Munch")).toBe("paket_munch");
+    it("should replace non-ASCII letters (umlauts are not [a-z0-9])", () => {
+      // Was "Paket-Munch" — plain ASCII under a "unicode" heading, so the test
+      // never touched the non-ASCII path it claimed to cover.
+      expect(manager.sanitize("Paket-München")).toBe("paket_m_nchen");
+      expect(manager.sanitize("Zürich→Genève")).toBe("z_rich_gen_ve");
     });
   });
 
@@ -693,6 +696,22 @@ describe("StateManager", () => {
         date_expected: "2026-13-40 25:99:99", // every component out of range
         date_expected_end: "2026-13-41 26:00:00",
       });
+      await updateDeliveryT(manager, delivery, "DHL");
+
+      const pkgId = manager.packageId(delivery);
+      const state = adapter.states.get(`deliveries.${pkgId}.deliveryWindow`);
+      expect(state?.val).toBe("");
+    });
+
+    it.each([
+      ["minute 60", "2026-06-15 10:60:00", "2026-06-15 12:00:00"],
+      ["second 60", "2026-06-15 10:30:60", "2026-06-15 12:00:00"],
+      ["hour 24 with same-day roll-over hidden by the end", "2026-06-15 24:00:00", "2026-06-16 12:00:00"],
+    ])("should NOT build a window when only the clock part is out of range (%s)", async (_label, start, end) => {
+      // The calendar round-trip check (Feb 30 …) cannot catch these: a bad
+      // minute or second rolls the clock, not the day. Only the explicit
+      // range check does. Mutation-checked 2026-09-02 (S11).
+      const delivery = makeDelivery({ status_code: 4, date_expected: start, date_expected_end: end });
       await updateDeliveryT(manager, delivery, "DHL");
 
       const pkgId = manager.packageId(delivery);

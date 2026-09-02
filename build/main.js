@@ -259,9 +259,8 @@ class ParcelappAdapter extends utils.Adapter {
    * @param obj The sendTo message (validated: command + callback present)
    */
   async handleCheckConnection(obj) {
-    var _a;
     const msg = obj.message;
-    const key = ((_a = msg == null ? void 0 : msg.apiKey) == null ? void 0 : _a.trim()) || "";
+    const key = typeof (msg == null ? void 0 : msg.apiKey) === "string" ? msg.apiKey.trim() : "";
     if (!key || key.length < MIN_API_KEY_LENGTH) {
       this.log.debug("checkConnection: apiKey too short");
       this.sendTo(obj.from, obj.command, { error: "API key is too short" }, obj.callback);
@@ -420,7 +419,11 @@ class ParcelappAdapter extends utils.Adapter {
         this.log.info("Connection restored");
         this.lastErrorCode = "";
       }
-      await this.setStateChangedAsync("info.connection", { val: true, ack: true });
+      try {
+        await this.setStateChangedAsync("info.connection", { val: true, ack: true });
+      } catch (err) {
+        this.log.warn(`State maintenance failed (API connection is fine, retrying next poll): ${(0, import_coerce.errText)(err)}`);
+      }
       const activeDeliveries = deliveries.filter((d) => stateManager.parseStatus(d) !== import_types.DELIVERED_STATUS_CODE);
       const visibleDeliveries = autoRemoveMode ? activeDeliveries : deliveries;
       stateManager.resetPollState();

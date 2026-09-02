@@ -113,15 +113,32 @@ export function coerceClampedInt(raw: unknown, min: number, max: number, default
 }
 
 /**
- * Collapse control-character runs (CR / LF / TAB / NUL / VT / FF and the
- * Unicode line separators U+2028/U+2029) in an untrusted string to a single
- * space before it is interpolated into a log line — prevents log-injection
- * (a forged second log line) from external values (tracking number, carrier
- * code, raw API body, collision raw-key with its NUL separator, …). Fleet
- * convention (hassemu/hueemu v1.36.0 S4); widened in v0.10.0 (I10).
+ * Collapse control-character runs in an untrusted string to a single space
+ * before it is interpolated into a log line — prevents log-injection (a forged
+ * second log line) and smuggled terminal escapes from external values
+ * (tracking number, carrier code, raw API body, collision raw-key with its NUL
+ * separator, …). Covers the whole C0 range (CR/LF/TAB/NUL/VT/FF, ESC, …), DEL
+ * and the Unicode line separators U+2028/U+2029. Fleet convention (hassemu /
+ * hueemu); widened from the line-break set in v0.10.0 (I10) to the full range
+ * in 0.10.4 — as a character loop, because a regex literal with control
+ * characters is rejected by the lint (no-control-regex).
  *
  * @param value Untrusted string to flatten for single-line logging.
  */
 export function oneLine(value: string): string {
-  return value.replace(/[\r\n\t\0\v\f\u2028\u2029]+/g, " ");
+  let out = "";
+  let inRun = false;
+  for (const ch of value) {
+    const code = ch.codePointAt(0) ?? 0;
+    if (code < 0x20 || code === 0x7f || code === 0x2028 || code === 0x2029) {
+      if (!inRun) {
+        out += " ";
+        inRun = true;
+      }
+    } else {
+      out += ch;
+      inRun = false;
+    }
+  }
+  return out;
 }

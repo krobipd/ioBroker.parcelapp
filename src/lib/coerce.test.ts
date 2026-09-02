@@ -221,6 +221,16 @@ describe("oneLine", () => {
     expect(oneLine("")).toBe("");
   });
 
+  it("flattens the rest of the C0 range and DEL as well — terminal escapes included (2026-09-02)", () => {
+    expect(oneLine("a\u001b[31mred\u001b[0mb")).toBe("a [31mred [0mb");
+    expect(oneLine("a\u007fb")).toBe("a b");
+    expect(oneLine("a\u0001\u0002\u001fb")).toBe("a b"); // one run → ONE space
+  });
+
+  it("leaves non-ASCII text alone", () => {
+    expect(oneLine("Paket für München — ✓")).toBe("Paket für München — ✓");
+  });
+
   it("flattens NUL / VT / FF and Unicode line separators too (v0.10.0, I10)", () => {
     expect(oneLine("a\0b")).toBe("a b"); // collision raw-key separator
     expect(oneLine("a\vb")).toBe("a b");

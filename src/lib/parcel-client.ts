@@ -192,6 +192,19 @@ export class ParcelClient {
       this.log?.debug(`API drift: deliveries not an array (got ${typeof response.deliveries})`);
       throw apiError("API error: deliveries not an array", "API_ERROR");
     }
+    // Same drift class one level down: an entry that is not an object (null,
+    // number, string, nested array) would blow up deep inside the poll — a
+    // TypeError from parseStatus reading `.status_code`, classified UNKNOWN and
+    // logged as "Poll failed: Cannot read properties of null". Fail the same way
+    // the wrong-typed list does: a coded API error, existing states kept stale.
+    const entries: unknown[] = response.deliveries;
+    const bad = entries.findIndex(d => d === null || typeof d !== "object" || Array.isArray(d));
+    if (bad !== -1) {
+      this.log?.debug(
+        `API drift: deliveries[${bad}] is not an object (got ${Array.isArray(entries[bad]) ? "array" : typeof entries[bad]})`,
+      );
+      throw apiError("API error: malformed delivery entry", "API_ERROR");
+    }
     return response.deliveries;
   }
 
@@ -199,13 +212,25 @@ export class ParcelClient {
    * Add a new delivery to parcel.app.
    *
    * Error style: transport/HTTP failures reject with {@link ApiError}; a 2xx
-   * body is returned RAW and never validated — `success: false` is passed
-   * through unchanged because sendTo callers receive this object verbatim.
+   * body is returned as-is once it is a plain object (its fields are not
+   * validated) — `success: false` is passed through unchanged because sendTo
+   * callers receive this object verbatim.
    *
    * @param delivery The delivery to add
    */
   async addDelivery(delivery: AddDeliveryRequest): Promise<AddDeliveryResponse> {
-    return this.request<AddDeliveryResponse>("POST", "/add-delivery/", true, delivery);
+    const response = await this.request<unknown>("POST", "/add-delivery/", true, delivery);
+    // API-drift guard: the body goes to the sendTo caller verbatim and the
+    // adapter reads `.success` from it — a null/array/primitive body used to
+    // surface as a TypeError ("Cannot read properties of null") instead of a
+    // clear API error.
+    if (!response || typeof response !== "object" || Array.isArray(response)) {
+      this.log?.debug(
+        `API drift: malformed add-delivery response (got ${Array.isArray(response) ? "array" : typeof response})`,
+      );
+      throw apiError("API error: malformed response", "API_ERROR");
+    }
+    return response as AddDeliveryResponse;
   }
 
   /** Get carrier names (cached after first call; concurrent callers share one fetch) */

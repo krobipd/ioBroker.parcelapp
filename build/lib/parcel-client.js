@@ -120,7 +120,7 @@ class ParcelClient {
    * @param filterMode Filter active or recent deliveries
    */
   async getDeliveries(filterMode = "active") {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     const response = await this.request("GET", `/deliveries/?filter_mode=${filterMode}`, true);
     if (!response || typeof response !== "object") {
       (_a = this.log) == null ? void 0 : _a.debug(`API drift: malformed response (got ${typeof response})`);
@@ -138,19 +138,36 @@ class ParcelClient {
       (_c = this.log) == null ? void 0 : _c.debug(`API drift: deliveries not an array (got ${typeof response.deliveries})`);
       throw apiError("API error: deliveries not an array", "API_ERROR");
     }
+    const entries = response.deliveries;
+    const bad = entries.findIndex((d) => d === null || typeof d !== "object" || Array.isArray(d));
+    if (bad !== -1) {
+      (_d = this.log) == null ? void 0 : _d.debug(
+        `API drift: deliveries[${bad}] is not an object (got ${Array.isArray(entries[bad]) ? "array" : typeof entries[bad]})`
+      );
+      throw apiError("API error: malformed delivery entry", "API_ERROR");
+    }
     return response.deliveries;
   }
   /**
    * Add a new delivery to parcel.app.
    *
    * Error style: transport/HTTP failures reject with {@link ApiError}; a 2xx
-   * body is returned RAW and never validated — `success: false` is passed
-   * through unchanged because sendTo callers receive this object verbatim.
+   * body is returned as-is once it is a plain object (its fields are not
+   * validated) — `success: false` is passed through unchanged because sendTo
+   * callers receive this object verbatim.
    *
    * @param delivery The delivery to add
    */
   async addDelivery(delivery) {
-    return this.request("POST", "/add-delivery/", true, delivery);
+    var _a;
+    const response = await this.request("POST", "/add-delivery/", true, delivery);
+    if (!response || typeof response !== "object" || Array.isArray(response)) {
+      (_a = this.log) == null ? void 0 : _a.debug(
+        `API drift: malformed add-delivery response (got ${Array.isArray(response) ? "array" : typeof response})`
+      );
+      throw apiError("API error: malformed response", "API_ERROR");
+    }
+    return response;
   }
   /** Get carrier names (cached after first call; concurrent callers share one fetch) */
   async getCarrierNames() {

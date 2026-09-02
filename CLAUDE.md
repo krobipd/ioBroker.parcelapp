@@ -27,8 +27,8 @@
 ```
 src/main.ts              → Adapter (Polling, Lifecycle, sendTo-Handler, handlePollError, Pick<>-Seams)
 src/lib/types.ts         → API-Interfaces + ApiErrorCode/ApiError (Fehler-Vertrag) + DELIVERED/UNKNOWN_STATUS_CODE
-src/lib/coerce.ts        → errText, coerceFiniteNumber strict, coerceClampedInt, isTrueish, oneLine (inkl. NUL/U+2028)
-src/lib/parcel-client.ts → HTTPS-Client (Node.js built-in); baseUrl- + Timeout-Seams (Tests), apiError (typisiert), 15s-Leerlauf + 60s-Deadline, cancelled-Flag, RETRY_AFTER_*-Konstanten
+src/lib/coerce.ts        → errText, coerceFiniteNumber strict, coerceClampedInt, isTrueish, oneLine (ganzer C0-Bereich + DEL + U+2028/29, ein Lauf = ein Leerzeichen; Zeichen-Schleife statt Regex wegen `no-control-regex`)
+src/lib/parcel-client.ts → HTTPS-Client (Node.js built-in); baseUrl- + Timeout-Seams (Tests), apiError (typisiert), 15s-Leerlauf + 60s-Deadline, cancelled-Flag, RETRY_AFTER_*-Konstanten; API-Drift-Wächter an der Grenze: Antwort muss Objekt sein (getDeliveries UND addDelivery), jeder Listeneintrag muss Objekt sein — sonst `API_ERROR` + Drift-Debugzeile, nie ein TypeError tief im Poll
 src/lib/state-manager.ts → State CRUD + Cleanup + Berechnungen; createdIds/deviceEnsured-Caches; lastUpdated via setStateChangedAsync-notChanged
 src/lib/i18n.ts          → tName/tText/statusLabel/packageName: type-safe Wrapper (keys aus admin/i18n/en.json; Status-Labels status_0…status_8)
 ../scripts/sync-iopackage-from-i18n.py → hält io-package.json:instanceObjects synchron mit admin/i18n (zentral, source: admin-i18n)
@@ -59,8 +59,9 @@ Drei Ebenen: **vitest** (`src/**/*.test.ts`) · **Paket-Prüfung** (mocha, `@iob
 
 Run: `npm test` (vitest + Paket-Prüfung), `npm run test:integration` (Boot), `npm run coverage` (Abdeckung). CI: `test:unit`-Alias triggert die vitest-Suite in testing-action-adapter@v1 (H2). **Aktuelle Zahlen immer live ziehen, nie hier pinnen** — eine hier notierte Testzahl ist beim nächsten Test veraltet (Fleet-Lehre aus dem govee-CLAUDE.md-Drift).
 
-**Konventionen der Suite (aus dem Test-Audit 2026-08-22 — `Ressourcen/parcelapp/test-audit-2026-08-22.md`):**
-- **Ein Test muss FALLEN können.** Der Audit fand drei Tests, die eine Regel nur scheinbar prüften. Neue Tests werden per **Mutation** gegengeprüft: Regel im Quellcode kaputtmachen → der Test MUSS rot werden. Das Protokoll der 12 belegten Mutationen steht im Audit-Report.
+**Konventionen der Suite (aus den Test-Audits 2026-08-22 + 2026-09-02 — `Ressourcen/parcelapp/test-audit-2026-08-22.md`, `…/test-audit-2026-09-02.md`):**
+- **Ein Test muss FALLEN können.** Der Audit fand drei Tests, die eine Regel nur scheinbar prüften. Neue Tests werden per **Mutation** gegengeprüft: Regel im Quellcode kaputtmachen → der Test MUSS rot werden. Seit 2026-09-02 gibt es dafür eine Tabelle: `Ressourcen/iobroker-entwicklung/mutation-testing/mutations_parcelapp_2026-09-02.py` (77 Regelbrüche über main/state-manager/parcel-client/coerce/i18n; Läufer `mutation-test.py`, Ergebnis `matrix_parcelapp_2026-09-02.json`). Nadeln sind exakte Quellzeilen — nach Prettier-Umbrüchen oder Refactorings zuerst den Nadel-Vorab-Check fahren (jede Nadel genau 1×), sonst misst der Lauf nichts.
+- **Broker ≠ API im Poll:** ALLE Schreibvorgänge ins ioBroker-Objektsystem innerhalb von `poll()` (connection=true, Paket-States, Aufräumen, Summary) stehen in eigenen Fängen mit `State maintenance failed … API connection is fine` auf Warnstufe. Nur der API-Aufruf selbst läuft in `handlePollError`/`classifyError`. Ein neuer Schreibvorgang im Poll bekommt denselben Fang, sonst färbt ein Broker-Schluckauf die Verbindungsanzeige rot und vergiftet die Fehler-Entprellung (Fund A4, 2026-09-02).
 - **`state-manager.test.ts` friert die Uhr** (`FIXED_NOW`, Mitte Juni, mittags — kein Sommerzeit-Wechsel, keine Monatsgrenze). Wer `lastUpdated`-Verhalten testet, muss die Uhr **bewusst vorstellen**: zwei Polls in derselben Millisekunde erzeugen denselben Zeitstempel, und dann meldet der Broker-Mock „unverändert" — ein kaputtes Verhalten sähe identisch aus.
 - **`parcel-client.test.ts` schaltet die Verbindungswiederverwendung ab** (`globalAgent.keepAlive = false` + `destroy()` nach jedem Test). Sonst kann ein Aufruf einen Socket erwischen, den der Wegwerf-Server gerade geschlossen hat → falsch-rot (einmal live passiert, 2026-08-21).
 - **Zeitgrenzen sind injizierbar** (`ParcelClientTimeouts`, 4. Konstruktor-Parameter): Leerlauf-Abbruch und harte Zeitgrenze laufen im Test mit Millisekunden statt 15/60 Sekunden. Produktiv immer die Vorgabewerte.
