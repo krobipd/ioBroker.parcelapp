@@ -140,8 +140,7 @@ sendTo("parcelapp.0", "addDelivery", {
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
-
-### **WORK IN PROGRESS**
+### 0.10.4 (2026-09-02)
 
 - Fixed: A malformed reply from parcel.app (empty body or a broken delivery entry) no longer aborts the poll with a cryptic internal message — it is reported as an API problem and retried next poll.
 - Fixed: A brief ioBroker database hiccup while marking the connection as online was mistaken for a parcel.app failure and switched the connection indicator to red.
@@ -170,11 +169,6 @@ sendTo("parcelapp.0", "addDelivery", {
 - Changed: short ioBroker database hiccups no longer flip the connection indicator — it now reflects only the parcel.app connection.
 - Changed: the fallback package name ("Package …") is localized like all other texts, and the adapter is listed under a fitting admin category (misc-data).
 - Changed: the automatic poll after adding a delivery now respects the one-minute pacing, so bulk-adds can no longer exhaust the hourly API budget.
-
-### 0.9.0 (2026-06-23) — stable
-
-- Fixed: tracked packages could disappear from the object tree after a temporary update error or an unexpected API response — a package is now kept until parcel.app actually stops returning it.
-- Changed: multi-day delivery windows now show the date on each side (e.g. `12-06 14:30 - 12-08 18:30`) instead of looking same-day; out-of-range or reversed dates no longer produce a misleading window.
 
 [Older changelogs can be found there](CHANGELOG_OLD.md)
 

@@ -1,9 +1,9 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.10.3",
+    "version": "0.10.4",
     "news": {
-      "NEXT": {
+      "0.10.4": {
         "en": "Malformed parcel.app replies and odd checkConnection input get a clear answer; a brief database hiccup no longer turns the connection indicator red.",
         "de": "Fehlerhafte parcel.app-Antworten und unpassende checkConnection-Eingaben bekommen eine klare Antwort; ein kurzer Datenbank-Aussetzer färbt die Verbindungsanzeige nicht mehr rot.",
         "ru": "Некорректные ответы parcel.app и неверный ввод в checkConnection получают понятный ответ; короткий сбой базы данных больше не делает индикатор связи красным.",
