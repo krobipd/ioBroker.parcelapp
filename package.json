@@ -69,8 +69,8 @@
     "translate": "translate-adapter",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format": "prettier --write . \"!build/**\" \"!io-package.json\" \"!.github/dependabot.yml\"",
+    "format:check": "prettier --check . \"!build/**\" \"!io-package.json\" \"!.github/dependabot.yml\"",
     "release": "release-script"
   },
   "bugs": {
