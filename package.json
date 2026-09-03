@@ -71,7 +71,10 @@
     "lint:fix": "eslint --fix",
     "format": "prettier --write . \"!build/**\" \"!io-package.json\" \"!.github/dependabot.yml\"",
     "format:check": "prettier --check . \"!build/**\" \"!io-package.json\" \"!.github/dependabot.yml\"",
-    "release": "release-script"
+    "release": "release-script",
+    "release-patch": "release-script patch --yes --all",
+    "release-minor": "release-script minor --yes --all",
+    "release-major": "release-script major --yes --all"
   },
   "bugs": {
     "url": "https://github.com/krobipd/ioBroker.parcelapp/issues"

@@ -44,5 +44,15 @@
   "status_6": "Delivery Attempt Failed",
   "status_7": "Exception",
   "status_8": "Info Received",
-  "packageName": "Package %s"
+  "packageName": "Package %s",
+  "descInfoConnection": "True while the adapter can reach the parcel.app API.",
+  "descStatusCode": "Numeric status from parcel.app (0-8); -1 means the value could not be interpreted.",
+  "descExtraInfo": "Additional detail the carrier needs, such as a postal code or e-mail address.",
+  "descDeliveryWindow": "Expected delivery time window; a window spanning several days carries the date on both sides.",
+  "descDeliveryEstimate": "Expected delivery in words - today, tomorrow or in a number of days.",
+  "descLastEvent": "Most recent tracking event reported by the carrier, with its date.",
+  "descLastUpdated": "When the tracking data last changed - not when the adapter last polled.",
+  "descActiveCount": "Number of packages that have not been delivered yet.",
+  "descTodayCount": "Number of packages expected to arrive today.",
+  "descSummaryDeliveryWindow": "Combined window of all packages expected today - earliest start to latest end."
 }

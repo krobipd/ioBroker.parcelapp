@@ -44,5 +44,15 @@
   "status_6": "派送失败",
   "status_7": "异常",
   "status_8": "已登记",
-  "packageName": "包裹 %s"
+  "packageName": "包裹 %s",
+  "descInfoConnection": "适配器能够连接 parcel.app API 时为真。",
+  "descStatusCode": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。",
+  "descExtraInfo": "承运商所需的附加信息，例如邮政编码或电子邮件地址。",
+  "descDeliveryWindow": "预计派送时间段；跨越多天的时间段会在两侧显示日期。",
+  "descDeliveryEstimate": "以文字表示的预计派送时间——今天、明天或若干天后。",
+  "descLastEvent": "承运商报告的最新跟踪事件及其日期。",
+  "descLastUpdated": "跟踪数据最后一次发生变化的时间——不是最后一次轮询的时间。",
+  "descActiveCount": "尚未派送的包裹数量。",
+  "descTodayCount": "预计今天送达的包裹数量。",
+  "descSummaryDeliveryWindow": "今天预计送达的所有包裹的合并时间段——最早开始到最晚结束。"
 }

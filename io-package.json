@@ -3,6 +3,19 @@
     "name": "parcelapp",
     "version": "0.10.4",
     "news": {
+      "NEXT": {
+        "en": "An update now reaches every datapoint of an existing installation: names and new short descriptions arrive in your system language.\nDetailed user documentation in English and German, plus two leftover settings from much older versions are cleaned up.",
+        "de": "Ein Update erreicht jetzt jeden Datenpunkt einer bestehenden Anlage: Namen und neue kurze Beschreibungen kommen in deiner Systemsprache an.\nAusführliche Nutzerdoku auf Englisch und Deutsch, und zwei Altlasten aus viel älteren Versionen werden aufgeräumt.",
+        "ru": "Обновление теперь доходит до каждой точки данных существующей установки: названия и новые краткие описания приходят на языке системы.\nПодробная документация на английском и немецком, а две настройки из очень старых версий удаляются.",
+        "pt": "Uma atualização chega agora a cada ponto de dados de uma instalação existente: nomes e novas descrições curtas surgem no idioma do sistema.\nDocumentação detalhada em inglês e alemão, e duas definições de versões muito antigas são removidas.",
+        "nl": "Een update bereikt nu elk datapunt van een bestaande installatie: namen en nieuwe korte beschrijvingen komen in je systeemtaal binnen.\nUitgebreide gebruikersdocumentatie in het Engels en Duits, en twee instellingen uit veel oudere versies worden opgeruimd.",
+        "fr": "Une mise à jour atteint désormais chaque point de données d'une installation existante : noms et nouvelles descriptions courtes dans la langue du système.\nDocumentation détaillée en anglais et en allemand, et deux réglages de versions bien plus anciennes sont supprimés.",
+        "it": "Un aggiornamento ora raggiunge ogni punto dati di un'installazione esistente: nomi e nuove brevi descrizioni arrivano nella lingua di sistema.\nDocumentazione dettagliata in inglese e tedesco, e due impostazioni di versioni molto più vecchie vengono rimosse.",
+        "es": "Una actualización llega ahora a cada punto de datos de una instalación existente: nombres y nuevas descripciones breves en el idioma del sistema.\nDocumentación detallada en inglés y alemán, y se eliminan dos ajustes de versiones mucho más antiguas.",
+        "pl": "Aktualizacja dociera teraz do każdego punktu danych istniejącej instalacji: nazwy i nowe krótkie opisy pojawiają się w języku systemu.\nSzczegółowa dokumentacja po angielsku i niemiecku, a dwa ustawienia z dużo starszych wersji zostają usunięte.",
+        "uk": "Оновлення тепер доходить до кожної точки даних наявної встановленої копії: назви та нові короткі описи з'являються мовою системи.\nДокладна документація англійською та німецькою, а два налаштування з набагато старіших версій прибираються.",
+        "zh-cn": "更新现在会到达现有安装的每一个数据点：名称和新的简短说明会以系统语言显示。\n提供英语和德语的详细用户文档，并清理了两项来自更早版本的遗留设置。"
+      },
       "0.10.4": {
         "en": "Malformed parcel.app replies and odd checkConnection input get a clear answer; a brief database hiccup no longer turns the connection indicator red.",
         "de": "Fehlerhafte parcel.app-Antworten und unpassende checkConnection-Eingaben bekommen eine klare Antwort; ein kurzer Datenbank-Aussetzer färbt die Verbindungsanzeige nicht mehr rot.",
@@ -80,19 +93,6 @@
         "pl": "Śledzone paczki nie znikają już po tymczasowym błędzie lub nieoczekiwanej odpowiedzi API, a wielodniowe okna dostawy pokazują teraz datę po obu stronach.",
         "uk": "Відстежувані посилки більше не зникають після тимчасової помилки або неочікуваної відповіді API, а багатоденні вікна доставки тепер показують дату з обох боків.",
         "zh-cn": "跟踪的包裹在临时错误或意外的 API 响应后不再消失，跨多天的派送时段现在会在两侧显示日期。"
-      },
-      "0.8.0": {
-        "en": "The delivery window is now also shown for carriers that report it only as a date/time range, not just as a Unix timestamp.",
-        "de": "Das Zustellfenster wird jetzt auch für Anbieter angezeigt, die es nur als Datums-/Zeitbereich melden, nicht nur als Unix-Zeitstempel.",
-        "ru": "Окно доставки теперь показывается и для перевозчиков, которые сообщают его только как диапазон даты/времени, а не как метку времени Unix.",
-        "pt": "A janela de entrega agora também aparece para transportadoras que a informam apenas como intervalo de data/hora, não como carimbo Unix.",
-        "nl": "Het bezorgvenster wordt nu ook getoond voor vervoerders die het alleen als datum-/tijdbereik doorgeven, niet alleen als Unix-tijdstempel.",
-        "fr": "Le créneau de livraison apparaît désormais aussi pour les transporteurs qui l'indiquent seulement comme plage date/heure, pas comme horodatage Unix.",
-        "it": "La finestra di consegna ora viene mostrata anche per i corrieri che la indicano solo come intervallo data/ora, non come timestamp Unix.",
-        "es": "La ventana de entrega ahora también se muestra para transportistas que la indican solo como rango de fecha/hora, no como marca de tiempo Unix.",
-        "pl": "Okno dostawy jest teraz pokazywane także dla przewoźników, którzy podają je tylko jako zakres daty/godziny, a nie jako znacznik czasu Unix.",
-        "uk": "Вікно доставки тепер показується й для перевізників, які повідомляють його лише як діапазон дати/часу, а не як позначку часу Unix.",
-        "zh-cn": "现在，对于仅以日期/时间范围（而非 Unix 时间戳）报告的承运商，也会显示派送时段。"
       }
     },
     "plugins": {
@@ -145,6 +145,18 @@
     "icon": "parcelapp.svg",
     "extIcon": "https://cdn.jsdelivr.net/gh/krobipd/ioBroker.parcelapp@main/admin/parcelapp.svg",
     "readme": "https://github.com/krobipd/ioBroker.parcelapp/blob/main/README.md",
+    "docs": {
+      "en": [
+        "docs/en/README.md",
+        "docs/en/scripting.md",
+        "docs/en/faq.md"
+      ],
+      "de": [
+        "docs/de/README.md",
+        "docs/de/scripting.md",
+        "docs/de/faq.md"
+      ]
+    },
     "enabled": true,
     "tier": 3,
     "loglevel": "info",
@@ -221,7 +233,20 @@
         "role": "indicator.connected",
         "read": true,
         "write": false,
-        "def": false
+        "def": false,
+        "desc": {
+          "en": "True while the adapter can reach the parcel.app API.",
+          "de": "Wahr, solange der Adapter die parcel.app-API erreicht.",
+          "ru": "Истина, пока адаптер может связаться с API parcel.app.",
+          "pt": "Verdadeiro enquanto o adaptador conseguir alcançar a API do parcel.app.",
+          "nl": "Waar zolang de adapter de parcel.app-API kan bereiken.",
+          "fr": "Vrai tant que l'adaptateur parvient à joindre l'API parcel.app.",
+          "it": "Vero finché l'adattatore riesce a raggiungere l'API di parcel.app.",
+          "es": "Verdadero mientras el adaptador pueda acceder a la API de parcel.app.",
+          "pl": "Prawda, dopóki adapter może połączyć się z API parcel.app.",
+          "uk": "Істина, доки адаптер може дістатися до API parcel.app.",
+          "zh-cn": "适配器能够连接 parcel.app API 时为真。"
+        }
       },
       "native": {}
     },

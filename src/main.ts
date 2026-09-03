@@ -2,6 +2,7 @@ import * as utils from "@iobroker/adapter-core";
 import { I18n } from "@iobroker/adapter-core";
 import { join } from "node:path";
 import { coerceClampedInt, errText, isTrueish, oneLine } from "./lib/coerce";
+import { tName } from "./lib/i18n";
 import { ParcelClient, RETRY_AFTER_DEFAULT_SEC, RETRY_AFTER_MAX_SEC } from "./lib/parcel-client";
 import { StateManager } from "./lib/state-manager";
 import { DELIVERED_STATUS_CODE } from "./lib/types";
@@ -30,6 +31,13 @@ const UPDATE_BATCH_SIZE = 25;
 // (the daily server limit is the real cap).
 const MAX_ADDS_PER_WINDOW = 20;
 const ADD_WINDOW_MS = 60_000;
+/**
+ * v0.11.0: config keys past versions wrote into the instance object and that nothing reads any
+ * more — `filterMode` was replaced by `autoRemoveDelivered` in v0.2.0, `language` by the system
+ * language before v0.5.0. An upgrade merges the manifest in and never removes a key, so they
+ * survive in every installation old enough to have them. See `correctInstanceObject`.
+ */
+const OBSOLETE_NATIVE_KEYS = ["filterMode", "language"] as const;
 
 /**
  * Node transport-level error codes treated as (transient) NETWORK problems:
@@ -129,30 +137,55 @@ export class ParcelappAdapter extends utils.Adapter {
   }
 
   /**
-   * Switch off `supportedMessages.stopInstance` on this instance's own object.
+   * Repair leftovers an upgrade cannot remove from this instance's own object.
    *
-   * The entry was dropped from the manifest, which only helps a FRESH install: an upgrade
-   * merges the manifest into the existing instance object and never removes a key, so the old
-   * `true` survives in the database — and that is what the host reads. With it the host kills
-   * the process one second after asking it to stop, `onUnload` never runs, and the
-   * `info.connection=false` write on the way out never reaches the database.
+   * js-controller MERGES the manifest into an existing instance object and never drops a key,
+   * so anything a past version wrote survives forever. Two such leftovers exist:
    *
-   * Only written when it is actually still on: every instance-object change restarts the
-   * instance, so doing it unconditionally would be a restart loop.
+   * 1. `common.supportedMessages.stopInstance` (dropped from the manifest in v0.10.3). With it
+   *    the host kills the process one second after asking it to stop, `onUnload` never runs, and
+   *    the `info.connection=false` write on the way out never reaches the database.
+   * 2. `native.filterMode` (dropped in v0.2.0) and `native.language` (dropped before v0.5.0).
+   *    Dead config keys nothing reads — the adapter owns its own configuration inventory the
+   *    same way it owns its states (`cleanupObsoleteStates`).
    *
-   * @returns true when the correction was written and the restart is coming — the caller has
+   * Both are corrected in ONE write, because every instance-object change restarts the instance:
+   * two writes would mean two restarts. And it is written only when something is actually stale,
+   * otherwise the correction would be a restart loop.
+   *
+   * `extendObject` cannot do this: its deep merge (`node.extend`) SETS a key given as `null`
+   * instead of dropping it — measured against the bundled js-controller. Removing a key needs a
+   * read/delete/`setForeignObject` round-trip, which is the same pattern js-controller's own
+   * `updateConfig()`/`disable()` use. `native.apiKey` rides along untouched and stays encrypted:
+   * `getForeignObject` does not decrypt (that happens only into `this.config`).
+   *
+   * @returns true when a correction was written and the restart is coming — the caller has
    *   to stop right there instead of polling in a process that is going down.
    */
-  private async clearStopInstanceFlag(): Promise<boolean> {
+  private async correctInstanceObject(): Promise<boolean> {
     const id = `system.adapter.${this.namespace}`;
     try {
       const obj = await this.getForeignObjectAsync(id);
-      const supported = obj?.common?.supportedMessages as { stopInstance?: unknown } | undefined;
-      if (!supported?.stopInstance) {
+      if (!obj) {
         return false;
       }
-      this.log.info("Correcting a leftover setting from an earlier version — this instance restarts once");
-      await this.extendForeignObjectAsync(id, { common: { supportedMessages: { stopInstance: false } } });
+      const supported = obj.common?.supportedMessages as { stopInstance?: unknown } | undefined;
+      const staleStopInstance = !!supported?.stopInstance;
+      const native = (obj.native ?? {}) as Record<string, unknown>;
+      const staleNativeKeys = OBSOLETE_NATIVE_KEYS.filter(key => key in native);
+      if (!staleStopInstance && staleNativeKeys.length === 0) {
+        return false;
+      }
+      this.log.info("Correcting leftover settings from an earlier version — this instance restarts once");
+      if (staleStopInstance) {
+        obj.common.supportedMessages = { ...supported, stopInstance: false };
+      }
+      for (const key of staleNativeKeys) {
+        this.log.debug(`Removing obsolete configuration key: native.${key}`);
+        delete native[key];
+      }
+      obj.native = native;
+      await this.setForeignObject(id, obj);
       return true;
     } catch (err) {
       // Objects DB unreachable — not worth failing the start over; the next start retries.
@@ -161,11 +194,55 @@ export class ParcelappAdapter extends utils.Adapter {
     }
   }
 
+  /**
+   * Re-apply the manifest objects' `common` to an EXISTING installation.
+   *
+   * js-controller creates `io-package.json:instanceObjects` only where they are MISSING, so a
+   * changed name or description otherwise reaches fresh installs only — measured on a live
+   * install, `info` and `info.connection` still carried their plain-English pre-i18n names while
+   * manifest, linter, type check and the name gate were all green. Each id is spelled out rather
+   * than looped over the manifest: the consistency gate looks for the literal id at the
+   * `extendObject` call, and a loop would be DRYer but unverifiable.
+   *
+   * `desc` is set only where there is something to explain — a folder called "Deliveries"
+   * explains itself, and an invented sentence is worse than none.
+   */
+  private async refreshManifestObjects(): Promise<void> {
+    await this.extendObject("info", {
+      type: "channel",
+      common: { name: tName("info") },
+      native: {},
+    });
+    await this.extendObject("info.connection", {
+      type: "state",
+      common: {
+        name: tName("infoConnection"),
+        desc: tName("descInfoConnection"),
+        type: "boolean",
+        role: "indicator.connected",
+        read: true,
+        write: false,
+        def: false,
+      },
+      native: {},
+    });
+    await this.extendObject("deliveries", {
+      type: "folder",
+      common: { name: tName("deliveries") },
+      native: {},
+    });
+    await this.extendObject("summary", {
+      type: "channel",
+      common: { name: tName("summary") },
+      native: {},
+    });
+  }
+
   private async onReady(): Promise<void> {
     try {
       // First: without this the whole shutdown path stays dead on an updated install.
       // A correction means the host is restarting us — no point starting a poll cycle.
-      if (await this.clearStopInstanceFlag()) {
+      if (await this.correctInstanceObject()) {
         return;
       }
       // I18n.init resolves system.config.language itself (adapter-core reads
@@ -174,6 +251,14 @@ export class ParcelappAdapter extends utils.Adapter {
       // resolveLanguage step are gone with the STATUS_LABELS table (L20).
       await I18n.init(join(this.adapterDir, "admin"), this);
       this.log.debug(`onReady: starting (autoRemoveDelivered=${this.config.autoRemoveDelivered})`);
+
+      try {
+        await this.refreshManifestObjects();
+      } catch (err) {
+        // Same class as cleanupObsoleteStates (C8): a broker hiccup while refreshing object
+        // texts must not abort the start — the next start reapplies them. Degrade to a warning.
+        this.log.warn(`Refreshing the manifest objects failed (continuing): ${errText(err)}`);
+      }
 
       await this.setState("info.connection", { val: false, ack: true });
 

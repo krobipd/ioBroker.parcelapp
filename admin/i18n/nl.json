@@ -44,5 +44,15 @@
   "status_6": "Bezorgpoging mislukt",
   "status_7": "Uitzondering",
   "status_8": "Geregistreerd",
-  "packageName": "Pakket %s"
+  "packageName": "Pakket %s",
+  "descInfoConnection": "Waar zolang de adapter de parcel.app-API kan bereiken.",
+  "descStatusCode": "Numerieke status van parcel.app (0-8); -1 betekent dat de waarde niet kon worden geduid.",
+  "descExtraInfo": "Aanvullend gegeven dat de vervoerder nodig heeft, zoals postcode of e-mailadres.",
+  "descDeliveryWindow": "Verwacht bezorgvenster; een venster over meerdere dagen toont aan beide kanten de datum.",
+  "descDeliveryEstimate": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
+  "descLastEvent": "Meest recente zendingsmelding van de vervoerder, met datum.",
+  "descLastUpdated": "Moment waarop de zendinggegevens voor het laatst zijn gewijzigd - niet de laatste opvraging.",
+  "descActiveCount": "Aantal pakketten dat nog niet is bezorgd.",
+  "descTodayCount": "Aantal pakketten dat vandaag wordt verwacht.",
+  "descSummaryDeliveryWindow": "Gecombineerd venster van alle vandaag verwachte pakketten - vroegste start tot laatste einde."
 }

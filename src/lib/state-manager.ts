@@ -277,26 +277,44 @@ export class StateManager {
     // v0.10.0 (M5): ONE definition list drives the writes AND the lastUpdated
     // decision — the former parallel JSON.stringify signature array was a
     // silent drift trap (a new field added to one list but not the other).
+    // `desc` is an EXPLANATION, only where the name alone does not give it —
+    // `undefined` means "nothing to explain here", and an invented sentence
+    // would be worse than none (fleet standard, 2026-09-02).
     const stateDefs: [
       id: string,
       name: ioBroker.StringOrTranslated,
       type: ioBroker.CommonType,
       role: string,
       val: ioBroker.StateValue,
+      desc: ioBroker.StringOrTranslated | undefined,
     ][] = [
-      [`${devicePath}.carrier`, tName("carrier"), "string", "text", carrierName],
-      [`${devicePath}.status`, tName("status"), "string", "text", statusText],
-      [`${devicePath}.statusCode`, tName("statusCode"), "number", "value", statusCode],
-      [`${devicePath}.description`, tName("description"), "string", "text", description],
-      [`${devicePath}.trackingNumber`, tName("trackingNumber"), "string", "text", trackingNumber],
-      [`${devicePath}.extraInfo`, tName("extraInfo"), "string", "text", extraInfo],
-      [`${devicePath}.deliveryWindow`, tName("deliveryWindow"), "string", "text", deliveryWindow],
-      [`${devicePath}.deliveryEstimate`, tName("deliveryEstimate"), "string", "text", deliveryEstimate],
-      [`${devicePath}.lastEvent`, tName("lastEvent"), "string", "text", lastEvent],
-      [`${devicePath}.lastLocation`, tName("lastLocation"), "string", "text", lastLocation],
+      [`${devicePath}.carrier`, tName("carrier"), "string", "text", carrierName, undefined],
+      [`${devicePath}.status`, tName("status"), "string", "text", statusText, undefined],
+      [`${devicePath}.statusCode`, tName("statusCode"), "number", "value", statusCode, tName("descStatusCode")],
+      [`${devicePath}.description`, tName("description"), "string", "text", description, undefined],
+      [`${devicePath}.trackingNumber`, tName("trackingNumber"), "string", "text", trackingNumber, undefined],
+      [`${devicePath}.extraInfo`, tName("extraInfo"), "string", "text", extraInfo, tName("descExtraInfo")],
+      [
+        `${devicePath}.deliveryWindow`,
+        tName("deliveryWindow"),
+        "string",
+        "text",
+        deliveryWindow,
+        tName("descDeliveryWindow"),
+      ],
+      [
+        `${devicePath}.deliveryEstimate`,
+        tName("deliveryEstimate"),
+        "string",
+        "text",
+        deliveryEstimate,
+        tName("descDeliveryEstimate"),
+      ],
+      [`${devicePath}.lastEvent`, tName("lastEvent"), "string", "text", lastEvent, tName("descLastEvent")],
+      [`${devicePath}.lastLocation`, tName("lastLocation"), "string", "text", lastLocation, undefined],
     ];
     const changed = await Promise.all(
-      stateDefs.map(([id, name, type, role, val]) => this.createAndSet(id, name, type, role, val)),
+      stateDefs.map(([id, name, type, role, val, desc]) => this.createAndSet(id, name, type, role, val, desc)),
     );
 
     // v0.10.0 (M5): `lastUpdated` = "when the tracking data last CHANGED".
@@ -312,6 +330,7 @@ export class StateManager {
         "string",
         "date",
         new Date().toISOString(),
+        tName("descLastUpdated"),
       );
     }
   }
@@ -331,14 +350,29 @@ export class StateManager {
     );
 
     await Promise.all([
-      this.createAndSet("summary.activeCount", tName("activeCount"), "number", "value", activeDeliveries.length),
-      this.createAndSet("summary.todayCount", tName("todayCount"), "number", "value", todayDeliveries.length),
+      this.createAndSet(
+        "summary.activeCount",
+        tName("activeCount"),
+        "number",
+        "value",
+        activeDeliveries.length,
+        tName("descActiveCount"),
+      ),
+      this.createAndSet(
+        "summary.todayCount",
+        tName("todayCount"),
+        "number",
+        "value",
+        todayDeliveries.length,
+        tName("descTodayCount"),
+      ),
       this.createAndSet(
         "summary.deliveryWindow",
         tName("summaryDeliveryWindow"),
         "string",
         "text",
         this.calculateCombinedWindow(todayDeliveries),
+        tName("descSummaryDeliveryWindow"),
       ),
     ]);
   }
@@ -689,15 +723,27 @@ export class StateManager {
   }
 
   /**
-   * Create/extend a read-only state and set its value. Skips the
-   * `setObjectNotExistsAsync` round-trip once the ID is in the cache —
-   * states are static after first creation; only the value changes per poll.
+   * Create/refresh a read-only state and set its value. Runs the object write
+   * once per ID per process (the cache skips the repeat round-trip on the hot
+   * path); only the value changes per poll.
+   *
+   * v0.11.0: `extendObject` instead of `setObjectNotExistsAsync`. The old call
+   * only ever touched an object that did not exist yet, so a changed name,
+   * description, role or type reached FRESH installs only — an existing tree
+   * kept the text it was created with, while manifest, linter, type check and
+   * the name gate all stayed green. Measured on a live install: the three
+   * permanent `summary.*` states still carried their plain-English pre-i18n
+   * names, while the per-package states looked correct only because packages
+   * are deleted and recreated. `extendObject` merges, so a user-set `custom`
+   * (history/logging) survives — the name deliberately does NOT: the adapter
+   * owns the names of its own states.
    *
    * @param id State ID relative to adapter namespace
    * @param name Display name (translation object or plain string)
    * @param type Value type
    * @param role ioBroker role
    * @param val Value to set
+   * @param desc Short explanation, or undefined where there is nothing to explain
    * @returns true when the broker actually wrote the value (it differed or the
    *   state was new) — the DB-backed "did anything change" signal driving
    *   `lastUpdated` (v0.10.0, M5)
@@ -708,13 +754,14 @@ export class StateManager {
     type: ioBroker.CommonType,
     role: string,
     val: ioBroker.StateValue,
+    desc?: ioBroker.StringOrTranslated,
   ): Promise<boolean> {
     if (!this.createdIds.has(id)) {
-      await this.adapter.setObjectNotExistsAsync(id, {
-        type: "state",
-        common: { name, type, role, read: true, write: false },
-        native: {},
-      });
+      const common: ioBroker.StateCommon = { name, type, role, read: true, write: false };
+      if (desc !== undefined) {
+        common.desc = desc;
+      }
+      await this.adapter.extendObject(id, { type: "state", common, native: {} });
       this.createdIds.add(id);
     }
     // The bundled @iobroker/types 7.1.2 types this promise as `string`, but

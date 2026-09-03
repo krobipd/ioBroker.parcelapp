@@ -236,19 +236,33 @@ class StateManager {
     const lastEvent = this.formatLastEvent(delivery);
     const lastLocation = this.extractLastLocation(delivery);
     const stateDefs = [
-      [`${devicePath}.carrier`, (0, import_i18n.tName)("carrier"), "string", "text", carrierName],
-      [`${devicePath}.status`, (0, import_i18n.tName)("status"), "string", "text", statusText],
-      [`${devicePath}.statusCode`, (0, import_i18n.tName)("statusCode"), "number", "value", statusCode],
-      [`${devicePath}.description`, (0, import_i18n.tName)("description"), "string", "text", description],
-      [`${devicePath}.trackingNumber`, (0, import_i18n.tName)("trackingNumber"), "string", "text", trackingNumber],
-      [`${devicePath}.extraInfo`, (0, import_i18n.tName)("extraInfo"), "string", "text", extraInfo],
-      [`${devicePath}.deliveryWindow`, (0, import_i18n.tName)("deliveryWindow"), "string", "text", deliveryWindow],
-      [`${devicePath}.deliveryEstimate`, (0, import_i18n.tName)("deliveryEstimate"), "string", "text", deliveryEstimate],
-      [`${devicePath}.lastEvent`, (0, import_i18n.tName)("lastEvent"), "string", "text", lastEvent],
-      [`${devicePath}.lastLocation`, (0, import_i18n.tName)("lastLocation"), "string", "text", lastLocation]
+      [`${devicePath}.carrier`, (0, import_i18n.tName)("carrier"), "string", "text", carrierName, void 0],
+      [`${devicePath}.status`, (0, import_i18n.tName)("status"), "string", "text", statusText, void 0],
+      [`${devicePath}.statusCode`, (0, import_i18n.tName)("statusCode"), "number", "value", statusCode, (0, import_i18n.tName)("descStatusCode")],
+      [`${devicePath}.description`, (0, import_i18n.tName)("description"), "string", "text", description, void 0],
+      [`${devicePath}.trackingNumber`, (0, import_i18n.tName)("trackingNumber"), "string", "text", trackingNumber, void 0],
+      [`${devicePath}.extraInfo`, (0, import_i18n.tName)("extraInfo"), "string", "text", extraInfo, (0, import_i18n.tName)("descExtraInfo")],
+      [
+        `${devicePath}.deliveryWindow`,
+        (0, import_i18n.tName)("deliveryWindow"),
+        "string",
+        "text",
+        deliveryWindow,
+        (0, import_i18n.tName)("descDeliveryWindow")
+      ],
+      [
+        `${devicePath}.deliveryEstimate`,
+        (0, import_i18n.tName)("deliveryEstimate"),
+        "string",
+        "text",
+        deliveryEstimate,
+        (0, import_i18n.tName)("descDeliveryEstimate")
+      ],
+      [`${devicePath}.lastEvent`, (0, import_i18n.tName)("lastEvent"), "string", "text", lastEvent, (0, import_i18n.tName)("descLastEvent")],
+      [`${devicePath}.lastLocation`, (0, import_i18n.tName)("lastLocation"), "string", "text", lastLocation, void 0]
     ];
     const changed = await Promise.all(
-      stateDefs.map(([id, name, type, role, val]) => this.createAndSet(id, name, type, role, val))
+      stateDefs.map(([id, name, type, role, val, desc]) => this.createAndSet(id, name, type, role, val, desc))
     );
     if (changed.some(Boolean)) {
       await this.createAndSet(
@@ -256,7 +270,8 @@ class StateManager {
         (0, import_i18n.tName)("lastUpdated"),
         "string",
         "date",
-        (/* @__PURE__ */ new Date()).toISOString()
+        (/* @__PURE__ */ new Date()).toISOString(),
+        (0, import_i18n.tName)("descLastUpdated")
       );
     }
   }
@@ -272,14 +287,29 @@ class StateManager {
       `updateSummary: ${activeDeliveries.length} active, ${todayDeliveries.length} expected today`
     );
     await Promise.all([
-      this.createAndSet("summary.activeCount", (0, import_i18n.tName)("activeCount"), "number", "value", activeDeliveries.length),
-      this.createAndSet("summary.todayCount", (0, import_i18n.tName)("todayCount"), "number", "value", todayDeliveries.length),
+      this.createAndSet(
+        "summary.activeCount",
+        (0, import_i18n.tName)("activeCount"),
+        "number",
+        "value",
+        activeDeliveries.length,
+        (0, import_i18n.tName)("descActiveCount")
+      ),
+      this.createAndSet(
+        "summary.todayCount",
+        (0, import_i18n.tName)("todayCount"),
+        "number",
+        "value",
+        todayDeliveries.length,
+        (0, import_i18n.tName)("descTodayCount")
+      ),
       this.createAndSet(
         "summary.deliveryWindow",
         (0, import_i18n.tName)("summaryDeliveryWindow"),
         "string",
         "text",
-        this.calculateCombinedWindow(todayDeliveries)
+        this.calculateCombinedWindow(todayDeliveries),
+        (0, import_i18n.tName)("descSummaryDeliveryWindow")
       )
     ]);
   }
@@ -579,26 +609,38 @@ class StateManager {
     return StateManager.formatWindow(minStart, maxEnd);
   }
   /**
-   * Create/extend a read-only state and set its value. Skips the
-   * `setObjectNotExistsAsync` round-trip once the ID is in the cache —
-   * states are static after first creation; only the value changes per poll.
+   * Create/refresh a read-only state and set its value. Runs the object write
+   * once per ID per process (the cache skips the repeat round-trip on the hot
+   * path); only the value changes per poll.
+   *
+   * v0.11.0: `extendObject` instead of `setObjectNotExistsAsync`. The old call
+   * only ever touched an object that did not exist yet, so a changed name,
+   * description, role or type reached FRESH installs only — an existing tree
+   * kept the text it was created with, while manifest, linter, type check and
+   * the name gate all stayed green. Measured on a live install: the three
+   * permanent `summary.*` states still carried their plain-English pre-i18n
+   * names, while the per-package states looked correct only because packages
+   * are deleted and recreated. `extendObject` merges, so a user-set `custom`
+   * (history/logging) survives — the name deliberately does NOT: the adapter
+   * owns the names of its own states.
    *
    * @param id State ID relative to adapter namespace
    * @param name Display name (translation object or plain string)
    * @param type Value type
    * @param role ioBroker role
    * @param val Value to set
+   * @param desc Short explanation, or undefined where there is nothing to explain
    * @returns true when the broker actually wrote the value (it differed or the
    *   state was new) — the DB-backed "did anything change" signal driving
    *   `lastUpdated` (v0.10.0, M5)
    */
-  async createAndSet(id, name, type, role, val) {
+  async createAndSet(id, name, type, role, val, desc) {
     if (!this.createdIds.has(id)) {
-      await this.adapter.setObjectNotExistsAsync(id, {
-        type: "state",
-        common: { name, type, role, read: true, write: false },
-        native: {}
-      });
+      const common = { name, type, role, read: true, write: false };
+      if (desc !== void 0) {
+        common.desc = desc;
+      }
+      await this.adapter.extendObject(id, { type: "state", common, native: {} });
       this.createdIds.add(id);
     }
     const result = await this.adapter.setStateChangedAsync(id, { val, ack: true });

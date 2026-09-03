@@ -53,8 +53,20 @@ interface ObjectViewRow {
   value: unknown;
 }
 
+/** A `common.name`/`common.desc` that is a translation object, not a plain string. */
+interface CommonNameTranslated {
+  en: string;
+  de: string;
+  [key: string]: string;
+}
+
 interface MockAdapterMetrics {
-  setObjectNotExistsCalls: number;
+  /**
+   * Object writes (`extendObject`). Since v0.11.0 every object — device AND states — is
+   * written with `extendObject` so a changed name/description reaches an EXISTING install;
+   * the `createdIds`/`deviceEnsured` caches keep it at one write per id per process.
+   */
+  objectWrites: number;
   setStateChangedWrites: number;
 }
 
@@ -66,7 +78,6 @@ interface MockAdapter {
   metrics: MockAdapterMetrics;
   log: { debug: (msg: string) => void };
   extendObject: (id: string, obj: Partial<ObjectDef>, options?: { preserve?: { common?: string[] } }) => Promise<void>;
-  setObjectNotExistsAsync: (id: string, obj: ObjectDef) => Promise<void>;
   setStateChangedAsync: (id: string, state: StateValue) => Promise<{ id: string; notChanged: boolean }>;
   delObjectAsync: (id: string, opts?: { recursive: boolean }) => Promise<void>;
   getObjectViewAsync: (
@@ -80,7 +91,7 @@ function createMockAdapter(): MockAdapter {
   const objects = new Map<string, ObjectDef>();
   const states = new Map<string, StateValue>();
   const debugMessages: string[] = [];
-  const metrics: MockAdapterMetrics = { setObjectNotExistsCalls: 0, setStateChangedWrites: 0 };
+  const metrics: MockAdapterMetrics = { objectWrites: 0, setStateChangedWrites: 0 };
 
   return {
     namespace: "parcelapp.0",
@@ -96,21 +107,26 @@ function createMockAdapter(): MockAdapter {
     extendObject: (
       id: string,
       obj: Partial<ObjectDef>,
-      _options?: { preserve?: { common?: string[] } },
+      options?: { preserve?: { common?: string[] } },
     ): Promise<void> => {
+      metrics.objectWrites++;
       const existing = objects.get(id) || { type: "", common: {}, native: {} };
+      const merged: Record<string, unknown> = { ...existing.common, ...(obj.common || {}) };
+      // Mirror js-controller's `preserve`: a listed field keeps the value the
+      // EXISTING object has (that is what makes a user rename survive). Without
+      // this the mock would silently make the preserve option untestable.
+      if (options?.preserve?.common && objects.has(id)) {
+        for (const field of options.preserve.common) {
+          if (field in existing.common) {
+            merged[field] = existing.common[field];
+          }
+        }
+      }
       objects.set(id, {
         type: obj.type || existing.type,
-        common: { ...existing.common, ...(obj.common || {}) },
+        common: merged,
         native: { ...existing.native, ...(obj.native || {}) },
       });
-      return Promise.resolve();
-    },
-    setObjectNotExistsAsync: (id: string, obj: ObjectDef): Promise<void> => {
-      metrics.setObjectNotExistsCalls++;
-      if (!objects.has(id)) {
-        objects.set(id, obj);
-      }
       return Promise.resolve();
     },
     setStateChangedAsync: (id: string, state: StateValue): Promise<{ id: string; notChanged: boolean }> => {
@@ -1697,12 +1713,6 @@ describe("StateManager", () => {
   });
 
   describe("translation-objects on common.name (T1)", () => {
-    interface CommonNameTranslated {
-      en: string;
-      de: string;
-      [key: string]: string;
-    }
-
     it("delivery state common.name is a translation object (en + de)", async () => {
       const adapter = createMockAdapter();
       const manager = new StateManager(adapter as never);
@@ -1739,27 +1749,27 @@ describe("StateManager", () => {
   });
 
   describe("createdIds cache (T4 — hot-path performance)", () => {
-    it("calls setObjectNotExistsAsync only once per state across repeated updates", async () => {
+    it("writes each state object only once across repeated updates", async () => {
       const adapter = createMockAdapter();
       const manager = new StateManager(adapter as never);
       const delivery = makeDelivery();
       await updateDeliveryT(manager, delivery, "DHL");
-      const firstPass = adapter.metrics.setObjectNotExistsCalls;
+      const firstPass = adapter.metrics.objectWrites;
       // Same delivery, second poll cycle — values may change, schema doesn't.
       await updateDeliveryT(manager, { ...delivery, status_code: 4 }, "DHL");
-      expect(adapter.metrics.setObjectNotExistsCalls).toBe(firstPass);
+      expect(adapter.metrics.objectWrites).toBe(firstPass);
       // Value updated:
       const pkgId = manager.packageId(delivery);
       expect(adapter.states.get(`deliveries.${pkgId}.statusCode`)?.val).toBe(4);
     });
 
-    it("summary states cache: two updateSummary calls hit setObjectNotExistsAsync only on the first", async () => {
+    it("summary states cache: two updateSummary calls write the objects only on the first", async () => {
       const adapter = createMockAdapter();
       const manager = new StateManager(adapter as never);
       await manager.updateSummary([]);
-      const firstPass = adapter.metrics.setObjectNotExistsCalls;
+      const firstPass = adapter.metrics.objectWrites;
       await manager.updateSummary([]);
-      expect(adapter.metrics.setObjectNotExistsCalls).toBe(firstPass);
+      expect(adapter.metrics.objectWrites).toBe(firstPass);
     });
 
     it("cleanupDeliveries clears the cache for removed packages so re-add re-creates states", async () => {
@@ -1768,14 +1778,120 @@ describe("StateManager", () => {
       const delivery = makeDelivery({ tracking_number: "TRK_REMOVE_ME" });
       const pkgId = manager.packageId(delivery);
       await updateDeliveryT(manager, delivery, "DHL");
-      const before = adapter.metrics.setObjectNotExistsCalls;
+      const before = adapter.metrics.objectWrites;
       // Cleanup removes it (passing an empty active list).
       await manager.cleanupDeliveries([]);
-      // Re-add: must hit setObjectNotExists again because the cache was cleared.
+      // Re-add: must write the objects again because the cache was cleared.
       await updateDeliveryT(manager, delivery, "DHL");
-      expect(adapter.metrics.setObjectNotExistsCalls).toBeGreaterThan(before);
+      expect(adapter.metrics.objectWrites).toBeGreaterThan(before);
       // And the states are back.
       expect(adapter.states.get(`deliveries.${pkgId}.carrier`)?.val).toBe("DHL");
+    });
+  });
+
+  /**
+   * v0.11.0. The defect this guards against was measured on a live install: the three permanent
+   * `summary.*` states still carried their plain-English pre-i18n names because the object was
+   * only ever written with `setObjectNotExistsAsync`, which does nothing once the object exists.
+   * Manifest, linter, type check and the name gate were all green while the real tree was wrong —
+   * only an EXISTING object with an outdated `common` can catch it, so that is what these set up.
+   */
+  describe("object texts reach an EXISTING installation (v0.11.0)", () => {
+    it("overwrites an outdated state name and adds the description", async () => {
+      const adapter = createMockAdapter();
+      const manager = new StateManager(adapter as never);
+      // Pre-seed the tree the way an old install looks: plain English string, no description.
+      adapter.objects.set("summary.activeCount", {
+        type: "state",
+        common: { name: "Active Deliveries", type: "number", role: "value", read: true, write: false },
+        native: {},
+      });
+
+      await manager.updateSummary([]);
+
+      const common = adapter.objects.get("summary.activeCount")!.common;
+      const name = common.name as CommonNameTranslated;
+      expect(typeof name).toBe("object");
+      expect(name.en).toBe(i18nData.en.activeCount);
+      expect(name.de).toBe(i18nData.de.activeCount);
+      const desc = common.desc as CommonNameTranslated;
+      expect(desc.en).toBe(i18nData.en.descActiveCount);
+      expect(desc.de).toBe(i18nData.de.descActiveCount);
+    });
+
+    it("overwrites an outdated per-package state name too", async () => {
+      const adapter = createMockAdapter();
+      const manager = new StateManager(adapter as never);
+      const delivery = makeDelivery();
+      const pkgId = manager.packageId(delivery);
+      adapter.objects.set(`deliveries.${pkgId}.statusCode`, {
+        type: "state",
+        common: { name: "Status Code", type: "number", role: "value", read: true, write: false },
+        native: {},
+      });
+
+      await updateDeliveryT(manager, delivery, "DHL");
+
+      const common = adapter.objects.get(`deliveries.${pkgId}.statusCode`)!.common;
+      expect((common.name as CommonNameTranslated).de).toBe(i18nData.de.statusCode);
+      expect((common.desc as CommonNameTranslated).de).toBe(i18nData.de.descStatusCode);
+    });
+
+    it("leaves desc unset where the adapter has nothing to explain", async () => {
+      const adapter = createMockAdapter();
+      const manager = new StateManager(adapter as never);
+      const delivery = makeDelivery();
+      const pkgId = manager.packageId(delivery);
+
+      await updateDeliveryT(manager, delivery, "DHL");
+
+      // The name says it all for these — an invented sentence would be worse than none.
+      for (const state of ["carrier", "status", "description", "trackingNumber", "lastLocation"]) {
+        const common = adapter.objects.get(`deliveries.${pkgId}.${state}`)!.common;
+        expect(common.desc, `${state} must not carry an invented description`).toBeUndefined();
+      }
+      // ... while the non-obvious ones do carry one. lastUpdated is in this list on purpose:
+      // it is written on its own path (only when the data actually changed), so a check that
+      // only walks the stateDefs list would leave exactly that one unguarded.
+      for (const state of [
+        "statusCode",
+        "extraInfo",
+        "deliveryWindow",
+        "deliveryEstimate",
+        "lastEvent",
+        "lastUpdated",
+      ]) {
+        const common = adapter.objects.get(`deliveries.${pkgId}.${state}`)!.common;
+        expect(common.desc, `${state} must carry a description`).toBeDefined();
+      }
+      const lastUpdated = adapter.objects.get(`deliveries.${pkgId}.lastUpdated`)!.common;
+      expect((lastUpdated.desc as CommonNameTranslated).de).toBe(i18nData.de.descLastUpdated);
+    });
+
+    it("a user rename of the package device survives, the state names do not", async () => {
+      const adapter = createMockAdapter();
+      const manager = new StateManager(adapter as never);
+      const delivery = makeDelivery();
+      const pkgId = manager.packageId(delivery);
+      // The user renamed the device in the admin, and the state carries an old plain name.
+      adapter.objects.set(`deliveries.${pkgId}`, {
+        type: "device",
+        common: { name: "Birthday present" },
+        native: {},
+      });
+      adapter.objects.set(`deliveries.${pkgId}.carrier`, {
+        type: "state",
+        common: { name: "Carrier", type: "string", role: "text", read: true, write: false },
+        native: {},
+      });
+
+      await updateDeliveryT(manager, delivery, "DHL");
+
+      // preserve:name keeps the rename — the user owns the device name ...
+      expect(adapter.objects.get(`deliveries.${pkgId}`)!.common.name).toBe("Birthday present");
+      // ... but the adapter owns the names of its own states.
+      const carrier = adapter.objects.get(`deliveries.${pkgId}.carrier`)!.common;
+      expect((carrier.name as CommonNameTranslated).de).toBe(i18nData.de.carrier);
     });
   });
 
@@ -1784,36 +1900,47 @@ describe("StateManager", () => {
   // the two were merged there (audit 2026-08-22, finding B7).
 
   describe("device object ensured once per process (v0.10.0, DP-5)", () => {
+    /**
+     * Count writes to the DEVICE object only. Since v0.11.0 the state objects go through the
+     * same `extendObject`, so an unfiltered counter would no longer measure what these tests
+     * claim to measure.
+     *
+     * @param adapter The mock adapter whose extendObject is wrapped
+     * @param deviceId The device object id to count writes for
+     * @returns A getter for the number of writes to that id
+     */
+    function countDeviceWrites(adapter: MockAdapter, deviceId: string): () => number {
+      let calls = 0;
+      const origExtend = adapter.extendObject;
+      adapter.extendObject = (...args): Promise<void> => {
+        if (args[0] === deviceId) {
+          calls++;
+        }
+        return origExtend(...args);
+      };
+      return () => calls;
+    }
+
     it("extends the device object only once across polls", async () => {
       const adapter = createMockAdapter();
       const manager = new StateManager(adapter as never);
-      let extendCalls = 0;
-      const origExtend = adapter.extendObject;
-      adapter.extendObject = async (...args): Promise<void> => {
-        extendCalls++;
-        return origExtend(...args);
-      };
       const delivery = makeDelivery();
+      const deviceWrites = countDeviceWrites(adapter, `deliveries.${manager.packageId(delivery)}`);
       await updateDeliveryT(manager, delivery, "DHL");
-      expect(extendCalls).toBe(1);
+      expect(deviceWrites()).toBe(1);
       await updateDeliveryT(manager, { ...delivery, status_code: 4 }, "DHL");
-      expect(extendCalls).toBe(1); // status change ≠ device re-write
+      expect(deviceWrites()).toBe(1); // status change ≠ device re-write
     });
 
     it("does NOT re-extend when the description changes — preserve:name made that write a no-op anyway", async () => {
       const adapter = createMockAdapter();
       const manager = new StateManager(adapter as never);
-      let extendCalls = 0;
-      const origExtend = adapter.extendObject;
-      adapter.extendObject = async (...args): Promise<void> => {
-        extendCalls++;
-        return origExtend(...args);
-      };
       const delivery = makeDelivery({ description: "Old name" });
+      const pkgId = manager.packageId(delivery);
+      const deviceWrites = countDeviceWrites(adapter, `deliveries.${pkgId}`);
       await updateDeliveryT(manager, delivery, "DHL");
       await updateDeliveryT(manager, { ...delivery, description: "New name" }, "DHL");
-      expect(extendCalls).toBe(1);
-      const pkgId = manager.packageId(delivery);
+      expect(deviceWrites()).toBe(1);
       // The object name keeps its first value (user renames win via preserve);
       // the CURRENT description is always available in the description state.
       expect(adapter.objects.get(`deliveries.${pkgId}`)!.common.name).toBe("Old name");
@@ -1826,14 +1953,9 @@ describe("StateManager", () => {
       const delivery = makeDelivery();
       await updateDeliveryT(manager, delivery, "DHL");
       await manager.cleanupDeliveries([]); // removes the device
-      let extendCalls = 0;
-      const origExtend = adapter.extendObject;
-      adapter.extendObject = async (...args): Promise<void> => {
-        extendCalls++;
-        return origExtend(...args);
-      };
+      const deviceWrites = countDeviceWrites(adapter, `deliveries.${manager.packageId(delivery)}`);
       await updateDeliveryT(manager, delivery, "DHL");
-      expect(extendCalls).toBe(1);
+      expect(deviceWrites()).toBe(1);
     });
   });
 

@@ -8,6 +8,8 @@
 
 ioBroker adapter for the [parcel.app](https://parcelapp.net) API. Supports all carriers that parcel.app tracks.
 
+📖 **Full user documentation:** [English](docs/en/README.md) · [Deutsch](docs/de/README.md) — setup step by step, every datapoint explained, scripting and FAQ.
+
 ---
 
 ## Features
@@ -140,6 +142,14 @@ sendTo("parcelapp.0", "addDelivery", {
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+
+### **WORK IN PROGRESS**
+
+- Fixed: On installations that already existed, the summary datapoints and the connection state kept their old English names — an update now reaches every datapoint.
+- New: Datapoints whose name alone does not explain them now carry a short description in the object tree, in all eleven languages.
+- New: Detailed user documentation in English and German, shown in the ioBroker documentation portal.
+- Fixed: Two settings from much older versions were still listed in the instance configuration although nothing used them any more.
+
 ### 0.10.4 (2026-09-02)
 
 - Fixed: A malformed reply from parcel.app (empty body or a broken delivery entry) no longer aborts the poll with a cryptic internal message — it is reported as an API problem and retried next poll.

@@ -18,17 +18,31 @@ vi.mock("@iobroker/adapter-core", () => {
     public terminate = vi.fn();
     public getObjectAsync = vi.fn(() => Promise.resolve(null));
     public delObjectAsync = vi.fn(async () => {});
-    // Instance object of this very instance — the stopInstance self-correction
-    // reads and rewrites it. Default: no supportedMessages (a clean install).
-    public instanceObject: { common?: Record<string, unknown> } | null = { common: {} };
-    public getForeignObjectAsync = vi.fn(() => Promise.resolve(this.instanceObject));
-    public extendForeignObjectAsync = vi.fn((_id: string, patch: { common?: Record<string, unknown> }) => {
-      this.instanceObject = {
-        ...(this.instanceObject ?? {}),
-        common: { ...(this.instanceObject?.common ?? {}), ...(patch.common ?? {}) },
-      };
+    // Objects below this instance's namespace, written by refreshManifestObjects.
+    public objects = new Map<string, { type?: string; common?: Record<string, unknown> }>();
+    public extendObject = vi.fn((id: string, obj: { type?: string; common?: Record<string, unknown> }) => {
+      const existing = this.objects.get(id);
+      this.objects.set(id, {
+        type: obj.type ?? existing?.type,
+        common: { ...(existing?.common ?? {}), ...(obj.common ?? {}) },
+      });
       return Promise.resolve();
     });
+    // Instance object of this very instance — the self-correction reads and rewrites it.
+    // Default: no supportedMessages and no obsolete native keys (a clean install).
+    public instanceObject: { common?: Record<string, unknown>; native?: Record<string, unknown> } | null = {
+      common: {},
+      native: { apiKey: "encrypted", pollInterval: 10, autoRemoveDelivered: true },
+    };
+    public getForeignObjectAsync = vi.fn(() => Promise.resolve(this.instanceObject));
+    // setForeignObject, not extendObject: the deep merge behind extendObject SETS a key given
+    // as null instead of dropping it, so removing an obsolete native key needs a full write.
+    public setForeignObject = vi.fn(
+      (_id: string, obj: { common?: Record<string, unknown>; native?: Record<string, unknown> }) => {
+        this.instanceObject = obj;
+        return Promise.resolve();
+      },
+    );
     constructor(_opts: unknown) {}
   }
   return {
@@ -112,9 +126,11 @@ function internalOf(adapter: ParcelappAdapter): {
   sendTo: ReturnType<typeof vi.fn>;
   terminate: ReturnType<typeof vi.fn>;
   classifyError: (err: Error & { code?: string }) => string;
-  instanceObject: { common?: Record<string, unknown> } | null;
+  instanceObject: { common?: Record<string, unknown>; native?: Record<string, unknown> } | null;
   getForeignObjectAsync: ReturnType<typeof vi.fn>;
-  extendForeignObjectAsync: ReturnType<typeof vi.fn>;
+  setForeignObject: ReturnType<typeof vi.fn>;
+  extendObject: ReturnType<typeof vi.fn>;
+  objects: Map<string, { type?: string; common?: Record<string, unknown> }>;
   onReady: () => Promise<void>;
   onUnload: (cb: () => void) => void;
   onMessage: (obj: unknown) => Promise<void>;
@@ -490,34 +506,91 @@ describe("ParcelappAdapter onUnload", () => {
   });
 });
 
-describe("ParcelappAdapter stopInstance self-correction", () => {
+describe("ParcelappAdapter instance-object self-correction", () => {
   it("switches the leftover flag off and aborts the start (the host restarts us)", async () => {
     // With the flag set the host kills the process a second after asking it to
     // stop, so onUnload never runs. An upgrade does NOT remove it from the
     // instance object — the adapter has to correct it itself, then stand down.
     const { adapter, client } = setup();
     const i = internalOf(adapter);
-    i.instanceObject = { common: { supportedMessages: { stopInstance: true } } };
+    i.instanceObject = { common: { supportedMessages: { stopInstance: true } }, native: {} };
 
     await i.onReady();
 
-    expect(i.extendForeignObjectAsync).toHaveBeenCalledWith("system.adapter.parcelapp.0", {
-      common: { supportedMessages: { stopInstance: false } },
-    });
+    expect(i.setForeignObject).toHaveBeenCalledTimes(1);
+    expect(i.setForeignObject.mock.calls[0][0]).toBe("system.adapter.parcelapp.0");
     expect(i.instanceObject?.common?.supportedMessages).toEqual({ stopInstance: false });
     expect(client.getDeliveries).not.toHaveBeenCalled();
     expect(i.setInterval).not.toHaveBeenCalled();
     expect(i.log.info).toHaveBeenCalledWith(expect.stringContaining("restarts once"));
   });
 
-  it("leaves a healthy instance object alone and starts normally", async () => {
+  it("removes obsolete native keys, keeps the rest, and aborts the start", async () => {
+    // filterMode (gone in v0.2.0) and language (gone before v0.5.0) survive in every
+    // installation old enough to have them: js-controller merges the manifest in and never
+    // removes a key. apiKey is encrypted and must ride along untouched.
     const { adapter, client } = setup();
     const i = internalOf(adapter);
-    i.instanceObject = { common: { name: "parcelapp" } };
+    i.instanceObject = {
+      common: {},
+      native: {
+        apiKey: "encrypted-secret",
+        pollInterval: 25,
+        filterMode: "active",
+        language: "de",
+        autoRemoveDelivered: false,
+      },
+    };
 
     await i.onReady();
 
-    expect(i.extendForeignObjectAsync).not.toHaveBeenCalled();
+    expect(i.setForeignObject).toHaveBeenCalledTimes(1);
+    expect(i.instanceObject?.native).toEqual({
+      apiKey: "encrypted-secret",
+      pollInterval: 25,
+      autoRemoveDelivered: false,
+    });
+    expect(client.getDeliveries).not.toHaveBeenCalled();
+    expect(i.setInterval).not.toHaveBeenCalled();
+  });
+
+  it("corrects both leftovers in ONE write — two writes would mean two restarts", async () => {
+    const { adapter } = setup();
+    const i = internalOf(adapter);
+    i.instanceObject = {
+      common: { supportedMessages: { stopInstance: true } },
+      native: { apiKey: "k", filterMode: "active", language: "de" },
+    };
+
+    await i.onReady();
+
+    expect(i.setForeignObject).toHaveBeenCalledTimes(1);
+    expect(i.instanceObject?.common?.supportedMessages).toEqual({ stopInstance: false });
+    expect(i.instanceObject?.native).toEqual({ apiKey: "k" });
+  });
+
+  it("leaves a healthy instance object alone and starts normally", async () => {
+    const { adapter, client } = setup();
+    const i = internalOf(adapter);
+    i.instanceObject = { common: { name: "parcelapp" }, native: { apiKey: "k", pollInterval: 10 } };
+
+    await i.onReady();
+
+    expect(i.setForeignObject).not.toHaveBeenCalled();
+    expect(client.getDeliveries).toHaveBeenCalledTimes(1);
+    expect(i.setInterval).toHaveBeenCalledTimes(1);
+  });
+
+  it("starts normally when the instance object comes back empty", async () => {
+    // getForeignObject resolving null (rather than throwing) is its own path — there is
+    // nothing to correct and nothing to write, and the start must simply continue.
+    const { adapter, client } = setup();
+    const i = internalOf(adapter);
+    i.instanceObject = null;
+
+    await i.onReady();
+
+    expect(i.setForeignObject).not.toHaveBeenCalled();
     expect(client.getDeliveries).toHaveBeenCalledTimes(1);
     expect(i.setInterval).toHaveBeenCalledTimes(1);
   });
@@ -531,6 +604,58 @@ describe("ParcelappAdapter stopInstance self-correction", () => {
 
     await i.onReady();
 
+    expect(client.getDeliveries).toHaveBeenCalledTimes(1);
+    expect(i.setInterval).toHaveBeenCalledTimes(1);
+  });
+});
+
+/**
+ * v0.11.0. js-controller creates `io-package.json:instanceObjects` only where they are MISSING,
+ * so a changed name or description otherwise reaches fresh installs only. Measured on a live
+ * install: `info` and `info.connection` still carried their plain-English pre-i18n names while
+ * the manifest, the linter, the type check and the name gate were all green. Only an explicit
+ * refresh in onReady closes that, and only a test that watches for the call can keep it.
+ */
+describe("ParcelappAdapter manifest objects reach an existing installation", () => {
+  it("refreshes all four manifest objects on every start", async () => {
+    const { adapter } = await setupReady();
+    const i = internalOf(adapter);
+
+    expect([...i.objects.keys()].sort()).toEqual(["deliveries", "info", "info.connection", "summary"]);
+  });
+
+  it("gives info.connection its full common — name, description, type and role", async () => {
+    const { adapter } = await setupReady();
+    const i = internalOf(adapter);
+
+    const common = i.objects.get("info.connection")!.common!;
+    // The I18n mock echoes the key, so this also pins WHICH translation key is used.
+    expect(common.name).toEqual({ en: "infoConnection" });
+    expect(common.desc).toEqual({ en: "descInfoConnection" });
+    expect(common.type).toBe("boolean");
+    expect(common.role).toBe("indicator.connected");
+    expect(common.read).toBe(true);
+    expect(common.write).toBe(false);
+  });
+
+  it("leaves desc unset on the containers — a folder called Deliveries explains itself", async () => {
+    const { adapter } = await setupReady();
+    const i = internalOf(adapter);
+
+    for (const id of ["info", "deliveries", "summary"]) {
+      expect(i.objects.get(id)!.common!.desc, `${id} must not carry an invented description`).toBeUndefined();
+      expect(i.objects.get(id)!.common!.name, `${id} needs a name`).toBeDefined();
+    }
+  });
+
+  it("keeps starting when the refresh fails — a broker hiccup must not abort the start", async () => {
+    const { adapter, client } = setup();
+    const i = internalOf(adapter);
+    i.extendObject.mockRejectedValueOnce(new Error("objects db down"));
+
+    await i.onReady();
+
+    expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("Refreshing the manifest objects failed"));
     expect(client.getDeliveries).toHaveBeenCalledTimes(1);
     expect(i.setInterval).toHaveBeenCalledTimes(1);
   });

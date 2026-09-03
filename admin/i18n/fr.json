@@ -44,5 +44,15 @@
   "status_6": "Échec de la livraison",
   "status_7": "Exception",
   "status_8": "Enregistré",
-  "packageName": "Colis %s"
+  "packageName": "Colis %s",
+  "descInfoConnection": "Vrai tant que l'adaptateur parvient à joindre l'API parcel.app.",
+  "descStatusCode": "Statut numérique de parcel.app (0-8) ; -1 signifie que la valeur n'a pas pu être interprétée.",
+  "descExtraInfo": "Information complémentaire exigée par le transporteur, par exemple un code postal ou une adresse e-mail.",
+  "descDeliveryWindow": "Créneau de livraison prévu ; un créneau sur plusieurs jours porte la date de chaque côté.",
+  "descDeliveryEstimate": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
+  "descLastEvent": "Dernier événement de suivi communiqué par le transporteur, avec sa date.",
+  "descLastUpdated": "Moment du dernier changement des données de suivi - pas de la dernière interrogation.",
+  "descActiveCount": "Nombre de colis qui ne sont pas encore livrés.",
+  "descTodayCount": "Nombre de colis attendus aujourd'hui.",
+  "descSummaryDeliveryWindow": "Créneau combiné de tous les colis attendus aujourd'hui - du début le plus tôt à la fin la plus tardive."
 }

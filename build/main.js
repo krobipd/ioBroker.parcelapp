@@ -35,6 +35,7 @@ var utils = __toESM(require("@iobroker/adapter-core"));
 var import_adapter_core = require("@iobroker/adapter-core");
 var import_node_path = require("node:path");
 var import_coerce = require("./lib/coerce");
+var import_i18n = require("./lib/i18n");
 var import_parcel_client = require("./lib/parcel-client");
 var import_state_manager = require("./lib/state-manager");
 var import_types = require("./lib/types");
@@ -47,6 +48,7 @@ const MAX_ADD_FIELD_LEN = 512;
 const UPDATE_BATCH_SIZE = 25;
 const MAX_ADDS_PER_WINDOW = 20;
 const ADD_WINDOW_MS = 6e4;
+const OBSOLETE_NATIVE_KEYS = ["filterMode", "language"];
 const NETWORK_ERROR_CODES = /* @__PURE__ */ new Set([
   "ENOTFOUND",
   "ECONNREFUSED",
@@ -117,44 +119,117 @@ class ParcelappAdapter extends utils.Adapter {
     this.on("message", this.onMessage.bind(this));
   }
   /**
-   * Switch off `supportedMessages.stopInstance` on this instance's own object.
+   * Repair leftovers an upgrade cannot remove from this instance's own object.
    *
-   * The entry was dropped from the manifest, which only helps a FRESH install: an upgrade
-   * merges the manifest into the existing instance object and never removes a key, so the old
-   * `true` survives in the database — and that is what the host reads. With it the host kills
-   * the process one second after asking it to stop, `onUnload` never runs, and the
-   * `info.connection=false` write on the way out never reaches the database.
+   * js-controller MERGES the manifest into an existing instance object and never drops a key,
+   * so anything a past version wrote survives forever. Two such leftovers exist:
    *
-   * Only written when it is actually still on: every instance-object change restarts the
-   * instance, so doing it unconditionally would be a restart loop.
+   * 1. `common.supportedMessages.stopInstance` (dropped from the manifest in v0.10.3). With it
+   *    the host kills the process one second after asking it to stop, `onUnload` never runs, and
+   *    the `info.connection=false` write on the way out never reaches the database.
+   * 2. `native.filterMode` (dropped in v0.2.0) and `native.language` (dropped before v0.5.0).
+   *    Dead config keys nothing reads — the adapter owns its own configuration inventory the
+   *    same way it owns its states (`cleanupObsoleteStates`).
    *
-   * @returns true when the correction was written and the restart is coming — the caller has
+   * Both are corrected in ONE write, because every instance-object change restarts the instance:
+   * two writes would mean two restarts. And it is written only when something is actually stale,
+   * otherwise the correction would be a restart loop.
+   *
+   * `extendObject` cannot do this: its deep merge (`node.extend`) SETS a key given as `null`
+   * instead of dropping it — measured against the bundled js-controller. Removing a key needs a
+   * read/delete/`setForeignObject` round-trip, which is the same pattern js-controller's own
+   * `updateConfig()`/`disable()` use. `native.apiKey` rides along untouched and stays encrypted:
+   * `getForeignObject` does not decrypt (that happens only into `this.config`).
+   *
+   * @returns true when a correction was written and the restart is coming — the caller has
    *   to stop right there instead of polling in a process that is going down.
    */
-  async clearStopInstanceFlag() {
-    var _a;
+  async correctInstanceObject() {
+    var _a, _b;
     const id = `system.adapter.${this.namespace}`;
     try {
       const obj = await this.getForeignObjectAsync(id);
-      const supported = (_a = obj == null ? void 0 : obj.common) == null ? void 0 : _a.supportedMessages;
-      if (!(supported == null ? void 0 : supported.stopInstance)) {
+      if (!obj) {
         return false;
       }
-      this.log.info("Correcting a leftover setting from an earlier version \u2014 this instance restarts once");
-      await this.extendForeignObjectAsync(id, { common: { supportedMessages: { stopInstance: false } } });
+      const supported = (_a = obj.common) == null ? void 0 : _a.supportedMessages;
+      const staleStopInstance = !!(supported == null ? void 0 : supported.stopInstance);
+      const native = (_b = obj.native) != null ? _b : {};
+      const staleNativeKeys = OBSOLETE_NATIVE_KEYS.filter((key) => key in native);
+      if (!staleStopInstance && staleNativeKeys.length === 0) {
+        return false;
+      }
+      this.log.info("Correcting leftover settings from an earlier version \u2014 this instance restarts once");
+      if (staleStopInstance) {
+        obj.common.supportedMessages = { ...supported, stopInstance: false };
+      }
+      for (const key of staleNativeKeys) {
+        this.log.debug(`Removing obsolete configuration key: native.${key}`);
+        delete native[key];
+      }
+      obj.native = native;
+      await this.setForeignObject(id, obj);
       return true;
     } catch (err) {
       this.log.debug(`Could not check the instance object ${id}: ${(0, import_coerce.errText)(err)}`);
       return false;
     }
   }
+  /**
+   * Re-apply the manifest objects' `common` to an EXISTING installation.
+   *
+   * js-controller creates `io-package.json:instanceObjects` only where they are MISSING, so a
+   * changed name or description otherwise reaches fresh installs only — measured on a live
+   * install, `info` and `info.connection` still carried their plain-English pre-i18n names while
+   * manifest, linter, type check and the name gate were all green. Each id is spelled out rather
+   * than looped over the manifest: the consistency gate looks for the literal id at the
+   * `extendObject` call, and a loop would be DRYer but unverifiable.
+   *
+   * `desc` is set only where there is something to explain — a folder called "Deliveries"
+   * explains itself, and an invented sentence is worse than none.
+   */
+  async refreshManifestObjects() {
+    await this.extendObject("info", {
+      type: "channel",
+      common: { name: (0, import_i18n.tName)("info") },
+      native: {}
+    });
+    await this.extendObject("info.connection", {
+      type: "state",
+      common: {
+        name: (0, import_i18n.tName)("infoConnection"),
+        desc: (0, import_i18n.tName)("descInfoConnection"),
+        type: "boolean",
+        role: "indicator.connected",
+        read: true,
+        write: false,
+        def: false
+      },
+      native: {}
+    });
+    await this.extendObject("deliveries", {
+      type: "folder",
+      common: { name: (0, import_i18n.tName)("deliveries") },
+      native: {}
+    });
+    await this.extendObject("summary", {
+      type: "channel",
+      common: { name: (0, import_i18n.tName)("summary") },
+      native: {}
+    });
+  }
   async onReady() {
     try {
-      if (await this.clearStopInstanceFlag()) {
+      if (await this.correctInstanceObject()) {
         return;
       }
       await import_adapter_core.I18n.init((0, import_node_path.join)(this.adapterDir, "admin"), this);
       this.log.debug(`onReady: starting (autoRemoveDelivered=${this.config.autoRemoveDelivered})`);
+      try {
+        await this.refreshManifestObjects();
+      } catch (err) {
+        this.log.warn(`Refreshing the manifest objects failed (continuing): ${(0, import_coerce.errText)(err)}`);
+      }
       await this.setState("info.connection", { val: false, ack: true });
       const { apiKey } = this.config;
       if (!apiKey || apiKey.trim().length < MIN_API_KEY_LENGTH) {

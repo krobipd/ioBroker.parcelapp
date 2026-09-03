@@ -44,5 +44,15 @@
   "status_6": "Zustellversuch gescheitert",
   "status_7": "Ausnahme",
   "status_8": "Registriert",
-  "packageName": "Paket %s"
+  "packageName": "Paket %s",
+  "descInfoConnection": "Wahr, solange der Adapter die parcel.app-API erreicht.",
+  "descStatusCode": "Numerischer Status von parcel.app (0-8); -1 bedeutet, dass der Wert nicht gedeutet werden konnte.",
+  "descExtraInfo": "Zusatzangabe, die der Zusteller benötigt, etwa Postleitzahl oder E-Mail-Adresse.",
+  "descDeliveryWindow": "Erwartetes Zustellfenster; ein über mehrere Tage reichendes Fenster trägt auf beiden Seiten das Datum.",
+  "descDeliveryEstimate": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
+  "descLastEvent": "Jüngste Sendungsmeldung des Zustellers mit Datum.",
+  "descLastUpdated": "Zeitpunkt der letzten Änderung der Sendungsdaten - nicht der letzte Abruf.",
+  "descActiveCount": "Anzahl der Pakete, die noch nicht zugestellt sind.",
+  "descTodayCount": "Anzahl der Pakete, die heute erwartet werden.",
+  "descSummaryDeliveryWindow": "Gemeinsames Fenster aller heute erwarteten Pakete - frühester Beginn bis spätestes Ende."
 }

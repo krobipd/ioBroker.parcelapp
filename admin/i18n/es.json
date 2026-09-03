@@ -44,5 +44,15 @@
   "status_6": "Intento de entrega fallido",
   "status_7": "Excepción",
   "status_8": "Registrado",
-  "packageName": "Paquete %s"
+  "packageName": "Paquete %s",
+  "descInfoConnection": "Verdadero mientras el adaptador pueda acceder a la API de parcel.app.",
+  "descStatusCode": "Estado numérico de parcel.app (0-8); -1 significa que el valor no se pudo interpretar.",
+  "descExtraInfo": "Dato adicional que necesita el transportista, por ejemplo un código postal o una dirección de correo.",
+  "descDeliveryWindow": "Ventana de entrega prevista; una ventana de varios días lleva la fecha a ambos lados.",
+  "descDeliveryEstimate": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
+  "descLastEvent": "Evento de seguimiento más reciente comunicado por el transportista, con su fecha.",
+  "descLastUpdated": "Momento del último cambio de los datos de seguimiento - no de la última consulta.",
+  "descActiveCount": "Número de paquetes que aún no se han entregado.",
+  "descTodayCount": "Número de paquetes que se esperan hoy.",
+  "descSummaryDeliveryWindow": "Ventana combinada de todos los paquetes esperados hoy - del inicio más temprano al final más tardío."
 }

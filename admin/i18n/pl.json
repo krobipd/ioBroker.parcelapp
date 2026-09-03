@@ -44,5 +44,15 @@
   "status_6": "Nieudana próba doręczenia",
   "status_7": "Wyjątek",
   "status_8": "Zarejestrowane",
-  "packageName": "Paczka %s"
+  "packageName": "Paczka %s",
+  "descInfoConnection": "Prawda, dopóki adapter może połączyć się z API parcel.app.",
+  "descStatusCode": "Status liczbowy z parcel.app (0-8); -1 oznacza, że wartości nie dało się zinterpretować.",
+  "descExtraInfo": "Dodatkowa informacja wymagana przez przewoźnika, np. kod pocztowy lub adres e-mail.",
+  "descDeliveryWindow": "Przewidywane okno dostawy; okno obejmujące kilka dni zawiera datę po obu stronach.",
+  "descDeliveryEstimate": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
+  "descLastEvent": "Najnowsze zdarzenie śledzenia zgłoszone przez przewoźnika, wraz z datą.",
+  "descLastUpdated": "Moment ostatniej zmiany danych śledzenia - nie ostatniego odpytania.",
+  "descActiveCount": "Liczba przesyłek, które nie zostały jeszcze doręczone.",
+  "descTodayCount": "Liczba przesyłek oczekiwanych dzisiaj.",
+  "descSummaryDeliveryWindow": "Wspólne okno wszystkich przesyłek oczekiwanych dzisiaj - od najwcześniejszego początku do najpóźniejszego końca."
 }
