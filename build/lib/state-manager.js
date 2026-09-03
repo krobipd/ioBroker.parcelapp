@@ -31,7 +31,7 @@ const DELETE_BATCH_SIZE = 25;
 class StateManager {
   adapter;
   /**
-   * Cache of state IDs that have already passed `setObjectNotExistsAsync`.
+   * Cache of state IDs whose object has already been written this process.
    * Skips repeat DB lookups on the hot path — each poll touches ~11 states
    * per delivery, and most deliveries see no schema change between polls.
    * On `cleanupDeliveries`, IDs of removed packages are dropped so a re-add
