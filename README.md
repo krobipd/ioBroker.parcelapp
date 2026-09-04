@@ -145,6 +145,7 @@ sendTo("parcelapp.0", "addDelivery", {
 
 ### **WORK IN PROGRESS**
 
+- Fixed: The Test Connection button and addDelivery from scripts silently stopped working after version 0.10.3 — nothing reached the adapter, and no error was logged.
 - Fixed: On installations that already existed, the summary datapoints and the connection state kept their old English names — an update now reaches every datapoint.
 - New: Datapoints whose name alone does not explain them now carry a short description in the object tree, in all eleven languages.
 - New: Detailed user documentation in English and German, shown in the ioBroker documentation portal.

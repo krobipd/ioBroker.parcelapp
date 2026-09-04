@@ -142,9 +142,21 @@ export class ParcelappAdapter extends utils.Adapter {
    * js-controller MERGES the manifest into an existing instance object and never drops a key,
    * so anything a past version wrote survives forever. Two such leftovers exist:
    *
-   * 1. `common.supportedMessages.stopInstance` (dropped from the manifest in v0.10.3). With it
-   *    the host kills the process one second after asking it to stop, `onUnload` never runs, and
-   *    the `info.connection=false` write on the way out never reaches the database.
+   * 1. `common.supportedMessages` (dropped from the manifest in v0.10.3). The whole key is
+   *    removed, and setting it to `{stopInstance: false}` — what v0.10.3 through v0.10.4 did —
+   *    is NOT a fix but a second, worse defect. `isMessageboxSupported()` in the adapter package
+   *    stops looking at `common.messagebox` the moment `supportedMessages` is an object, and then
+   *    only reports true when SOME value is not false:
+   *
+   *      if (!isObject(common.supportedMessages)) return !!common.messagebox;
+   *      return Object.values(common.supportedMessages).find(v => v !== false) !== undefined;
+   *
+   *    With `{stopInstance: false}` that is `false`, so the adapter never runs
+   *    `subscribeMessage` and NOTHING reaches `onMessage` — the admin's "Test Connection" button
+   *    and every `sendTo(..., "addDelivery", ...)` from a script die silently. Silently, because
+   *    the error branch next to that call only fires for `options.message`, and we register via
+   *    `this.on("message", …)`. The old `{stopInstance: true}` kept the box open by accident
+   *    (`true !== false`), which is why this only broke with the v0.10.3 correction.
    * 2. `native.filterMode` (dropped in v0.2.0) and `native.language` (dropped before v0.5.0).
    *    Dead config keys nothing reads — the adapter owns its own configuration inventory the
    *    same way it owns its states (`cleanupObsoleteStates`).
@@ -169,16 +181,19 @@ export class ParcelappAdapter extends utils.Adapter {
       if (!obj) {
         return false;
       }
-      const supported = obj.common?.supportedMessages as { stopInstance?: unknown } | undefined;
-      const staleStopInstance = !!supported?.stopInstance;
+      // Any leftover supportedMessages has to GO, not be set to false. isMessageboxSupported()
+      // stops looking at common.messagebox the moment supportedMessages is an object, and then
+      // only accepts it when some value is not false — `{stopInstance: false}` closes the box.
+      const staleSupportedMessages = "supportedMessages" in (obj.common ?? {});
       const native = (obj.native ?? {}) as Record<string, unknown>;
       const staleNativeKeys = OBSOLETE_NATIVE_KEYS.filter(key => key in native);
-      if (!staleStopInstance && staleNativeKeys.length === 0) {
+      if (!staleSupportedMessages && staleNativeKeys.length === 0) {
         return false;
       }
       this.log.info("Correcting leftover settings from an earlier version — this instance restarts once");
-      if (staleStopInstance) {
-        obj.common.supportedMessages = { ...supported, stopInstance: false };
+      if (staleSupportedMessages) {
+        this.log.debug("Removing the obsolete supportedMessages entry so the message box stays open");
+        delete obj.common.supportedMessages;
       }
       for (const key of staleNativeKeys) {
         this.log.debug(`Removing obsolete configuration key: native.${key}`);

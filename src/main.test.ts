@@ -506,11 +506,45 @@ describe("ParcelappAdapter onUnload", () => {
   });
 });
 
+/**
+ * Verbatim copy of `isMessageboxSupported` from
+ * `@iobroker/js-controller-adapter/lib/adapter/utils.js` (read at js-controller 7.2.3). The
+ * adapter runs this against its OWN instance object at start and only calls `subscribeMessage`
+ * when it returns true — so this is the gate that decides whether onMessage ever fires.
+ *
+ * @param common The instance object's `common` section
+ * @returns whether js-controller would subscribe this instance to messages
+ */
+function isMessageboxSupported(common: Record<string, unknown>): boolean {
+  const supported = common.supportedMessages;
+  if (supported === null || typeof supported !== "object" || Array.isArray(supported)) {
+    return !!common.messagebox;
+  }
+  return Object.values(supported).find(val => val !== false) !== undefined;
+}
+
+describe("io-package manifest", () => {
+  /**
+   * The manifest must not carry `supportedMessages` AT ALL — not just `stopInstance`. Any object
+   * there overrides `common.messagebox` (see isMessageboxSupported above): an empty object or a
+   * second `false` entry closes the message box just as effectively, and a `true` entry brings
+   * back the hard kill that leaves onUnload dead. parcelapp needs neither — it has no
+   * deviceManager, and its message handler rides on plain `messagebox: true`.
+   */
+  it("declares no supportedMessages, so messagebox governs the message box", () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const manifest = require("../io-package.json") as { common: Record<string, unknown> };
+    expect(manifest.common).not.toHaveProperty("supportedMessages");
+    expect(manifest.common.messagebox).toBe(true);
+    expect(isMessageboxSupported(manifest.common)).toBe(true);
+  });
+});
+
 describe("ParcelappAdapter instance-object self-correction", () => {
-  it("switches the leftover flag off and aborts the start (the host restarts us)", async () => {
-    // With the flag set the host kills the process a second after asking it to
-    // stop, so onUnload never runs. An upgrade does NOT remove it from the
-    // instance object — the adapter has to correct it itself, then stand down.
+  it("REMOVES the leftover supportedMessages and aborts the start (the host restarts us)", async () => {
+    // With stopInstance set the host kills the process a second after asking it to stop, so
+    // onUnload never runs. An upgrade does NOT remove the key from the instance object — the
+    // adapter has to correct it itself, then stand down.
     const { adapter, client } = setup();
     const i = internalOf(adapter);
     i.instanceObject = { common: { supportedMessages: { stopInstance: true } }, native: {} };
@@ -519,10 +553,32 @@ describe("ParcelappAdapter instance-object self-correction", () => {
 
     expect(i.setForeignObject).toHaveBeenCalledTimes(1);
     expect(i.setForeignObject.mock.calls[0][0]).toBe("system.adapter.parcelapp.0");
-    expect(i.instanceObject?.common?.supportedMessages).toEqual({ stopInstance: false });
+    expect(i.instanceObject?.common).not.toHaveProperty("supportedMessages");
     expect(client.getDeliveries).not.toHaveBeenCalled();
     expect(i.setInterval).not.toHaveBeenCalled();
     expect(i.log.info).toHaveBeenCalledWith(expect.stringContaining("restarts once"));
+  });
+
+  /**
+   * The regression this guards against was shipped in v0.10.3 and lived until v0.10.4: the
+   * correction SET `supportedMessages` to `{stopInstance: false}` instead of removing it.
+   * `isMessageboxSupported()` in the adapter package stops reading `common.messagebox` as soon as
+   * `supportedMessages` is an object and then only accepts a value that is not false — so
+   * `{stopInstance: false}` closes the message box, `subscribeMessage` never runs, and both the
+   * admin's Test-Connection button and every sendTo from a script die without a log line.
+   */
+  it("never leaves supportedMessages behind as an object — that closes the message box", async () => {
+    const { adapter } = setup();
+    const i = internalOf(adapter);
+    i.instanceObject = { common: { messagebox: true, supportedMessages: { stopInstance: false } }, native: {} };
+
+    await i.onReady();
+
+    expect(i.setForeignObject).toHaveBeenCalledTimes(1);
+    const common = i.instanceObject.common!;
+    expect(common).not.toHaveProperty("supportedMessages");
+    // Mirror the real gate: with the key gone, messagebox decides again and the box is open.
+    expect(isMessageboxSupported(common)).toBe(true);
   });
 
   it("removes obsolete native keys, keeps the rest, and aborts the start", async () => {
@@ -565,7 +621,7 @@ describe("ParcelappAdapter instance-object self-correction", () => {
     await i.onReady();
 
     expect(i.setForeignObject).toHaveBeenCalledTimes(1);
-    expect(i.instanceObject?.common?.supportedMessages).toEqual({ stopInstance: false });
+    expect(i.instanceObject?.common).not.toHaveProperty("supportedMessages");
     expect(i.instanceObject?.native).toEqual({ apiKey: "k" });
   });
 
