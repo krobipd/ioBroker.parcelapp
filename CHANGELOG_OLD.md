@@ -1,4 +1,5 @@
 # Older Changes
+
 ## 0.10.0 (2026-07-08)
 
 - Fixed: the admin "Test Connection" button now reports real failures — before, it always showed "Ok" even with a wrong API key.

@@ -1868,6 +1868,42 @@ describe("StateManager", () => {
       expect((lastUpdated.desc as CommonNameTranslated).de).toBe(i18nData.de.descLastUpdated);
     });
 
+    /**
+     * v0.11.1. `lastUpdated` writes its VALUE only when the tracking data changed. As long as the
+     * object write was welded to the value write, a quiet installation — no package moving for
+     * days — kept the `common` this datapoint was created with, forever. Measured on a live
+     * install right after the v0.11.0 upgrade: all four `lastUpdated` states carried no
+     * description while their 24 siblings already had one. The clock is deliberately NOT advanced
+     * here, so the value stays unchanged and only the object path can satisfy the assertion.
+     */
+    it("refreshes lastUpdated's object even when the data did NOT change", async () => {
+      const adapter = createMockAdapter();
+      const delivery = makeDelivery();
+      const pkgId = new StateManager(adapter as never).packageId(delivery);
+
+      // Round 1: an older version filled the tree. Values are in place afterwards.
+      await updateDeliveryT(new StateManager(adapter as never), delivery, "DHL");
+      // That version left this object with a plain name and no description.
+      adapter.objects.set(`deliveries.${pkgId}.lastUpdated`, {
+        type: "state",
+        common: { name: "Last Updated", type: "string", role: "date", read: true, write: false },
+        native: {},
+      });
+
+      // Round 2 = the upgrade: a FRESH manager (empty cache, like a restart) polls the SAME
+      // delivery. The clock is frozen, so every value matches what is already stored, the broker
+      // answers "unchanged" throughout, and the lastUpdated VALUE is deliberately not written.
+      const afterRestart = new StateManager(adapter as never);
+      const before = adapter.states.get(`deliveries.${pkgId}.lastUpdated`)?.val;
+      await updateDeliveryT(afterRestart, delivery, "DHL");
+      expect(adapter.states.get(`deliveries.${pkgId}.lastUpdated`)?.val, "value must stay put").toBe(before);
+
+      // ... and yet the OBJECT has to carry the current texts.
+      const common = adapter.objects.get(`deliveries.${pkgId}.lastUpdated`)!.common;
+      expect((common.name as CommonNameTranslated).de).toBe(i18nData.de.lastUpdated);
+      expect((common.desc as CommonNameTranslated).de).toBe(i18nData.de.descLastUpdated);
+    });
+
     it("a user rename of the package device survives, the state names do not", async () => {
       const adapter = createMockAdapter();
       const manager = new StateManager(adapter as never);

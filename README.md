@@ -142,6 +142,11 @@ sendTo("parcelapp.0", "addDelivery", {
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+
+### **WORK IN PROGRESS**
+
+- Fixed: The last-changed timestamp of a package kept its old label and had no description as long as the package did not move.
+
 ### 0.11.0 (2026-09-04)
 
 - Fixed: Since version 0.10.3 the Test Connection button gave no response at all, and packages added from a script never showed up — both work again.

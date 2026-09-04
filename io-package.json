@@ -3,6 +3,19 @@
     "name": "parcelapp",
     "version": "0.11.0",
     "news": {
+      "NEXT": {
+        "en": "The last-changed timestamp of a package kept its old label and had no description as long as the package did not move.",
+        "de": "Der Zeitstempel der letzten Änderung einer Sendung behielt seine alte Bezeichnung und hatte keine Beschreibung, solange sich die Sendung nicht bewegte.",
+        "ru": "Отметка времени последнего изменения посылки сохраняла старое название и не имела описания, пока посылка не двигалась.",
+        "pt": "O carimbo da última alteração de uma encomenda mantinha o rótulo antigo e não tinha descrição enquanto a encomenda não se movia.",
+        "nl": "Het tijdstempel van de laatste wijziging van een zending behield zijn oude naam en had geen omschrijving zolang de zending niet bewoog.",
+        "fr": "L'horodatage de la dernière modification d'un colis gardait son ancien libellé et n'avait pas de description tant que le colis ne bougeait pas.",
+        "it": "Il timestamp dell'ultima modifica di una spedizione manteneva la vecchia etichetta e non aveva descrizione finché il pacco non si muoveva.",
+        "es": "La marca de tiempo del último cambio de un paquete conservaba su etiqueta antigua y no tenía descripción mientras el paquete no se movía.",
+        "pl": "Znacznik czasu ostatniej zmiany przesyłki zachowywał starą nazwę i nie miał opisu, dopóki przesyłka się nie poruszyła.",
+        "uk": "Позначка часу останньої зміни посилки зберігала стару назву й не мала опису, доки посилка не рухалася.",
+        "zh-cn": "只要包裹没有变动，其最后更新时间戳就一直保留旧名称且没有说明。"
+      },
       "0.11.0": {
         "en": "Since 0.10.3 the Test Connection button gave no response, and packages added from a script never showed up — both work again.\nAn update now reaches every datapoint of an existing installation: names and new short descriptions arrive in your system language.\nDetailed user documentation in English and German, plus two leftover settings from much older versions are cleaned up.",
         "de": "Seit 0.10.3 reagierte der Verbindungstest-Knopf gar nicht mehr, und per Skript hinzugefügte Pakete tauchten nie auf — beides geht wieder.\nEin Update erreicht jetzt jeden Datenpunkt einer bestehenden Anlage: Namen und neue kurze Beschreibungen kommen in deiner Systemsprache an.\nAusführliche Nutzerdoku auf Englisch und Deutsch, und zwei Altlasten aus viel älteren Versionen werden aufgeräumt.",
@@ -80,19 +93,6 @@
         "pl": "Test połączenia w adminie zgłasza teraz prawdziwe błędy.\nSpokojniejsze logi, stabilny wskaźnik połączenia i automatyczne odzyskiwanie po błędach.",
         "uk": "Тест з'єднання в адмінці тепер показує реальні помилки.\nМенше повторів у лозі, стабільний індикатор зв'язку, автоматичне відновлення після збоїв.",
         "zh-cn": "管理界面的连接测试现在会报告真实错误。\n日志更安静，连接状态更稳定，请求卡住或启动失败后可自动恢复。"
-      },
-      "0.9.0": {
-        "en": "Tracked packages no longer disappear after a temporary error or an unexpected API response, and multi-day delivery windows now show the date on each side.",
-        "de": "Verfolgte Pakete verschwinden nicht mehr nach einem vorübergehenden Fehler oder einer unerwarteten API-Antwort, und mehrtägige Zustellfenster zeigen jetzt auf beiden Seiten das Datum.",
-        "ru": "Отслеживаемые посылки больше не исчезают после временной ошибки или неожиданного ответа API, а многодневные окна доставки теперь показывают дату с обеих сторон.",
-        "pt": "Os pacotes monitorizados já não desaparecem após um erro temporário ou uma resposta inesperada da API, e as janelas de entrega de vários dias mostram agora a data em cada lado.",
-        "nl": "Gevolgde pakketten verdwijnen niet meer na een tijdelijke fout of een onverwacht API-antwoord, en bezorgvensters over meerdere dagen tonen nu aan beide kanten de datum.",
-        "fr": "Les colis suivis ne disparaissent plus après une erreur temporaire ou une réponse inattendue de l'API, et les créneaux de livraison sur plusieurs jours affichent désormais la date de chaque côté.",
-        "it": "I pacchi tracciati non scompaiono più dopo un errore temporaneo o una risposta API imprevista, e le finestre di consegna su più giorni ora mostrano la data su entrambi i lati.",
-        "es": "Los paquetes rastreados ya no desaparecen tras un error temporal o una respuesta inesperada de la API, y las ventanas de entrega de varios días ahora muestran la fecha en cada lado.",
-        "pl": "Śledzone paczki nie znikają już po tymczasowym błędzie lub nieoczekiwanej odpowiedzi API, a wielodniowe okna dostawy pokazują teraz datę po obu stronach.",
-        "uk": "Відстежувані посилки більше не зникають після тимчасової помилки або неочікуваної відповіді API, а багатоденні вікна доставки тепер показують дату з обох боків.",
-        "zh-cn": "跟踪的包裹在临时错误或意外的 API 响应后不再消失，跨多天的派送时段现在会在两侧显示日期。"
       }
     },
     "plugins": {

@@ -264,14 +264,20 @@ class StateManager {
     const changed = await Promise.all(
       stateDefs.map(([id, name, type, role, val, desc]) => this.createAndSet(id, name, type, role, val, desc))
     );
+    await this.ensureStateObject(
+      `${devicePath}.lastUpdated`,
+      (0, import_i18n.tName)("lastUpdated"),
+      "string",
+      "date",
+      (0, import_i18n.tName)("descLastUpdated")
+    );
     if (changed.some(Boolean)) {
       await this.createAndSet(
         `${devicePath}.lastUpdated`,
         (0, import_i18n.tName)("lastUpdated"),
         "string",
         "date",
-        (/* @__PURE__ */ new Date()).toISOString(),
-        (0, import_i18n.tName)("descLastUpdated")
+        (/* @__PURE__ */ new Date()).toISOString()
       );
     }
   }
@@ -634,15 +640,39 @@ class StateManager {
    *   state was new) — the DB-backed "did anything change" signal driving
    *   `lastUpdated` (v0.10.0, M5)
    */
-  async createAndSet(id, name, type, role, val, desc) {
-    if (!this.createdIds.has(id)) {
-      const common = { name, type, role, read: true, write: false };
-      if (desc !== void 0) {
-        common.desc = desc;
-      }
-      await this.adapter.extendObject(id, { type: "state", common, native: {} });
-      this.createdIds.add(id);
+  /**
+   * Write a state's OBJECT once per process — name, description, type and role.
+   *
+   * Split out of {@link createAndSet} in v0.11.1 because `lastUpdated` writes its VALUE only
+   * when the tracking data actually changed. With the object write welded to the value write,
+   * its object was refreshed only on that same condition — so on a quiet installation, where no
+   * package moves for days, the datapoint kept the `common` it was created with forever. Measured
+   * on a live install right after the v0.11.0 upgrade: all four `lastUpdated` states still
+   * carried no description while their 24 siblings already had one. Same class as
+   * `reference_abgeleiteter_wert_nur_bei_aenderung` — a write path behind a condition looks alive
+   * because the condition is usually true, and an outdated name in the tree is what gives it away.
+   *
+   * The object write is unconditional now; only the VALUE keeps its condition.
+   *
+   * @param id State ID relative to adapter namespace
+   * @param name Display name (translation object or plain string)
+   * @param type Value type
+   * @param role ioBroker role
+   * @param desc Short explanation, or undefined where there is nothing to explain
+   */
+  async ensureStateObject(id, name, type, role, desc) {
+    if (this.createdIds.has(id)) {
+      return;
     }
+    const common = { name, type, role, read: true, write: false };
+    if (desc !== void 0) {
+      common.desc = desc;
+    }
+    await this.adapter.extendObject(id, { type: "state", common, native: {} });
+    this.createdIds.add(id);
+  }
+  async createAndSet(id, name, type, role, val, desc) {
+    await this.ensureStateObject(id, name, type, role, desc);
     const result = await this.adapter.setStateChangedAsync(id, { val, ack: true });
     return typeof result === "object" && result !== null && result.notChanged === false;
   }

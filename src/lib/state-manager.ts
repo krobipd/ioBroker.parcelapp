@@ -323,14 +323,25 @@ export class StateManager {
     // adapter restart no longer stamps every package with a fresh timestamp —
     // the old in-memory signature map always missed on the first poll after a
     // restart, and it was updated BEFORE its write survived (ASYNC-6).
+    // The OBJECT is refreshed on every poll cycle (once per process, the cache sees to that) —
+    // only the VALUE stays behind the change condition. Welding the two together left this
+    // datapoint with a stale `common` forever on a quiet installation (v0.11.1).
+    await this.ensureStateObject(
+      `${devicePath}.lastUpdated`,
+      tName("lastUpdated"),
+      "string",
+      "date",
+      tName("descLastUpdated"),
+    );
     if (changed.some(Boolean)) {
+      // No `desc` argument here on purpose: ensureStateObject above already wrote the object and
+      // put the id in the cache, so anything passed along would be dead weight.
       await this.createAndSet(
         `${devicePath}.lastUpdated`,
         tName("lastUpdated"),
         "string",
         "date",
         new Date().toISOString(),
-        tName("descLastUpdated"),
       );
     }
   }
@@ -748,6 +759,44 @@ export class StateManager {
    *   state was new) — the DB-backed "did anything change" signal driving
    *   `lastUpdated` (v0.10.0, M5)
    */
+  /**
+   * Write a state's OBJECT once per process — name, description, type and role.
+   *
+   * Split out of {@link createAndSet} in v0.11.1 because `lastUpdated` writes its VALUE only
+   * when the tracking data actually changed. With the object write welded to the value write,
+   * its object was refreshed only on that same condition — so on a quiet installation, where no
+   * package moves for days, the datapoint kept the `common` it was created with forever. Measured
+   * on a live install right after the v0.11.0 upgrade: all four `lastUpdated` states still
+   * carried no description while their 24 siblings already had one. Same class as
+   * `reference_abgeleiteter_wert_nur_bei_aenderung` — a write path behind a condition looks alive
+   * because the condition is usually true, and an outdated name in the tree is what gives it away.
+   *
+   * The object write is unconditional now; only the VALUE keeps its condition.
+   *
+   * @param id State ID relative to adapter namespace
+   * @param name Display name (translation object or plain string)
+   * @param type Value type
+   * @param role ioBroker role
+   * @param desc Short explanation, or undefined where there is nothing to explain
+   */
+  private async ensureStateObject(
+    id: string,
+    name: ioBroker.StringOrTranslated,
+    type: ioBroker.CommonType,
+    role: string,
+    desc?: ioBroker.StringOrTranslated,
+  ): Promise<void> {
+    if (this.createdIds.has(id)) {
+      return;
+    }
+    const common: ioBroker.StateCommon = { name, type, role, read: true, write: false };
+    if (desc !== undefined) {
+      common.desc = desc;
+    }
+    await this.adapter.extendObject(id, { type: "state", common, native: {} });
+    this.createdIds.add(id);
+  }
+
   private async createAndSet(
     id: string,
     name: ioBroker.StringOrTranslated,
@@ -756,14 +805,7 @@ export class StateManager {
     val: ioBroker.StateValue,
     desc?: ioBroker.StringOrTranslated,
   ): Promise<boolean> {
-    if (!this.createdIds.has(id)) {
-      const common: ioBroker.StateCommon = { name, type, role, read: true, write: false };
-      if (desc !== undefined) {
-        common.desc = desc;
-      }
-      await this.adapter.extendObject(id, { type: "state", common, native: {} });
-      this.createdIds.add(id);
-    }
+    await this.ensureStateObject(id, name, type, role, desc);
     // The bundled @iobroker/types 7.1.2 types this promise as `string`, but
     // js-controller ≥7.2.2 (our dependency floor) resolves { id, notChanged }
     // — verified at v7.2.2: adapter.ts invokes the callback with
