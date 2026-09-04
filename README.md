@@ -142,10 +142,9 @@ sendTo("parcelapp.0", "addDelivery", {
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+### 0.11.0 (2026-09-04)
 
-### **WORK IN PROGRESS**
-
-- Fixed: The Test Connection button and addDelivery from scripts silently stopped working after version 0.10.3 — nothing reached the adapter, and no error was logged.
+- Fixed: Since version 0.10.3 the Test Connection button gave no response at all, and packages added from a script never showed up — both work again.
 - Fixed: On installations that already existed, the summary datapoints and the connection state kept their old English names — an update now reaches every datapoint.
 - New: Datapoints whose name alone does not explain them now carry a short description in the object tree, in all eleven languages.
 - New: Detailed user documentation in English and German, shown in the ioBroker documentation portal.
@@ -169,17 +168,6 @@ sendTo("parcelapp.0", "addDelivery", {
 ### 0.10.1 (2026-07-13) — stable
 
 - Internal refactoring. No user-facing changes.
-
-### 0.10.0 (2026-07-08)
-
-- Fixed: the admin "Test Connection" button now reports real failures — before, it always showed "Ok" even with a wrong API key.
-- Fixed: a package's last-updated timestamp no longer jumps to the restart time after an adapter restart — it only changes when tracking data actually changed.
-- Fixed: a stalled API response can no longer freeze polling until a manual restart — every request now has a hard 60-second deadline.
-- Fixed: a failed adapter start now triggers an automatic restart instead of leaving the adapter idle until restarted by hand.
-- Changed: recurring errors such as a wrong API key are logged once instead of every poll cycle, and stopping the adapter no longer leaves a red error line in the log.
-- Changed: short ioBroker database hiccups no longer flip the connection indicator — it now reflects only the parcel.app connection.
-- Changed: the fallback package name ("Package …") is localized like all other texts, and the adapter is listed under a fitting admin category (misc-data).
-- Changed: the automatic poll after adding a delivery now respects the one-minute pacing, so bulk-adds can no longer exhaust the hourly API budget.
 
 [Older changelogs can be found there](CHANGELOG_OLD.md)
 

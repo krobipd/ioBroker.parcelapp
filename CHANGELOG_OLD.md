@@ -1,4 +1,14 @@
 # Older Changes
+## 0.10.0 (2026-07-08)
+
+- Fixed: the admin "Test Connection" button now reports real failures — before, it always showed "Ok" even with a wrong API key.
+- Fixed: a package's last-updated timestamp no longer jumps to the restart time after an adapter restart — it only changes when tracking data actually changed.
+- Fixed: a stalled API response can no longer freeze polling until a manual restart — every request now has a hard 60-second deadline.
+- Fixed: a failed adapter start now triggers an automatic restart instead of leaving the adapter idle until restarted by hand.
+- Changed: recurring errors such as a wrong API key are logged once instead of every poll cycle, and stopping the adapter no longer leaves a red error line in the log.
+- Changed: short ioBroker database hiccups no longer flip the connection indicator — it now reflects only the parcel.app connection.
+- Changed: the fallback package name ("Package …") is localized like all other texts, and the adapter is listed under a fitting admin category (misc-data).
+- Changed: the automatic poll after adding a delivery now respects the one-minute pacing, so bulk-adds can no longer exhaust the hourly API budget.
 
 ## 0.9.0 (2026-06-23) — stable
 
