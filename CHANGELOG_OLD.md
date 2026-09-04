@@ -1,4 +1,7 @@
 # Older Changes
+## 0.10.1 (2026-07-13) — stable
+
+- Internal refactoring. No user-facing changes.
 
 ## 0.10.0 (2026-07-08)
 

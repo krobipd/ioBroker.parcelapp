@@ -142,8 +142,7 @@ sendTo("parcelapp.0", "addDelivery", {
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
-
-### **WORK IN PROGRESS**
+### 0.11.1 (2026-09-04)
 
 - Fixed: The last-changed timestamp of a package kept its old label and had no description as long as the package did not move.
 
@@ -169,10 +168,6 @@ sendTo("parcelapp.0", "addDelivery", {
 ### 0.10.2 (2026-08-22)
 
 - Changed: Internal cleanup. No user-facing changes.
-
-### 0.10.1 (2026-07-13) — stable
-
-- Internal refactoring. No user-facing changes.
 
 [Older changelogs can be found there](CHANGELOG_OLD.md)
 
