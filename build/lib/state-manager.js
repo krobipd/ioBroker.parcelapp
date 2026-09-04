@@ -615,20 +615,11 @@ class StateManager {
     return StateManager.formatWindow(minStart, maxEnd);
   }
   /**
-   * Create/refresh a read-only state and set its value. Runs the object write
-   * once per ID per process (the cache skips the repeat round-trip on the hot
-   * path); only the value changes per poll.
+   * Make sure the state's object is current, then write its value.
    *
-   * v0.11.0: `extendObject` instead of `setObjectNotExistsAsync`. The old call
-   * only ever touched an object that did not exist yet, so a changed name,
-   * description, role or type reached FRESH installs only — an existing tree
-   * kept the text it was created with, while manifest, linter, type check and
-   * the name gate all stayed green. Measured on a live install: the three
-   * permanent `summary.*` states still carried their plain-English pre-i18n
-   * names, while the per-package states looked correct only because packages
-   * are deleted and recreated. `extendObject` merges, so a user-set `custom`
-   * (history/logging) survives — the name deliberately does NOT: the adapter
-   * owns the names of its own states.
+   * The object part lives in {@link ensureStateObject} since v0.11.1 — this method only forwards
+   * to it and then sets the value. Callers whose value is conditional must call
+   * ensureStateObject themselves, unconditionally; see the note there.
    *
    * @param id State ID relative to adapter namespace
    * @param name Display name (translation object or plain string)
@@ -653,6 +644,16 @@ class StateManager {
    * because the condition is usually true, and an outdated name in the tree is what gives it away.
    *
    * The object write is unconditional now; only the VALUE keeps its condition.
+   *
+   * v0.11.0 changed the call itself from `setObjectNotExistsAsync` to `extendObject`: the old one
+   * only ever touched an object that did not exist yet, so a changed name, description, role or
+   * type reached FRESH installs only, while manifest, linter, type check and the name gate all
+   * stayed green. Measured on a live install: the three permanent `summary.*` states still carried
+   * their plain-English pre-i18n names, while the per-package states looked correct only because
+   * packages are deleted and recreated. `extendObject` merges, so a user-set `custom`
+   * (history/logging) survives — verified live on the 0.11.0 upgrade, where the recorded-datapoint
+   * count went 26 -> 48 without losing a single influxdb setting. The name deliberately does NOT
+   * survive: the adapter owns the names of its own states.
    *
    * @param id State ID relative to adapter namespace
    * @param name Display name (translation object or plain string)
