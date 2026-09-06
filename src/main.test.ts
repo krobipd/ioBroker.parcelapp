@@ -1466,7 +1466,7 @@ describe("ParcelappAdapter onMessage", () => {
   });
 
   /**
-   * v0.11.2. The in-flight flag used to be raised BEFORE the client was built and registered.
+   * v0.12.0. The in-flight flag used to be raised BEFORE the client was built and registered.
    * Anything throwing between those two points latched it for the rest of the process, and the
    * admin button then answered "a test is already running" forever — with no log line, the same
    * silent-dead-button shape as the v0.10.3 message box. The construction now sits inside the try.

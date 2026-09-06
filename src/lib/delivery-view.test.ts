@@ -84,13 +84,13 @@ describe("parseExpectedToMs", () => {
   });
 
   /**
-   * v0.11.2 (audit B2). The parser knew exactly one format. `Ressourcen/parcelapp/
+   * v0.12.0 (audit B2). The parser knew exactly one format. `Ressourcen/parcelapp/
    * api-clients-und-feldformate.md` documents `"MMMM dd, yyyy HH:mm"` as a real carrier format
    * that the most thorough production client parses — and it is UNAMBIGUOUS, so the "we do not
    * guess ambiguous formats" rule never covered it. Before the fix these packages showed an empty
    * window and an empty estimate.
    */
-  describe("English month-name format (v0.11.2)", () => {
+  describe("English month-name format (v0.12.0)", () => {
     it("parses 'December 06, 2025 14:30'", () => {
       const parsed = parseExpectedToMs("December 06, 2025 14:30");
       expect(parsed).not.toBeNull();
@@ -129,7 +129,7 @@ describe("parseExpectedToMs", () => {
     });
   });
 
-  describe("ambiguous formats stay unparsed — but are no longer silent (v0.11.2)", () => {
+  describe("ambiguous formats stay unparsed — but are no longer silent (v0.12.0)", () => {
     it("reports a dotted date instead of dropping it without a trace", () => {
       const log = makeLog();
       expect(parseExpectedToMs("06.12.2025 14:30", log)).toBeNull();
@@ -211,7 +211,7 @@ describe("calculateDeliveryWindow", () => {
     expect(calculateDeliveryWindow(d, 2)).toBe("09:00");
   });
 
-  it("fills a window for a carrier that reports the month-name format (v0.11.2)", () => {
+  it("fills a window for a carrier that reports the month-name format (v0.12.0)", () => {
     const d = makeDelivery({ date_expected: "June 15, 2026 9:00", date_expected_end: "June 15, 2026 13:00" });
     expect(calculateDeliveryWindow(d, 2)).toBe("09:00 - 13:00");
   });
@@ -230,7 +230,7 @@ describe("calculateDeliveryEstimate / isToday", () => {
     expect(calculateDeliveryEstimate(makeDelivery({ date_expected: "2026-06-14" }), 2)).toBe("overdue");
   });
 
-  it("counts a month-name date towards today (v0.11.2)", () => {
+  it("counts a month-name date towards today (v0.12.0)", () => {
     expect(isToday(makeDelivery({ date_expected: "June 15, 2026" }), 2)).toBe(true);
   });
 

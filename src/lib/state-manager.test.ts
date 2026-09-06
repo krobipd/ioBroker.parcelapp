@@ -1789,7 +1789,7 @@ describe("StateManager", () => {
     });
 
     /**
-     * v0.11.2. Measured defect: `deviceEnsured` was pruned INSIDE the delete loop while the
+     * v0.12.0. Measured defect: `deviceEnsured` was pruned INSIDE the delete loop while the
      * `createdIds` prune sat after it. One rejecting `delObjectAsync` aborted the `Promise.all`,
      * so the second prune never ran — and a package that came back got its device object
      * re-created but not its state OBJECTS, while the VALUES were written anyway. The result was
@@ -1798,7 +1798,7 @@ describe("StateManager", () => {
      * These tests only bite when the delete really rejects; the shared mock never fails, so each
      * one installs its own failing `delObjectAsync`.
      */
-    describe("a delete that fails (v0.11.2)", () => {
+    describe("a delete that fails (v0.12.0)", () => {
       /**
        * Replaces delObjectAsync with one that rejects for exactly one id.
        *
@@ -1982,7 +1982,7 @@ describe("StateManager", () => {
       await updateDeliveryT(manager, delivery, "DHL");
 
       // The name says it all for these — an invented sentence would be worse than none.
-      // v0.11.2: `lastLocation` LEFT this list. "Last Location" reads like a live position, and it
+      // v0.12.0: `lastLocation` LEFT this list. "Last Location" reads like a live position, and it
       // is not — it is the last place the carrier scanned the package. That is a real explanation,
       // not invented filler, so it moved to the described group below.
       for (const state of ["carrier", "status", "description", "trackingNumber"]) {
@@ -2388,12 +2388,12 @@ describe("StateManager", () => {
   });
 
   /**
-   * v0.11.2 (audit B2). The date parser itself is pure and reports every value it cannot use;
+   * v0.12.0 (audit B2). The date parser itself is pure and reports every value it cannot use;
    * the de-duplication lives here, because only the state manager knows where a poll begins.
    * Without it the SAME unusable value would be logged up to four times per package per poll
    * (window, estimate, today filter, combined window) — noise that hides the signal it exists for.
    */
-  describe("expected-date drift is reported once per poll (v0.11.2)", () => {
+  describe("expected-date drift is reported once per poll (v0.12.0)", () => {
     /**
      * Redirects the mock adapter's debug log into an array.
      *

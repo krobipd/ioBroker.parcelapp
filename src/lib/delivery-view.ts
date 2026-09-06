@@ -2,7 +2,7 @@
  * Everything that turns a raw parcel.app delivery into the strings the datapoints show:
  * the expected-delivery window, the human-readable estimate and the latest tracking event.
  *
- * Split out of `StateManager` in v0.11.2 (audit A1). The class had two reasons to change —
+ * Split out of `StateManager` in v0.12.0 (audit A1). The class had two reasons to change —
  * "parcel.app reports a new date format" and "ioBroker writes objects differently" — and only the
  * second one has anything to do with the broker. Nothing here touches the adapter or the object
  * DB; the only outside contact is the optional drift logger and the i18n lookup for the estimate

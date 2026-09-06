@@ -78,7 +78,7 @@ export class StateManager {
   private readonly statusMemo = new WeakMap<ParcelDelivery, number>();
 
   /**
-   * v0.11.2 (B2): raw date values already reported as drift during this poll. The same
+   * v0.12.0 (B2): raw date values already reported as drift during this poll. The same
    * unparseable string is seen up to four times per poll (window, estimate, today filter,
    * combined window); without this the log would carry four identical lines per package. Cleared
    * in `resetPollState()`, the same way the collision tracker is.
@@ -386,7 +386,7 @@ export class StateManager {
   async updateSummary(activeDeliveries: ParcelDelivery[]): Promise<void> {
     // Parse the status ONCE per delivery here and carry it along — the today filter and the
     // combined window both need it, and `calculateCombinedWindow` no longer has to reach back
-    // into the state manager for it (v0.11.2).
+    // into the state manager for it (v0.12.0).
     const statused: StatusedDelivery[] = activeDeliveries.map(d => ({
       delivery: d,
       statusCode: this.parseStatus(d),
@@ -467,7 +467,7 @@ export class StateManager {
     // (v0.10.0, I2) like the update fan-out in main.ts.
     const toDelete = [...this.knownDeliveryIds].filter(pkgId => !keepSet.has(pkgId));
 
-    // v0.11.2: a delete that FAILED must change nothing, and a delete that landed must clear
+    // v0.12.0: a delete that FAILED must change nothing, and a delete that landed must clear
     // EVERY cache in the same step. Before this, `deviceEnsured` was pruned inside the loop while
     // the `createdIds` prune sat after it — one rejecting `delObjectAsync` aborted the `Promise.all`,
     // so the second prune never ran. A package that came back afterwards had its device object
@@ -500,7 +500,7 @@ export class StateManager {
 
     // v0.9.0 (S2): prune the caches for every REMOVED package in ONE pass over the set —
     // O(created). A createdId is `deliveries.<pkgId>` or `deliveries.<pkgId>.<state>`, so the
-    // pkgId is extracted. Both caches are keyed on the same `deleted` set (v0.11.2).
+    // pkgId is extracted. Both caches are keyed on the same `deleted` set (v0.12.0).
     if (deleted.size > 0) {
       for (const pkgId of deleted) {
         this.deviceEnsured.delete(pkgId);

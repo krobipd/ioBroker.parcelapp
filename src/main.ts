@@ -455,7 +455,7 @@ export class ParcelappAdapter extends utils.Adapter {
       this.sendTo(obj.from, obj.command, { error: "A connection test is already running — please wait" }, obj.callback);
       return;
     }
-    // v0.11.2: the flag is raised and everything that could fail happens INSIDE the try, so
+    // v0.12.0: the flag is raised and everything that could fail happens INSIDE the try, so
     // setting and clearing are welded together structurally. Before, the client construction and
     // the registry insert sat between the two — a throw there would have latched the flag for the
     // rest of the process, and the admin button would answer "a test is already running" forever
@@ -634,7 +634,7 @@ export class ParcelappAdapter extends utils.Adapter {
   /**
    * Write the states of every visible delivery, in bounded batches.
    *
-   * Extracted from `poll()` in v0.11.2 (audit A2): the poll method carried nine jobs, and this is
+   * Extracted from `poll()` in v0.12.0 (audit A2): the poll method carried nine jobs, and this is
    * the one closed unit among them — it owns the per-delivery error policy (dedup, shutdown noise)
    * that has nothing to do with the throttle, the connection indicator or the cleanup around it.
    *
