@@ -51,6 +51,7 @@
   "descDeliveryWindow": "Janela de entrega prevista; uma janela que abrange vários dias mostra a data de ambos os lados.",
   "descDeliveryEstimate": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
   "descLastEvent": "Evento de rastreio mais recente comunicado pela transportadora, com a data.",
+  "descLastLocation": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
   "descLastUpdated": "Momento da última alteração dos dados de rastreio - não da última consulta.",
   "descActiveCount": "Número de encomendas que ainda não foram entregues.",
   "descTodayCount": "Número de encomendas previstas para hoje.",

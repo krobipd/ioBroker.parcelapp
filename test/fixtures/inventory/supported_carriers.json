@@ -1,0 +1,12 @@
+{
+  "dhl": "DHL",
+  "dhlexpress": "DHL Express",
+  "dpd": "DPD",
+  "ups": "UPS",
+  "fedex": "FedEx",
+  "hermes": "Hermes",
+  "gls": "GLS",
+  "amazon": "Amazon Logistics",
+  "postnl": "PostNL",
+  "usps": "USPS"
+}

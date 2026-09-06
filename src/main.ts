@@ -6,7 +6,7 @@ import { tName } from "./lib/i18n";
 import { ParcelClient, RETRY_AFTER_DEFAULT_SEC, RETRY_AFTER_MAX_SEC } from "./lib/parcel-client";
 import { StateManager } from "./lib/state-manager";
 import { DELIVERED_STATUS_CODE } from "./lib/types";
-import type { AddDeliveryRequest } from "./lib/types";
+import type { AddDeliveryRequest, ParcelDelivery } from "./lib/types";
 
 const MIN_POLL_INTERVAL = 5;
 const MAX_POLL_INTERVAL = 60;
@@ -455,15 +455,21 @@ export class ParcelappAdapter extends utils.Adapter {
       this.sendTo(obj.from, obj.command, { error: "A connection test is already running — please wait" }, obj.callback);
       return;
     }
+    // v0.11.2: the flag is raised and everything that could fail happens INSIDE the try, so
+    // setting and clearing are welded together structurally. Before, the client construction and
+    // the registry insert sat between the two — a throw there would have latched the flag for the
+    // rest of the process, and the admin button would answer "a test is already running" forever
+    // without a single log line. Same silent-dead-button class as the v0.10.3 message box.
     this.testConnectionInFlight = true;
-    // v0.4.3: same debug-logger as the prod client so checkConnection
-    // failures get the same HTTPS-layer trace (via the makeClient seam).
-    const testClient = this.makeClient(key);
-    // v0.4.4: register test-client so onUnload can abort its inflight
-    // HTTPS-request — the adapter's `this.client.cancelAll()` only
-    // touches the prod-client, not these short-lived test-clients.
-    this.testClients.add(testClient);
+    let testClient: ClientLike | undefined;
     try {
+      // v0.4.3: same debug-logger as the prod client so checkConnection
+      // failures get the same HTTPS-layer trace (via the makeClient seam).
+      testClient = this.makeClient(key);
+      // v0.4.4: register test-client so onUnload can abort its inflight
+      // HTTPS-request — the adapter's `this.client.cancelAll()` only
+      // touches the prod-client, not these short-lived test-clients.
+      this.testClients.add(testClient);
       const result = await testClient.testConnection();
       // v0.4.3 (F3): trace checkConnection result.
       this.log.debug(`checkConnection: result=${result.success ? "ok" : "fail"} (${result.message})`);
@@ -474,7 +480,9 @@ export class ParcelappAdapter extends utils.Adapter {
         obj.callback,
       );
     } finally {
-      this.testClients.delete(testClient);
+      if (testClient) {
+        this.testClients.delete(testClient);
+      }
       this.testConnectionInFlight = false;
     }
   }
@@ -623,6 +631,74 @@ export class ParcelappAdapter extends utils.Adapter {
     return "UNKNOWN";
   }
 
+  /**
+   * Write the states of every visible delivery, in bounded batches.
+   *
+   * Extracted from `poll()` in v0.11.2 (audit A2): the poll method carried nine jobs, and this is
+   * the one closed unit among them — it owns the per-delivery error policy (dedup, shutdown noise)
+   * that has nothing to do with the throttle, the connection indicator or the cleanup around it.
+   *
+   * v0.9.0 (S3): batches instead of one broker fan-out for ALL deliveries at once. The keep-set is
+   * still every visible pkgId (computed by the caller), so this only caps concurrency — it never
+   * drops a package. A normal poll (a handful of packages) is a single batch.
+   *
+   * v0.4.2 (M4): each delivery is wrapped individually so one bad delivery does not poison the
+   * others.
+   *
+   * @param client HTTP client seam (carrier lookup)
+   * @param stateManager State manager seam (the actual writes)
+   * @param deliveries The deliveries that get states this poll
+   * @param pkgIds Package ids from the caller's deterministic pre-pass, index-aligned to `deliveries`
+   */
+  private async updateDeliveries(
+    client: ClientLike,
+    stateManager: StateManagerLike,
+    deliveries: ParcelDelivery[],
+    pkgIds: string[],
+  ): Promise<void> {
+    if (deliveries.length > UPDATE_BATCH_SIZE) {
+      this.log.debug(`Updating ${deliveries.length} deliveries in batches of ${UPDATE_BATCH_SIZE}`);
+    }
+    for (let start = 0; start < deliveries.length; start += UPDATE_BATCH_SIZE) {
+      const batch = deliveries.slice(start, start + UPDATE_BATCH_SIZE);
+      await Promise.all(
+        batch.map(async (delivery, offset) => {
+          const pkgId = pkgIds[start + offset];
+          // Pre-sanitize the externally-sourced strings once for logging. The
+          // fields are optional (the API can drop them), so default to "" before
+          // oneLine flattens them onto a single log line.
+          const tracking = oneLine(delivery.tracking_number ?? "");
+          const carrier = oneLine(delivery.carrier_code ?? "");
+          try {
+            // v0.4.3 (C1): per-delivery entry. ~10 packages × 144 polls/day
+            // = ~1440 debug lines/day — acceptable at debug-level. Line stays
+            // short (tracking + carrier + status only, no full delivery JSON).
+            // v0.10.0 (M6): status_code is typed number|string (drift), so it
+            // is flattened like the other externally-sourced fields.
+            this.log.debug(
+              `updateDelivery: '${tracking}' carrier=${carrier} status=${oneLine(String(delivery.status_code))}`,
+            );
+            const carrierName = await client.getCarrierName(delivery.carrier_code);
+            await stateManager.updateDelivery(delivery, carrierName, pkgId);
+            this.failedDeliveries.delete(pkgId);
+          } catch (err) {
+            const msg = errText(err);
+            if (this.failedDeliveries.has(pkgId)) {
+              this.log.debug(`Failed to update '${tracking}': ${msg}`);
+            } else if (this.unloaded) {
+              // v0.10.0 (L2): broker teardown mid-batch is expected noise
+              // during shutdown, not a per-package warning.
+              this.log.debug(`Failed to update '${tracking}' during shutdown: ${msg}`);
+            } else {
+              this.log.warn(`Failed to update '${tracking}': ${msg}`);
+              this.failedDeliveries.add(pkgId);
+            }
+          }
+        }),
+      );
+    }
+  }
+
   private async poll(): Promise<void> {
     if (this.isPolling || !this.client || !this.stateManager) {
       // v0.10.0 (M4): make the re-entry/uninitialized skip visible like the
@@ -697,47 +773,7 @@ export class ParcelappAdapter extends utils.Adapter {
       // broker fan-out for ALL deliveries at once. The keep-set is still every
       // visible pkgId (computed above), so this only caps concurrency — it never
       // drops a package. A normal poll (a handful of packages) is a single batch.
-      if (visibleDeliveries.length > UPDATE_BATCH_SIZE) {
-        this.log.debug(`Updating ${visibleDeliveries.length} deliveries in batches of ${UPDATE_BATCH_SIZE}`);
-      }
-      for (let start = 0; start < visibleDeliveries.length; start += UPDATE_BATCH_SIZE) {
-        const batch = visibleDeliveries.slice(start, start + UPDATE_BATCH_SIZE);
-        await Promise.all(
-          batch.map(async (delivery, offset) => {
-            const pkgId = pkgIds[start + offset];
-            // Pre-sanitize the externally-sourced strings once for logging. The
-            // fields are optional (the API can drop them), so default to "" before
-            // oneLine flattens them onto a single log line.
-            const tracking = oneLine(delivery.tracking_number ?? "");
-            const carrier = oneLine(delivery.carrier_code ?? "");
-            try {
-              // v0.4.3 (C1): per-delivery entry. ~10 packages × 144 polls/day
-              // = ~1440 debug lines/day — acceptable at debug-level. Line stays
-              // short (tracking + carrier + status only, no full delivery JSON).
-              // v0.10.0 (M6): status_code is typed number|string (drift), so it
-              // is flattened like the other externally-sourced fields.
-              this.log.debug(
-                `updateDelivery: '${tracking}' carrier=${carrier} status=${oneLine(String(delivery.status_code))}`,
-              );
-              const carrierName = await client.getCarrierName(delivery.carrier_code);
-              await stateManager.updateDelivery(delivery, carrierName, pkgId);
-              this.failedDeliveries.delete(pkgId);
-            } catch (err) {
-              const msg = errText(err);
-              if (this.failedDeliveries.has(pkgId)) {
-                this.log.debug(`Failed to update '${tracking}': ${msg}`);
-              } else if (this.unloaded) {
-                // v0.10.0 (L2): broker teardown mid-batch is expected noise
-                // during shutdown, not a per-package warning.
-                this.log.debug(`Failed to update '${tracking}' during shutdown: ${msg}`);
-              } else {
-                this.log.warn(`Failed to update '${tracking}': ${msg}`);
-                this.failedDeliveries.add(pkgId);
-              }
-            }
-          }),
-        );
-      }
+      await this.updateDeliveries(client, stateManager, visibleDeliveries, pkgIds);
 
       // v0.9.0 (C1): keep-set = EVERY package the API still returns this poll
       // (pkgIds), NOT only the writes that just succeeded. A transient

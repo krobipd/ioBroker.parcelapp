@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.11.1",
+    "version": "0.12.0",
     "news": {
+      "0.12.0": {
+        "en": "A package that reappears after a database hiccup keeps complete datapoints, and a delivery window written as \"September 6, 2026 14:30\" is now read instead of ignored.",
+        "de": "Eine Sendung, die nach einem Datenbank-Aussetzer wieder auftaucht, behält vollständige Datenpunkte, und ein Zustellfenster wie \"September 6, 2026 14:30\" wird jetzt gelesen.",
+        "ru": "Посылка, вновь появившаяся после сбоя базы данных, сохраняет полные точки данных, а окно доставки вида \"September 6, 2026 14:30\" теперь распознаётся.",
+        "pt": "Uma encomenda que reaparece após uma falha da base de dados mantém pontos de dados completos, e uma janela de entrega como \"September 6, 2026 14:30\" passa a ser lida.",
+        "nl": "Een pakket dat na een databasehapering terugkeert houdt volledige datapunten, en een bezorgvenster als \"September 6, 2026 14:30\" wordt nu gelezen in plaats van genegeerd.",
+        "fr": "Un colis qui réapparaît après un incident de base de données conserve des points de données complets, et un créneau tel que \"September 6, 2026 14:30\" est désormais lu.",
+        "it": "Un pacco che ricompare dopo un problema del database mantiene punti dati completi e una finestra di consegna come \"September 6, 2026 14:30\" viene ora letta.",
+        "es": "Un paquete que reaparece tras un fallo de la base de datos conserva puntos de datos completos, y una ventana de entrega como \"September 6, 2026 14:30\" ahora se lee.",
+        "pl": "Przesyłka, która pojawia się ponownie po awarii bazy danych, zachowuje kompletne punkty danych, a okno dostawy w postaci \"September 6, 2026 14:30\" jest teraz odczytywane.",
+        "uk": "Посилка, що знову з'являється після збою бази даних, зберігає повні точки даних, а вікно доставки на кшталт \"September 6, 2026 14:30\" тепер зчитується.",
+        "zh-cn": "数据库故障后重新出现的包裹将保留完整的数据点，形如 \"September 6, 2026 14:30\" 的送达时间窗现在也能被读取。"
+      },
       "0.11.1": {
         "en": "The last-changed timestamp of a package kept its old label and had no description as long as the package did not move.",
         "de": "Der Zeitstempel der letzten Änderung einer Sendung behielt seine alte Bezeichnung und hatte keine Beschreibung, solange sich die Sendung nicht bewegte.",
@@ -80,19 +93,6 @@
         "pl": "Wewnętrzna refaktoryzacja. Brak zmian widocznych dla użytkownika.",
         "uk": "Внутрішня переробка. Без видимих для користувача змін.",
         "zh-cn": "内部重构。对用户无可见变化。"
-      },
-      "0.10.0": {
-        "en": "Admin connection test reports real errors now.\nQuieter logs, steadier connection state and automatic recovery from stalled requests or failed starts.",
-        "de": "Der Verbindungstest im Admin meldet jetzt echte Fehler.\nRuhigere Logs, stabile Verbindungsanzeige, automatische Erholung bei hängenden Anfragen und Startfehlern.",
-        "ru": "Тест подключения в админке теперь показывает реальные ошибки.\nМеньше повторов в логе, стабильный индикатор связи, автоматическое восстановление при сбоях.",
-        "pt": "O teste de ligação no admin mostra agora erros reais.\nMenos repetições no registo, indicador de ligação estável e recuperação automática de falhas.",
-        "nl": "De verbindingstest in de admin meldt nu echte fouten.\nRustigere logs, stabiele verbindingsindicator en automatisch herstel na fouten.",
-        "fr": "Le test de connexion dans l'admin signale désormais les vraies erreurs.\nJournaux plus calmes, indicateur de connexion stable et reprise automatique après incident.",
-        "it": "Il test di connessione nell'admin ora segnala gli errori reali.\nLog più tranquilli, indicatore di connessione stabile e ripristino automatico dopo i guasti.",
-        "es": "La prueba de conexión del admin ahora muestra errores reales.\nRegistros más tranquilos, indicador de conexión estable y recuperación automática tras fallos.",
-        "pl": "Test połączenia w adminie zgłasza teraz prawdziwe błędy.\nSpokojniejsze logi, stabilny wskaźnik połączenia i automatyczne odzyskiwanie po błędach.",
-        "uk": "Тест з'єднання в адмінці тепер показує реальні помилки.\nМенше повторів у лозі, стабільний індикатор зв'язку, автоматичне відновлення після збоїв.",
-        "zh-cn": "管理界面的连接测试现在会报告真实错误。\n日志更安静，连接状态更稳定，请求卡住或启动失败后可自动恢复。"
       }
     },
     "plugins": {
@@ -178,7 +178,8 @@
       {
         "admin": ">=8.0.11"
       }
-    ]
+    ],
+    "nogit": true
   },
   "encryptedNative": [
     "apiKey"

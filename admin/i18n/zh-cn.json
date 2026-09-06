@@ -51,6 +51,7 @@
   "descDeliveryWindow": "预计派送时间段；跨越多天的时间段会在两侧显示日期。",
   "descDeliveryEstimate": "以文字表示的预计派送时间——今天、明天或若干天后。",
   "descLastEvent": "承运商报告的最新跟踪事件及其日期。",
+  "descLastLocation": "承运商最后一次扫描包裹的地点 - 不是实时位置。",
   "descLastUpdated": "跟踪数据最后一次发生变化的时间——不是最后一次轮询的时间。",
   "descActiveCount": "尚未派送的包裹数量。",
   "descTodayCount": "预计今天送达的包裹数量。",

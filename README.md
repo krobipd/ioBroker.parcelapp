@@ -40,6 +40,8 @@ For details and how to disable it, see the [Sentry plugin documentation](https:/
 - **ioBroker Admin >= 8.0.11**
 - **parcel.app Premium subscription** — required for API access
 
+> The adapter CANNOT be installed via GitHub: The adapter must be installed via the ioBroker repository (stable or latest).
+
 ---
 
 ## Configuration
@@ -143,6 +145,13 @@ sendTo("parcelapp.0", "addDelivery", {
     ### **WORK IN PROGRESS**
 -->
 
+### 0.12.0 (2026-09-06)
+
+- Fixed: A package that reappeared after a database hiccup kept datapoints without a name or description until the adapter was restarted.
+- Fixed: A delivery window written as "September 6, 2026 14:30" was ignored, so window, estimate and the count of packages expected today stayed empty for those carriers.
+- New: The documentation explains why a delivery window can stay empty, and an unreadable date from the carrier can now be reported so the format gets added.
+- New: The last known location of a package explains itself in the object tree: it is where the carrier last scanned it, not a live position.
+
 ### 0.11.1 (2026-09-04)
 
 - Fixed: The last-changed timestamp of a package kept its old label and had no description as long as the package did not move.
@@ -165,10 +174,6 @@ sendTo("parcelapp.0", "addDelivery", {
 ### 0.10.3 (2026-08-27) — stable
 
 - Fixed: Stopping or restarting the adapter was cut short — the stopped instance kept claiming a live connection to parcel.app instead of showing as disconnected.
-
-### 0.10.2 (2026-08-22)
-
-- Changed: Internal cleanup. No user-facing changes.
 
 [Older changelogs can be found there](CHANGELOG_OLD.md)
 

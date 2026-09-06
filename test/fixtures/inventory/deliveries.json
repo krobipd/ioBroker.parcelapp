@@ -1,0 +1,129 @@
+[
+  {
+    "tracking_number": "INV-STATUS-0",
+    "carrier_code": "dhl",
+    "description": "Delivered parcel",
+    "status_code": 0,
+    "events": [
+      {
+        "event": "Delivered",
+        "date": "2026-06-14 11:02:00",
+        "location": "Frontdoor"
+      }
+    ]
+  },
+  {
+    "tracking_number": "INV-STATUS-1",
+    "carrier_code": "dpd",
+    "description": "Frozen parcel",
+    "status_code": 1
+  },
+  {
+    "tracking_number": "INV-STATUS-2",
+    "carrier_code": "ups",
+    "description": "In transit, same-day window",
+    "status_code": 2,
+    "date_expected": "2026-06-15 09:00:00",
+    "date_expected_end": "2026-06-15 13:00:00",
+    "events": [
+      {
+        "event": "Arrived at delivery depot",
+        "date": "2026-06-14 22:10:00",
+        "location": "Cologne"
+      }
+    ]
+  },
+  {
+    "tracking_number": "INV-STATUS-3",
+    "carrier_code": "hermes",
+    "description": "Awaiting pickup",
+    "status_code": 3
+  },
+  {
+    "tracking_number": "INV-STATUS-4",
+    "carrier_code": "fedex",
+    "description": "Out for delivery, epoch window",
+    "status_code": 4,
+    "timestamp_expected": 1781766000,
+    "timestamp_expected_end": 1781780400,
+    "events": [
+      {
+        "event": "Out for delivery",
+        "date": "2026-06-15 07:30:00",
+        "location": "Bonn"
+      }
+    ]
+  },
+  {
+    "tracking_number": "INV-STATUS-5",
+    "carrier_code": "gls",
+    "description": "Not found",
+    "status_code": 5
+  },
+  {
+    "tracking_number": "INV-STATUS-6",
+    "carrier_code": "postnl",
+    "description": "Delivery attempt failed",
+    "status_code": 6,
+    "events": [
+      {
+        "event": "Delivery attempt failed",
+        "date": "2026-06-14 16:44:00",
+        "location": "Utrecht"
+      }
+    ]
+  },
+  {
+    "tracking_number": "INV-STATUS-7",
+    "carrier_code": "usps",
+    "description": "Exception",
+    "status_code": 7
+  },
+  {
+    "tracking_number": "INV-STATUS-8",
+    "carrier_code": "amazon",
+    "description": "Info received, month-name date",
+    "status_code": 8,
+    "date_expected": "June 15, 2026 10:30"
+  },
+  {
+    "tracking_number": "INV-DRIFT-NUMSTR",
+    "carrier_code": "dhlexpress",
+    "description": "Numeric string status",
+    "status_code": "2",
+    "date_expected": "2026-06-15 08:00:00",
+    "date_expected_end": "2026-06-17 18:00:00"
+  },
+  {
+    "tracking_number": "INV-DRIFT-UNKNOWN",
+    "carrier_code": "dhl",
+    "description": "Unparseable status",
+    "status_code": "not-a-number"
+  },
+  {
+    "tracking_number": "INV-DRIFT-FORMAT",
+    "carrier_code": "dpd",
+    "description": "Ambiguous date format",
+    "status_code": 2,
+    "date_expected": "06.12.2026 14:30"
+  },
+  {
+    "tracking_number": "INV-UNKNOWN-CARRIER",
+    "carrier_code": "not-in-the-carrier-list",
+    "description": "Carrier code not in the list",
+    "status_code": 2
+  },
+  {
+    "tracking_number": "INV-EXTRA",
+    "carrier_code": "dhl",
+    "extra_information": "50733",
+    "description": "With extra information",
+    "status_code": 2,
+    "date_expected": "2026-06-15 14:00:00"
+  },
+  {
+    "tracking_number": "INV-NO-DESCRIPTION",
+    "carrier_code": "ups",
+    "status_code": 2
+  }
+]

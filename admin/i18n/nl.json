@@ -51,6 +51,7 @@
   "descDeliveryWindow": "Verwacht bezorgvenster; een venster over meerdere dagen toont aan beide kanten de datum.",
   "descDeliveryEstimate": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
   "descLastEvent": "Meest recente zendingsmelding van de vervoerder, met datum.",
+  "descLastLocation": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
   "descLastUpdated": "Moment waarop de zendinggegevens voor het laatst zijn gewijzigd - niet de laatste opvraging.",
   "descActiveCount": "Aantal pakketten dat nog niet is bezorgd.",
   "descTodayCount": "Aantal pakketten dat vandaag wordt verwacht.",

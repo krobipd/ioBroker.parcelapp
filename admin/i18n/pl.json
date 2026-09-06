@@ -51,6 +51,7 @@
   "descDeliveryWindow": "Przewidywane okno dostawy; okno obejmujące kilka dni zawiera datę po obu stronach.",
   "descDeliveryEstimate": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
   "descLastEvent": "Najnowsze zdarzenie śledzenia zgłoszone przez przewoźnika, wraz z datą.",
+  "descLastLocation": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
   "descLastUpdated": "Moment ostatniej zmiany danych śledzenia - nie ostatniego odpytania.",
   "descActiveCount": "Liczba przesyłek, które nie zostały jeszcze doręczone.",
   "descTodayCount": "Liczba przesyłek oczekiwanych dzisiaj.",

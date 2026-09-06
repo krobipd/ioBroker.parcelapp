@@ -51,6 +51,7 @@
   "descDeliveryWindow": "Expected delivery time window; a window spanning several days carries the date on both sides.",
   "descDeliveryEstimate": "Expected delivery in words - today, tomorrow or in a number of days.",
   "descLastEvent": "Most recent tracking event reported by the carrier, with its date.",
+  "descLastLocation": "Where the carrier last scanned the package - not a live position.",
   "descLastUpdated": "When the tracking data last changed - not when the adapter last polled.",
   "descActiveCount": "Number of packages that have not been delivered yet.",
   "descTodayCount": "Number of packages expected to arrive today.",

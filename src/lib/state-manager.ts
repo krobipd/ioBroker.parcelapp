@@ -1,11 +1,18 @@
 import { type AdapterInstance } from "@iobroker/adapter-core";
-import { coerceFiniteNumber, oneLine } from "./coerce";
-import { packageName, statusLabel, tName, tText } from "./i18n";
-import type { ParcelDelivery, ParcelEvent } from "./types";
+import { errText, oneLine } from "./coerce";
+import {
+  calculateCombinedWindow,
+  calculateDeliveryEstimate,
+  calculateDeliveryWindow,
+  extractLastLocation,
+  formatLastEvent,
+  isToday,
+  type DriftLogger,
+  type StatusedDelivery,
+} from "./delivery-view";
+import { packageName, statusLabel, tName } from "./i18n";
+import type { ParcelDelivery } from "./types";
 import { UNKNOWN_STATUS_CODE } from "./types";
-
-/** Status codes that have expected delivery date/time: 2=In Transit, 4=Out for Delivery, 8=Info Received */
-const TRACKABLE_STATUSES = new Set([2, 4, 8]);
 
 /**
  * Upper bound for the `deliveries.*` object-view range query: the highest BMP
@@ -61,14 +68,37 @@ export class StateManager {
 
   /**
    * L1: per-delivery-object memo for `parseStatus`. A poll parses the SAME
-   * delivery object at up to four sites (active filter, updateDelivery,
-   * updateSummary's isToday filter, combined window); memoizing keyed by the
-   * object means the parse — and its drift debug line — runs ONCE per delivery
+   * delivery object at several sites (main's active filter, updateDelivery,
+   * updateSummary's pre-pass); memoizing keyed by the object means the parse —
+   * and its drift debug line — runs ONCE per delivery
    * instead of per site. No reset needed: each poll's deliveries are fresh
    * objects (JSON.parse) and GC'd afterwards, and nothing holds a long-lived
    * delivery reference (idOwner/failedDeliveries/knownDeliveryIds store strings).
    */
   private readonly statusMemo = new WeakMap<ParcelDelivery, number>();
+
+  /**
+   * v0.11.2 (B2): raw date values already reported as drift during this poll. The same
+   * unparseable string is seen up to four times per poll (window, estimate, today filter,
+   * combined window); without this the log would carry four identical lines per package. Cleared
+   * in `resetPollState()`, the same way the collision tracker is.
+   */
+  private readonly driftReported = new Set<string>();
+
+  /**
+   * Trace sink handed to `delivery-view`: one debug line per distinct drift message per poll.
+   * The parser itself stays pure — the de-duplication lives here, next to the poll lifecycle
+   * that defines the window.
+   */
+  private readonly viewLog: DriftLogger = {
+    debug: (message: string): void => {
+      if (this.driftReported.has(message)) {
+        return;
+      }
+      this.driftReported.add(message);
+      this.adapter.log.debug(message);
+    },
+  };
 
   /**
    * @param adapter The ioBroker adapter instance
@@ -209,6 +239,7 @@ export class StateManager {
    */
   resetPollState(): void {
     this.idOwner.clear();
+    this.driftReported.clear();
   }
 
   /**
@@ -269,10 +300,10 @@ export class StateManager {
       statusText = `Unknown (${statusCode})`;
     }
 
-    const deliveryWindow = this.calculateDeliveryWindow(delivery, statusCode);
-    const deliveryEstimate = this.calculateDeliveryEstimate(delivery, statusCode);
-    const lastEvent = this.formatLastEvent(delivery);
-    const lastLocation = this.extractLastLocation(delivery);
+    const deliveryWindow = calculateDeliveryWindow(delivery, statusCode, this.viewLog);
+    const deliveryEstimate = calculateDeliveryEstimate(delivery, statusCode, this.viewLog);
+    const lastEvent = formatLastEvent(delivery);
+    const lastLocation = extractLastLocation(delivery);
 
     // v0.10.0 (M5): ONE definition list drives the writes AND the lastUpdated
     // decision — the former parallel JSON.stringify signature array was a
@@ -311,7 +342,7 @@ export class StateManager {
         tName("descDeliveryEstimate"),
       ],
       [`${devicePath}.lastEvent`, tName("lastEvent"), "string", "text", lastEvent, tName("descLastEvent")],
-      [`${devicePath}.lastLocation`, tName("lastLocation"), "string", "text", lastLocation, undefined],
+      [`${devicePath}.lastLocation`, tName("lastLocation"), "string", "text", lastLocation, tName("descLastLocation")],
     ];
     const changed = await Promise.all(
       stateDefs.map(([id, name, type, role, val, desc]) => this.createAndSet(id, name, type, role, val, desc)),
@@ -353,7 +384,14 @@ export class StateManager {
    * @param activeDeliveries Only active (non-delivered) deliveries
    */
   async updateSummary(activeDeliveries: ParcelDelivery[]): Promise<void> {
-    const todayDeliveries = activeDeliveries.filter(d => this.isToday(d, this.parseStatus(d)));
+    // Parse the status ONCE per delivery here and carry it along — the today filter and the
+    // combined window both need it, and `calculateCombinedWindow` no longer has to reach back
+    // into the state manager for it (v0.11.2).
+    const statused: StatusedDelivery[] = activeDeliveries.map(d => ({
+      delivery: d,
+      statusCode: this.parseStatus(d),
+    }));
+    const todayDeliveries = statused.filter(e => isToday(e.delivery, e.statusCode, this.viewLog));
     // v0.4.3 (E1): trace summary refresh — ~144/day at the default poll
     // interval, kept short (counts only).
     this.adapter.log.debug(
@@ -382,7 +420,7 @@ export class StateManager {
         tName("summaryDeliveryWindow"),
         "string",
         "text",
-        this.calculateCombinedWindow(todayDeliveries),
+        calculateCombinedWindow(todayDeliveries, this.viewLog),
         tName("descSummaryDeliveryWindow"),
       ),
     ]);
@@ -428,309 +466,64 @@ export class StateManager {
     // v0.4.2 (S1): collect first, then delete in parallel — capped in batches
     // (v0.10.0, I2) like the update fan-out in main.ts.
     const toDelete = [...this.knownDeliveryIds].filter(pkgId => !keepSet.has(pkgId));
-    const toDeleteSet = new Set(toDelete);
 
+    // v0.11.2: a delete that FAILED must change nothing, and a delete that landed must clear
+    // EVERY cache in the same step. Before this, `deviceEnsured` was pruned inside the loop while
+    // the `createdIds` prune sat after it — one rejecting `delObjectAsync` aborted the `Promise.all`,
+    // so the second prune never ran. A package that came back afterwards had its device object
+    // re-created but NOT its state objects (`ensureStateObject` still found them in `createdIds`),
+    // while `createAndSet` wrote the values anyway: datapoints without name, type, role or
+    // description — for the rest of the process, measured over four polls without healing.
+    // `allSettled` instead of `all` for the same reason: one broker failure must not cancel the
+    // remaining deletes of this poll.
+    const deleted = new Set<string>();
+    // Kept as a real Error: it is re-thrown below, and a rejected promise may carry anything.
+    let deleteError: Error | undefined;
     for (let start = 0; start < toDelete.length; start += DELETE_BATCH_SIZE) {
       const batch = toDelete.slice(start, start + DELETE_BATCH_SIZE);
-      await Promise.all(
+      const results = await Promise.allSettled(
         batch.map(async pkgId => {
           const relativeId = `deliveries.${pkgId}`;
           await this.adapter.delObjectAsync(relativeId, { recursive: true });
           this.adapter.log.debug(`Removed stale delivery: ${relativeId}`);
-          this.deviceEnsured.delete(pkgId);
+          return pkgId;
         }),
       );
+      for (const result of results) {
+        if (result.status === "fulfilled") {
+          deleted.add(result.value);
+        } else if (deleteError === undefined) {
+          deleteError = result.reason instanceof Error ? result.reason : new Error(errText(result.reason));
+        }
+      }
     }
 
-    // v0.9.0 (S2): prune createdIds for every removed package in ONE pass over
-    // the set — O(created). A createdId is `deliveries.<pkgId>` or
-    // `deliveries.<pkgId>.<state>` — extract the pkgId and drop it if removed.
-    if (toDeleteSet.size > 0) {
+    // v0.9.0 (S2): prune the caches for every REMOVED package in ONE pass over the set —
+    // O(created). A createdId is `deliveries.<pkgId>` or `deliveries.<pkgId>.<state>`, so the
+    // pkgId is extracted. Both caches are keyed on the same `deleted` set (v0.11.2).
+    if (deleted.size > 0) {
+      for (const pkgId of deleted) {
+        this.deviceEnsured.delete(pkgId);
+      }
       for (const id of [...this.createdIds]) {
-        if (toDeleteSet.has(StateManager.pkgIdOf(id))) {
+        if (deleted.has(StateManager.pkgIdOf(id))) {
           this.createdIds.delete(id);
         }
       }
     }
+    // A package whose delete failed still exists in the object DB. It stays KNOWN so the next
+    // poll retries it — dropping it here would leave an orphan device nothing ever cleans up.
     this.knownDeliveryIds = new Set(keepSet);
-  }
-
-  /**
-   * Parse a parcel.app expected-date string to LOCAL epoch-millis.
-   *
-   * The API delivers `date_expected`/`date_expected_end` "without specific
-   * timezone information"; parse with explicit local calendar components so the
-   * value lands on the intended local day/time (`new Date("YYYY-MM-DD")` would
-   * be UTC midnight). `hasTime` is false for a bare date or a midnight time
-   * (a day, not an hour-window). Ambiguous carrier formats (dotted, weekday
-   * names) are deliberately NOT guessed — they return null rather than risk a
-   * wrong date.
-   *
-   * @param value Raw date/time string from the API
-   */
-  private static parseExpectedToMs(value: unknown): { ms: number; hasTime: boolean } | null {
-    if (typeof value !== "string") {
-      return null;
-    }
-    const m = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/.exec(value.trim());
-    if (!m) {
-      return null;
-    }
-    const hasClock = m[4] !== undefined;
-    const year = Number(m[1]);
-    const month = Number(m[2]); // 1-12
-    const day = Number(m[3]);
-    const hour = hasClock ? Number(m[4]) : 0;
-    const min = hasClock ? Number(m[5]) : 0;
-    const sec = m[6] !== undefined ? Number(m[6]) : 0;
-    // Range-validate the components. The regex only checks digit COUNT, not
-    // value range, and `new Date(2026, 12, 40, 25, …)` silently ROLLS OVER to a
-    // wrong date (getTime() is NOT NaN). Reject out-of-range rather than guess.
-    if (month < 1 || month > 12 || day < 1 || day > 31 || hour > 23 || min > 59 || sec > 59) {
-      return null;
-    }
-    const date = new Date(year, month - 1, day, hour, min, sec);
-    // Catch day-of-month overflow the range check misses (Feb 30, Apr 31, …):
-    // a real date round-trips the month and day it was built from.
-    if (Number.isNaN(date.getTime()) || date.getMonth() !== month - 1 || date.getDate() !== day) {
-      return null;
-    }
-    const hasTime = hasClock && !(hour === 0 && min === 0 && sec === 0);
-    return { ms: date.getTime(), hasTime };
-  }
-
-  /**
-   * Resolve a delivery's expected window to epoch-millis bounds. Returns null
-   * for non-trackable status or when there is no usable start time.
-   *
-   * Prefers the Unix timestamp fields; for carriers that report the window only
-   * as a date/time string (`date_expected`/`date_expected_end`) it falls back to
-   * those — but only when the string carries a real time-of-day (a bare date or
-   * midnight is a day, not an hour-window). Carrier-agnostic.
-   *
-   * @param delivery The delivery data
-   * @param statusCode Pre-parsed status code
-   */
-  private windowBoundsMs(delivery: ParcelDelivery, statusCode: number): { start: number; end: number | null } | null {
-    if (!TRACKABLE_STATUSES.has(statusCode)) {
-      return null;
-    }
-    const toMs = (timestamp: unknown): number | null => {
-      const ts = coerceFiniteNumber(timestamp);
-      if (ts === null || ts <= 0) {
-        return null;
+    for (const pkgId of toDelete) {
+      if (!deleted.has(pkgId)) {
+        this.knownDeliveryIds.add(pkgId);
       }
-      const ms = ts * 1000;
-      return Number.isNaN(new Date(ms).getTime()) ? null : ms;
-    };
-    const dateMs = (value: unknown): number | null => {
-      const parsed = StateManager.parseExpectedToMs(value);
-      return parsed && parsed.hasTime ? parsed.ms : null;
-    };
-    const start = toMs(delivery.timestamp_expected) ?? dateMs(delivery.date_expected);
-    if (start === null) {
-      return null;
     }
-    const end = toMs(delivery.timestamp_expected_end) ?? dateMs(delivery.date_expected_end);
-    return { start, end };
-  }
-
-  /**
-   * Format epoch-millis as local HH:MM.
-   *
-   * @param ms Epoch milliseconds
-   */
-  private static formatHHMM(ms: number): string {
-    const d = new Date(ms);
-    return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
-  }
-
-  /**
-   * Local "MM-DD HH:MM" — used when a window spans more than one calendar day.
-   *
-   * @param ms Epoch milliseconds
-   */
-  private static formatDateHHMM(ms: number): string {
-    const d = new Date(ms);
-    const mm = (d.getMonth() + 1).toString().padStart(2, "0");
-    const dd = d.getDate().toString().padStart(2, "0");
-    return `${mm}-${dd} ${StateManager.formatHHMM(ms)}`;
-  }
-
-  /**
-   * Whether two epoch-millis fall on the same LOCAL calendar day.
-   *
-   * @param aMs First epoch milliseconds
-   * @param bMs Second epoch milliseconds
-   */
-  private static sameLocalDay(aMs: number, bMs: number): boolean {
-    const a = new Date(aMs);
-    const b = new Date(bMs);
-    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-  }
-
-  /**
-   * Format a start→end window as a local string. A real end (> start) on the
-   * SAME day renders "HH:MM - HH:MM"; an end on a LATER day carries the date on
-   * both sides ("12-06 14:30 - 12-08 18:30") so a multi-day window is not shown
-   * as if it were same-day. No end, or an end <= start (reversed/equal), renders
-   * just the start.
-   *
-   * @param startMs Window start (epoch ms)
-   * @param endMs Window end (epoch ms) or null
-   */
-  private static formatWindow(startMs: number, endMs: number | null): string {
-    if (endMs === null || endMs <= startMs) {
-      return StateManager.formatHHMM(startMs);
+    if (deleteError !== undefined) {
+      // main.ts turns this into `State maintenance failed … retrying next poll`. With the caches
+      // consistent, that promise now actually holds.
+      throw deleteError;
     }
-    return StateManager.sameLocalDay(startMs, endMs)
-      ? `${StateManager.formatHHMM(startMs)} - ${StateManager.formatHHMM(endMs)}`
-      : `${StateManager.formatDateHHMM(startMs)} - ${StateManager.formatDateHHMM(endMs)}`;
-  }
-
-  /**
-   * Calculate a delivery time-window string from the resolved expected bounds.
-   *
-   * @param delivery The delivery data
-   * @param statusCode Pre-parsed status code
-   */
-  private calculateDeliveryWindow(delivery: ParcelDelivery, statusCode: number): string {
-    const bounds = this.windowBoundsMs(delivery, statusCode);
-    if (!bounds) {
-      return "";
-    }
-    return StateManager.formatWindow(bounds.start, bounds.end);
-  }
-
-  /**
-   * Days from today to the expected delivery date. Returns null when the
-   * delivery has no usable expected date or is in a non-trackable status.
-   *
-   * @param delivery The delivery data
-   * @param statusCode Pre-parsed status code
-   */
-  private computeDiffDays(delivery: ParcelDelivery, statusCode: number): number | null {
-    if (!TRACKABLE_STATUSES.has(statusCode)) {
-      return null;
-    }
-
-    let expectedDate: Date | null = null;
-    const ts = coerceFiniteNumber(delivery.timestamp_expected);
-    if (ts !== null && ts > 0) {
-      expectedDate = new Date(ts * 1000);
-    } else {
-      // Shares the window's date parser (one source of format-truth). Only the
-      // calendar day matters here, so the time-of-day flag is ignored; the
-      // local-component parse keeps the day timezone-stable.
-      const parsed = StateManager.parseExpectedToMs(delivery.date_expected);
-      expectedDate = parsed ? new Date(parsed.ms) : null;
-    }
-
-    if (!expectedDate || Number.isNaN(expectedDate.getTime())) {
-      return null;
-    }
-
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const expectedStart = new Date(expectedDate.getFullYear(), expectedDate.getMonth(), expectedDate.getDate());
-    return Math.round((expectedStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24));
-  }
-
-  /**
-   * Calculate human-readable delivery estimate.
-   *
-   * @param delivery The delivery data
-   * @param statusCode Pre-parsed status code
-   */
-  private calculateDeliveryEstimate(delivery: ParcelDelivery, statusCode: number): string {
-    const diffDays = this.computeDiffDays(delivery, statusCode);
-    if (diffDays === null) {
-      return "";
-    }
-    if (diffDays < 0) {
-      return tText("estimateOverdue");
-    }
-    if (diffDays === 0) {
-      return tText("estimateToday");
-    }
-    if (diffDays === 1) {
-      return tText("estimateTomorrow");
-    }
-    return tText("estimateDays", diffDays);
-  }
-
-  /**
-   * Whether the delivery is expected today. Language-agnostic, used by the
-   * summary filter so `todayCount` works across all languages.
-   *
-   * @param delivery The delivery data
-   * @param statusCode Pre-parsed status code
-   */
-  private isToday(delivery: ParcelDelivery, statusCode: number): boolean {
-    return this.computeDiffDays(delivery, statusCode) === 0;
-  }
-
-  private getLatestEvent(delivery: ParcelDelivery): ParcelEvent | null {
-    if (!Array.isArray(delivery.events) || delivery.events.length === 0) {
-      return null;
-    }
-    const latest = delivery.events[0];
-    if (!latest || typeof latest !== "object") {
-      return null;
-    }
-    return latest;
-  }
-
-  private formatLastEvent(delivery: ParcelDelivery): string {
-    const latest = this.getLatestEvent(delivery);
-    if (!latest) {
-      return "";
-    }
-    const parts: string[] = [];
-    if (typeof latest.event === "string" && latest.event.length > 0) {
-      parts.push(latest.event);
-    }
-    if (typeof latest.date === "string" && latest.date.length > 0) {
-      parts.push(latest.date);
-    }
-    return parts.join(" - ");
-  }
-
-  private extractLastLocation(delivery: ParcelDelivery): string {
-    const latest = this.getLatestEvent(delivery);
-    if (!latest) {
-      return "";
-    }
-    return typeof latest.location === "string" ? latest.location : "";
-  }
-
-  /**
-   * Combined delivery window for today's packages: earliest start to latest
-   * end across all windows. Computed from the raw millis (not the formatted
-   * strings) so the latest end always wins — fixes the earlier bug where the
-   * end of the latest-*starting* window was used instead of the maximum end.
-   *
-   * @param todayDeliveries Deliveries expected today
-   */
-  private calculateCombinedWindow(todayDeliveries: ParcelDelivery[]): string {
-    const bounds = todayDeliveries
-      .map(d => this.windowBoundsMs(d, this.parseStatus(d)))
-      .filter((b): b is { start: number; end: number | null } => b !== null);
-
-    if (bounds.length === 0) {
-      return "";
-    }
-
-    // L3: fold instead of Math.min/max(...spread). The bounds array is capped
-    // by the 1 MiB response limit, but a spread over a large array can still hit
-    // V8's argument-count limit (RangeError); reduce is O(n) and unbounded-safe
-    // — consistent with beszel's computeMaxTemp hardening.
-    const minStart = bounds.reduce((m, b) => (b.start < m ? b.start : m), bounds[0].start);
-    const maxEnd = bounds.reduce((m, b) => {
-      const e = b.end ?? b.start;
-      return e > m ? e : m;
-    }, bounds[0].end ?? bounds[0].start);
-    return StateManager.formatWindow(minStart, maxEnd);
   }
 
   /**

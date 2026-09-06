@@ -37,6 +37,25 @@ Gib ihr 45 bis 90 Minuten. parcel.app liefert die Sendungsliste aus einem server
 Zwischenspeicher und braucht so lange, bis eine frisch hinzugefügte Sendung Ereignisse trägt. Der
 Adapter kann das nicht verkürzen; häufigeres Abfragen verbrennt nur das Anfragebudget.
 
+## `deliveryWindow` und `deliveryEstimate` bleiben leer
+
+Dafür gibt es drei verschiedene Gründe, und das Debug-Log unterscheidet sie:
+
+- **Die Sendung ist nicht im Status 2, 4 oder 8.** Nur _Unterwegs_, _In Zustellung_ und
+  _Registriert_ können ein voraussichtliches Zustelldatum tragen. Es ist nichts kaputt.
+- **Der Zusteller meldet gar kein Datum.** Häufig — viele Zusteller nennen erst kurz vor der
+  Zustellung eines. Es wird nichts protokolliert, weil nichts schiefgelaufen ist.
+- **Der Zusteller meldet ein Datum, das der Adapter nicht liest.** parcel.app reicht die
+  Schreibweise des Zustellers unverändert durch, und die Formate unterscheiden sich. Der Adapter
+  liest `2026-09-06 14:30:00` (die dokumentierte Vorgabe, mit oder ohne Uhrzeit) und
+  `September 6, 2026 14:30`. Mehrdeutige Formen wie `06.09.2026` verweigert er bewusst — das kann
+  der 6. September oder der 9. Juni sein, und ein falsches Datum ist schlimmer als keins. Stelle
+  die Instanz auf Protokollstufe `debug` und suche nach `expected-date drift`: die Zeile nennt den
+  genau abgelehnten Wert. Melde ihn bitte mit dieser Zeile, dann kann das Format ergänzt werden.
+
+Ein reines Datum ohne Uhrzeit (oder Mitternacht) ist ein Zustell*tag*, kein Stundenfenster —
+`deliveryWindow` bleibt dann leer, während `deliveryEstimate` weiterhin _heute_ oder _morgen_ sagt.
+
 ## Eine Sendung zeigt „Unbekannt (-1)"
 
 parcel.app hat einen Statuswert geschickt, den der Adapter nicht deuten konnte — vermutlich einen

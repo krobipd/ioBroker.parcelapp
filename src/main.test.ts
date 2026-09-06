@@ -111,6 +111,7 @@ function internalOf(adapter: ParcelappAdapter): {
   failedDeliveries: Set<string>;
   addTimestamps: number[];
   testClients: Set<{ cancelAll: () => void }>;
+  makeClient: (apiKey: string) => FakeClient;
   pollTimer: unknown;
   config: Record<string, unknown>;
   log: {
@@ -1462,6 +1463,36 @@ describe("ParcelappAdapter onMessage", () => {
     });
     expect(i.sendTo).toHaveBeenCalledWith("x", "checkConnection", { error: "boom" }, expect.anything());
     expect(i.testClients.size).toBe(0); // finally cleaned up
+  });
+
+  /**
+   * v0.11.2. The in-flight flag used to be raised BEFORE the client was built and registered.
+   * Anything throwing between those two points latched it for the rest of the process, and the
+   * admin button then answered "a test is already running" forever — with no log line, the same
+   * silent-dead-button shape as the v0.10.3 message box. The construction now sits inside the try.
+   */
+  it("a throwing client factory does not latch the in-flight flag — the next test still runs", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    const healthy = i.makeClient;
+    i.makeClient = (): never => {
+      throw new Error("factory exploded");
+    };
+    const msg = (): unknown => ({
+      command: "checkConnection",
+      from: "x",
+      callback: { id: 1 },
+      message: { apiKey: "0123456789abcdef" },
+    });
+    await i.onMessage(msg());
+    expect(i.sendTo).toHaveBeenCalledWith("x", "checkConnection", { error: "factory exploded" }, expect.anything());
+    expect(i.testClients.size).toBe(0);
+
+    // Factory recovers: the very next test must go through instead of being refused.
+    i.makeClient = healthy;
+    client.testConnection.mockResolvedValueOnce({ success: true, message: "ok" });
+    await i.onMessage(msg());
+    expect(i.sendTo).toHaveBeenCalledWith("x", "checkConnection", { result: "ok" }, expect.anything());
   });
 
   it("ignores broadcasts without a callback instead of answering into the void", async () => {

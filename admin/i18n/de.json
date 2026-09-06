@@ -51,6 +51,7 @@
   "descDeliveryWindow": "Erwartetes Zustellfenster; ein über mehrere Tage reichendes Fenster trägt auf beiden Seiten das Datum.",
   "descDeliveryEstimate": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
   "descLastEvent": "Jüngste Sendungsmeldung des Zustellers mit Datum.",
+  "descLastLocation": "Wo der Zusteller die Sendung zuletzt erfasst hat - keine Live-Position.",
   "descLastUpdated": "Zeitpunkt der letzten Änderung der Sendungsdaten - nicht der letzte Abruf.",
   "descActiveCount": "Anzahl der Pakete, die noch nicht zugestellt sind.",
   "descTodayCount": "Anzahl der Pakete, die heute erwartet werden.",

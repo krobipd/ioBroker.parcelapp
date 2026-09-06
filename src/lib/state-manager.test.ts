@@ -1787,6 +1787,142 @@ describe("StateManager", () => {
       // And the states are back.
       expect(adapter.states.get(`deliveries.${pkgId}.carrier`)?.val).toBe("DHL");
     });
+
+    /**
+     * v0.11.2. Measured defect: `deviceEnsured` was pruned INSIDE the delete loop while the
+     * `createdIds` prune sat after it. One rejecting `delObjectAsync` aborted the `Promise.all`,
+     * so the second prune never ran — and a package that came back got its device object
+     * re-created but not its state OBJECTS, while the VALUES were written anyway. The result was
+     * a datapoint without name, type, role or description that no later poll repaired.
+     *
+     * These tests only bite when the delete really rejects; the shared mock never fails, so each
+     * one installs its own failing `delObjectAsync`.
+     */
+    describe("a delete that fails (v0.11.2)", () => {
+      /**
+       * Replaces delObjectAsync with one that rejects for exactly one id.
+       *
+       * @param adapter Mock adapter to patch
+       * @param failingId Relative object id whose delete must reject
+       * @returns the pristine delObjectAsync, so a test can let the broker recover
+       */
+      function failDeleteFor(
+        adapter: MockAdapter,
+        failingId: string,
+      ): (id: string, opts?: { recursive: boolean }) => Promise<void> {
+        const original = adapter.delObjectAsync;
+        adapter.delObjectAsync = (id: string, opts?: { recursive: boolean }): Promise<void> =>
+          id === failingId ? Promise.reject(new Error("objects db closed")) : original(id, opts);
+        return original;
+      }
+
+      it("leaves the caches of a SUCCESSFULLY removed package consistent, so a re-add rebuilds its objects", async () => {
+        const adapter = createMockAdapter();
+        const manager = new StateManager(adapter as never);
+        const gone = makeDelivery({ tracking_number: "TRK_GONE" });
+        const stuck = makeDelivery({ tracking_number: "TRK_STUCK" });
+        const goneId = manager.packageId(gone);
+        const stuckId = manager.packageId(stuck);
+        await updateDeliveryT(manager, gone, "DHL");
+        await updateDeliveryT(manager, stuck, "DHL");
+        failDeleteFor(adapter, `deliveries.${stuckId}`);
+
+        await expect(manager.cleanupDeliveries([])).rejects.toThrow("objects db closed");
+
+        // The one that really went is gone from the tree ...
+        expect(adapter.objects.has(`deliveries.${goneId}.carrier`)).toBe(false);
+        // ... and comes back COMPLETE — object first, not just a value.
+        await updateDeliveryT(manager, gone, "DHL");
+        expect(adapter.objects.has(`deliveries.${goneId}.carrier`)).toBe(true);
+        expect(adapter.states.get(`deliveries.${goneId}.carrier`)?.val).toBe("DHL");
+      });
+
+      it("keeps a package whose delete failed KNOWN, so the next poll retries it", async () => {
+        const adapter = createMockAdapter();
+        const manager = new StateManager(adapter as never);
+        const stuck = makeDelivery({ tracking_number: "TRK_STUCK" });
+        const stuckId = manager.packageId(stuck);
+        await updateDeliveryT(manager, stuck, "DHL");
+        const healthyDelete = failDeleteFor(adapter, `deliveries.${stuckId}`);
+        await expect(manager.cleanupDeliveries([])).rejects.toThrow("objects db closed");
+        // Object still there — the delete did not land.
+        expect(adapter.objects.has(`deliveries.${stuckId}`)).toBe(true);
+
+        // Broker recovers; the retry must still target the package.
+        const retried: string[] = [];
+        adapter.delObjectAsync = (id: string, opts?: { recursive: boolean }): Promise<void> => {
+          retried.push(id);
+          return healthyDelete(id, opts);
+        };
+        await manager.cleanupDeliveries([]);
+        expect(retried).toContain(`deliveries.${stuckId}`);
+        expect(adapter.objects.has(`deliveries.${stuckId}`)).toBe(false);
+      });
+
+      /**
+       * js-controller rejects with the STRING constant `tools.ERRORS.ERROR_DB_CLOSED`, not with an
+       * Error object — and that is exactly the objects-DB failure this whole block is about. The
+       * cast carries the runtime truth past the linter's "reject an Error" rule without switching
+       * the rule off: the value here really is a plain string.
+       */
+      const DB_CLOSED = "Database is closed" as unknown as Error;
+
+      it("turns a non-Error rejection into a real Error instead of throwing a bare value", async () => {
+        const adapter = createMockAdapter();
+        const manager = new StateManager(adapter as never);
+        const stuck = makeDelivery({ tracking_number: "TRK_STRINGFAIL" });
+        const stuckId = manager.packageId(stuck);
+        await updateDeliveryT(manager, stuck, "DHL");
+        const original = adapter.delObjectAsync;
+        adapter.delObjectAsync = (id: string, opts?: { recursive: boolean }): Promise<void> =>
+          id === `deliveries.${stuckId}` ? Promise.reject(DB_CLOSED) : original(id, opts);
+
+        // `toThrow` alone would NOT prove anything here: it matches a thrown string just as
+        // happily as an Error (measured — the mutation "drop the wrapper" survived that check).
+        // What has to hold is that main.ts receives a real Error, so errText() finds `.message`.
+        const reason: unknown = await manager.cleanupDeliveries([]).then(
+          () => undefined,
+          (err: unknown) => err,
+        );
+        expect(reason).toBeInstanceOf(Error);
+        expect((reason as Error).message).toBe("Database is closed");
+      });
+
+      it("reports the FIRST failure when several deletes fail in one poll", async () => {
+        const adapter = createMockAdapter();
+        const manager = new StateManager(adapter as never);
+        const a = makeDelivery({ tracking_number: "TRK_FAIL_A" });
+        const b = makeDelivery({ tracking_number: "TRK_FAIL_B" });
+        const aId = manager.packageId(a);
+        const bId = manager.packageId(b);
+        await updateDeliveryT(manager, a, "DHL");
+        await updateDeliveryT(manager, b, "DHL");
+        adapter.delObjectAsync = (id: string): Promise<void> =>
+          Promise.reject(new Error(id === `deliveries.${aId}` ? "first failure" : "second failure"));
+
+        await expect(manager.cleanupDeliveries([])).rejects.toThrow("first failure");
+        // Neither landed, so both stay known and are retried next poll.
+        expect(adapter.objects.has(`deliveries.${aId}`)).toBe(true);
+        expect(adapter.objects.has(`deliveries.${bId}`)).toBe(true);
+      });
+
+      it("still deletes the rest of the batch when one delete rejects", async () => {
+        const adapter = createMockAdapter();
+        const manager = new StateManager(adapter as never);
+        const deliveries = ["A", "B", "C"].map(t => makeDelivery({ tracking_number: `TRK_${t}` }));
+        const ids = deliveries.map(d => manager.packageId(d));
+        for (const d of deliveries) {
+          await updateDeliveryT(manager, d, "DHL");
+        }
+        failDeleteFor(adapter, `deliveries.${ids[0]}`);
+
+        await expect(manager.cleanupDeliveries([])).rejects.toThrow("objects db closed");
+
+        expect(adapter.objects.has(`deliveries.${ids[0]}`)).toBe(true);
+        expect(adapter.objects.has(`deliveries.${ids[1]}`)).toBe(false);
+        expect(adapter.objects.has(`deliveries.${ids[2]}`)).toBe(false);
+      });
+    });
   });
 
   /**
@@ -1846,7 +1982,10 @@ describe("StateManager", () => {
       await updateDeliveryT(manager, delivery, "DHL");
 
       // The name says it all for these — an invented sentence would be worse than none.
-      for (const state of ["carrier", "status", "description", "trackingNumber", "lastLocation"]) {
+      // v0.11.2: `lastLocation` LEFT this list. "Last Location" reads like a live position, and it
+      // is not — it is the last place the carrier scanned the package. That is a real explanation,
+      // not invented filler, so it moved to the described group below.
+      for (const state of ["carrier", "status", "description", "trackingNumber"]) {
         const common = adapter.objects.get(`deliveries.${pkgId}.${state}`)!.common;
         expect(common.desc, `${state} must not carry an invented description`).toBeUndefined();
       }
@@ -1859,6 +1998,7 @@ describe("StateManager", () => {
         "deliveryWindow",
         "deliveryEstimate",
         "lastEvent",
+        "lastLocation",
         "lastUpdated",
       ]) {
         const common = adapter.objects.get(`deliveries.${pkgId}.${state}`)!.common;
@@ -2244,6 +2384,66 @@ describe("StateManager", () => {
       await updateDeliveryT(manager, delivery, "DHL");
       const pkgId = manager.packageId(delivery);
       expect(adapter.objects.get(`deliveries.${pkgId}`)!.common.name).toBe("My parcel");
+    });
+  });
+
+  /**
+   * v0.11.2 (audit B2). The date parser itself is pure and reports every value it cannot use;
+   * the de-duplication lives here, because only the state manager knows where a poll begins.
+   * Without it the SAME unusable value would be logged up to four times per package per poll
+   * (window, estimate, today filter, combined window) — noise that hides the signal it exists for.
+   */
+  describe("expected-date drift is reported once per poll (v0.11.2)", () => {
+    /**
+     * Redirects the mock adapter's debug log into an array.
+     *
+     * @param adapter Mock adapter to patch
+     * @returns the collected lines
+     */
+    function captureDebug(adapter: MockAdapter): string[] {
+      const lines: string[] = [];
+      adapter.log.debug = (msg: string): void => {
+        lines.push(msg);
+      };
+      return lines;
+    }
+
+    it("logs an unusable date ONCE although four call sites ask for it", async () => {
+      const adapter = createMockAdapter();
+      const manager = new StateManager(adapter as never);
+      const lines = captureDebug(adapter);
+      const delivery = makeDelivery({ tracking_number: "TRK_FMT", date_expected: "06.12.2025 14:30" });
+
+      manager.resetPollState();
+      await updateDeliveryT(manager, delivery, "DHL");
+      await manager.updateSummary([delivery]);
+
+      expect(lines.filter(l => l.includes("unsupported format"))).toHaveLength(1);
+    });
+
+    it("reports it again on the NEXT poll — a lasting drift must not fall silent", async () => {
+      const adapter = createMockAdapter();
+      const manager = new StateManager(adapter as never);
+      const lines = captureDebug(adapter);
+      const delivery = makeDelivery({ tracking_number: "TRK_FMT", date_expected: "06.12.2025 14:30" });
+
+      manager.resetPollState();
+      await updateDeliveryT(manager, delivery, "DHL");
+      manager.resetPollState();
+      await updateDeliveryT(manager, delivery, "DHL");
+
+      expect(lines.filter(l => l.includes("unsupported format"))).toHaveLength(2);
+    });
+
+    it("says nothing when the carrier simply reports no date", async () => {
+      const adapter = createMockAdapter();
+      const manager = new StateManager(adapter as never);
+      const lines = captureDebug(adapter);
+
+      manager.resetPollState();
+      await updateDeliveryT(manager, makeDelivery({ tracking_number: "TRK_NODATE" }), "DHL");
+
+      expect(lines.filter(l => l.includes("expected-date drift"))).toEqual([]);
     });
   });
 });

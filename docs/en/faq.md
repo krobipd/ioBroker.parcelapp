@@ -36,6 +36,25 @@ Give it 45 to 90 minutes. parcel.app serves the delivery list from a server-side
 that long before a freshly added shipment carries events. The adapter cannot shorten that; polling
 more often only wastes the request budget.
 
+## `deliveryWindow` and `deliveryEstimate` stay empty
+
+Three different reasons, and the debug log tells them apart:
+
+- **The package is not in status 2, 4 or 8.** Only _In Transit_, _Out for Delivery_ and
+  _Info Received_ can carry an expected delivery date. Nothing is wrong.
+- **The carrier reports no date at all.** Common — many carriers only give one shortly before
+  delivery. Nothing is logged, because nothing went wrong.
+- **The carrier reports a date the adapter does not read.** parcel.app passes the carrier's own
+  wording through, and the formats vary. The adapter reads `2026-09-06 14:30:00` (the documented
+  default, with or without a time) and `September 6, 2026 14:30`. It deliberately refuses
+  ambiguous forms such as `06.09.2026` — that could be the 6th of September or the 9th of June,
+  and a wrong date is worse than none. Set the instance log level to `debug` and look for
+  `expected-date drift`: the line names the exact value that was rejected. Please report it,
+  with that line, and the format can be added.
+
+A bare date without a time (or midnight) is a delivery _day_, not an hour window, so
+`deliveryWindow` stays empty while `deliveryEstimate` still says _today_ or _tomorrow_.
+
 ## A package shows "Unknown (-1)"
 
 parcel.app sent a status value the adapter could not interpret — most likely a new status code

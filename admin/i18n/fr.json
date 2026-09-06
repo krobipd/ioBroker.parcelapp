@@ -51,6 +51,7 @@
   "descDeliveryWindow": "Créneau de livraison prévu ; un créneau sur plusieurs jours porte la date de chaque côté.",
   "descDeliveryEstimate": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
   "descLastEvent": "Dernier événement de suivi communiqué par le transporteur, avec sa date.",
+  "descLastLocation": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
   "descLastUpdated": "Moment du dernier changement des données de suivi - pas de la dernière interrogation.",
   "descActiveCount": "Nombre de colis qui ne sont pas encore livrés.",
   "descTodayCount": "Nombre de colis attendus aujourd'hui.",
