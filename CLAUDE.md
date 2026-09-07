@@ -33,7 +33,7 @@ src/lib/state-manager.ts → NUR noch Broker-Arbeit: State/Objekt-CRUD + Cleanup
 src/lib/delivery-view.ts → v0.12.0 (A1): reine Darstellungs-Logik ohne Broker-Berührung — Datumsparser (zwei unmehrdeutige Formate, jede Ablehnung mit Drift-Zeile), Fenster, Schätzung, isToday, Gesamtfenster, letztes Ereignis/Ort. Frei testbar ohne Adapter-Attrappe
 src/lib/i18n.ts          → tName/tText/statusLabel/packageName: type-safe Wrapper (keys aus admin/i18n/en.json; Status-Labels status_0…status_8)
 test/self-explaining.json → Datenpunkte, deren Name die ganze Aussage IST (Muster → englische Begründung). Quelle der Beschreibungs-Entscheidung für das Flotten-Gate D08 UND für den desc-Test in state-manager.test.ts — nie eine zweite Liste danebenlegen
-test/inventory.js        → v0.12.0 (K1): Objekt-Inventar aus Fixtures (test/fixtures/inventory/) über ALLE Statuscodes + Fenster-Formen; die Fixtures erreichen den Adapter über `inventory-https-hook.cjs` (NODE_OPTIONS), der jede api.parcel.app-Anfrage auf den lokalen Wegwerf-Server umlenkt und jeden anderen Host ABLEHNT — der Produktivcode bleibt ohne Test-Naht. ⚠️ `npm run build` MUSS vorher laufen (der Vorlauf tut das als D05); sonst misst der Lauf den alten Bau-Ausgang
+test/inventory.js        → v0.12.0 (K1): Objekt-Inventar aus Fixtures (test/fixtures/inventory/) über ALLE Statuscodes + Fenster-Formen; die Fixtures erreichen den Adapter über `inventory-https-hook.cjs` (NODE_OPTIONS), der jede api.parcel.app-Anfrage auf den lokalen Wegwerf-Server umlenkt und jeden anderen Host ABLEHNT — der Produktivcode bleibt ohne Test-Naht. ⚠️ `npm run build` MUSS vorher laufen (der Vorlauf tut das als D05); sonst misst der Lauf den alten Bau-Ausgang. Suite 2 (Aufstieg) wartet per `waitForCompletedPoll` auf einen ABGESCHLOSSENEN Poll — ihr Objektsatz ist gesät, ein Warten darauf wäre sofort erfüllt (v0.12.1)
 docs/en/ + docs/de/      → Nutzerdoku (README/scripting/faq, gleiche Kapitel je Sprache), verlinkt über io-package.json:common.docs; NICHT im npm-Paket (kein `docs` im files-Feld) — das Doku-Portal liest sie roh aus dem Repo
 ../scripts/sync-iopackage-from-i18n.py → hält io-package.json:instanceObjects synchron mit admin/i18n (zentral, source: admin-i18n); parcelapp-desc_mapping: nur info.connection
 ```
@@ -88,7 +88,7 @@ Run: `npm test` (vitest + Paket-Prüfung), `npm run test:integration` (Boot), `n
 npm run build        # Production (esbuild)
 npm test             # vitest (unit) + mocha (package files)
 npm run lint         # ESLint + Prettier
-npm run check        # tsc --noEmit (TS 6)
+npm run check        # tsc --noEmit (TS 6) — deckt seit v0.12.1 src UND test (`npm test` meldet KEINE Typfehler)
 npm run coverage     # vitest coverage report
 npm run format:check # Prettier — muss 0 Beanstandungen liefern (seit 2026-09-02)
 npm run release-patch / release-minor / release-major   # Flags fest im Skript: ohne `--` verschluckt npm sie
