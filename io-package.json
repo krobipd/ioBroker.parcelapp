@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.12.0",
+    "version": "0.12.1",
     "news": {
+      "0.12.1": {
+        "en": "Carrier, status and description of a package now carry a short explanation in the object tree, in all eleven languages — including why scripts should read the status code, not the text.",
+        "de": "Zusteller, Status und Beschreibung einer Sendung tragen jetzt eine kurze Erklärung im Objektbaum, in allen elf Sprachen — samt dem Hinweis, dass Skripte den Status-Code lesen sollten.",
+        "ru": "Перевозчик, статус и описание отправления теперь несут короткое пояснение в дереве объектов, на всех одиннадцати языках — включая то, что скриптам нужен код статуса, а не текст.",
+        "pt": "A transportadora, o estado e a descrição de um envio passam a ter uma breve explicação na árvore de objetos, nos onze idiomas — incluindo porque os scripts devem ler o código de estado.",
+        "nl": "Vervoerder, status en omschrijving van een zending dragen nu een korte uitleg in de objectboom, in alle elf talen — inclusief waarom scripts de statuscode moeten lezen en niet de tekst.",
+        "fr": "Le transporteur, l'état et la description d'un envoi portent désormais une brève explication dans l'arborescence, dans les onze langues — dont pourquoi les scripts doivent lire le code d'état.",
+        "it": "Corriere, stato e descrizione di una spedizione portano ora una breve spiegazione nell'albero degli oggetti, in tutte e undici le lingue — incluso perché gli script devono leggere il codice di stato.",
+        "es": "El transportista, el estado y la descripción de un envío llevan ahora una breve explicación en el árbol de objetos, en los once idiomas — incluido por qué los scripts deben leer el código de estado.",
+        "pl": "Przewoźnik, status i opis przesyłki mają teraz krótkie wyjaśnienie w drzewie obiektów, we wszystkich jedenastu językach — w tym dlaczego skrypty powinny czytać kod statusu, a nie tekst.",
+        "uk": "Перевізник, статус і опис відправлення тепер мають коротке пояснення в дереві об'єктів, усіма одинадцятьма мовами — зокрема чому скрипти мають читати код статусу, а не текст.",
+        "zh-cn": "包裹的承运商、状态和描述现在在对象树中都带有简短说明，涵盖全部十一种语言 — 包括为什么脚本应读取状态代码而不是状态文本。"
+      },
       "0.12.0": {
         "en": "A package that reappears after a database hiccup keeps complete datapoints, and a delivery window written as \"September 6, 2026 14:30\" is now read instead of ignored.",
         "de": "Eine Sendung, die nach einem Datenbank-Aussetzer wieder auftaucht, behält vollständige Datenpunkte, und ein Zustellfenster wie \"September 6, 2026 14:30\" wird jetzt gelesen.",
@@ -80,19 +93,6 @@
         "pl": "Porządki wewnętrzne. Bez zmian dla użytkownika.",
         "uk": "Внутрішнє прибирання. Без змін для користувачів.",
         "zh-cn": "内部清理。用户无可见变化。"
-      },
-      "0.10.1": {
-        "en": "Internal refactoring. No user-facing changes.",
-        "de": "Interne Überarbeitung. Keine für Nutzer sichtbaren Änderungen.",
-        "ru": "Внутренняя переработка. Без изменений, видимых пользователю.",
-        "pt": "Refatoração interna. Sem alterações visíveis para o utilizador.",
-        "nl": "Interne herstructurering. Geen zichtbare wijzigingen voor de gebruiker.",
-        "fr": "Refactorisation interne. Aucun changement visible pour l'utilisateur.",
-        "it": "Refactoring interno. Nessuna modifica visibile per l'utente.",
-        "es": "Refactorización interna. Sin cambios visibles para el usuario.",
-        "pl": "Wewnętrzna refaktoryzacja. Brak zmian widocznych dla użytkownika.",
-        "uk": "Внутрішня переробка. Без видимих для користувача змін.",
-        "zh-cn": "内部重构。对用户无可见变化。"
       }
     },
     "plugins": {

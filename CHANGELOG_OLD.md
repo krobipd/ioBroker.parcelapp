@@ -1,5 +1,9 @@
 # Older Changes
 
+## 0.10.3 (2026-08-27) — stable
+
+- Fixed: Stopping or restarting the adapter was cut short — the stopped instance kept claiming a live connection to parcel.app instead of showing as disconnected.
+
 ## 0.10.2 (2026-08-22)
 
 - Changed: Internal cleanup. No user-facing changes.

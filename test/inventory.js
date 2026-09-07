@@ -105,6 +105,47 @@ function expectedObjectIds() {
   return ids;
 }
 
+/**
+ * Wait until a poll has actually COMPLETED — every package carries a `carrier` VALUE.
+ *
+ * `feedFixtures` waits for the object SET, which is the right criterion for suite 1 (only the
+ * adapter creates those objects) and a hollow one for suite 2: the upgrade suite SEEDS exactly
+ * that set before the start, so the wait was satisfied on its first look and the assertions ran
+ * 13 ms after `onReady` — before the first poll had even begun (measured 2026-09-07, parcelapp's
+ * first upgrade run: the adapter's only poll attempt hit the fixture server AFTER `after()` had
+ * closed it, `ECONNREFUSED`). The suite reported "desc still undefined" for the three datapoints
+ * whose description was new, which reads exactly like an adapter that fails to reach existing
+ * objects — while the real answer was that nothing had run yet.
+ *
+ * The seed writes OBJECTS only (`setObjectAsync`), so state VALUES are the one signal the seed
+ * cannot fake. `info.connection` is NOT enough: main.ts sets it right after the GET succeeds and
+ * before the package states are written.
+ *
+ * @param {import("@iobroker/testing").TestHarness} harness The integration harness
+ */
+async function waitForCompletedPoll(harness) {
+  const wanted = expectedObjectIds().filter(id => id.endsWith(".carrier"));
+  const deadline = Date.now() + 60000;
+  for (;;) {
+    const missing = [];
+    for (const id of wanted) {
+      const state = await harness.states.getState(id);
+      if (!state || state.val === undefined || state.val === null || state.val === "") {
+        missing.push(id);
+      }
+    }
+    if (missing.length === 0) {
+      return;
+    }
+    if (Date.now() > deadline) {
+      throw new Error(
+        `no completed poll — ${missing.length} package(s) without a carrier value, e.g. ${missing.slice(0, 5).join(", ")}`,
+      );
+    }
+    await new Promise(resolve => setTimeout(resolve, 250));
+  }
+}
+
 let server;
 let fixtureUrl;
 
@@ -232,6 +273,8 @@ tests.integration(ADAPTER_DIR, {
             PARCELAPP_FIXTURE_URL: fixtureUrl,
           });
           await feedFixtures(harness);
+          // The seeded set makes feedFixtures a no-op here — this is the real wait.
+          await waitForCompletedPoll(harness);
         });
 
         after(async () => {

@@ -17,6 +17,6 @@
     // @types packages — vitest globals need an explicit types entry.
     "types": ["vitest/globals", "node"]
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "test/**/*.ts"],
   "exclude": ["build/**", "node_modules/**"]
 }

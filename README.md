@@ -145,9 +145,9 @@ sendTo("parcelapp.0", "addDelivery", {
     ### **WORK IN PROGRESS**
 -->
 
-### **WORK IN PROGRESS**
+### 0.12.1 (2026-09-07)
 
-- New: Carrier, status and description of a package now explain themselves in the object tree, in all eleven languages.
+- New: Carrier, status and description of a package now carry a short explanation in the object tree, in all eleven languages — including why scripts should read the status code, not the text.
 
 ### 0.12.0 (2026-09-06)
 
@@ -174,10 +174,6 @@ sendTo("parcelapp.0", "addDelivery", {
 - Fixed: A brief ioBroker database hiccup while marking the connection as online was mistaken for a parcel.app failure and switched the connection indicator to red.
 - Fixed: Scripts that call checkConnection with a non-text API key now receive the regular "API key is too short" reply instead of an internal failure.
 - Improved: Control characters in texts coming from parcel.app (carrier names, status notes) are now stripped completely before they reach the states.
-
-### 0.10.3 (2026-08-27) — stable
-
-- Fixed: Stopping or restarting the adapter was cut short — the stopped instance kept claiming a live connection to parcel.app instead of showing as disconnected.
 
 [Older changelogs can be found there](CHANGELOG_OLD.md)
 
