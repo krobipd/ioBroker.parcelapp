@@ -6,6 +6,15 @@ const i18nData: Record<string, Record<string, string>> = {};
 for (const f of readdirSync(i18nDir).filter(f => f.endsWith(".json"))) {
   i18nData[f.replace(".json", "")] = JSON.parse(readFileSync(join(i18nDir, f), "utf8"));
 }
+/**
+ * The fleet gate D08 (`check-object-inventory.py`) owns the decision "every datapoint is either
+ * explained or declared self-explaining" and reads it from this file. The desc test below derives
+ * its two groups from the very same source, so the two can never drift apart.
+ */
+const selfExplaining: Record<string, string> = JSON.parse(
+  readFileSync(join(__dirname, "../../test/self-explaining.json"), "utf8"),
+);
+
 let mockLang = "en";
 
 // Mirrors adapter-core I18n incl. its %s substitution (translate fills args in
@@ -1973,7 +1982,7 @@ describe("StateManager", () => {
       expect((common.desc as CommonNameTranslated).de).toBe(i18nData.de.descStatusCode);
     });
 
-    it("leaves desc unset where the adapter has nothing to explain", async () => {
+    it("leaves desc unset ONLY where test/self-explaining.json declares it", async () => {
       const adapter = createMockAdapter();
       const manager = new StateManager(adapter as never);
       const delivery = makeDelivery();
@@ -1981,28 +1990,33 @@ describe("StateManager", () => {
 
       await updateDeliveryT(manager, delivery, "DHL");
 
-      // The name says it all for these — an invented sentence would be worse than none.
-      // v0.12.0: `lastLocation` LEFT this list. "Last Location" reads like a live position, and it
-      // is not — it is the last place the carrier scanned the package. That is a real explanation,
-      // not invented filler, so it moved to the described group below.
-      for (const state of ["carrier", "status", "description", "trackingNumber"]) {
+      // Both groups come from the gate's own file, and the state list comes from what the code
+      // actually created — so a NEW datapoint nobody decided on lands in "must carry a
+      // description" by itself instead of slipping past a hand-written list.
+      const declared = Object.keys(selfExplaining)
+        .filter(p => p.startsWith("deliveries.*."))
+        .map(p => p.slice("deliveries.*.".length));
+      expect(declared, "premise: the gate's file decides per-package datapoints").toContain("trackingNumber");
+      const created = [...adapter.objects.keys()]
+        .filter(id => id.startsWith(`deliveries.${pkgId}.`))
+        .map(id => id.slice(`deliveries.${pkgId}.`.length));
+      expect(created.length, "premise: the delivery created its states").toBeGreaterThan(declared.length);
+
+      for (const state of created) {
         const common = adapter.objects.get(`deliveries.${pkgId}.${state}`)!.common;
-        expect(common.desc, `${state} must not carry an invented description`).toBeUndefined();
-      }
-      // ... while the non-obvious ones do carry one. lastUpdated is in this list on purpose:
-      // it is written on its own path (only when the data actually changed), so a check that
-      // only walks the stateDefs list would leave exactly that one unguarded.
-      for (const state of [
-        "statusCode",
-        "extraInfo",
-        "deliveryWindow",
-        "deliveryEstimate",
-        "lastEvent",
-        "lastLocation",
-        "lastUpdated",
-      ]) {
-        const common = adapter.objects.get(`deliveries.${pkgId}.${state}`)!.common;
-        expect(common.desc, `${state} must carry a description`).toBeDefined();
+        if (declared.includes(state)) {
+          // The name says it all for these — an invented sentence would be worse than none.
+          expect(common.desc, `${state} is declared self-explaining, it must stay silent`).toBeUndefined();
+        } else {
+          // ... while everything else carries one. lastUpdated is covered here on purpose: it is
+          // written on its own path (only when the data actually changed), so a check that only
+          // walks the stateDefs list would leave exactly that one unguarded.
+          // v0.12.0: `lastLocation` left the silent group ("Last Location" reads like a live
+          // position and is not); 2026-09-07: `carrier`, `status` and `description` followed when
+          // D08 put them up for decision — a fallback value, a language-dependent text and a
+          // label that outlives the device name are all real explanations, not invented filler.
+          expect(common.desc, `${state} must carry a description`).toBeDefined();
+        }
       }
       const lastUpdated = adapter.objects.get(`deliveries.${pkgId}.lastUpdated`)!.common;
       expect((lastUpdated.desc as CommonNameTranslated).de).toBe(i18nData.de.descLastUpdated);

@@ -310,7 +310,9 @@ export class StateManager {
     // silent drift trap (a new field added to one list but not the other).
     // `desc` is an EXPLANATION, only where the name alone does not give it —
     // `undefined` means "nothing to explain here", and an invented sentence
-    // would be worse than none (fleet standard, 2026-09-02).
+    // would be worse than none (fleet standard, 2026-09-02). Every `undefined`
+    // here needs its counterpart in `test/self-explaining.json`, which is where
+    // the fleet gate D08 reads the decision (2026-09-07).
     const stateDefs: [
       id: string,
       name: ioBroker.StringOrTranslated,
@@ -319,10 +321,10 @@ export class StateManager {
       val: ioBroker.StateValue,
       desc: ioBroker.StringOrTranslated | undefined,
     ][] = [
-      [`${devicePath}.carrier`, tName("carrier"), "string", "text", carrierName, undefined],
-      [`${devicePath}.status`, tName("status"), "string", "text", statusText, undefined],
+      [`${devicePath}.carrier`, tName("carrier"), "string", "text", carrierName, tName("descCarrier")],
+      [`${devicePath}.status`, tName("status"), "string", "text", statusText, tName("descStatus")],
       [`${devicePath}.statusCode`, tName("statusCode"), "number", "value", statusCode, tName("descStatusCode")],
-      [`${devicePath}.description`, tName("description"), "string", "text", description, undefined],
+      [`${devicePath}.description`, tName("description"), "string", "text", description, tName("descDescription")],
       [`${devicePath}.trackingNumber`, tName("trackingNumber"), "string", "text", trackingNumber, undefined],
       [`${devicePath}.extraInfo`, tName("extraInfo"), "string", "text", extraInfo, tName("descExtraInfo")],
       [

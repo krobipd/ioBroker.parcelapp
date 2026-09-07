@@ -145,6 +145,10 @@ sendTo("parcelapp.0", "addDelivery", {
     ### **WORK IN PROGRESS**
 -->
 
+### **WORK IN PROGRESS**
+
+- New: Carrier, status and description of a package now explain themselves in the object tree, in all eleven languages.
+
 ### 0.12.0 (2026-09-06)
 
 - Fixed: A package that reappeared after a database hiccup kept datapoints without a name or description until the adapter was restarted.

@@ -46,7 +46,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Anzeigename des Zustellers; ersatzweise das Zustellerkürzel in Großbuchstaben, wenn parcel.app keinen Namen kennt.",
+        "en": "Display name of the carrier; falls back to the uppercase carrier code when parcel.app knows no name for it.",
+        "es": "Nombre visible del transportista; en su defecto, el código del transportista en mayúsculas cuando parcel.app no conoce ningún nombre.",
+        "fr": "Nom d'affichage du transporteur ; à défaut, le code du transporteur en majuscules lorsque parcel.app n'en connaît pas le nom.",
+        "it": "Nome visualizzato del corriere; in mancanza, il codice del corriere in maiuscolo quando parcel.app non ne conosce il nome.",
+        "nl": "Weergavenaam van de vervoerder; anders de vervoerderscode in hoofdletters, wanneer parcel.app geen naam kent.",
+        "pl": "Nazwa wyświetlana przewoźnika; zamiennie kod przewoźnika wielkimi literami, gdy parcel.app nie zna nazwy.",
+        "pt": "Nome de apresentação da transportadora; em alternativa, o código da transportadora em maiúsculas quando o parcel.app não sabe o nome.",
+        "ru": "Отображаемое название перевозчика; при отсутствии - код перевозчика заглавными буквами, если parcel.app не знает названия.",
+        "uk": "Відображувана назва перевізника; за відсутності - код перевізника великими літерами, якщо parcel.app не знає назви.",
+        "zh-cn": "承运商的显示名称；若 parcel.app 不知道其名称，则回退为大写的承运商代码。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_drift_format.carrier"
@@ -144,7 +157,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Die Beschreibung, die du der Sendung in parcel.app gegeben hast; anders als der Gerätename zeigt sie immer den aktuellen Wert.",
+        "en": "The description you gave the shipment in parcel.app; unlike the device name it always shows the current value.",
+        "es": "La descripción que diste al envío en parcel.app; a diferencia del nombre del dispositivo, siempre muestra el valor actual.",
+        "fr": "La description que vous avez donnée à l'envoi dans parcel.app ; contrairement au nom de l'appareil, elle affiche toujours la valeur actuelle.",
+        "it": "La descrizione che hai dato alla spedizione in parcel.app; a differenza del nome del dispositivo mostra sempre il valore attuale.",
+        "nl": "De omschrijving die je de zending in parcel.app hebt gegeven; anders dan de apparaatnaam toont deze altijd de actuele waarde.",
+        "pl": "Opis, który nadałeś przesyłce w parcel.app; w przeciwieństwie do nazwy urządzenia zawsze pokazuje aktualną wartość.",
+        "pt": "A descrição que deu ao envio no parcel.app; ao contrário do nome do dispositivo, mostra sempre o valor atual.",
+        "ru": "Описание, которое вы задали отправлению в parcel.app; в отличие от имени устройства оно всегда показывает текущее значение.",
+        "uk": "Опис, який ви дали відправленню в parcel.app; на відміну від назви пристрою він завжди показує поточне значення.",
+        "zh-cn": "你在 parcel.app 中为该寄件填写的描述；与设备名称不同，它始终显示当前值。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_drift_format.description"
@@ -316,7 +342,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
+        "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
+        "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
+        "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
+        "pl": "Status jako czytelny tekst w języku systemowym ioBroker - w skryptach należy używać statusCode, który nie zmienia się wraz z językiem.",
+        "pt": "O estado como texto legível no idioma do sistema ioBroker - nos scripts utilize statusCode, que não muda com o idioma.",
+        "ru": "Статус в виде читаемого текста на системном языке ioBroker - в скриптах используйте statusCode, он не меняется вместе с языком.",
+        "uk": "Статус як читабельний текст системною мовою ioBroker - у скриптах використовуйте statusCode, він не змінюється разом з мовою.",
+        "zh-cn": "以 ioBroker 系统语言显示的可读状态文本 - 在脚本中请使用 statusCode，它不随语言变化。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_drift_format.status"
@@ -409,7 +448,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Anzeigename des Zustellers; ersatzweise das Zustellerkürzel in Großbuchstaben, wenn parcel.app keinen Namen kennt.",
+        "en": "Display name of the carrier; falls back to the uppercase carrier code when parcel.app knows no name for it.",
+        "es": "Nombre visible del transportista; en su defecto, el código del transportista en mayúsculas cuando parcel.app no conoce ningún nombre.",
+        "fr": "Nom d'affichage du transporteur ; à défaut, le code du transporteur en majuscules lorsque parcel.app n'en connaît pas le nom.",
+        "it": "Nome visualizzato del corriere; in mancanza, il codice del corriere in maiuscolo quando parcel.app non ne conosce il nome.",
+        "nl": "Weergavenaam van de vervoerder; anders de vervoerderscode in hoofdletters, wanneer parcel.app geen naam kent.",
+        "pl": "Nazwa wyświetlana przewoźnika; zamiennie kod przewoźnika wielkimi literami, gdy parcel.app nie zna nazwy.",
+        "pt": "Nome de apresentação da transportadora; em alternativa, o código da transportadora em maiúsculas quando o parcel.app não sabe o nome.",
+        "ru": "Отображаемое название перевозчика; при отсутствии - код перевозчика заглавными буквами, если parcel.app не знает названия.",
+        "uk": "Відображувана назва перевізника; за відсутності - код перевізника великими літерами, якщо parcel.app не знає назви.",
+        "zh-cn": "承运商的显示名称；若 parcel.app 不知道其名称，则回退为大写的承运商代码。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_drift_numstr.carrier"
@@ -507,7 +559,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Die Beschreibung, die du der Sendung in parcel.app gegeben hast; anders als der Gerätename zeigt sie immer den aktuellen Wert.",
+        "en": "The description you gave the shipment in parcel.app; unlike the device name it always shows the current value.",
+        "es": "La descripción que diste al envío en parcel.app; a diferencia del nombre del dispositivo, siempre muestra el valor actual.",
+        "fr": "La description que vous avez donnée à l'envoi dans parcel.app ; contrairement au nom de l'appareil, elle affiche toujours la valeur actuelle.",
+        "it": "La descrizione che hai dato alla spedizione in parcel.app; a differenza del nome del dispositivo mostra sempre il valore attuale.",
+        "nl": "De omschrijving die je de zending in parcel.app hebt gegeven; anders dan de apparaatnaam toont deze altijd de actuele waarde.",
+        "pl": "Opis, który nadałeś przesyłce w parcel.app; w przeciwieństwie do nazwy urządzenia zawsze pokazuje aktualną wartość.",
+        "pt": "A descrição que deu ao envio no parcel.app; ao contrário do nome do dispositivo, mostra sempre o valor atual.",
+        "ru": "Описание, которое вы задали отправлению в parcel.app; в отличие от имени устройства оно всегда показывает текущее значение.",
+        "uk": "Опис, який ви дали відправленню в parcel.app; на відміну від назви пристрою він завжди показує поточне значення.",
+        "zh-cn": "你在 parcel.app 中为该寄件填写的描述；与设备名称不同，它始终显示当前值。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_drift_numstr.description"
@@ -679,7 +744,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
+        "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
+        "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
+        "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
+        "pl": "Status jako czytelny tekst w języku systemowym ioBroker - w skryptach należy używać statusCode, który nie zmienia się wraz z językiem.",
+        "pt": "O estado como texto legível no idioma do sistema ioBroker - nos scripts utilize statusCode, que não muda com o idioma.",
+        "ru": "Статус в виде читаемого текста на системном языке ioBroker - в скриптах используйте statusCode, он не меняется вместе с языком.",
+        "uk": "Статус як читабельний текст системною мовою ioBroker - у скриптах використовуйте statusCode, він не змінюється разом з мовою.",
+        "zh-cn": "以 ioBroker 系统语言显示的可读状态文本 - 在脚本中请使用 statusCode，它不随语言变化。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_drift_numstr.status"
@@ -772,7 +850,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Anzeigename des Zustellers; ersatzweise das Zustellerkürzel in Großbuchstaben, wenn parcel.app keinen Namen kennt.",
+        "en": "Display name of the carrier; falls back to the uppercase carrier code when parcel.app knows no name for it.",
+        "es": "Nombre visible del transportista; en su defecto, el código del transportista en mayúsculas cuando parcel.app no conoce ningún nombre.",
+        "fr": "Nom d'affichage du transporteur ; à défaut, le code du transporteur en majuscules lorsque parcel.app n'en connaît pas le nom.",
+        "it": "Nome visualizzato del corriere; in mancanza, il codice del corriere in maiuscolo quando parcel.app non ne conosce il nome.",
+        "nl": "Weergavenaam van de vervoerder; anders de vervoerderscode in hoofdletters, wanneer parcel.app geen naam kent.",
+        "pl": "Nazwa wyświetlana przewoźnika; zamiennie kod przewoźnika wielkimi literami, gdy parcel.app nie zna nazwy.",
+        "pt": "Nome de apresentação da transportadora; em alternativa, o código da transportadora em maiúsculas quando o parcel.app não sabe o nome.",
+        "ru": "Отображаемое название перевозчика; при отсутствии - код перевозчика заглавными буквами, если parcel.app не знает названия.",
+        "uk": "Відображувана назва перевізника; за відсутності - код перевізника великими літерами, якщо parcel.app не знає назви.",
+        "zh-cn": "承运商的显示名称；若 parcel.app 不知道其名称，则回退为大写的承运商代码。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_drift_unknown.carrier"
@@ -870,7 +961,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Die Beschreibung, die du der Sendung in parcel.app gegeben hast; anders als der Gerätename zeigt sie immer den aktuellen Wert.",
+        "en": "The description you gave the shipment in parcel.app; unlike the device name it always shows the current value.",
+        "es": "La descripción que diste al envío en parcel.app; a diferencia del nombre del dispositivo, siempre muestra el valor actual.",
+        "fr": "La description que vous avez donnée à l'envoi dans parcel.app ; contrairement au nom de l'appareil, elle affiche toujours la valeur actuelle.",
+        "it": "La descrizione che hai dato alla spedizione in parcel.app; a differenza del nome del dispositivo mostra sempre il valore attuale.",
+        "nl": "De omschrijving die je de zending in parcel.app hebt gegeven; anders dan de apparaatnaam toont deze altijd de actuele waarde.",
+        "pl": "Opis, który nadałeś przesyłce w parcel.app; w przeciwieństwie do nazwy urządzenia zawsze pokazuje aktualną wartość.",
+        "pt": "A descrição que deu ao envio no parcel.app; ao contrário do nome do dispositivo, mostra sempre o valor atual.",
+        "ru": "Описание, которое вы задали отправлению в parcel.app; в отличие от имени устройства оно всегда показывает текущее значение.",
+        "uk": "Опис, який ви дали відправленню в parcel.app; на відміну від назви пристрою він завжди показує поточне значення.",
+        "zh-cn": "你在 parcel.app 中为该寄件填写的描述；与设备名称不同，它始终显示当前值。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_drift_unknown.description"
@@ -1042,7 +1146,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
+        "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
+        "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
+        "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
+        "pl": "Status jako czytelny tekst w języku systemowym ioBroker - w skryptach należy używać statusCode, który nie zmienia się wraz z językiem.",
+        "pt": "O estado como texto legível no idioma do sistema ioBroker - nos scripts utilize statusCode, que não muda com o idioma.",
+        "ru": "Статус в виде читаемого текста на системном языке ioBroker - в скриптах используйте statusCode, он не меняется вместе с языком.",
+        "uk": "Статус як читабельний текст системною мовою ioBroker - у скриптах використовуйте statusCode, він не змінюється разом з мовою.",
+        "zh-cn": "以 ioBroker 系统语言显示的可读状态文本 - 在脚本中请使用 statusCode，它不随语言变化。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_drift_unknown.status"
@@ -1135,7 +1252,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Anzeigename des Zustellers; ersatzweise das Zustellerkürzel in Großbuchstaben, wenn parcel.app keinen Namen kennt.",
+        "en": "Display name of the carrier; falls back to the uppercase carrier code when parcel.app knows no name for it.",
+        "es": "Nombre visible del transportista; en su defecto, el código del transportista en mayúsculas cuando parcel.app no conoce ningún nombre.",
+        "fr": "Nom d'affichage du transporteur ; à défaut, le code du transporteur en majuscules lorsque parcel.app n'en connaît pas le nom.",
+        "it": "Nome visualizzato del corriere; in mancanza, il codice del corriere in maiuscolo quando parcel.app non ne conosce il nome.",
+        "nl": "Weergavenaam van de vervoerder; anders de vervoerderscode in hoofdletters, wanneer parcel.app geen naam kent.",
+        "pl": "Nazwa wyświetlana przewoźnika; zamiennie kod przewoźnika wielkimi literami, gdy parcel.app nie zna nazwy.",
+        "pt": "Nome de apresentação da transportadora; em alternativa, o código da transportadora em maiúsculas quando o parcel.app não sabe o nome.",
+        "ru": "Отображаемое название перевозчика; при отсутствии - код перевозчика заглавными буквами, если parcel.app не знает названия.",
+        "uk": "Відображувана назва перевізника; за відсутності - код перевізника великими літерами, якщо parcel.app не знає назви.",
+        "zh-cn": "承运商的显示名称；若 parcel.app 不知道其名称，则回退为大写的承运商代码。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_extra_50733.carrier"
@@ -1233,7 +1363,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Die Beschreibung, die du der Sendung in parcel.app gegeben hast; anders als der Gerätename zeigt sie immer den aktuellen Wert.",
+        "en": "The description you gave the shipment in parcel.app; unlike the device name it always shows the current value.",
+        "es": "La descripción que diste al envío en parcel.app; a diferencia del nombre del dispositivo, siempre muestra el valor actual.",
+        "fr": "La description que vous avez donnée à l'envoi dans parcel.app ; contrairement au nom de l'appareil, elle affiche toujours la valeur actuelle.",
+        "it": "La descrizione che hai dato alla spedizione in parcel.app; a differenza del nome del dispositivo mostra sempre il valore attuale.",
+        "nl": "De omschrijving die je de zending in parcel.app hebt gegeven; anders dan de apparaatnaam toont deze altijd de actuele waarde.",
+        "pl": "Opis, który nadałeś przesyłce w parcel.app; w przeciwieństwie do nazwy urządzenia zawsze pokazuje aktualną wartość.",
+        "pt": "A descrição que deu ao envio no parcel.app; ao contrário do nome do dispositivo, mostra sempre o valor atual.",
+        "ru": "Описание, которое вы задали отправлению в parcel.app; в отличие от имени устройства оно всегда показывает текущее значение.",
+        "uk": "Опис, який ви дали відправленню в parcel.app; на відміну від назви пристрою він завжди показує поточне значення.",
+        "zh-cn": "你在 parcel.app 中为该寄件填写的描述；与设备名称不同，它始终显示当前值。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_extra_50733.description"
@@ -1405,7 +1548,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
+        "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
+        "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
+        "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
+        "pl": "Status jako czytelny tekst w języku systemowym ioBroker - w skryptach należy używać statusCode, który nie zmienia się wraz z językiem.",
+        "pt": "O estado como texto legível no idioma do sistema ioBroker - nos scripts utilize statusCode, que não muda com o idioma.",
+        "ru": "Статус в виде читаемого текста на системном языке ioBroker - в скриптах используйте statusCode, он не меняется вместе с языком.",
+        "uk": "Статус як читабельний текст системною мовою ioBroker - у скриптах використовуйте statusCode, він не змінюється разом з мовою.",
+        "zh-cn": "以 ioBroker 系统语言显示的可读状态文本 - 在脚本中请使用 statusCode，它不随语言变化。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_extra_50733.status"
@@ -1510,7 +1666,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Anzeigename des Zustellers; ersatzweise das Zustellerkürzel in Großbuchstaben, wenn parcel.app keinen Namen kennt.",
+        "en": "Display name of the carrier; falls back to the uppercase carrier code when parcel.app knows no name for it.",
+        "es": "Nombre visible del transportista; en su defecto, el código del transportista en mayúsculas cuando parcel.app no conoce ningún nombre.",
+        "fr": "Nom d'affichage du transporteur ; à défaut, le code du transporteur en majuscules lorsque parcel.app n'en connaît pas le nom.",
+        "it": "Nome visualizzato del corriere; in mancanza, il codice del corriere in maiuscolo quando parcel.app non ne conosce il nome.",
+        "nl": "Weergavenaam van de vervoerder; anders de vervoerderscode in hoofdletters, wanneer parcel.app geen naam kent.",
+        "pl": "Nazwa wyświetlana przewoźnika; zamiennie kod przewoźnika wielkimi literami, gdy parcel.app nie zna nazwy.",
+        "pt": "Nome de apresentação da transportadora; em alternativa, o código da transportadora em maiúsculas quando o parcel.app não sabe o nome.",
+        "ru": "Отображаемое название перевозчика; при отсутствии - код перевозчика заглавными буквами, если parcel.app не знает названия.",
+        "uk": "Відображувана назва перевізника; за відсутності - код перевізника великими літерами, якщо parcel.app не знає назви.",
+        "zh-cn": "承运商的显示名称；若 parcel.app 不知道其名称，则回退为大写的承运商代码。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_no_description.carrier"
@@ -1608,7 +1777,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Die Beschreibung, die du der Sendung in parcel.app gegeben hast; anders als der Gerätename zeigt sie immer den aktuellen Wert.",
+        "en": "The description you gave the shipment in parcel.app; unlike the device name it always shows the current value.",
+        "es": "La descripción que diste al envío en parcel.app; a diferencia del nombre del dispositivo, siempre muestra el valor actual.",
+        "fr": "La description que vous avez donnée à l'envoi dans parcel.app ; contrairement au nom de l'appareil, elle affiche toujours la valeur actuelle.",
+        "it": "La descrizione che hai dato alla spedizione in parcel.app; a differenza del nome del dispositivo mostra sempre il valore attuale.",
+        "nl": "De omschrijving die je de zending in parcel.app hebt gegeven; anders dan de apparaatnaam toont deze altijd de actuele waarde.",
+        "pl": "Opis, który nadałeś przesyłce w parcel.app; w przeciwieństwie do nazwy urządzenia zawsze pokazuje aktualną wartość.",
+        "pt": "A descrição que deu ao envio no parcel.app; ao contrário do nome do dispositivo, mostra sempre o valor atual.",
+        "ru": "Описание, которое вы задали отправлению в parcel.app; в отличие от имени устройства оно всегда показывает текущее значение.",
+        "uk": "Опис, який ви дали відправленню в parcel.app; на відміну від назви пристрою він завжди показує поточне значення.",
+        "zh-cn": "你在 parcel.app 中为该寄件填写的描述；与设备名称不同，它始终显示当前值。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_no_description.description"
@@ -1780,7 +1962,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
+        "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
+        "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
+        "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
+        "pl": "Status jako czytelny tekst w języku systemowym ioBroker - w skryptach należy używać statusCode, który nie zmienia się wraz z językiem.",
+        "pt": "O estado como texto legível no idioma do sistema ioBroker - nos scripts utilize statusCode, que não muda com o idioma.",
+        "ru": "Статус в виде читаемого текста на системном языке ioBroker - в скриптах используйте statusCode, он не меняется вместе с языком.",
+        "uk": "Статус як читабельний текст системною мовою ioBroker - у скриптах використовуйте statusCode, він не змінюється разом з мовою.",
+        "zh-cn": "以 ioBroker 系统语言显示的可读状态文本 - 在脚本中请使用 statusCode，它不随语言变化。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_no_description.status"
@@ -1873,7 +2068,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Anzeigename des Zustellers; ersatzweise das Zustellerkürzel in Großbuchstaben, wenn parcel.app keinen Namen kennt.",
+        "en": "Display name of the carrier; falls back to the uppercase carrier code when parcel.app knows no name for it.",
+        "es": "Nombre visible del transportista; en su defecto, el código del transportista en mayúsculas cuando parcel.app no conoce ningún nombre.",
+        "fr": "Nom d'affichage du transporteur ; à défaut, le code du transporteur en majuscules lorsque parcel.app n'en connaît pas le nom.",
+        "it": "Nome visualizzato del corriere; in mancanza, il codice del corriere in maiuscolo quando parcel.app non ne conosce il nome.",
+        "nl": "Weergavenaam van de vervoerder; anders de vervoerderscode in hoofdletters, wanneer parcel.app geen naam kent.",
+        "pl": "Nazwa wyświetlana przewoźnika; zamiennie kod przewoźnika wielkimi literami, gdy parcel.app nie zna nazwy.",
+        "pt": "Nome de apresentação da transportadora; em alternativa, o código da transportadora em maiúsculas quando o parcel.app não sabe o nome.",
+        "ru": "Отображаемое название перевозчика; при отсутствии - код перевозчика заглавными буквами, если parcel.app не знает названия.",
+        "uk": "Відображувана назва перевізника; за відсутності - код перевізника великими літерами, якщо parcel.app не знає назви.",
+        "zh-cn": "承运商的显示名称；若 parcel.app 不知道其名称，则回退为大写的承运商代码。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_0.carrier"
@@ -1971,7 +2179,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Die Beschreibung, die du der Sendung in parcel.app gegeben hast; anders als der Gerätename zeigt sie immer den aktuellen Wert.",
+        "en": "The description you gave the shipment in parcel.app; unlike the device name it always shows the current value.",
+        "es": "La descripción que diste al envío en parcel.app; a diferencia del nombre del dispositivo, siempre muestra el valor actual.",
+        "fr": "La description que vous avez donnée à l'envoi dans parcel.app ; contrairement au nom de l'appareil, elle affiche toujours la valeur actuelle.",
+        "it": "La descrizione che hai dato alla spedizione in parcel.app; a differenza del nome del dispositivo mostra sempre il valore attuale.",
+        "nl": "De omschrijving die je de zending in parcel.app hebt gegeven; anders dan de apparaatnaam toont deze altijd de actuele waarde.",
+        "pl": "Opis, który nadałeś przesyłce w parcel.app; w przeciwieństwie do nazwy urządzenia zawsze pokazuje aktualną wartość.",
+        "pt": "A descrição que deu ao envio no parcel.app; ao contrário do nome do dispositivo, mostra sempre o valor atual.",
+        "ru": "Описание, которое вы задали отправлению в parcel.app; в отличие от имени устройства оно всегда показывает текущее значение.",
+        "uk": "Опис, який ви дали відправленню в parcel.app; на відміну від назви пристрою він завжди показує поточне значення.",
+        "zh-cn": "你在 parcel.app 中为该寄件填写的描述；与设备名称不同，它始终显示当前值。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_0.description"
@@ -2143,7 +2364,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
+        "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
+        "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
+        "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
+        "pl": "Status jako czytelny tekst w języku systemowym ioBroker - w skryptach należy używać statusCode, który nie zmienia się wraz z językiem.",
+        "pt": "O estado como texto legível no idioma do sistema ioBroker - nos scripts utilize statusCode, que não muda com o idioma.",
+        "ru": "Статус в виде читаемого текста на системном языке ioBroker - в скриптах используйте statusCode, он не меняется вместе с языком.",
+        "uk": "Статус як читабельний текст системною мовою ioBroker - у скриптах використовуйте statusCode, він не змінюється разом з мовою.",
+        "zh-cn": "以 ioBroker 系统语言显示的可读状态文本 - 在脚本中请使用 statusCode，它不随语言变化。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_0.status"
@@ -2236,7 +2470,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Anzeigename des Zustellers; ersatzweise das Zustellerkürzel in Großbuchstaben, wenn parcel.app keinen Namen kennt.",
+        "en": "Display name of the carrier; falls back to the uppercase carrier code when parcel.app knows no name for it.",
+        "es": "Nombre visible del transportista; en su defecto, el código del transportista en mayúsculas cuando parcel.app no conoce ningún nombre.",
+        "fr": "Nom d'affichage du transporteur ; à défaut, le code du transporteur en majuscules lorsque parcel.app n'en connaît pas le nom.",
+        "it": "Nome visualizzato del corriere; in mancanza, il codice del corriere in maiuscolo quando parcel.app non ne conosce il nome.",
+        "nl": "Weergavenaam van de vervoerder; anders de vervoerderscode in hoofdletters, wanneer parcel.app geen naam kent.",
+        "pl": "Nazwa wyświetlana przewoźnika; zamiennie kod przewoźnika wielkimi literami, gdy parcel.app nie zna nazwy.",
+        "pt": "Nome de apresentação da transportadora; em alternativa, o código da transportadora em maiúsculas quando o parcel.app não sabe o nome.",
+        "ru": "Отображаемое название перевозчика; при отсутствии - код перевозчика заглавными буквами, если parcel.app не знает названия.",
+        "uk": "Відображувана назва перевізника; за відсутності - код перевізника великими літерами, якщо parcel.app не знає назви.",
+        "zh-cn": "承运商的显示名称；若 parcel.app 不知道其名称，则回退为大写的承运商代码。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_1.carrier"
@@ -2334,7 +2581,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Die Beschreibung, die du der Sendung in parcel.app gegeben hast; anders als der Gerätename zeigt sie immer den aktuellen Wert.",
+        "en": "The description you gave the shipment in parcel.app; unlike the device name it always shows the current value.",
+        "es": "La descripción que diste al envío en parcel.app; a diferencia del nombre del dispositivo, siempre muestra el valor actual.",
+        "fr": "La description que vous avez donnée à l'envoi dans parcel.app ; contrairement au nom de l'appareil, elle affiche toujours la valeur actuelle.",
+        "it": "La descrizione che hai dato alla spedizione in parcel.app; a differenza del nome del dispositivo mostra sempre il valore attuale.",
+        "nl": "De omschrijving die je de zending in parcel.app hebt gegeven; anders dan de apparaatnaam toont deze altijd de actuele waarde.",
+        "pl": "Opis, który nadałeś przesyłce w parcel.app; w przeciwieństwie do nazwy urządzenia zawsze pokazuje aktualną wartość.",
+        "pt": "A descrição que deu ao envio no parcel.app; ao contrário do nome do dispositivo, mostra sempre o valor atual.",
+        "ru": "Описание, которое вы задали отправлению в parcel.app; в отличие от имени устройства оно всегда показывает текущее значение.",
+        "uk": "Опис, який ви дали відправленню в parcel.app; на відміну від назви пристрою він завжди показує поточне значення.",
+        "zh-cn": "你在 parcel.app 中为该寄件填写的描述；与设备名称不同，它始终显示当前值。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_1.description"
@@ -2506,7 +2766,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
+        "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
+        "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
+        "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
+        "pl": "Status jako czytelny tekst w języku systemowym ioBroker - w skryptach należy używać statusCode, który nie zmienia się wraz z językiem.",
+        "pt": "O estado como texto legível no idioma do sistema ioBroker - nos scripts utilize statusCode, que não muda com o idioma.",
+        "ru": "Статус в виде читаемого текста на системном языке ioBroker - в скриптах используйте statusCode, он не меняется вместе с языком.",
+        "uk": "Статус як читабельний текст системною мовою ioBroker - у скриптах використовуйте statusCode, він не змінюється разом з мовою.",
+        "zh-cn": "以 ioBroker 系统语言显示的可读状态文本 - 在脚本中请使用 statusCode，它不随语言变化。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_1.status"
@@ -2599,7 +2872,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Anzeigename des Zustellers; ersatzweise das Zustellerkürzel in Großbuchstaben, wenn parcel.app keinen Namen kennt.",
+        "en": "Display name of the carrier; falls back to the uppercase carrier code when parcel.app knows no name for it.",
+        "es": "Nombre visible del transportista; en su defecto, el código del transportista en mayúsculas cuando parcel.app no conoce ningún nombre.",
+        "fr": "Nom d'affichage du transporteur ; à défaut, le code du transporteur en majuscules lorsque parcel.app n'en connaît pas le nom.",
+        "it": "Nome visualizzato del corriere; in mancanza, il codice del corriere in maiuscolo quando parcel.app non ne conosce il nome.",
+        "nl": "Weergavenaam van de vervoerder; anders de vervoerderscode in hoofdletters, wanneer parcel.app geen naam kent.",
+        "pl": "Nazwa wyświetlana przewoźnika; zamiennie kod przewoźnika wielkimi literami, gdy parcel.app nie zna nazwy.",
+        "pt": "Nome de apresentação da transportadora; em alternativa, o código da transportadora em maiúsculas quando o parcel.app não sabe o nome.",
+        "ru": "Отображаемое название перевозчика; при отсутствии - код перевозчика заглавными буквами, если parcel.app не знает названия.",
+        "uk": "Відображувана назва перевізника; за відсутності - код перевізника великими літерами, якщо parcel.app не знає назви.",
+        "zh-cn": "承运商的显示名称；若 parcel.app 不知道其名称，则回退为大写的承运商代码。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_2.carrier"
@@ -2697,7 +2983,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Die Beschreibung, die du der Sendung in parcel.app gegeben hast; anders als der Gerätename zeigt sie immer den aktuellen Wert.",
+        "en": "The description you gave the shipment in parcel.app; unlike the device name it always shows the current value.",
+        "es": "La descripción que diste al envío en parcel.app; a diferencia del nombre del dispositivo, siempre muestra el valor actual.",
+        "fr": "La description que vous avez donnée à l'envoi dans parcel.app ; contrairement au nom de l'appareil, elle affiche toujours la valeur actuelle.",
+        "it": "La descrizione che hai dato alla spedizione in parcel.app; a differenza del nome del dispositivo mostra sempre il valore attuale.",
+        "nl": "De omschrijving die je de zending in parcel.app hebt gegeven; anders dan de apparaatnaam toont deze altijd de actuele waarde.",
+        "pl": "Opis, który nadałeś przesyłce w parcel.app; w przeciwieństwie do nazwy urządzenia zawsze pokazuje aktualną wartość.",
+        "pt": "A descrição que deu ao envio no parcel.app; ao contrário do nome do dispositivo, mostra sempre o valor atual.",
+        "ru": "Описание, которое вы задали отправлению в parcel.app; в отличие от имени устройства оно всегда показывает текущее значение.",
+        "uk": "Опис, який ви дали відправленню в parcel.app; на відміну від назви пристрою він завжди показує поточне значення.",
+        "zh-cn": "你在 parcel.app 中为该寄件填写的描述；与设备名称不同，它始终显示当前值。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_2.description"
@@ -2869,7 +3168,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
+        "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
+        "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
+        "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
+        "pl": "Status jako czytelny tekst w języku systemowym ioBroker - w skryptach należy używać statusCode, który nie zmienia się wraz z językiem.",
+        "pt": "O estado como texto legível no idioma do sistema ioBroker - nos scripts utilize statusCode, que não muda com o idioma.",
+        "ru": "Статус в виде читаемого текста на системном языке ioBroker - в скриптах используйте statusCode, он не меняется вместе с языком.",
+        "uk": "Статус як читабельний текст системною мовою ioBroker - у скриптах використовуйте statusCode, він не змінюється разом з мовою.",
+        "zh-cn": "以 ioBroker 系统语言显示的可读状态文本 - 在脚本中请使用 statusCode，它不随语言变化。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_2.status"
@@ -2962,7 +3274,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Anzeigename des Zustellers; ersatzweise das Zustellerkürzel in Großbuchstaben, wenn parcel.app keinen Namen kennt.",
+        "en": "Display name of the carrier; falls back to the uppercase carrier code when parcel.app knows no name for it.",
+        "es": "Nombre visible del transportista; en su defecto, el código del transportista en mayúsculas cuando parcel.app no conoce ningún nombre.",
+        "fr": "Nom d'affichage du transporteur ; à défaut, le code du transporteur en majuscules lorsque parcel.app n'en connaît pas le nom.",
+        "it": "Nome visualizzato del corriere; in mancanza, il codice del corriere in maiuscolo quando parcel.app non ne conosce il nome.",
+        "nl": "Weergavenaam van de vervoerder; anders de vervoerderscode in hoofdletters, wanneer parcel.app geen naam kent.",
+        "pl": "Nazwa wyświetlana przewoźnika; zamiennie kod przewoźnika wielkimi literami, gdy parcel.app nie zna nazwy.",
+        "pt": "Nome de apresentação da transportadora; em alternativa, o código da transportadora em maiúsculas quando o parcel.app não sabe o nome.",
+        "ru": "Отображаемое название перевозчика; при отсутствии - код перевозчика заглавными буквами, если parcel.app не знает названия.",
+        "uk": "Відображувана назва перевізника; за відсутності - код перевізника великими літерами, якщо parcel.app не знає назви.",
+        "zh-cn": "承运商的显示名称；若 parcel.app 不知道其名称，则回退为大写的承运商代码。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_3.carrier"
@@ -3060,7 +3385,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Die Beschreibung, die du der Sendung in parcel.app gegeben hast; anders als der Gerätename zeigt sie immer den aktuellen Wert.",
+        "en": "The description you gave the shipment in parcel.app; unlike the device name it always shows the current value.",
+        "es": "La descripción que diste al envío en parcel.app; a diferencia del nombre del dispositivo, siempre muestra el valor actual.",
+        "fr": "La description que vous avez donnée à l'envoi dans parcel.app ; contrairement au nom de l'appareil, elle affiche toujours la valeur actuelle.",
+        "it": "La descrizione che hai dato alla spedizione in parcel.app; a differenza del nome del dispositivo mostra sempre il valore attuale.",
+        "nl": "De omschrijving die je de zending in parcel.app hebt gegeven; anders dan de apparaatnaam toont deze altijd de actuele waarde.",
+        "pl": "Opis, który nadałeś przesyłce w parcel.app; w przeciwieństwie do nazwy urządzenia zawsze pokazuje aktualną wartość.",
+        "pt": "A descrição que deu ao envio no parcel.app; ao contrário do nome do dispositivo, mostra sempre o valor atual.",
+        "ru": "Описание, которое вы задали отправлению в parcel.app; в отличие от имени устройства оно всегда показывает текущее значение.",
+        "uk": "Опис, який ви дали відправленню в parcel.app; на відміну від назви пристрою він завжди показує поточне значення.",
+        "zh-cn": "你在 parcel.app 中为该寄件填写的描述；与设备名称不同，它始终显示当前值。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_3.description"
@@ -3232,7 +3570,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
+        "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
+        "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
+        "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
+        "pl": "Status jako czytelny tekst w języku systemowym ioBroker - w skryptach należy używać statusCode, który nie zmienia się wraz z językiem.",
+        "pt": "O estado como texto legível no idioma do sistema ioBroker - nos scripts utilize statusCode, que não muda com o idioma.",
+        "ru": "Статус в виде читаемого текста на системном языке ioBroker - в скриптах используйте statusCode, он не меняется вместе с языком.",
+        "uk": "Статус як читабельний текст системною мовою ioBroker - у скриптах використовуйте statusCode, він не змінюється разом з мовою.",
+        "zh-cn": "以 ioBroker 系统语言显示的可读状态文本 - 在脚本中请使用 statusCode，它不随语言变化。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_3.status"
@@ -3325,7 +3676,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Anzeigename des Zustellers; ersatzweise das Zustellerkürzel in Großbuchstaben, wenn parcel.app keinen Namen kennt.",
+        "en": "Display name of the carrier; falls back to the uppercase carrier code when parcel.app knows no name for it.",
+        "es": "Nombre visible del transportista; en su defecto, el código del transportista en mayúsculas cuando parcel.app no conoce ningún nombre.",
+        "fr": "Nom d'affichage du transporteur ; à défaut, le code du transporteur en majuscules lorsque parcel.app n'en connaît pas le nom.",
+        "it": "Nome visualizzato del corriere; in mancanza, il codice del corriere in maiuscolo quando parcel.app non ne conosce il nome.",
+        "nl": "Weergavenaam van de vervoerder; anders de vervoerderscode in hoofdletters, wanneer parcel.app geen naam kent.",
+        "pl": "Nazwa wyświetlana przewoźnika; zamiennie kod przewoźnika wielkimi literami, gdy parcel.app nie zna nazwy.",
+        "pt": "Nome de apresentação da transportadora; em alternativa, o código da transportadora em maiúsculas quando o parcel.app não sabe o nome.",
+        "ru": "Отображаемое название перевозчика; при отсутствии - код перевозчика заглавными буквами, если parcel.app не знает названия.",
+        "uk": "Відображувана назва перевізника; за відсутності - код перевізника великими літерами, якщо parcel.app не знає назви.",
+        "zh-cn": "承运商的显示名称；若 parcel.app 不知道其名称，则回退为大写的承运商代码。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_4.carrier"
@@ -3423,7 +3787,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Die Beschreibung, die du der Sendung in parcel.app gegeben hast; anders als der Gerätename zeigt sie immer den aktuellen Wert.",
+        "en": "The description you gave the shipment in parcel.app; unlike the device name it always shows the current value.",
+        "es": "La descripción que diste al envío en parcel.app; a diferencia del nombre del dispositivo, siempre muestra el valor actual.",
+        "fr": "La description que vous avez donnée à l'envoi dans parcel.app ; contrairement au nom de l'appareil, elle affiche toujours la valeur actuelle.",
+        "it": "La descrizione che hai dato alla spedizione in parcel.app; a differenza del nome del dispositivo mostra sempre il valore attuale.",
+        "nl": "De omschrijving die je de zending in parcel.app hebt gegeven; anders dan de apparaatnaam toont deze altijd de actuele waarde.",
+        "pl": "Opis, który nadałeś przesyłce w parcel.app; w przeciwieństwie do nazwy urządzenia zawsze pokazuje aktualną wartość.",
+        "pt": "A descrição que deu ao envio no parcel.app; ao contrário do nome do dispositivo, mostra sempre o valor atual.",
+        "ru": "Описание, которое вы задали отправлению в parcel.app; в отличие от имени устройства оно всегда показывает текущее значение.",
+        "uk": "Опис, який ви дали відправленню в parcel.app; на відміну від назви пристрою він завжди показує поточне значення.",
+        "zh-cn": "你在 parcel.app 中为该寄件填写的描述；与设备名称不同，它始终显示当前值。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_4.description"
@@ -3595,7 +3972,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
+        "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
+        "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
+        "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
+        "pl": "Status jako czytelny tekst w języku systemowym ioBroker - w skryptach należy używać statusCode, który nie zmienia się wraz z językiem.",
+        "pt": "O estado como texto legível no idioma do sistema ioBroker - nos scripts utilize statusCode, que não muda com o idioma.",
+        "ru": "Статус в виде читаемого текста на системном языке ioBroker - в скриптах используйте statusCode, он не меняется вместе с языком.",
+        "uk": "Статус як читабельний текст системною мовою ioBroker - у скриптах використовуйте statusCode, він не змінюється разом з мовою.",
+        "zh-cn": "以 ioBroker 系统语言显示的可读状态文本 - 在脚本中请使用 statusCode，它不随语言变化。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_4.status"
@@ -3688,7 +4078,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Anzeigename des Zustellers; ersatzweise das Zustellerkürzel in Großbuchstaben, wenn parcel.app keinen Namen kennt.",
+        "en": "Display name of the carrier; falls back to the uppercase carrier code when parcel.app knows no name for it.",
+        "es": "Nombre visible del transportista; en su defecto, el código del transportista en mayúsculas cuando parcel.app no conoce ningún nombre.",
+        "fr": "Nom d'affichage du transporteur ; à défaut, le code du transporteur en majuscules lorsque parcel.app n'en connaît pas le nom.",
+        "it": "Nome visualizzato del corriere; in mancanza, il codice del corriere in maiuscolo quando parcel.app non ne conosce il nome.",
+        "nl": "Weergavenaam van de vervoerder; anders de vervoerderscode in hoofdletters, wanneer parcel.app geen naam kent.",
+        "pl": "Nazwa wyświetlana przewoźnika; zamiennie kod przewoźnika wielkimi literami, gdy parcel.app nie zna nazwy.",
+        "pt": "Nome de apresentação da transportadora; em alternativa, o código da transportadora em maiúsculas quando o parcel.app não sabe o nome.",
+        "ru": "Отображаемое название перевозчика; при отсутствии - код перевозчика заглавными буквами, если parcel.app не знает названия.",
+        "uk": "Відображувана назва перевізника; за відсутності - код перевізника великими літерами, якщо parcel.app не знає назви.",
+        "zh-cn": "承运商的显示名称；若 parcel.app 不知道其名称，则回退为大写的承运商代码。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_5.carrier"
@@ -3786,7 +4189,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Die Beschreibung, die du der Sendung in parcel.app gegeben hast; anders als der Gerätename zeigt sie immer den aktuellen Wert.",
+        "en": "The description you gave the shipment in parcel.app; unlike the device name it always shows the current value.",
+        "es": "La descripción que diste al envío en parcel.app; a diferencia del nombre del dispositivo, siempre muestra el valor actual.",
+        "fr": "La description que vous avez donnée à l'envoi dans parcel.app ; contrairement au nom de l'appareil, elle affiche toujours la valeur actuelle.",
+        "it": "La descrizione che hai dato alla spedizione in parcel.app; a differenza del nome del dispositivo mostra sempre il valore attuale.",
+        "nl": "De omschrijving die je de zending in parcel.app hebt gegeven; anders dan de apparaatnaam toont deze altijd de actuele waarde.",
+        "pl": "Opis, który nadałeś przesyłce w parcel.app; w przeciwieństwie do nazwy urządzenia zawsze pokazuje aktualną wartość.",
+        "pt": "A descrição que deu ao envio no parcel.app; ao contrário do nome do dispositivo, mostra sempre o valor atual.",
+        "ru": "Описание, которое вы задали отправлению в parcel.app; в отличие от имени устройства оно всегда показывает текущее значение.",
+        "uk": "Опис, який ви дали відправленню в parcel.app; на відміну від назви пристрою він завжди показує поточне значення.",
+        "zh-cn": "你在 parcel.app 中为该寄件填写的描述；与设备名称不同，它始终显示当前值。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_5.description"
@@ -3958,7 +4374,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
+        "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
+        "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
+        "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
+        "pl": "Status jako czytelny tekst w języku systemowym ioBroker - w skryptach należy używać statusCode, który nie zmienia się wraz z językiem.",
+        "pt": "O estado como texto legível no idioma do sistema ioBroker - nos scripts utilize statusCode, que não muda com o idioma.",
+        "ru": "Статус в виде читаемого текста на системном языке ioBroker - в скриптах используйте statusCode, он не меняется вместе с языком.",
+        "uk": "Статус як читабельний текст системною мовою ioBroker - у скриптах використовуйте statusCode, він не змінюється разом з мовою.",
+        "zh-cn": "以 ioBroker 系统语言显示的可读状态文本 - 在脚本中请使用 statusCode，它不随语言变化。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_5.status"
@@ -4051,7 +4480,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Anzeigename des Zustellers; ersatzweise das Zustellerkürzel in Großbuchstaben, wenn parcel.app keinen Namen kennt.",
+        "en": "Display name of the carrier; falls back to the uppercase carrier code when parcel.app knows no name for it.",
+        "es": "Nombre visible del transportista; en su defecto, el código del transportista en mayúsculas cuando parcel.app no conoce ningún nombre.",
+        "fr": "Nom d'affichage du transporteur ; à défaut, le code du transporteur en majuscules lorsque parcel.app n'en connaît pas le nom.",
+        "it": "Nome visualizzato del corriere; in mancanza, il codice del corriere in maiuscolo quando parcel.app non ne conosce il nome.",
+        "nl": "Weergavenaam van de vervoerder; anders de vervoerderscode in hoofdletters, wanneer parcel.app geen naam kent.",
+        "pl": "Nazwa wyświetlana przewoźnika; zamiennie kod przewoźnika wielkimi literami, gdy parcel.app nie zna nazwy.",
+        "pt": "Nome de apresentação da transportadora; em alternativa, o código da transportadora em maiúsculas quando o parcel.app não sabe o nome.",
+        "ru": "Отображаемое название перевозчика; при отсутствии - код перевозчика заглавными буквами, если parcel.app не знает названия.",
+        "uk": "Відображувана назва перевізника; за відсутності - код перевізника великими літерами, якщо parcel.app не знає назви.",
+        "zh-cn": "承运商的显示名称；若 parcel.app 不知道其名称，则回退为大写的承运商代码。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_6.carrier"
@@ -4149,7 +4591,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Die Beschreibung, die du der Sendung in parcel.app gegeben hast; anders als der Gerätename zeigt sie immer den aktuellen Wert.",
+        "en": "The description you gave the shipment in parcel.app; unlike the device name it always shows the current value.",
+        "es": "La descripción que diste al envío en parcel.app; a diferencia del nombre del dispositivo, siempre muestra el valor actual.",
+        "fr": "La description que vous avez donnée à l'envoi dans parcel.app ; contrairement au nom de l'appareil, elle affiche toujours la valeur actuelle.",
+        "it": "La descrizione che hai dato alla spedizione in parcel.app; a differenza del nome del dispositivo mostra sempre il valore attuale.",
+        "nl": "De omschrijving die je de zending in parcel.app hebt gegeven; anders dan de apparaatnaam toont deze altijd de actuele waarde.",
+        "pl": "Opis, który nadałeś przesyłce w parcel.app; w przeciwieństwie do nazwy urządzenia zawsze pokazuje aktualną wartość.",
+        "pt": "A descrição que deu ao envio no parcel.app; ao contrário do nome do dispositivo, mostra sempre o valor atual.",
+        "ru": "Описание, которое вы задали отправлению в parcel.app; в отличие от имени устройства оно всегда показывает текущее значение.",
+        "uk": "Опис, який ви дали відправленню в parcel.app; на відміну від назви пристрою він завжди показує поточне значення.",
+        "zh-cn": "你在 parcel.app 中为该寄件填写的描述；与设备名称不同，它始终显示当前值。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_6.description"
@@ -4321,7 +4776,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
+        "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
+        "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
+        "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
+        "pl": "Status jako czytelny tekst w języku systemowym ioBroker - w skryptach należy używać statusCode, który nie zmienia się wraz z językiem.",
+        "pt": "O estado como texto legível no idioma do sistema ioBroker - nos scripts utilize statusCode, que não muda com o idioma.",
+        "ru": "Статус в виде читаемого текста на системном языке ioBroker - в скриптах используйте statusCode, он не меняется вместе с языком.",
+        "uk": "Статус як читабельний текст системною мовою ioBroker - у скриптах використовуйте statusCode, він не змінюється разом з мовою.",
+        "zh-cn": "以 ioBroker 系统语言显示的可读状态文本 - 在脚本中请使用 statusCode，它不随语言变化。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_6.status"
@@ -4414,7 +4882,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Anzeigename des Zustellers; ersatzweise das Zustellerkürzel in Großbuchstaben, wenn parcel.app keinen Namen kennt.",
+        "en": "Display name of the carrier; falls back to the uppercase carrier code when parcel.app knows no name for it.",
+        "es": "Nombre visible del transportista; en su defecto, el código del transportista en mayúsculas cuando parcel.app no conoce ningún nombre.",
+        "fr": "Nom d'affichage du transporteur ; à défaut, le code du transporteur en majuscules lorsque parcel.app n'en connaît pas le nom.",
+        "it": "Nome visualizzato del corriere; in mancanza, il codice del corriere in maiuscolo quando parcel.app non ne conosce il nome.",
+        "nl": "Weergavenaam van de vervoerder; anders de vervoerderscode in hoofdletters, wanneer parcel.app geen naam kent.",
+        "pl": "Nazwa wyświetlana przewoźnika; zamiennie kod przewoźnika wielkimi literami, gdy parcel.app nie zna nazwy.",
+        "pt": "Nome de apresentação da transportadora; em alternativa, o código da transportadora em maiúsculas quando o parcel.app não sabe o nome.",
+        "ru": "Отображаемое название перевозчика; при отсутствии - код перевозчика заглавными буквами, если parcel.app не знает названия.",
+        "uk": "Відображувана назва перевізника; за відсутності - код перевізника великими літерами, якщо parcel.app не знає назви.",
+        "zh-cn": "承运商的显示名称；若 parcel.app 不知道其名称，则回退为大写的承运商代码。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_7.carrier"
@@ -4512,7 +4993,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Die Beschreibung, die du der Sendung in parcel.app gegeben hast; anders als der Gerätename zeigt sie immer den aktuellen Wert.",
+        "en": "The description you gave the shipment in parcel.app; unlike the device name it always shows the current value.",
+        "es": "La descripción que diste al envío en parcel.app; a diferencia del nombre del dispositivo, siempre muestra el valor actual.",
+        "fr": "La description que vous avez donnée à l'envoi dans parcel.app ; contrairement au nom de l'appareil, elle affiche toujours la valeur actuelle.",
+        "it": "La descrizione che hai dato alla spedizione in parcel.app; a differenza del nome del dispositivo mostra sempre il valore attuale.",
+        "nl": "De omschrijving die je de zending in parcel.app hebt gegeven; anders dan de apparaatnaam toont deze altijd de actuele waarde.",
+        "pl": "Opis, który nadałeś przesyłce w parcel.app; w przeciwieństwie do nazwy urządzenia zawsze pokazuje aktualną wartość.",
+        "pt": "A descrição que deu ao envio no parcel.app; ao contrário do nome do dispositivo, mostra sempre o valor atual.",
+        "ru": "Описание, которое вы задали отправлению в parcel.app; в отличие от имени устройства оно всегда показывает текущее значение.",
+        "uk": "Опис, який ви дали відправленню в parcel.app; на відміну від назви пристрою він завжди показує поточне значення.",
+        "zh-cn": "你在 parcel.app 中为该寄件填写的描述；与设备名称不同，它始终显示当前值。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_7.description"
@@ -4684,7 +5178,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
+        "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
+        "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
+        "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
+        "pl": "Status jako czytelny tekst w języku systemowym ioBroker - w skryptach należy używać statusCode, który nie zmienia się wraz z językiem.",
+        "pt": "O estado como texto legível no idioma do sistema ioBroker - nos scripts utilize statusCode, que não muda com o idioma.",
+        "ru": "Статус в виде читаемого текста на системном языке ioBroker - в скриптах используйте statusCode, он не меняется вместе с языком.",
+        "uk": "Статус як читабельний текст системною мовою ioBroker - у скриптах використовуйте statusCode, він не змінюється разом з мовою.",
+        "zh-cn": "以 ioBroker 系统语言显示的可读状态文本 - 在脚本中请使用 statusCode，它不随语言变化。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_7.status"
@@ -4777,7 +5284,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Anzeigename des Zustellers; ersatzweise das Zustellerkürzel in Großbuchstaben, wenn parcel.app keinen Namen kennt.",
+        "en": "Display name of the carrier; falls back to the uppercase carrier code when parcel.app knows no name for it.",
+        "es": "Nombre visible del transportista; en su defecto, el código del transportista en mayúsculas cuando parcel.app no conoce ningún nombre.",
+        "fr": "Nom d'affichage du transporteur ; à défaut, le code du transporteur en majuscules lorsque parcel.app n'en connaît pas le nom.",
+        "it": "Nome visualizzato del corriere; in mancanza, il codice del corriere in maiuscolo quando parcel.app non ne conosce il nome.",
+        "nl": "Weergavenaam van de vervoerder; anders de vervoerderscode in hoofdletters, wanneer parcel.app geen naam kent.",
+        "pl": "Nazwa wyświetlana przewoźnika; zamiennie kod przewoźnika wielkimi literami, gdy parcel.app nie zna nazwy.",
+        "pt": "Nome de apresentação da transportadora; em alternativa, o código da transportadora em maiúsculas quando o parcel.app não sabe o nome.",
+        "ru": "Отображаемое название перевозчика; при отсутствии - код перевозчика заглавными буквами, если parcel.app не знает названия.",
+        "uk": "Відображувана назва перевізника; за відсутності - код перевізника великими літерами, якщо parcel.app не знає назви.",
+        "zh-cn": "承运商的显示名称；若 parcel.app 不知道其名称，则回退为大写的承运商代码。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_8.carrier"
@@ -4875,7 +5395,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Die Beschreibung, die du der Sendung in parcel.app gegeben hast; anders als der Gerätename zeigt sie immer den aktuellen Wert.",
+        "en": "The description you gave the shipment in parcel.app; unlike the device name it always shows the current value.",
+        "es": "La descripción que diste al envío en parcel.app; a diferencia del nombre del dispositivo, siempre muestra el valor actual.",
+        "fr": "La description que vous avez donnée à l'envoi dans parcel.app ; contrairement au nom de l'appareil, elle affiche toujours la valeur actuelle.",
+        "it": "La descrizione che hai dato alla spedizione in parcel.app; a differenza del nome del dispositivo mostra sempre il valore attuale.",
+        "nl": "De omschrijving die je de zending in parcel.app hebt gegeven; anders dan de apparaatnaam toont deze altijd de actuele waarde.",
+        "pl": "Opis, który nadałeś przesyłce w parcel.app; w przeciwieństwie do nazwy urządzenia zawsze pokazuje aktualną wartość.",
+        "pt": "A descrição que deu ao envio no parcel.app; ao contrário do nome do dispositivo, mostra sempre o valor atual.",
+        "ru": "Описание, которое вы задали отправлению в parcel.app; в отличие от имени устройства оно всегда показывает текущее значение.",
+        "uk": "Опис, який ви дали відправленню в parcel.app; на відміну від назви пристрою він завжди показує поточне значення.",
+        "zh-cn": "你在 parcel.app 中为该寄件填写的描述；与设备名称不同，它始终显示当前值。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_8.description"
@@ -5047,7 +5580,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
+        "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
+        "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
+        "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
+        "pl": "Status jako czytelny tekst w języku systemowym ioBroker - w skryptach należy używać statusCode, który nie zmienia się wraz z językiem.",
+        "pt": "O estado como texto legível no idioma do sistema ioBroker - nos scripts utilize statusCode, que não muda com o idioma.",
+        "ru": "Статус в виде читаемого текста на системном языке ioBroker - в скриптах используйте statusCode, он не меняется вместе с языком.",
+        "uk": "Статус як читабельний текст системною мовою ioBroker - у скриптах використовуйте statusCode, він не змінюється разом з мовою.",
+        "zh-cn": "以 ioBroker 系统语言显示的可读状态文本 - 在脚本中请使用 statusCode，它不随语言变化。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_8.status"
@@ -5140,7 +5686,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Anzeigename des Zustellers; ersatzweise das Zustellerkürzel in Großbuchstaben, wenn parcel.app keinen Namen kennt.",
+        "en": "Display name of the carrier; falls back to the uppercase carrier code when parcel.app knows no name for it.",
+        "es": "Nombre visible del transportista; en su defecto, el código del transportista en mayúsculas cuando parcel.app no conoce ningún nombre.",
+        "fr": "Nom d'affichage du transporteur ; à défaut, le code du transporteur en majuscules lorsque parcel.app n'en connaît pas le nom.",
+        "it": "Nome visualizzato del corriere; in mancanza, il codice del corriere in maiuscolo quando parcel.app non ne conosce il nome.",
+        "nl": "Weergavenaam van de vervoerder; anders de vervoerderscode in hoofdletters, wanneer parcel.app geen naam kent.",
+        "pl": "Nazwa wyświetlana przewoźnika; zamiennie kod przewoźnika wielkimi literami, gdy parcel.app nie zna nazwy.",
+        "pt": "Nome de apresentação da transportadora; em alternativa, o código da transportadora em maiúsculas quando o parcel.app não sabe o nome.",
+        "ru": "Отображаемое название перевозчика; при отсутствии - код перевозчика заглавными буквами, если parcel.app не знает названия.",
+        "uk": "Відображувана назва перевізника; за відсутності - код перевізника великими літерами, якщо parcel.app не знає назви.",
+        "zh-cn": "承运商的显示名称；若 parcel.app 不知道其名称，则回退为大写的承运商代码。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_unknown_carrier.carrier"
@@ -5238,7 +5797,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Die Beschreibung, die du der Sendung in parcel.app gegeben hast; anders als der Gerätename zeigt sie immer den aktuellen Wert.",
+        "en": "The description you gave the shipment in parcel.app; unlike the device name it always shows the current value.",
+        "es": "La descripción que diste al envío en parcel.app; a diferencia del nombre del dispositivo, siempre muestra el valor actual.",
+        "fr": "La description que vous avez donnée à l'envoi dans parcel.app ; contrairement au nom de l'appareil, elle affiche toujours la valeur actuelle.",
+        "it": "La descrizione che hai dato alla spedizione in parcel.app; a differenza del nome del dispositivo mostra sempre il valore attuale.",
+        "nl": "De omschrijving die je de zending in parcel.app hebt gegeven; anders dan de apparaatnaam toont deze altijd de actuele waarde.",
+        "pl": "Opis, który nadałeś przesyłce w parcel.app; w przeciwieństwie do nazwy urządzenia zawsze pokazuje aktualną wartość.",
+        "pt": "A descrição que deu ao envio no parcel.app; ao contrário do nome do dispositivo, mostra sempre o valor atual.",
+        "ru": "Описание, которое вы задали отправлению в parcel.app; в отличие от имени устройства оно всегда показывает текущее значение.",
+        "uk": "Опис, який ви дали відправленню в parcel.app; на відміну від назви пристрою він завжди показує поточне значення.",
+        "zh-cn": "你在 parcel.app 中为该寄件填写的描述；与设备名称不同，它始终显示当前值。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_unknown_carrier.description"
@@ -5410,7 +5982,20 @@
       "type": "string",
       "role": "text",
       "read": true,
-      "write": false
+      "write": false,
+      "desc": {
+        "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
+        "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
+        "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
+        "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
+        "pl": "Status jako czytelny tekst w języku systemowym ioBroker - w skryptach należy używać statusCode, który nie zmienia się wraz z językiem.",
+        "pt": "O estado como texto legível no idioma do sistema ioBroker - nos scripts utilize statusCode, que não muda com o idioma.",
+        "ru": "Статус в виде читаемого текста на системном языке ioBroker - в скриптах используйте statusCode, он не меняется вместе с языком.",
+        "uk": "Статус як читабельний текст системною мовою ioBroker - у скриптах використовуйте statusCode, він не змінюється разом з мовою.",
+        "zh-cn": "以 ioBroker 系统语言显示的可读状态文本 - 在脚本中请使用 statusCode，它不随语言变化。"
+      }
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_unknown_carrier.status"

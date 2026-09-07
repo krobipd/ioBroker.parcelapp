@@ -1,0 +1,3 @@
+{
+  "deliveries.*.trackingNumber": "The carrier's tracking number, verbatim as parcel.app reports it - the name plus the text role are the whole statement, with no unit, range or fallback value behind it."
+}
