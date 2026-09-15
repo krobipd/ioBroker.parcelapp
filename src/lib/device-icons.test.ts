@@ -1,9 +1,12 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { carrierIcon, FALLBACK_ICON, ICON_BY_CARRIER, ICON_URI_PREFIX, normaliseLineEndings } from "./device-icons";
 
 const ICON_DIR = join(__dirname, "..", "..", "admin", "icons");
+
+/** Shape of the freshly imported module in the CRLF test below. */
+type FreshModule = { carrierIcon: typeof carrierIcon };
 
 /**
  * Decode an inline icon URI back to its markup.
@@ -52,13 +55,26 @@ describe("carrierIcon", () => {
     expect(carrierIcon("ups")).toBe(carrierIcon("ups"));
   });
 
-  it("a CRLF checkout produces the SAME URI as an LF checkout", () => {
+  it("a CRLF checkout produces the SAME URI as an LF checkout", async () => {
     // The Windows runner checks out with CRLF. Embedding the raw bytes would
-    // yield a different URI there, so every inventory comparison would be red
-    // on Windows only.
-    const lf = readFileSync(join(ICON_DIR, "dpd.svg"), "utf8").replace(/\r\n/g, "\n");
-    const crlf = lf.replace(/\n/g, "\r\n");
-    expect(normaliseLineEndings(crlf)).toBe(lf);
+    // yield a different URI there, so every comparison against a recorded
+    // inventory would be red on Windows only. Proven without Windows: rewrite one
+    // file with CRLF, read it through a FRESH module (the URI cache is
+    // module-level) and compare against the LF value.
+    const file = join(ICON_DIR, "dpd.svg");
+    const lf = readFileSync(file, "utf8").replace(/\r\n/g, "\n");
+    expect(normaliseLineEndings(lf.replace(/\n/g, "\r\n"))).toBe(lf);
+
+    const before = carrierIcon("dpdpcode");
+    try {
+      writeFileSync(file, lf.replace(/\n/g, "\r\n"), "utf8");
+      vi.resetModules();
+      const fresh: FreshModule = await import("./device-icons.js");
+      expect(fresh.carrierIcon("dpdpcode")).toBe(before);
+    } finally {
+      writeFileSync(file, lf, "utf8");
+      vi.resetModules();
+    }
   });
 });
 
