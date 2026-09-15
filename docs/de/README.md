@@ -149,6 +149,11 @@ werden.
 Nur Sendungen im Status 2, 4 und 8 können ein voraussichtliches Zustelldatum haben; bei allen
 anderen sind `deliveryWindow` und `deliveryEstimate` deshalb leer.
 
+Eine Sendung im Status 4 (_In Zustellung_) zählt als **heute**, auch wenn der Zusteller kein
+voraussichtliches Datum meldet — sofern die letzte Erfassung von heute ist, denn dann ist sie im
+Fahrzeug. `deliveryEstimate` sagt dann _heute_ und die Sendung zählt in `summary.todayCount`,
+während `deliveryWindow` leer bleibt: es gibt keine Uhrzeit zu zeigen.
+
 ---
 
 ## Sprache

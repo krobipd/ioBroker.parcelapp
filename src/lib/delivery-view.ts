@@ -15,6 +15,9 @@ import type { ParcelDelivery, ParcelEvent } from "./types";
 /** Status codes that have an expected delivery date/time: 2=In Transit, 4=Out for Delivery, 8=Info Received */
 export const TRACKABLE_STATUSES = new Set([2, 4, 8]);
 
+/** "Out for Delivery" — the carrier has the parcel on the van. */
+const OUT_FOR_DELIVERY = 4;
+
 /**
  * Optional trace sink. Every parse that gives up says why — the adapter logs API drift everywhere
  * else (`parseStatus`, carrier lookup, response shape), and this was the one place that stayed
@@ -296,6 +299,23 @@ export function computeDiffDays(delivery: ParcelDelivery, statusCode: number, lo
   }
 
   if (!expectedDate || Number.isNaN(expectedDate.getTime())) {
+    // v0.13.0 (audit O1): plenty of carriers report "out for delivery" without any
+    // expected date. The parcel is on the van, but it was missing from todayCount
+    // and had no estimate. The day of the last scan decides: scanned today → today
+    // (the window stays empty, there is no time to show); an older scan is not
+    // evidence for today, so it stays unknown.
+    if (statusCode === OUT_FOR_DELIVERY) {
+      const scanned = parseExpectedToMs(getLatestEvent(delivery)?.date, log);
+      if (scanned) {
+        const scanDate = new Date(scanned.ms);
+        const scanStart = new Date(scanDate.getFullYear(), scanDate.getMonth(), scanDate.getDate());
+        const nowForScan = new Date();
+        const todayForScan = new Date(nowForScan.getFullYear(), nowForScan.getMonth(), nowForScan.getDate());
+        if (scanStart.getTime() === todayForScan.getTime()) {
+          return 0;
+        }
+      }
+    }
     return null;
   }
 

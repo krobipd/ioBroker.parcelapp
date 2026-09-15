@@ -237,6 +237,39 @@ describe("calculateDeliveryEstimate / isToday", () => {
   it("is empty for a non-trackable status", () => {
     expect(calculateDeliveryEstimate(makeDelivery({ date_expected: "2026-06-15" }), 0)).toBe("");
   });
+
+  describe('"out for delivery" without an expected date (v0.13.0, audit O1)', () => {
+    it("counts as today when the carrier scanned the parcel today", () => {
+      // Plenty of carriers report status 4 and no date at all. The parcel is on the
+      // van — before v0.13.0 it was missing from todayCount and had no estimate.
+      const d = makeDelivery({ events: [{ event: "Out for delivery", date: "2026-06-15 07:12:00" }] });
+      expect(isToday(d, 4)).toBe(true);
+      expect(calculateDeliveryEstimate(d, 4)).toBe("today");
+      // No date means no window — that half stays empty on purpose.
+      expect(calculateDeliveryWindow(d, 4)).toBe("");
+    });
+
+    it("stays unknown when the last scan is older than today", () => {
+      const d = makeDelivery({ events: [{ event: "Out for delivery", date: "2026-06-14 07:12:00" }] });
+      expect(isToday(d, 4)).toBe(false);
+      expect(calculateDeliveryEstimate(d, 4)).toBe("");
+    });
+
+    it("stays unknown without any event, and for the other trackable statuses", () => {
+      expect(isToday(makeDelivery(), 4)).toBe(false);
+      expect(isToday(makeDelivery({ events: [{ event: "Scanned" }] }), 4)).toBe(false);
+      // Status 2 with a scan from today is NOT out for delivery — no day is implied.
+      expect(isToday(makeDelivery({ events: [{ date: "2026-06-15 07:12:00" }] }), 2)).toBe(false);
+    });
+
+    it("an expected date still wins over the scan day", () => {
+      const d = makeDelivery({
+        date_expected: "2026-06-16",
+        events: [{ date: "2026-06-15 07:12:00" }],
+      });
+      expect(calculateDeliveryEstimate(d, 4)).toBe("tomorrow");
+    });
+  });
 });
 
 describe("calculateCombinedWindow", () => {

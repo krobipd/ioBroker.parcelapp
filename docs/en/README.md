@@ -142,6 +142,11 @@ interpret — for example because a future app version introduced a new code. Su
 Only packages in status 2, 4 and 8 can have an expected delivery date, so `deliveryWindow` and
 `deliveryEstimate` are empty for all other statuses.
 
+A package in status 4 (_Out for Delivery_) counts as **today** even when the carrier reports no
+expected date, as long as its last scan happened today — it is on the van. `deliveryEstimate` then
+reads _today_ and the package is included in `summary.todayCount`, while `deliveryWindow` stays
+empty because there is no time to show.
+
 ---
 
 ## Language
