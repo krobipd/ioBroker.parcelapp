@@ -8,7 +8,7 @@
   "tooltip_pollInterval": "Frequenza di aggiornamento delle consegne (5-60 minuti, predefinito: 10). Limite: 20 richieste/ora.",
   "header_delivery": "Consegne",
   "label_autoRemoveDelivered": "Rimuovi automaticamente i pacchi consegnati",
-  "tooltip_autoRemoveDelivered": "Se attivato, i pacchi consegnati vengono automaticamente rimossi dall'albero degli stati. Se disattivato, rimangono con lo stato 'Consegnato' fino alla cancellazione in parcel.app.",
+  "tooltip_autoRemoveDelivered": "Se attivato, i pacchi consegnati vengono automaticamente rimossi dall'albero degli stati. Se disattivato, rimangono con lo stato 'Consegnato' finché parcel.app non li elenca più come recenti.",
   "supportHeader": "Supporto",
   "aboutInfo": "Questo adattatore è gratuito e open source. Se lo trovi utile, considera di supportare lo sviluppo con una piccola donazione.",
   "donateKofi": "Supporta su Ko-fi",

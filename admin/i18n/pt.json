@@ -8,7 +8,7 @@
   "tooltip_pollInterval": "Com que frequência buscar atualizações de entrega (5-60 minutos, padrão: 10). Limite: 20 solicitações/hora.",
   "header_delivery": "Entregas",
   "label_autoRemoveDelivered": "Remover automaticamente pacotes entregues",
-  "tooltip_autoRemoveDelivered": "Quando ativado, os pacotes entregues são automaticamente removidos da árvore de estados. Quando desativado, permanecem com o estado 'Entregue' até serem eliminados no parcel.app.",
+  "tooltip_autoRemoveDelivered": "Quando ativado, os pacotes entregues são automaticamente removidos da árvore de estados. Quando desativado, permanecem com o estado 'Entregue' até que o parcel.app deixe de os listar como recentes.",
   "supportHeader": "Suporte",
   "aboutInfo": "Este adaptador é gratuito e de código aberto. Se você o achar útil, considere apoiar o desenvolvimento com uma pequena doação.",
   "donateKofi": "Apoiar no Ko-fi",

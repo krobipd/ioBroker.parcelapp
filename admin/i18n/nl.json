@@ -8,7 +8,7 @@
   "tooltip_pollInterval": "Hoe vaak bezorgingsupdates ophalen (5-60 minuten, standaard: 10). Limiet: 20 verzoeken/uur.",
   "header_delivery": "Leveringen",
   "label_autoRemoveDelivered": "Afgeleverde pakketten automatisch verwijderen",
-  "tooltip_autoRemoveDelivered": "Indien ingeschakeld worden afgeleverde pakketten automatisch uit de objectboom verwijderd. Indien uitgeschakeld blijven ze met status 'Afgeleverd' bestaan tot ze in parcel.app worden verwijderd.",
+  "tooltip_autoRemoveDelivered": "Indien ingeschakeld worden afgeleverde pakketten automatisch uit de objectboom verwijderd. Indien uitgeschakeld blijven ze met status 'Afgeleverd' staan totdat parcel.app ze niet meer als recent vermeldt.",
   "supportHeader": "Ondersteuning",
   "aboutInfo": "Deze adapter is gratis en open source. Als je hem nuttig vindt, overweeg dan de ontwikkeling te steunen met een kleine donatie.",
   "donateKofi": "Steunen op Ko-fi",

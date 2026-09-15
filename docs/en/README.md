@@ -33,11 +33,11 @@ dialog opens by itself.
 
 ### 3. Fill in the settings
 
-| Setting                                     | What it does                                                                                                                      |
-| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| **API Key**                                 | The key from step 1. It is stored encrypted in the instance object and is never written to the log.                               |
-| **Poll Interval**                           | How often the adapter asks parcel.app for an update, in minutes (5–60, default 10).                                               |
-| **Automatically remove delivered packages** | On: a delivered package disappears from the object tree. Off: it stays with status _Delivered_ until you delete it in parcel.app. |
+| Setting                                     | What it does                                                                                                                                                                                          |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **API Key**                                 | The key from step 1. It is stored encrypted in the instance object and is never written to the log.                                                                                                   |
+| **Poll Interval**                           | How often the adapter asks parcel.app for an update, in minutes (5–60, default 10).                                                                                                                   |
+| **Automatically remove delivered packages** | On: a delivered package disappears from the object tree. Off: it stays with status _Delivered_ as long as parcel.app lists it — the adapter only removes a package when the API no longer returns it. |
 
 ### 4. Test the connection
 

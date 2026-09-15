@@ -8,7 +8,7 @@
   "tooltip_pollInterval": "Wie oft Lieferupdates abgefragt werden (5-60 Minuten, Standard: 10). Rate-Limit: 20 Anfragen/Stunde.",
   "header_delivery": "Lieferungen",
   "label_autoRemoveDelivered": "Zugestellte Pakete automatisch entfernen",
-  "tooltip_autoRemoveDelivered": "Wenn aktiviert, werden zugestellte Pakete automatisch aus dem Objektbaum entfernt. Wenn deaktiviert, bleiben sie mit Status 'Zugestellt' bestehen, bis sie in parcel.app gelöscht werden.",
+  "tooltip_autoRemoveDelivered": "Wenn aktiviert, werden zugestellte Pakete automatisch aus dem Objektbaum entfernt. Wenn deaktiviert, bleiben sie mit Status 'Zugestellt' stehen, bis parcel.app sie nicht mehr als aktuell liefert.",
   "supportHeader": "Unterstützung",
   "aboutInfo": "Dieser Adapter ist kostenlos und Open Source. Wenn du ihn nützlich findest, unterstütze die Entwicklung gerne mit einer kleinen Spende.",
   "donateKofi": "Unterstützen auf Ko-fi",

@@ -20,7 +20,7 @@ ioBroker adapter for the [parcel.app](https://parcelapp.net) API. Supports all c
 - **Summary states** — active count, today count, combined delivery window
 - **Delivery time estimates** — today, tomorrow, in X days with combined time window
 - **Configurable poll interval** (5–60 minutes)
-- **Configurable cleanup** — auto-remove delivered packages or keep them until deleted in parcel.app
+- **Configurable cleanup** — auto-remove delivered packages, or keep them as long as parcel.app lists them
 - **Add deliveries** via sendTo message from scripts or other adapters
 - **Admin UI** with connection test and polling settings
 
@@ -51,7 +51,7 @@ For details and how to disable it, see the [Sentry plugin documentation](https:/
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
 | **API Key**               | Your parcel.app API key (get it at [web.parcelapp.net](https://web.parcelapp.net))                                                                                        | —       |
 | **Poll Interval**         | How often to fetch updates (minutes). parcel.app serves the list from a ~45–90 min server cache, so shorter intervals mostly reduce the delay until a refresh is noticed. | 10      |
-| **Auto-remove delivered** | Remove delivered packages from states automatically. When disabled, they stay until deleted in parcel.app.                                                                | Yes     |
+| **Auto-remove delivered** | Remove delivered packages from states automatically. When disabled, they stay until parcel.app no longer lists them as recent.                                            | Yes     |
 
 Status labels (`Delivered`, `In Transit`, …) and delivery estimates (`today`, `tomorrow`, `in X days`) are rendered in the ioBroker system language.
 

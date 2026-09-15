@@ -8,7 +8,7 @@
   "tooltip_pollInterval": "How often to fetch delivery updates (5-60 minutes, default: 10). Rate limit: 20 requests/hour.",
   "header_delivery": "Delivery",
   "label_autoRemoveDelivered": "Automatically remove delivered packages",
-  "tooltip_autoRemoveDelivered": "When enabled, delivered packages are automatically removed from the state tree. When disabled, they remain with status 'Delivered' until deleted in parcel.app.",
+  "tooltip_autoRemoveDelivered": "When enabled, delivered packages are automatically removed from the state tree. When disabled, they remain with status 'Delivered' until parcel.app no longer lists them as recent.",
   "supportHeader": "Support",
   "aboutInfo": "This adapter is free and open source. If you find it useful, please consider supporting its development with a small donation.",
   "donateKofi": "Support on Ko-fi",

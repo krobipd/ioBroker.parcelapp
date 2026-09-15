@@ -8,7 +8,7 @@
   "tooltip_pollInterval": "Fréquence de récupération des mises à jour de livraison (5-60 minutes, défaut : 10). Limite : 20 requêtes/heure.",
   "header_delivery": "Livraisons",
   "label_autoRemoveDelivered": "Supprimer automatiquement les colis livrés",
-  "tooltip_autoRemoveDelivered": "Lorsque activé, les colis livrés sont automatiquement supprimés de l'arborescence d'états. Lorsque désactivé, ils restent avec le statut 'Livré' jusqu'à leur suppression dans parcel.app.",
+  "tooltip_autoRemoveDelivered": "Lorsque activé, les colis livrés sont automatiquement supprimés de l'arborescence d'états. Lorsque désactivé, ils restent avec le statut 'Livré' jusqu'à ce que parcel.app ne les liste plus comme récents.",
   "supportHeader": "Support",
   "aboutInfo": "Cet adaptateur est gratuit et open source. Si vous le trouvez utile, pensez à soutenir son développement par un petit don.",
   "donateKofi": "Soutenir sur Ko-fi",

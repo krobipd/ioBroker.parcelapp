@@ -8,7 +8,7 @@
   "tooltip_pollInterval": "Jak często pobierać aktualizacje dostaw (5-60 minut, domyślnie: 10). Limit: 20 zapytań/godzinę.",
   "header_delivery": "Dostawy",
   "label_autoRemoveDelivered": "Automatycznie usuwaj dostarczone przesyłki",
-  "tooltip_autoRemoveDelivered": "Po włączeniu dostarczone przesyłki są automatycznie usuwane z drzewa stanów. Po wyłączeniu pozostają ze statusem 'Dostarczono' do usunięcia w parcel.app.",
+  "tooltip_autoRemoveDelivered": "Po włączeniu dostarczone przesyłki są automatycznie usuwane z drzewa stanów. Po wyłączeniu pozostają ze statusem 'Dostarczono', dopóki parcel.app nie przestanie wykazywać ich jako ostatnie.",
   "supportHeader": "Wsparcie",
   "aboutInfo": "Ten adapter jest darmowy i open source. Jeśli uważasz go za przydatny, rozważ wsparcie rozwoju niewielką darowizną.",
   "donateKofi": "Wesprzyj na Ko-fi",
