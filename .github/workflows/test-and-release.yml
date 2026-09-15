@@ -125,7 +125,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Lint workflow YAML files (actionlint)
-        uses: reviewdog/action-actionlint@v7
+        uses: reviewdog/action-actionlint@v1
         with:
           fail_level: error
 
@@ -160,7 +160,7 @@ jobs:
           fetch-depth: 0 # tags: the upgrade suite seeds the previous release's inventory
       - uses: actions/setup-node@v7
         with:
-          node-version: __NODE_VERSION__
+          node-version: 22.x
           cache: npm
       - run: npm ci
       - run: npm run build
