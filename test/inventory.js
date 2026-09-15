@@ -30,6 +30,11 @@ const COMPARED = ["name", "desc", "role", "type", "unit"];
 
 const FIXTURE_DIR = path.join(__dirname, "fixtures", "inventory");
 const DELIVERIES = JSON.parse(fs.readFileSync(path.join(FIXTURE_DIR, "deliveries.json"), "utf8"));
+// supported_carriers.json is a RECORDED excerpt of https://api.parcel.app/external/supported_carriers.json
+// (public file, no api-key, fetched 2026-09-15: 304 entries, every value an object
+// `{ name, extra_required?, name_variations? }`). Never hand-write this shape — the v0.9.0
+// hand-made `{ code: "Name" }` fixture kept the whole suite green while the real file had
+// changed and the adapter showed carrier CODES on every installation (audit 2026-09-15, B1).
 const CARRIERS = JSON.parse(fs.readFileSync(path.join(FIXTURE_DIR, "supported_carriers.json"), "utf8"));
 const HOOK = path.join(__dirname, "inventory-https-hook.cjs");
 

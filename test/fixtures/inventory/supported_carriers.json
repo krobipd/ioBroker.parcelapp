@@ -1,12 +1,59 @@
 {
-  "dhl": "DHL",
-  "dhlexpress": "DHL Express",
-  "dpd": "DPD",
-  "ups": "UPS",
-  "fedex": "FedEx",
-  "hermes": "Hermes",
-  "gls": "GLS",
-  "amazon": "Amazon Logistics",
-  "postnl": "PostNL",
-  "usps": "USPS"
+  "dhl": {
+    "name": "DHL Express"
+  },
+  "dp": {
+    "name": "Deutsche Post"
+  },
+  "dpdpcode": {
+    "name": "DPD Germany",
+    "extra_required": 1
+  },
+  "ups": {
+    "name": "UPS"
+  },
+  "hermes": {
+    "name": "Hermes"
+  },
+  "fedex": {
+    "name": "FedEx"
+  },
+  "gls": {
+    "name": "GLS"
+  },
+  "tntp": {
+    "name": "PostNL",
+    "extra_required": 1
+  },
+  "usps": {
+    "name": "USPS"
+  },
+  "amzlde": {
+    "name": "Amazon Germany"
+  },
+  "bpost": {
+    "name": "Bpost",
+    "extra_required": 1
+  },
+  "apple": {
+    "name": "Apple Store Orders",
+    "extra_required": 2
+  },
+  "blp": {
+    "name": "Belpost",
+    "name_variations": {
+      "ru": "Белпочта"
+    }
+  },
+  "jde": {
+    "name": "JDE",
+    "name_variations": {
+      "ru": "ЖелДорЭкспедиция"
+    },
+    "extra_required": 3
+  },
+  "tntpitp": {
+    "name": "PostNL (International)",
+    "extra_required": 5
+  }
 }

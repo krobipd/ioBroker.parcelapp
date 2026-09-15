@@ -14,7 +14,7 @@
   },
   {
     "tracking_number": "INV-STATUS-1",
-    "carrier_code": "dpd",
+    "carrier_code": "dpdpcode",
     "description": "Frozen parcel",
     "status_code": 1
   },
@@ -62,7 +62,7 @@
   },
   {
     "tracking_number": "INV-STATUS-6",
-    "carrier_code": "postnl",
+    "carrier_code": "tntp",
     "description": "Delivery attempt failed",
     "status_code": 6,
     "events": [
@@ -81,14 +81,14 @@
   },
   {
     "tracking_number": "INV-STATUS-8",
-    "carrier_code": "amazon",
+    "carrier_code": "amzlde",
     "description": "Info received, month-name date",
     "status_code": 8,
     "date_expected": "June 15, 2026 10:30"
   },
   {
     "tracking_number": "INV-DRIFT-NUMSTR",
-    "carrier_code": "dhlexpress",
+    "carrier_code": "dp",
     "description": "Numeric string status",
     "status_code": "2",
     "date_expected": "2026-06-15 08:00:00",
@@ -102,7 +102,7 @@
   },
   {
     "tracking_number": "INV-DRIFT-FORMAT",
-    "carrier_code": "dpd",
+    "carrier_code": "dpdpcode",
     "description": "Ambiguous date format",
     "status_code": 2,
     "date_expected": "06.12.2026 14:30"

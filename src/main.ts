@@ -87,7 +87,7 @@ export class ParcelappAdapter extends utils.Adapter {
    * @param apiKey parcel.app API key
    */
   private makeClient: (apiKey: string) => ClientLike = apiKey =>
-    new ParcelClient(apiKey, { debug: (m: string) => this.log.debug(m) });
+    new ParcelClient(apiKey, { debug: (m: string) => this.log.debug(m), warn: (m: string) => this.log.warn(m) });
   private makeStateManager: () => StateManagerLike = () => new StateManager(this);
   private pollTimer: ioBroker.Interval | undefined = undefined;
   private isPolling = false;

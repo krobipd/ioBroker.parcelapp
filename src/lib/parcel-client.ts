@@ -36,6 +36,12 @@ const BODY_SNIPPET_LEN = 200;
 export interface ParcelClientLogger {
   /** Adapter debug log. Called per request/response outcome (drift, status, parse, oversize) — low-frequency tracing. */
   debug(message: string): void;
+  /**
+   * v0.13.0: adapter warn log, optional. Used exactly once per process when the
+   * carrier list arrives in a shape the client cannot read — the one drift that
+   * silently degrades a visible feature (every package shows its carrier code).
+   */
+  warn?(message: string): void;
 }
 
 /**
@@ -90,6 +96,8 @@ export class ParcelClient {
    * retried N times per poll). Same pattern as beszel's auth mutex (B1).
    */
   private carrierFetchInFlight: Promise<CarrierMap> | null = null;
+  /** v0.13.0: the unreadable-carrier-list warning is logged once per process; repeats go to debug. */
+  private carrierDriftWarned = false;
   /**
    * v0.4.2 (P1): per-request AbortController. `cancelAll()` aborts every
    * pending HTTPS request — called from the adapter's `onUnload` so a slow
@@ -259,19 +267,40 @@ export class ParcelClient {
       const raw = await this.request<unknown>("GET", "/supported_carriers.json", false);
       // API-drift guard: must be a plain object (not null, array, or primitive)
       if (raw && typeof raw === "object" && !Array.isArray(raw)) {
-        // v0.9.0 (C6): keep only string-valued entries instead of asserting the
-        // whole object is Record<string,string>. A drifted non-string value is
-        // dropped here, so the cache is honestly typed (no `as CarrierMap`).
+        // v0.13.0: parcel.app changed the file from `{ code: "Name" }` to
+        // `{ code: { name: "Name", extra_required?: number, name_variations?: {…} } }`
+        // (measured 2026-09-15, 304 entries, every value an object). The v0.9.0
+        // string-only filter then kept nothing — and cached the empty map for the
+        // process lifetime, so every package showed its carrier CODE. Both shapes
+        // are read now; anything else is dropped, so the cache stays honestly typed.
         const clean: CarrierMap = {};
-        for (const [code, name] of Object.entries(raw)) {
-          if (typeof name === "string") {
+        for (const [code, entry] of Object.entries(raw)) {
+          const name = ParcelClient.carrierEntryName(entry);
+          if (name !== undefined) {
             clean[code] = name;
           }
+        }
+        const count = Object.keys(clean).length;
+        if (count === 0) {
+          // No usable entry at all — the file is not empty in reality (304 carriers),
+          // so this is the format drift above happening again. NOT cached: the
+          // next poll retries (the file is public and not rate-limited). Warned
+          // once per process because the visible effect is a degraded feature,
+          // not a crash; repeats stay at debug (same pattern as the 403 hint, M3).
+          const line =
+            "carrier names unavailable: supported_carriers.json arrived in an unexpected format — packages show carrier codes until the next poll succeeds";
+          if (this.carrierDriftWarned || !this.log?.warn) {
+            this.log?.debug(line);
+          } else {
+            this.carrierDriftWarned = true;
+            this.log.warn(line);
+          }
+          return {};
         }
         this.carrierCache = clean;
         // v0.4.3 (D1): trace the one-time cache fill so a successful warm-up
         // is visible in the debug log (happens once per adapter restart).
-        this.log?.debug(`carriers: fetched ${Object.keys(this.carrierCache).length} entries`);
+        this.log?.debug(`carriers: fetched ${count} entries`);
         return this.carrierCache;
       }
       // v0.4.3 (D3): non-object drift — supported_carriers.json returned
@@ -289,6 +318,27 @@ export class ParcelClient {
       // Return empty map but don't cache it — allow retry next time
       return {};
     }
+  }
+
+  /**
+   * The display name of one `supported_carriers.json` entry, or `undefined`
+   * when the entry carries none. Accepts the current object form
+   * (`{ name: "DHL Express", … }`) and the pre-2026 plain string, so a
+   * roll-back on parcel.app's side does not kill the names a second time.
+   *
+   * @param entry One value of the carrier map, untrusted.
+   */
+  private static carrierEntryName(entry: unknown): string | undefined {
+    if (typeof entry === "string") {
+      return entry.length > 0 ? entry : undefined;
+    }
+    if (entry && typeof entry === "object" && !Array.isArray(entry)) {
+      const name = (entry as { name?: unknown }).name;
+      if (typeof name === "string" && name.length > 0) {
+        return name;
+      }
+    }
+    return undefined;
   }
 
   /**

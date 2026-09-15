@@ -341,8 +341,15 @@ describe("ParcelClient", () => {
   });
 
   describe("getCarrierNames", () => {
-    it("should return carrier map", async () => {
-      const carriers = { dhl: "DHL", ups: "UPS", fedex: "FedEx" };
+    it("reads the carrier map in the shape parcel.app serves since 2026 — every value an object with `name`", async () => {
+      // Recorded excerpt of the live file (2026-09-15, 304 entries): `extra_required`
+      // and `name_variations` ride along and must not disturb the name lookup.
+      const carriers = {
+        dhl: { name: "DHL Express" },
+        bpost: { name: "Bpost", extra_required: 1 },
+        apple: { name: "Apple Store Orders", extra_required: 2 },
+        blp: { name: "Belpost", name_variations: { ru: "Белпочта" } },
+      };
 
       const { server, port } = await startMockServer((_req, res) => {
         res.writeHead(200, { "Content-Type": "application/json" });
@@ -352,22 +359,106 @@ describe("ParcelClient", () => {
       try {
         const client = createTestClient("key", port);
         const result = await client.getCarrierNames();
-        expect(result).toEqual(carriers);
+        expect(result).toEqual({ dhl: "DHL Express", bpost: "Bpost", apple: "Apple Store Orders", blp: "Belpost" });
       } finally {
         await stopServer(server);
       }
     });
 
-    it("v0.9.0 (C6): drops non-string values from the carrier map", async () => {
+    it("still reads the pre-2026 plain-string form, and drops entries that carry no usable name", async () => {
       const { server, port } = await startMockServer((_req, res) => {
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ dhl: "DHL", broken: 123, nested: { x: 1 } }));
+        res.end(
+          JSON.stringify({
+            dhl: "DHL",
+            ups: { name: "UPS" },
+            broken: 123,
+            nested: { x: 1 },
+            empty: "",
+            blank: { name: "" },
+            list: ["DPD"],
+            nothing: null,
+          }),
+        );
       });
 
       try {
         const client = createTestClient("key", port);
         const result = await client.getCarrierNames();
-        expect(result).toEqual({ dhl: "DHL" });
+        expect(result).toEqual({ dhl: "DHL", ups: "UPS" });
+      } finally {
+        await stopServer(server);
+      }
+    });
+
+    it("does NOT cache a map without a single usable entry — the next call fetches again", async () => {
+      // This is exactly the defect of v0.9.0–v0.12.1: the format drift left the
+      // filter with nothing, the empty object was cached as a success, and every
+      // package showed its carrier code for the rest of the process.
+      let calls = 0;
+      const { server, port } = await startMockServer((_req, res) => {
+        calls += 1;
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(
+          calls === 1
+            ? JSON.stringify({ dhl: { title: "DHL Express" }, ups: 7 })
+            : JSON.stringify({ dhl: { name: "DHL Express" } }),
+        );
+      });
+
+      try {
+        const client = createTestClient("key", port);
+        expect(await client.getCarrierNames()).toEqual({});
+        expect(await client.getCarrierNames()).toEqual({ dhl: "DHL Express" });
+        expect(calls).toBe(2);
+        // …and the good map IS cached.
+        expect(await client.getCarrierNames()).toEqual({ dhl: "DHL Express" });
+        expect(calls).toBe(2);
+      } finally {
+        await stopServer(server);
+      }
+    });
+
+    it("warns exactly once per process about an unreadable carrier list, then repeats at debug", async () => {
+      const warned: string[] = [];
+      const debugged: string[] = [];
+      const { server, port } = await startMockServer((_req, res) => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ dhl: { title: "DHL Express" } }));
+      });
+
+      try {
+        const client = new ParcelClient(
+          "key",
+          { debug: (m: string) => debugged.push(m), warn: (m: string) => warned.push(m) },
+          `http://127.0.0.1:${port}/external`,
+        );
+        await client.getCarrierNames();
+        await client.getCarrierNames();
+        await client.getCarrierNames();
+        expect(warned).toHaveLength(1);
+        expect(warned[0]).toContain("carrier names unavailable");
+        expect(debugged.filter(l => l.includes("carrier names unavailable"))).toHaveLength(2);
+      } finally {
+        await stopServer(server);
+      }
+    });
+
+    it("without a warn logger the unreadable-list message goes to debug", async () => {
+      const debugged: string[] = [];
+      const { server, port } = await startMockServer((_req, res) => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({}));
+      });
+
+      try {
+        const client = new ParcelClient(
+          "key",
+          { debug: (m: string) => debugged.push(m) },
+          `http://127.0.0.1:${port}/external`,
+        );
+        expect(await client.getCarrierNames()).toEqual({});
+        expect(debugged.filter(l => l.includes("carrier names unavailable"))).toHaveLength(1);
       } finally {
         await stopServer(server);
       }
@@ -761,10 +852,10 @@ describe("ParcelClient", () => {
       }
     });
 
-    it("getCarrierName should fall back to uppercase code for non-string map value", async () => {
+    it("getCarrierName should fall back to uppercase code for an entry without a usable name", async () => {
       const { server, port } = await startMockServer((_req, res) => {
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ dhl: 42, ups: null, fedex: "FedEx" }));
+        res.end(JSON.stringify({ dhl: 42, ups: null, fedex: { name: "FedEx" } }));
       });
 
       try {
