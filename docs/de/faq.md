@@ -111,13 +111,15 @@ Debug-Stufe, eine lange Störung flutet das Log also nicht.
 
 ## Ich habe eine Sendung im Admin umbenannt und der Adapter hat es überschrieben
 
-Tut er nicht. Der Gerätename ist geschützt — deine Umbenennung gewinnt gegen die Beschreibung aus
-parcel.app und überlebt jedes Update. Die aktuelle Beschreibung aus parcel.app steht immer im
-Datenpunkt `description`.
+Ja, und seit v0.13.0 ist das so gewollt. Der Gerätename ist die Beschreibung aus parcel.app, und der
+Adapter hält ihn damit gleich: benennst du die Sendung dort um, folgt das Gerät bei der nächsten
+Abfrage. Vor v0.13.0 war der Name auf seinem ersten Wert eingefroren — damit kam auch deine eigene
+Änderung in parcel.app nie an.
 
-Die **Namen der Datenpunkte** unterhalb einer Sendung sind etwas anderes: die gehören dem Adapter
-und werden bei jedem Start aufgefrischt, damit eine verbesserte Übersetzung auch deine Anlage
-erreicht.
+Für eine eigene Bezeichnung nimm einen Alias oder einen Datenpunkt in `0_userdata` — der gehört dir
+und wird vom Adapter nie angefasst. Die **Namen der Datenpunkte** unterhalb einer Sendung gehören
+genauso dem Adapter und werden bei jedem Start aufgefrischt, damit eine verbesserte Übersetzung auch
+deine Anlage erreicht.
 
 ## Welche Zusteller werden unterstützt?
 

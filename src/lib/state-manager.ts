@@ -43,13 +43,16 @@ export class StateManager {
   private readonly createdIds = new Set<string>();
 
   /**
-   * v0.10.0 (DP-5): package ids whose device object was ensured this process.
-   * Replaces the former description+tracking signature map: with
-   * `preserve: { common: ["name"] }` a rewrite never changed an existing
-   * object's name anyway, so ensuring existence ONCE per process is the
-   * honest version of what the signature cache actually did.
+   * v0.13.0 (audit B2): package id → signature of the device object last written
+   * in this process. One write per package per process as before, plus one when
+   * the name really changes — which `preserve: { common: ["name"] }` used to make
+   * impossible: the device name IS the description from parcel.app, so editing
+   * the description there never reached the object. The adapter owns the names of
+   * its objects (a user's own name belongs in `0_userdata` or an alias), and the
+   * former `preserve` also made a collision hand-over unhealable: the surviving
+   * package inherited the departed one's name for good.
    */
-  private readonly deviceEnsured = new Set<string>();
+  private readonly deviceSignature = new Map<string, string>();
 
   /**
    * v0.7.2: package ids known to exist as device objects. Filled from the
@@ -297,23 +300,18 @@ export class StateManager {
     const trackingNumber = typeof delivery.tracking_number === "string" ? delivery.tracking_number : "";
     const extraInfo = typeof delivery.extra_information === "string" ? delivery.extra_information : "";
 
-    // v0.10.0 (DP-5): ensure the device object once per process. `preserve:
-    // name` keeps an existing name (user renames win), so the name — localized
-    // fallback when the API sends no description (L18) — only matters at
-    // first creation; the former per-change rewrite never had a visible effect.
-    if (!this.deviceEnsured.has(pkgId)) {
-      await this.adapter.extendObject(
-        devicePath,
-        {
-          type: "device",
-          common: {
-            name: description || packageName(trackingNumber || pkgId),
-          },
-          native: {},
-        },
-        { preserve: { common: ["name"] } },
-      );
-      this.deviceEnsured.add(pkgId);
+    // v0.13.0 (B2): write the device object when its signature changed — once per
+    // package per process as before, and again when parcel.app reports a new
+    // description. No `preserve`: the adapter owns the name.
+    const deviceName = description || packageName(trackingNumber || pkgId);
+    const signature = JSON.stringify([deviceName]);
+    if (this.deviceSignature.get(pkgId) !== signature) {
+      await this.adapter.extendObject(devicePath, {
+        type: "device",
+        common: { name: deviceName },
+        native: {},
+      });
+      this.deviceSignature.set(pkgId, signature);
     }
     this.knownDeliveryIds?.add(pkgId);
 
@@ -497,7 +495,7 @@ export class StateManager {
     const toDelete = [...this.knownDeliveryIds].filter(pkgId => !keepSet.has(pkgId));
 
     // v0.12.0: a delete that FAILED must change nothing, and a delete that landed must clear
-    // EVERY cache in the same step. Before this, `deviceEnsured` was pruned inside the loop while
+    // EVERY cache in the same step. Before this, `deviceSignature` (then `deviceEnsured`) was pruned inside the loop while
     // the `createdIds` prune sat after it — one rejecting `delObjectAsync` aborted the `Promise.all`,
     // so the second prune never ran. A package that came back afterwards had its device object
     // re-created but NOT its state objects (`ensureStateObject` still found them in `createdIds`),
@@ -532,7 +530,7 @@ export class StateManager {
     // pkgId is extracted. Both caches are keyed on the same `deleted` set (v0.12.0).
     if (deleted.size > 0) {
       for (const pkgId of deleted) {
-        this.deviceEnsured.delete(pkgId);
+        this.deviceSignature.delete(pkgId);
         // v0.13.0 (S1b): the collision tracker outlives a poll now, so a removed
         // package must release its id here — otherwise the bare id stays claimed
         // by a delivery that no longer exists and the surviving one keeps its suffix.

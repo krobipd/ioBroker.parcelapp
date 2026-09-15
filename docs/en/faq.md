@@ -109,12 +109,14 @@ does not flood the log.
 
 ## I renamed a package in the admin and the adapter overwrote it
 
-It does not. The device name is protected — your rename wins over the description from parcel.app
-and survives every update. The current description from parcel.app is always available in the
-`description` state.
+It does, and since v0.13.0 that is deliberate. The device name is the description from parcel.app,
+and the adapter keeps it in sync: rename the shipment there and the device follows on the next poll.
+Before v0.13.0 the name was frozen at its first value, so your own change in parcel.app never
+arrived either.
 
-Object **names of the states** below a package are a different matter: those belong to the adapter
-and are refreshed on every start, so a translation fix reaches your installation too.
+For a label of your own, use an alias or a datapoint in `0_userdata` — that is yours and the adapter
+never touches it. The object **names of the states** below a package belong to the adapter in the
+same way and are refreshed on every start, so a translation fix reaches your installation too.
 
 ## Which carriers are supported?
 

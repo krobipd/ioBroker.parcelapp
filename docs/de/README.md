@@ -106,8 +106,10 @@ unterwegs befindlichen Sendungen ändert sich nicht dadurch, dass niemand hinsie
 ### Je Sendung
 
 Jede Sendung wird ein **Gerät** unterhalb von `deliveries.`. Der Gerätename ist die Beschreibung,
-die du der Sendung in parcel.app gegeben hast — und wenn du das Gerät im ioBroker-Admin umbenennst,
-gewinnt dein Name und wird von keinem Update überschrieben.
+die du der Sendung in parcel.app gegeben hast, und folgt ihr: änderst du sie dort, wird das Gerät
+bei der nächsten Abfrage umbenannt. Der Name gehört dem Adapter — eine Umbenennung im
+ioBroker-Admin hält also nicht; für eine eigene Bezeichnung nimm einen Alias oder einen Datenpunkt
+in `0_userdata`.
 
 | Datenpunkt         | Typ    | Bedeutung                                                                                                                                                                                                                                                                                                                                                     |
 | ------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

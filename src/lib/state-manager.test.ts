@@ -73,7 +73,7 @@ interface MockAdapterMetrics {
   /**
    * Object writes (`extendObject`). Since v0.11.0 every object — device AND states — is
    * written with `extendObject` so a changed name/description reaches an EXISTING install;
-   * the `createdIds`/`deviceEnsured` caches keep it at one write per id per process.
+   * the `createdIds`/`deviceSignature` caches keep it at one write per id per process.
    */
   objectWrites: number;
   setStateChangedWrites: number;
@@ -1854,7 +1854,7 @@ describe("StateManager", () => {
     });
 
     /**
-     * v0.12.0. Measured defect: `deviceEnsured` was pruned INSIDE the delete loop while the
+     * v0.12.0. Measured defect: the device cache was pruned INSIDE the delete loop while the
      * `createdIds` prune sat after it. One rejecting `delObjectAsync` aborted the `Promise.all`,
      * so the second prune never ran — and a package that came back got its device object
      * re-created but not its state OBJECTS, while the VALUES were written anyway. The result was
@@ -2114,12 +2114,16 @@ describe("StateManager", () => {
       expect((common.desc as CommonNameTranslated).de).toBe(i18nData.de.descLastUpdated);
     });
 
-    it("a user rename of the package device survives, the state names do not", async () => {
+    it("v0.13.0 (B2): the adapter owns the device name — a rename in the admin is written back", async () => {
+      // Until v0.12.1 the device write carried `preserve: { common: ["name"] }`.
+      // The device name IS the description from parcel.app, so that option did not
+      // protect a user's label, it blocked the user's OWN change from arriving —
+      // and after a collision hand-over the survivor kept the departed package's
+      // name for good. A personal label belongs in `0_userdata` or an alias.
       const adapter = createMockAdapter();
       const manager = new StateManager(adapter as never);
-      const delivery = makeDelivery();
+      const delivery = makeDelivery({ description: "Headphones" });
       const pkgId = manager.packageId(delivery);
-      // The user renamed the device in the admin, and the state carries an old plain name.
       adapter.objects.set(`deliveries.${pkgId}`, {
         type: "device",
         common: { name: "Birthday present" },
@@ -2133,9 +2137,8 @@ describe("StateManager", () => {
 
       await updateDeliveryT(manager, delivery, "DHL");
 
-      // preserve:name keeps the rename — the user owns the device name ...
-      expect(adapter.objects.get(`deliveries.${pkgId}`)!.common.name).toBe("Birthday present");
-      // ... but the adapter owns the names of its own states.
+      expect(adapter.objects.get(`deliveries.${pkgId}`)!.common.name).toBe("Headphones");
+      // The state names keep coming from the adapter too.
       const carrier = adapter.objects.get(`deliveries.${pkgId}.carrier`)!.common;
       expect((carrier.name as CommonNameTranslated).de).toBe(i18nData.de.carrier);
     });
@@ -2178,7 +2181,7 @@ describe("StateManager", () => {
       expect(deviceWrites()).toBe(1); // status change ≠ device re-write
     });
 
-    it("does NOT re-extend when the description changes — preserve:name made that write a no-op anyway", async () => {
+    it("v0.13.0 (B2): a changed description reaches the device name — exactly one extra write", async () => {
       const adapter = createMockAdapter();
       const manager = new StateManager(adapter as never);
       const delivery = makeDelivery({ description: "Old name" });
@@ -2186,11 +2189,13 @@ describe("StateManager", () => {
       const deviceWrites = countDeviceWrites(adapter, `deliveries.${pkgId}`);
       await updateDeliveryT(manager, delivery, "DHL");
       await updateDeliveryT(manager, { ...delivery, description: "New name" }, "DHL");
-      expect(deviceWrites()).toBe(1);
-      // The object name keeps its first value (user renames win via preserve);
-      // the CURRENT description is always available in the description state.
-      expect(adapter.objects.get(`deliveries.${pkgId}`)!.common.name).toBe("Old name");
+      expect(deviceWrites()).toBe(2);
+      expect(adapter.objects.get(`deliveries.${pkgId}`)!.common.name).toBe("New name");
       expect(adapter.states.get(`deliveries.${pkgId}.description`)?.val).toBe("New name");
+
+      // An unchanged description stays one write — no churn on every poll.
+      await updateDeliveryT(manager, { ...delivery, description: "New name" }, "DHL");
+      expect(deviceWrites()).toBe(2);
     });
 
     it("re-extends after remove + re-add (cache follows lifecycle)", async () => {
@@ -2376,8 +2381,12 @@ describe("StateManager", () => {
     });
   });
 
-  describe("preserve option", () => {
-    it("extendObject is called with preserve for device objects", async () => {
+  describe("no write preserves an existing name (v0.13.0, B2)", () => {
+    it("not a single extendObject call carries a preserve option", async () => {
+      // The fleet-proven shape of this test: record every write that asks
+      // js-controller to keep what is already there, and hold the list against
+      // the expectation — which is empty for this adapter. The mock emulates
+      // `preserve` faithfully, so putting the option back turns this red.
       const calls: { id: string; options: unknown }[] = [];
       const spyAdapter = createMockAdapter();
       const origExtend = spyAdapter.extendObject;
@@ -2393,10 +2402,10 @@ describe("StateManager", () => {
       const mgr = new StateManager(spyAdapter as never);
       const delivery = makeDelivery({ tracking_number: "PRESERVE1" });
       await updateDeliveryT(mgr, delivery, "DHL");
+      await mgr.updateSummary([delivery]);
 
-      const deviceCall = calls.find(c => c.id === "deliveries.preserve1");
-      expect(deviceCall).toBeDefined();
-      expect(deviceCall!.options).toEqual({ preserve: { common: ["name"] } });
+      expect(calls.find(c => c.id === "deliveries.preserve1")).toBeDefined();
+      expect(calls.filter(c => (c.options as { preserve?: unknown } | undefined)?.preserve !== undefined)).toEqual([]);
     });
   });
 
