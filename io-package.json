@@ -3,6 +3,19 @@
     "name": "parcelapp",
     "version": "0.12.1",
     "news": {
+      "NEXT": {
+        "en": "Carrier names work again after a format change at parcel.app, every package shows its carrier's pictogram, scripts can pass a postcode or e-mail, and the device name follows the description again.",
+        "de": "Zustellernamen kommen nach einer Formatänderung bei parcel.app wieder an, jedes Paket zeigt das Zeichen seines Zustellers, Skripte können Postleitzahl oder E-Mail mitgeben, und der Gerätename folgt wieder der Beschreibung.",
+        "ru": "Названия перевозчиков снова работают после смены формата в parcel.app, каждая посылка показывает знак перевозчика, скрипты могут передавать индекс или e-mail, имя устройства снова следует описанию.",
+        "pt": "Os nomes das transportadoras voltam a funcionar após uma mudança de formato no parcel.app, cada encomenda mostra o símbolo da sua transportadora, os scripts podem enviar código postal ou e-mail, e o nome do dispositivo volta a seguir a descrição.",
+        "nl": "Vervoerdersnamen werken weer na een formaatwijziging bij parcel.app, elk pakket toont het teken van zijn vervoerder, scripts kunnen postcode of e-mail meegeven, en de apparaatnaam volgt weer de omschrijving.",
+        "fr": "Les noms des transporteurs fonctionnent à nouveau après un changement de format chez parcel.app, chaque colis affiche le symbole de son transporteur, les scripts peuvent transmettre un code postal ou un e-mail, et le nom de l'appareil suit à nouveau la description.",
+        "it": "I nomi dei corrieri funzionano di nuovo dopo un cambio di formato in parcel.app, ogni pacco mostra il simbolo del suo corriere, gli script possono passare codice postale o e-mail e il nome del dispositivo segue di nuovo la descrizione.",
+        "es": "Los nombres de los transportistas vuelven a funcionar tras un cambio de formato en parcel.app, cada paquete muestra el símbolo de su transportista, los scripts pueden enviar código postal o correo electrónico y el nombre del dispositivo vuelve a seguir la descripción.",
+        "pl": "Nazwy przewoźników znów działają po zmianie formatu w parcel.app, każda przesyłka pokazuje znak swojego przewoźnika, skrypty mogą przekazać kod pocztowy lub e-mail, a nazwa urządzenia znów podąża za opisem.",
+        "uk": "Назви перевізників знову працюють після зміни формату в parcel.app, кожна посилка показує знак свого перевізника, скрипти можуть передавати індекс або e-mail, а назва пристрою знову слідує опису.",
+        "zh-cn": "parcel.app 更改格式后承运商名称恢复正常，每个包裹在对象树中显示其承运商标识，脚本可传入邮编或邮箱，设备名称也重新跟随描述。"
+      },
       "0.12.1": {
         "en": "Carrier, status and description of a package now carry a short explanation in the object tree, in all eleven languages — including why scripts should read the status code, not the text.",
         "de": "Zusteller, Status und Beschreibung einer Sendung tragen jetzt eine kurze Erklärung im Objektbaum, in allen elf Sprachen — samt dem Hinweis, dass Skripte den Status-Code lesen sollten.",
@@ -126,17 +139,8 @@
       "uk": "Адаптер ioBroker для API parcel.app. Підтримує всіх перевізників, яких відстежує parcel.app.",
       "zh-cn": "用于 parcel.app API 的 ioBroker 适配器。支持 parcel.app 跟踪的所有承运商。"
     },
-    "authors": [
-      "krobi <krobi@power-dreams.com>"
-    ],
-    "keywords": [
-      "parcel",
-      "tracking",
-      "delivery",
-      "package",
-      "shipment",
-      "carrier"
-    ],
+    "authors": ["krobi <krobi@power-dreams.com>"],
+    "keywords": ["parcel", "tracking", "delivery", "package", "shipment", "carrier"],
     "licenseInformation": {
       "license": "MIT",
       "type": "free"
@@ -146,16 +150,8 @@
     "extIcon": "https://cdn.jsdelivr.net/gh/krobipd/ioBroker.parcelapp@main/admin/parcelapp.svg",
     "readme": "https://github.com/krobipd/ioBroker.parcelapp/blob/main/README.md",
     "docs": {
-      "en": [
-        "docs/en/README.md",
-        "docs/en/scripting.md",
-        "docs/en/faq.md"
-      ],
-      "de": [
-        "docs/de/README.md",
-        "docs/de/scripting.md",
-        "docs/de/faq.md"
-      ]
+      "en": ["docs/en/README.md", "docs/en/scripting.md", "docs/en/faq.md"],
+      "de": ["docs/de/README.md", "docs/de/scripting.md", "docs/de/faq.md"]
     },
     "enabled": true,
     "tier": 3,
@@ -181,12 +177,8 @@
     ],
     "nogit": true
   },
-  "encryptedNative": [
-    "apiKey"
-  ],
-  "protectedNative": [
-    "apiKey"
-  ],
+  "encryptedNative": ["apiKey"],
+  "protectedNative": ["apiKey"],
   "native": {
     "apiKey": "",
     "pollInterval": 10,

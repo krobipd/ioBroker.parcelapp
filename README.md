@@ -148,6 +148,19 @@ sendTo("parcelapp.0", "addDelivery", {
     ### **WORK IN PROGRESS**
 -->
 
+### **WORK IN PROGRESS**
+
+- Fixed: Every package showed the carrier's short code instead of its name — parcel.app changed the format of its carrier list, and the adapter could no longer read it.
+- New: Each package now carries the pictogram of its carrier in the object tree, drawn to read in the light and the dark theme.
+- New: Deliveries added from a script can pass a postcode or an e-mail address — some carriers cannot track a shipment without one.
+- Fixed: When parcel.app rejects a request, the reply now carries its own explanation instead of only the HTTP status line.
+- Changed: The device name of a package follows the description in parcel.app again; a rename in the ioBroker admin no longer survives, use an alias for your own label.
+- Fixed: The same tracking number under two carriers is two packages again — one of them used to be invisible in the object tree.
+- Fixed: A failed removal of a delivered package no longer kept the count of active packages and the combined delivery window a poll behind.
+- Improved: A package the carrier reports as out for delivery counts towards today even when no delivery date is reported.
+- Fixed: Stopping the instance while it was still starting no longer spends one more request of the hourly parcel.app budget on a poll nobody reads.
+- Fixed: The setting for delivered packages promised they stay until you delete them in parcel.app — they stay while parcel.app still lists them.
+
 ### 0.12.1 (2026-09-07)
 
 - New: Carrier, status and description of a package now carry a short explanation in the object tree, in all eleven languages — including why scripts should read the status code, not the text.
