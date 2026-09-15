@@ -194,7 +194,7 @@ export class StateManager {
     const owner = this.idOwner.get(id);
     const rawKey = StateManager.rawIdKey(delivery);
     if (owner !== undefined && owner !== rawKey) {
-      const suffixed = `${id}__${StateManager.shortHash(rawKey)}`;
+      const suffixed = `${id}__${StateManager.shortHash(StateManager.suffixKey(delivery))}`;
       // v0.4.3 (C3): trace the collision-suffix path. Rare event but the
       // resulting state-id divergence is hard to diagnose without a log.
       this.adapter.log.debug(
@@ -215,6 +215,28 @@ export class StateManager {
   private static rawIdKey(delivery: ParcelDelivery): string {
     const t = typeof delivery.tracking_number === "string" ? delivery.tracking_number : "";
     const e = typeof delivery.extra_information === "string" ? delivery.extra_information : "";
+    // v0.13.0 (audit S1): the carrier belongs to a delivery's IDENTITY. Without it
+    // the same tracking number under two carriers produced one identical key, so
+    // `packageId` saw no collision, both deliveries mapped to one state id and one
+    // of the two packages was invisible in ioBroker — silently, with the keep-set
+    // holding a single entry for both. The realistic path: a number added with the
+    // wrong carrier (the API has no DELETE) and then added again correctly.
+    const c = typeof delivery.carrier_code === "string" ? delivery.carrier_code : "";
+    return `${t}\u0000${e}\u0000${c}`;
+  }
+
+  /**
+   * v0.13.0: the material of the collision SUFFIX — deliberately without the
+   * carrier. The suffix is part of a state id that exists on installations, and
+   * feeding the carrier into the hash would rename those objects (a rename means
+   * delete + create, taking the user's recording settings with it). Identity and
+   * suffix material are therefore two functions.
+   *
+   * @param delivery The delivery whose suffix material is built.
+   */
+  private static suffixKey(delivery: ParcelDelivery): string {
+    const t = typeof delivery.tracking_number === "string" ? delivery.tracking_number : "";
+    const e = typeof delivery.extra_information === "string" ? delivery.extra_information : "";
     return `${t}\u0000${e}`;
   }
 
@@ -233,12 +255,17 @@ export class StateManager {
   }
 
   /**
-   * v0.4.2 (S3): reset the per-poll collision tracker. Call from main.ts
-   * before iterating deliveries so the bare id always wins for the first
-   * occurrence in each poll.
+   * v0.4.2 (S3): reset the per-poll drift dedup. Call from main.ts before
+   * iterating deliveries.
+   *
+   * v0.13.0 (audit S1b): the collision tracker is NOT cleared any more. It used
+   * to be, so the bare id went to whichever colliding delivery came first in the
+   * API's array — an order the API does not document. Two colliding packages
+   * could therefore swap their state ids between two polls. The owner now keeps
+   * the bare id for as long as it is present; `cleanupDeliveries` releases the
+   * entry when the package is gone, and the other one moves up on the next poll.
    */
   resetPollState(): void {
-    this.idOwner.clear();
     this.driftReported.clear();
   }
 
@@ -506,6 +533,10 @@ export class StateManager {
     if (deleted.size > 0) {
       for (const pkgId of deleted) {
         this.deviceEnsured.delete(pkgId);
+        // v0.13.0 (S1b): the collision tracker outlives a poll now, so a removed
+        // package must release its id here — otherwise the bare id stays claimed
+        // by a delivery that no longer exists and the surviving one keeps its suffix.
+        this.idOwner.delete(pkgId);
       }
       for (const id of [...this.createdIds]) {
         if (deleted.has(StateManager.pkgIdOf(id))) {

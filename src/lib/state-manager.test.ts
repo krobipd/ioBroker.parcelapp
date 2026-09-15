@@ -317,17 +317,73 @@ describe("StateManager", () => {
       expect(id1).toBe("abc_123");
     });
 
-    it("resetPollState lets the bare-id win again next poll", () => {
+    it("v0.13.0 (S1b): the owner keeps the bare id across polls, whatever order the API sends", () => {
+      // Until v0.12.1 the tracker was cleared every poll, so the bare id went to
+      // whichever colliding delivery came first in the API's array — an order the
+      // API does not document. Two packages could swap their state ids (and thus
+      // their whole state subtree) between two polls.
       const a = makeDelivery({ tracking_number: "ABC-123" });
       const b = makeDelivery({ tracking_number: "ABC.123" });
 
       manager.resetPollState();
-      manager.packageId(a);
-      expect(manager.packageId(b)).toMatch(/^abc_123__/); // suffixed in this poll
+      expect(manager.packageId(a)).toBe("abc_123");
+      const suffixedB = manager.packageId(b);
+      expect(suffixedB).toMatch(/^abc_123__/);
+
+      // Next poll, reversed order: both ids stay exactly where they were.
+      manager.resetPollState();
+      expect(manager.packageId(b)).toBe(suffixedB);
+      expect(manager.packageId(a)).toBe("abc_123");
+    });
+
+    it("v0.13.0 (S1b): once the owner is gone the survivor moves up to the bare id", async () => {
+      const a = makeDelivery({ tracking_number: "ABC-123" });
+      const b = makeDelivery({ tracking_number: "ABC.123" });
 
       manager.resetPollState();
-      // Fresh poll — `b` alone should now get the bare id.
-      expect(manager.packageId(b)).toBe("abc_123");
+      const bareId = manager.packageId(a);
+      const suffixedB = manager.packageId(b);
+      await manager.updateDelivery(a, "DHL", bareId);
+      await manager.updateDelivery(b, "DHL", suffixedB);
+
+      // `a` disappears from the API; its objects and its claim on the bare id go.
+      await manager.cleanupDeliveries([suffixedB]);
+      expect(adapter.objects.has(`deliveries.${bareId}`)).toBe(false);
+
+      manager.resetPollState();
+      expect(manager.packageId(b)).toBe(bareId);
+    });
+
+    it("v0.13.0 (S1): the same tracking number under two carriers stays two packages", () => {
+      // One key for both meant one state id: the second delivery overwrote the
+      // first on every poll and only one of the two was visible in ioBroker.
+      const dhl = makeDelivery({ tracking_number: "SAME-1", carrier_code: "dhl" });
+      const ups = makeDelivery({ tracking_number: "SAME-1", carrier_code: "ups" });
+
+      manager.resetPollState();
+      const first = manager.packageId(dhl);
+      const second = manager.packageId(ups);
+      expect(first).toBe("same_1");
+      expect(second).toMatch(/^same_1__/);
+      expect(second).not.toBe(first);
+    });
+
+    it("v0.13.0 (S1): the collision suffix does NOT depend on the carrier — existing ids stay put", () => {
+      // The suffix is part of a state id that exists on installations. Feeding the
+      // carrier into the hash would rename those objects on update — a rename is a
+      // delete plus a create, and it would take the user's recording settings with it.
+      const a = makeDelivery({ tracking_number: "ABC-123", carrier_code: "dhl" });
+      const b = makeDelivery({ tracking_number: "ABC.123", carrier_code: "dhl" });
+      const bOtherCarrier = makeDelivery({ tracking_number: "ABC.123", carrier_code: "ups" });
+
+      manager.resetPollState();
+      manager.packageId(a);
+      const suffixed = manager.packageId(b);
+
+      const fresh = new StateManager(adapter as never);
+      fresh.resetPollState();
+      fresh.packageId(a);
+      expect(fresh.packageId(bOtherCarrier)).toBe(suffixed);
     });
   });
 

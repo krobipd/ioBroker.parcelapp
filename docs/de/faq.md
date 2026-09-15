@@ -82,6 +82,15 @@ Nein. Die parcel.app-API hat keinen Lösch-Endpunkt — löschen geht nur in der
 Web. Die ioBroker-Datenpunkte von Hand zu löschen hilft ebenfalls nicht: die nächste Abfrage legt
 sie wieder an, solange parcel.app die Sendung noch liefert.
 
+## Ich habe dieselbe Sendungsnummer zweimal, bei zwei Zustellern
+
+Beide werden verfolgt, jede mit ihrem eigenen Gerät. Das passiert, wenn eine Nummer zuerst mit dem
+falschen Zusteller angelegt wurde: die API hat keinen Lösch-Endpunkt, der Eintrag bleibt also, und
+man legt die Nummer mit dem richtigen Zusteller erneut an. Die zweite Sendung bekommt einen Anhang
+an ihrer Objekt-Kennung, damit sich die beiden nie gegenseitig überschreiben. Ist der falsche
+Eintrag in parcel.app weg, rückt die verbliebene Sendung bei der nächsten Abfrage auf die
+Kennung ohne Anhang.
+
 ## Warum ist `lastUpdated` alt, obwohl der Adapter abfragt?
 
 Weil es „die Sendungsdaten haben sich zuletzt geändert" bedeutet und nicht „der Adapter hat zuletzt
@@ -92,8 +101,8 @@ Zeitstempel — das ist die nützliche Lesart. Ob der Adapter lebt, sagt `info.c
 
 Nur ein echter Fehler der parcel.app-API färbt `info.connection` rot. Ein Aussetzer der
 ioBroker-Datenbank während des Schreibens tut das nicht — er erscheint als
-`State maintenance failed (API connection is fine, retrying next poll)` auf Warnstufe, und die
-Anzeige bleibt grün.
+`Removing stale packages failed …` oder `Updating the summary failed …` auf Warnstufe — beide mit
+`(API connection is fine, retrying next poll)` — und die Anzeige bleibt grün.
 
 War die Anzeige wirklich rot, nennt die Logzeile davor den Grund: ein ungültiger Schlüssel
 (HTTP 401), ein Abo-Problem (HTTP 403), eine Anfragegrenze (HTTP 429), eine Zeitüberschreitung oder
