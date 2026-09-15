@@ -804,12 +804,21 @@ export class ParcelappAdapter extends utils.Adapter {
       // v0.10.0 (M2): broker-side failures in cleanup/summary are NOT API
       // failures — they must neither flip info.connection to false (the GET
       // above just succeeded) nor run through the API error classification.
+      // v0.13.0 (audit S2): one try for both cost the summary whenever a single
+      // delObject failed — cleanupDeliveries re-throws the first delete error by
+      // design, so the counts and the combined window stayed a poll behind on
+      // fresh delivery data. Two guards, two warnings: one step's broker hiccup
+      // no longer skips the other.
       try {
         await stateManager.cleanupDeliveries(pkgIds);
+      } catch (err) {
+        this.log.warn(`Removing stale packages failed (API connection is fine, retrying next poll): ${errText(err)}`);
+      }
+      try {
         // Update summary (always uses active/non-delivered)
         await stateManager.updateSummary(activeDeliveries);
       } catch (err) {
-        this.log.warn(`State maintenance failed (API connection is fine, retrying next poll): ${errText(err)}`);
+        this.log.warn(`Updating the summary failed (API connection is fine, retrying next poll): ${errText(err)}`);
       }
 
       // Keep failedDeliveries bounded: drop entries for package ids no longer

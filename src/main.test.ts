@@ -941,6 +941,36 @@ describe("ParcelappAdapter poll — per-delivery failure dedup", () => {
     expect(i.setStateChangedAsync).not.toHaveBeenCalledWith("info.connection", { val: false, ack: true });
   });
 
+  it("a failed delete no longer costs the summary — both maintenance steps run (audit S2)", async () => {
+    // cleanupDeliveries re-throws the first delObject error by design. With one
+    // shared try that error skipped updateSummary, so activeCount/todayCount and
+    // the combined window stayed a poll behind on fresh delivery data.
+    const { adapter, stateMgr } = await setupReady();
+    const i = internalOf(adapter);
+    stateMgr.cleanupDeliveries.mockRejectedValueOnce(new Error("delObject failed"));
+    stateMgr.updateSummary.mockClear();
+
+    await i.poll();
+
+    expect(stateMgr.updateSummary).toHaveBeenCalledTimes(1);
+    expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("Removing stale packages failed"));
+    expect(i.log.warn).not.toHaveBeenCalledWith(expect.stringContaining("Updating the summary failed"));
+  });
+
+  it("a failing summary write is reported on its own and does not hide the cleanup (audit S2)", async () => {
+    const { adapter, stateMgr } = await setupReady();
+    const i = internalOf(adapter);
+    stateMgr.updateSummary.mockRejectedValueOnce(new Error("db down"));
+    stateMgr.cleanupDeliveries.mockClear();
+
+    await i.poll();
+
+    expect(stateMgr.cleanupDeliveries).toHaveBeenCalledTimes(1);
+    expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("Updating the summary failed"));
+    expect(i.log.error).not.toHaveBeenCalled();
+    expect(i.lastErrorCode).toBe("");
+  });
+
   it("broker failures in cleanup/summary warn but keep info.connection green (M2)", async () => {
     const { adapter, stateMgr } = await setupReady();
     const i = internalOf(adapter);
@@ -949,7 +979,7 @@ describe("ParcelappAdapter poll — per-delivery failure dedup", () => {
 
     await i.poll();
 
-    expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("State maintenance failed"));
+    expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("Removing stale packages failed"));
     // The API call succeeded — connection stays true, no false write follows.
     expect(i.setStateChangedAsync).toHaveBeenCalledWith("info.connection", { val: true, ack: true });
     expect(i.setStateChangedAsync).not.toHaveBeenCalledWith("info.connection", { val: false, ack: true });
