@@ -4,17 +4,17 @@
     "version": "0.12.1",
     "news": {
       "NEXT": {
-        "en": "Carrier names work again after a format change at parcel.app, every package shows its carrier's pictogram, scripts can pass a postcode or e-mail, and the device name follows the description again.",
-        "de": "Zustellernamen kommen nach einer Formatänderung bei parcel.app wieder an, jedes Paket zeigt das Zeichen seines Zustellers, Skripte können Postleitzahl oder E-Mail mitgeben, und der Gerätename folgt wieder der Beschreibung.",
-        "ru": "Названия перевозчиков снова работают после смены формата в parcel.app, каждая посылка показывает знак перевозчика, скрипты могут передавать индекс или e-mail, имя устройства снова следует описанию.",
-        "pt": "Os nomes das transportadoras voltam a funcionar após uma mudança de formato no parcel.app, cada encomenda mostra o símbolo da sua transportadora, os scripts podem enviar código postal ou e-mail, e o nome do dispositivo volta a seguir a descrição.",
-        "nl": "Vervoerdersnamen werken weer na een formaatwijziging bij parcel.app, elk pakket toont het teken van zijn vervoerder, scripts kunnen postcode of e-mail meegeven, en de apparaatnaam volgt weer de omschrijving.",
-        "fr": "Les noms des transporteurs fonctionnent à nouveau après un changement de format chez parcel.app, chaque colis affiche le symbole de son transporteur, les scripts peuvent transmettre un code postal ou un e-mail, et le nom de l'appareil suit à nouveau la description.",
-        "it": "I nomi dei corrieri funzionano di nuovo dopo un cambio di formato in parcel.app, ogni pacco mostra il simbolo del suo corriere, gli script possono passare codice postale o e-mail e il nome del dispositivo segue di nuovo la descrizione.",
-        "es": "Los nombres de los transportistas vuelven a funcionar tras un cambio de formato en parcel.app, cada paquete muestra el símbolo de su transportista, los scripts pueden enviar código postal o correo electrónico y el nombre del dispositivo vuelve a seguir la descripción.",
-        "pl": "Nazwy przewoźników znów działają po zmianie formatu w parcel.app, każda przesyłka pokazuje znak swojego przewoźnika, skrypty mogą przekazać kod pocztowy lub e-mail, a nazwa urządzenia znów podąża za opisem.",
-        "uk": "Назви перевізників знову працюють після зміни формату в parcel.app, кожна посилка показує знак свого перевізника, скрипти можуть передавати індекс або e-mail, а назва пристрою знову слідує опису.",
-        "zh-cn": "parcel.app 更改格式后承运商名称恢复正常，每个包裹在对象树中显示其承运商标识，脚本可传入邮编或邮箱，设备名称也重新跟随描述。"
+        "en": "Carrier names work again after a format change at parcel.app, every package shows its carrier's pictogram, and scripts can pass a postcode or e-mail.",
+        "de": "Zustellernamen kommen nach einer Formatänderung bei parcel.app wieder an, jedes Paket zeigt das Zeichen seines Zustellers, Skripte können Postleitzahl oder E-Mail mitgeben.",
+        "ru": "Названия перевозчиков снова работают после смены формата в parcel.app, каждая посылка показывает знак перевозчика, скрипты могут передавать индекс или e-mail.",
+        "pt": "Os nomes das transportadoras voltam a funcionar após uma mudança de formato no parcel.app, cada encomenda mostra o símbolo da transportadora e os scripts podem enviar código postal ou e-mail.",
+        "nl": "Vervoerdersnamen werken weer na een formaatwijziging bij parcel.app, elk pakket toont het teken van zijn vervoerder en scripts kunnen postcode of e-mail meegeven.",
+        "fr": "Les noms des transporteurs fonctionnent à nouveau après un changement de format chez parcel.app, chaque colis affiche le symbole de son transporteur et les scripts peuvent transmettre un code postal.",
+        "it": "I nomi dei corrieri funzionano di nuovo dopo un cambio di formato in parcel.app, ogni pacco mostra il simbolo del suo corriere e gli script possono passare codice postale o e-mail.",
+        "es": "Los nombres de los transportistas vuelven a funcionar tras un cambio de formato en parcel.app, cada paquete muestra el símbolo de su transportista y los scripts pueden enviar código postal.",
+        "pl": "Nazwy przewoźników znów działają po zmianie formatu w parcel.app, każda przesyłka pokazuje znak swojego przewoźnika, a skrypty mogą przekazać kod pocztowy.",
+        "uk": "Назви перевізників знову працюють після зміни формату в parcel.app, кожна посилка показує знак свого перевізника, а скрипти можуть передавати індекс.",
+        "zh-cn": "parcel.app 更改格式后承运商名称恢复正常，每个包裹显示其承运商标识，脚本还可传入邮编或邮箱。"
       },
       "0.12.1": {
         "en": "Carrier, status and description of a package now carry a short explanation in the object tree, in all eleven languages — including why scripts should read the status code, not the text.",
@@ -93,19 +93,6 @@
         "pl": "Zatrzymanie lub restart adaptera był przerywany — zatrzymana instancja nadal zgłaszała aktywne połączenie z parcel.app zamiast rozłączenia.",
         "uk": "Зупинка або перезапуск адаптера обривалися — зупинений екземпляр далі повідомляв про активне з'єднання з parcel.app замість роз'єднання.",
         "zh-cn": "停止或重启适配器时过程被中断——已停止的实例仍显示与 parcel.app 保持连接，而不是显示为已断开。"
-      },
-      "0.10.2": {
-        "en": "Internal cleanup. No user-facing changes.",
-        "de": "Interne Aufräumarbeiten. Keine Änderungen für Nutzer.",
-        "ru": "Внутренняя очистка. Изменений для пользователей нет.",
-        "pt": "Limpeza interna. Sem alterações para o utilizador.",
-        "nl": "Interne opschoning. Geen wijzigingen voor gebruikers.",
-        "fr": "Nettoyage interne. Aucun changement pour l'utilisateur.",
-        "it": "Pulizia interna. Nessuna modifica per gli utenti.",
-        "es": "Limpieza interna. Sin cambios para el usuario.",
-        "pl": "Porządki wewnętrzne. Bez zmian dla użytkownika.",
-        "uk": "Внутрішнє прибирання. Без змін для користувачів.",
-        "zh-cn": "内部清理。用户无可见变化。"
       }
     },
     "plugins": {

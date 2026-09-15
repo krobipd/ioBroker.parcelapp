@@ -8,22 +8,22 @@ and `foreignObject`.
 
 ## Sources
 
-| File                | Source                                                               | Licence of the artwork                     |
-| ------------------- | -------------------------------------------------------------------- | ------------------------------------------ |
-| `apple.svg`         | [simple-icons](https://github.com/simple-icons/simple-icons) 16.31.0 | CC0 1.0 (the project), see the note below  |
-| `deutschepost.svg`  | simple-icons 16.31.0                                                 | CC0 1.0 (the project), see the note below  |
-| `doordash.svg`      | simple-icons 16.31.0                                                 | CC0 1.0 (the project), see the note below  |
-| `dpd.svg`           | simple-icons 16.31.0                                                 | CC0 1.0 (the project), see the note below  |
-| `hermes.svg`        | simple-icons 16.31.0                                                 | CC0 1.0 (the project), see the note below  |
-| `ups.svg`           | simple-icons 16.31.0                                                 | CC0 1.0 (the project), see the note below  |
-| `usps.svg`          | simple-icons 16.31.0                                                 | CC0 1.0 (the project), see the note below  |
-| `vinted.svg`        | simple-icons 16.31.0                                                 | CC0 1.0 (the project), see the note below  |
-| `amazon.svg`        | drawn for this adapter                                               | MIT, like the rest of the adapter          |
-| `dhl.svg`           | drawn for this adapter                                               | MIT, like the rest of the adapter          |
-| `gls.svg`           | drawn for this adapter                                               | MIT, like the rest of the adapter          |
-| `tnt.svg`           | drawn for this adapter                                               | MIT, like the rest of the adapter          |
-| `post.svg`          | drawn for this adapter (envelope, national postal operators)         | MIT, like the rest of the adapter          |
-| `truck.svg`         | drawn for this adapter (delivery van, every other carrier)           | MIT, like the rest of the adapter          |
+| File               | Source                                                               | Licence of the artwork                    |
+| ------------------ | -------------------------------------------------------------------- | ----------------------------------------- |
+| `apple.svg`        | [simple-icons](https://github.com/simple-icons/simple-icons) 16.31.0 | CC0 1.0 (the project), see the note below |
+| `deutschepost.svg` | simple-icons 16.31.0                                                 | CC0 1.0 (the project), see the note below |
+| `doordash.svg`     | simple-icons 16.31.0                                                 | CC0 1.0 (the project), see the note below |
+| `dpd.svg`          | simple-icons 16.31.0                                                 | CC0 1.0 (the project), see the note below |
+| `hermes.svg`       | simple-icons 16.31.0                                                 | CC0 1.0 (the project), see the note below |
+| `ups.svg`          | simple-icons 16.31.0                                                 | CC0 1.0 (the project), see the note below |
+| `usps.svg`         | simple-icons 16.31.0                                                 | CC0 1.0 (the project), see the note below |
+| `vinted.svg`       | simple-icons 16.31.0                                                 | CC0 1.0 (the project), see the note below |
+| `amazon.svg`       | drawn for this adapter                                               | MIT, like the rest of the adapter         |
+| `dhl.svg`          | drawn for this adapter                                               | MIT, like the rest of the adapter         |
+| `gls.svg`          | drawn for this adapter                                               | MIT, like the rest of the adapter         |
+| `tnt.svg`          | drawn for this adapter                                               | MIT, like the rest of the adapter         |
+| `post.svg`         | drawn for this adapter (envelope, national postal operators)         | MIT, like the rest of the adapter         |
+| `truck.svg`        | drawn for this adapter (delivery van, every other carrier)           | MIT, like the rest of the adapter         |
 
 ## Trademarks
 
