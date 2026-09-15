@@ -148,7 +148,7 @@ sendTo("parcelapp.0", "addDelivery", {
     ### **WORK IN PROGRESS**
 -->
 
-### **WORK IN PROGRESS**
+### 0.13.0 (2026-09-15)
 
 - Fixed: Every package showed the carrier's short code instead of its name — parcel.app changed the format of its carrier list, and the adapter could no longer read it.
 - New: Each package now carries the pictogram of its carrier in the object tree, drawn to read in the light and the dark theme.
@@ -183,13 +183,6 @@ sendTo("parcelapp.0", "addDelivery", {
 - New: Datapoints whose name alone does not explain them now carry a short description in the object tree, in all eleven languages.
 - New: Detailed user documentation in English and German, shown in the ioBroker documentation portal.
 - Fixed: Two settings from much older versions were still listed in the instance configuration although nothing used them any more.
-
-### 0.10.4 (2026-09-02)
-
-- Fixed: A malformed reply from parcel.app (empty body or a broken delivery entry) no longer aborts the poll with a cryptic internal message — it is reported as an API problem and retried next poll.
-- Fixed: A brief ioBroker database hiccup while marking the connection as online was mistaken for a parcel.app failure and switched the connection indicator to red.
-- Fixed: Scripts that call checkConnection with a non-text API key now receive the regular "API key is too short" reply instead of an internal failure.
-- Improved: Control characters in texts coming from parcel.app (carrier names, status notes) are now stripped completely before they reach the states.
 
 [Older changelogs can be found there](CHANGELOG_OLD.md)
 

@@ -1,9 +1,9 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.12.1",
+    "version": "0.13.0",
     "news": {
-      "NEXT": {
+      "0.13.0": {
         "en": "Carrier names work again after a format change at parcel.app, every package shows its carrier's pictogram, and scripts can pass a postcode or e-mail.",
         "de": "Zustellernamen kommen nach einer Formatänderung bei parcel.app wieder an, jedes Paket zeigt das Zeichen seines Zustellers, Skripte können Postleitzahl oder E-Mail mitgeben.",
         "ru": "Названия перевозчиков снова работают после смены формата в parcel.app, каждая посылка показывает знак перевозчика, скрипты могут передавать индекс или e-mail.",
@@ -126,8 +126,17 @@
       "uk": "Адаптер ioBroker для API parcel.app. Підтримує всіх перевізників, яких відстежує parcel.app.",
       "zh-cn": "用于 parcel.app API 的 ioBroker 适配器。支持 parcel.app 跟踪的所有承运商。"
     },
-    "authors": ["krobi <krobi@power-dreams.com>"],
-    "keywords": ["parcel", "tracking", "delivery", "package", "shipment", "carrier"],
+    "authors": [
+      "krobi <krobi@power-dreams.com>"
+    ],
+    "keywords": [
+      "parcel",
+      "tracking",
+      "delivery",
+      "package",
+      "shipment",
+      "carrier"
+    ],
     "licenseInformation": {
       "license": "MIT",
       "type": "free"
@@ -137,8 +146,16 @@
     "extIcon": "https://cdn.jsdelivr.net/gh/krobipd/ioBroker.parcelapp@main/admin/parcelapp.svg",
     "readme": "https://github.com/krobipd/ioBroker.parcelapp/blob/main/README.md",
     "docs": {
-      "en": ["docs/en/README.md", "docs/en/scripting.md", "docs/en/faq.md"],
-      "de": ["docs/de/README.md", "docs/de/scripting.md", "docs/de/faq.md"]
+      "en": [
+        "docs/en/README.md",
+        "docs/en/scripting.md",
+        "docs/en/faq.md"
+      ],
+      "de": [
+        "docs/de/README.md",
+        "docs/de/scripting.md",
+        "docs/de/faq.md"
+      ]
     },
     "enabled": true,
     "tier": 3,
@@ -164,8 +181,12 @@
     ],
     "nogit": true
   },
-  "encryptedNative": ["apiKey"],
-  "protectedNative": ["apiKey"],
+  "encryptedNative": [
+    "apiKey"
+  ],
+  "protectedNative": [
+    "apiKey"
+  ],
   "native": {
     "apiKey": "",
     "pollInterval": 10,
