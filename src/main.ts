@@ -539,7 +539,9 @@ export class ParcelappAdapter extends utils.Adapter {
       msg.tracking_number.length > MAX_ADD_FIELD_LEN ||
       msg.carrier_code.length > MAX_ADD_FIELD_LEN ||
       msg.description.length > MAX_ADD_FIELD_LEN ||
-      (typeof msg.language === "string" && msg.language.length > MAX_ADD_FIELD_LEN)
+      (typeof msg.language === "string" && msg.language.length > MAX_ADD_FIELD_LEN) ||
+      (typeof msg.postcode === "string" && msg.postcode.length > MAX_ADD_FIELD_LEN) ||
+      (typeof msg.email === "string" && msg.email.length > MAX_ADD_FIELD_LEN)
     ) {
       this.log.debug("addDelivery: a field exceeds the maximum length");
       this.replyAddError(obj, `each field must be at most ${MAX_ADD_FIELD_LEN} characters`);
@@ -547,7 +549,12 @@ export class ParcelappAdapter extends utils.Adapter {
     }
     // Pass the optional API fields through when the caller supplies them
     // (language: ISO 639-1 two-letter code; send_push_confirmation: push
-    // notification once the delivery is added).
+    // notification once the delivery is added; postcode / email: what some
+    // carriers need to track at all — v0.13.0, both are official fields and
+    // were silently dropped before, so a script could never add a bpost or
+    // Apple Store delivery, and every failed POST counted against 20/day).
+    // No pre-check against the carrier list's `extra_required`: parcel.app
+    // answers with its own error_message, which reaches the caller verbatim.
     const request: AddDeliveryRequest = {
       tracking_number: msg.tracking_number,
       carrier_code: msg.carrier_code,
@@ -558,6 +565,12 @@ export class ParcelappAdapter extends utils.Adapter {
     }
     if (typeof msg.send_push_confirmation === "boolean") {
       request.send_push_confirmation = msg.send_push_confirmation;
+    }
+    if (typeof msg.postcode === "string" && msg.postcode.length > 0) {
+      request.postcode = msg.postcode;
+    }
+    if (typeof msg.email === "string" && msg.email.length > 0) {
+      request.email = msg.email;
     }
     // v0.9.0 (S4): throttle addDelivery POSTs. parcel.app caps ~20/day
     // server-side; this stops a runaway/buggy script from hammering the API

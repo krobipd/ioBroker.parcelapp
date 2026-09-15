@@ -104,10 +104,12 @@ sendTo("parcelapp.0", "addDelivery", {
   // optional:
   language: "de", // tracking language as an ISO 639-1 code, default "en"
   send_push_confirmation: true, // send a push once the delivery is added, default false
+  postcode: "10115", // some carriers (e.g. bpost, DPD Germany) cannot track without it
+  email: "you@example.com", // some services (e.g. Apple Store orders) require it
 });
 ```
 
-`tracking_number`, `carrier_code` and `description` are required; `language` and `send_push_confirmation` are optional. The delivery is added to your parcel.app account and a poll follows right away (at most one poll per minute) — but freshly added deliveries usually have no tracking data yet (see the note below).
+`tracking_number`, `carrier_code` and `description` are required; `language`, `send_push_confirmation`, `postcode` and `email` are optional. Some carriers need the postcode or the e-mail address of the order to track at all — parcel.app tells you in the reply when one is missing, and its carrier list (`https://api.parcel.app/external/supported_carriers.json`) marks them. The delivery is added to your parcel.app account and a poll follows right away (at most one poll per minute) — but freshly added deliveries usually have no tracking data yet (see the note below).
 
 **Notes:**
 

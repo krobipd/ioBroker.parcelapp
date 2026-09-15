@@ -1282,6 +1282,67 @@ describe("ParcelappAdapter onMessage", () => {
     });
   });
 
+  it("addDelivery: passes postcode and email through — the fields some carriers cannot track without (v0.13.0)", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    await i.onMessage({
+      command: "addDelivery",
+      from: "system.adapter.admin.0",
+      callback: { id: 1 },
+      message: {
+        tracking_number: "NEW-BPOST",
+        carrier_code: "bpost",
+        description: "Parcel",
+        postcode: "1000",
+        email: "me@example.com",
+      },
+    });
+    expect(client.addDelivery).toHaveBeenCalledWith({
+      tracking_number: "NEW-BPOST",
+      carrier_code: "bpost",
+      description: "Parcel",
+      postcode: "1000",
+      email: "me@example.com",
+    });
+  });
+
+  it("addDelivery: absent, empty or non-string postcode/email stay OUT of the request body", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    await i.onMessage({
+      command: "addDelivery",
+      from: "system.adapter.admin.0",
+      callback: { id: 1 },
+      message: { tracking_number: "NEW-PLAIN", carrier_code: "dhl", description: "Parcel", postcode: "", email: 42 },
+    });
+    expect(client.addDelivery).toHaveBeenCalledWith({
+      tracking_number: "NEW-PLAIN",
+      carrier_code: "dhl",
+      description: "Parcel",
+    });
+  });
+
+  it("addDelivery: an over-long postcode or email is capped like every other field", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    for (const extra of [{ postcode: "1".repeat(513) }, { email: `${"a".repeat(510)}@x.de` }]) {
+      i.sendTo.mockClear();
+      await i.onMessage({
+        command: "addDelivery",
+        from: "system.adapter.admin.0",
+        callback: { id: 1 },
+        message: { tracking_number: "NEW-LONG", carrier_code: "dhl", description: "Parcel", ...extra },
+      });
+      expect(client.addDelivery).not.toHaveBeenCalled();
+      expect(i.sendTo).toHaveBeenCalledWith(
+        "system.adapter.admin.0",
+        "addDelivery",
+        { success: false, error_message: "each field must be at most 512 characters" },
+        expect.anything(),
+      );
+    }
+  });
+
   it("addDelivery: a drifted success string ('false') does not trigger the follow-up poll (L9)", async () => {
     const { adapter, client } = await setupReady();
     const i = internalOf(adapter);

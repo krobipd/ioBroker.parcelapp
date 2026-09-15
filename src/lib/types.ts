@@ -59,6 +59,17 @@ export interface AddDeliveryRequest {
   language?: string;
   /** Send push confirmation */
   send_push_confirmation?: boolean;
+  /**
+   * v0.13.0 — official field: "Postcode associated with your delivery. It will be
+   * recorded only for carriers that require it" (e.g. bpost, DPD Germany; the
+   * carrier list marks them with `extra_required: 1`).
+   */
+  postcode?: string;
+  /**
+   * v0.13.0 — official field: "Email associated with your order. Some services
+   * like Apple Store require an email" (`extra_required: 2` in the carrier list).
+   */
+  email?: string;
 }
 
 /** Add delivery API response */
