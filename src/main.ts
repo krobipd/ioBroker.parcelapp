@@ -283,6 +283,14 @@ export class ParcelappAdapter extends utils.Adapter {
         return;
       }
 
+      // v0.13.0 (audit B5): a stop during the awaits above (I18n.init, the manifest
+      // refresh, the connection write) must not build a client and run a full poll
+      // — one HTTP request against the 20/h budget on an instance the host is
+      // tearing down. The check below the poll (L2) only covered the timer.
+      if (this.unloaded) {
+        return;
+      }
+
       this.client = this.makeClient(apiKey.trim());
       this.stateManager = this.makeStateManager();
 

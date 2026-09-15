@@ -342,6 +342,26 @@ describe("ParcelappAdapter onReady", () => {
     expect(i.log.info).not.toHaveBeenCalledWith(expect.stringContaining("Parcel tracking started"));
   });
 
+  it("a stop BEFORE the first poll builds no client at all (audit B5)", async () => {
+    // The unload arrives while onReady still awaits the manifest refresh. Until
+    // v0.13.0 the start went on to build the HTTPS client and run a full poll —
+    // one request against the 20/h budget on an instance that is shutting down.
+    const { adapter, client } = setup();
+    const i = internalOf(adapter);
+    let built = 0;
+    i.makeClient = () => {
+      built += 1;
+      return client;
+    };
+    i.extendObject.mockImplementationOnce(async () => {
+      i.onUnload(vi.fn());
+    });
+    await i.onReady();
+    expect(built).toBe(0);
+    expect(client.getDeliveries).not.toHaveBeenCalled();
+    expect(i.setInterval).not.toHaveBeenCalled();
+  });
+
   it("the armed interval actually polls — the adapter's recurring work (C10)", async () => {
     // Until 2026-08-22 nothing drove this callback: emptying it left all tests
     // green while the adapter would have polled ONCE at startup and then never
