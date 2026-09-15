@@ -21,6 +21,14 @@
 - **Rate Limits:** GET 20/Stunde, POST 20/Tag
 - **Doku:** https://parcelapp.net/help/api.html
 - **Kein DELETE-Endpoint** — nur über parcel.app UI löschbar
+- **`supported_carriers.json` ist ÖFFENTLICH** (kein `api-key`, kein Rate-Limit) und liefert seit 2026 **Objekte**:
+  `{ "dhl": { "name": "DHL Express", "extra_required"?: 1|2|3|5, "name_variations"?: {…} } }` — 304 Einträge
+  (gemessen 2026-09-15). Die frühere Flach-Form `{code: "Name"}` ist weg; der Client liest beide, cacht aber NIE
+  eine Karte ohne brauchbaren Eintrag (v0.13.0/B1 — genau das machte die Namen monatelang tot). `extra_required`
+  1 = Postleitzahl, 2 = E-Mail; 3/5 undokumentiert.
+- **`add-delivery/` kennt `postcode` und `email`** (offizielle, optionale Felder — 31 Carrier verlangen eines).
+  Der Adapter reicht sie durch und prüft NICHT gegen `extra_required`: parcel.app antwortet selbst, und der
+  Fehlertext aus dem Body erreicht seit v0.13.0 den Aufrufer (`HTTP 400: <error_message>`).
 
 ## Architektur
 
@@ -29,9 +37,11 @@ src/main.ts              → Adapter (Polling, Lifecycle, sendTo-Handler, handle
 src/lib/types.ts         → API-Interfaces + ApiErrorCode/ApiError (Fehler-Vertrag) + DELIVERED/UNKNOWN_STATUS_CODE
 src/lib/coerce.ts        → errText, coerceFiniteNumber strict, coerceClampedInt, isTrueish, oneLine (ganzer C0-Bereich + DEL + U+2028/29, ein Lauf = ein Leerzeichen; Zeichen-Schleife statt Regex wegen `no-control-regex`)
 src/lib/parcel-client.ts → HTTPS-Client (Node.js built-in); baseUrl- + Timeout-Seams (Tests), apiError (typisiert), 15s-Leerlauf + 60s-Deadline, cancelled-Flag, RETRY_AFTER_*-Konstanten; API-Drift-Wächter an der Grenze: Antwort muss Objekt sein (getDeliveries UND addDelivery), jeder Listeneintrag muss Objekt sein — sonst `API_ERROR` + Drift-Debugzeile, nie ein TypeError tief im Poll
-src/lib/state-manager.ts → NUR noch Broker-Arbeit: State/Objekt-CRUD + Cleanup; createdIds/deviceEnsured/knownDeliveryIds-Caches; lastUpdated via setStateChangedAsync-notChanged; Objekte per extendObject (nie setObjectNotExists — sonst erreicht ein geänderter Name/`desc` nur Neuinstallationen); viewLog entprellt die Drift-Zeilen von delivery-view auf eine je Poll
+src/lib/state-manager.ts → NUR noch Broker-Arbeit: State/Objekt-CRUD + Cleanup; createdIds/deviceSignature/knownDeliveryIds/idOwner-Caches (deviceSignature = `pkgId` → Signatur `[name, icon]` des letzten Geräte-Schreibvorgangs, v0.13.0); lastUpdated via setStateChangedAsync-notChanged; Objekte per extendObject (nie setObjectNotExists — sonst erreicht ein geänderter Name/`desc` nur Neuinstallationen); viewLog entprellt die Drift-Zeilen von delivery-view auf eine je Poll
 src/lib/delivery-view.ts → v0.12.0 (A1): reine Darstellungs-Logik ohne Broker-Berührung — Datumsparser (zwei unmehrdeutige Formate, jede Ablehnung mit Drift-Zeile), Fenster, Schätzung, isToday, Gesamtfenster, letztes Ereignis/Ort. Frei testbar ohne Adapter-Attrappe
+src/lib/device-icons.ts  → v0.13.0: Carrier-Piktogramme — Karte `carrier_code` → Datei in `admin/icons/` (131 der 304 Codes; alles andere und jeder künftige Code der Lieferwagen), Inline-URI `data:image/svg+xml;base64,…` aus den LF-normalisierten Dateibytes, Cache je Datei, `Object.hasOwn` an der API-Grenze. Zuordnung über den CODE, nie über den Namen (der kam aus der Datei, deren Format sich änderte — B1)
 src/lib/i18n.ts          → tName/tText/statusLabel/packageName: type-safe Wrapper (keys aus admin/i18n/en.json; Status-Labels status_0…status_8)
+test/standards/object-inventory.test.ts → v0.13.0: hält jede `common.icon` des Inventars gegen die Dateien in `admin/icons` — `COMPARED` der Aufstiegs-Suite kennt `icon` nicht, ohne diesen Block wäre ein Pfad-Icon oder eine verwaiste Datei unsichtbar
 test/self-explaining.json → Datenpunkte, deren Name die ganze Aussage IST (Muster → englische Begründung). Quelle der Beschreibungs-Entscheidung für das Flotten-Gate D08 UND für den desc-Test in state-manager.test.ts — nie eine zweite Liste danebenlegen
 test/inventory.js        → v0.12.0 (K1): Objekt-Inventar aus Fixtures (test/fixtures/inventory/) über ALLE Statuscodes + Fenster-Formen; die Fixtures erreichen den Adapter über `inventory-https-hook.cjs` (NODE_OPTIONS), der jede api.parcel.app-Anfrage auf den lokalen Wegwerf-Server umlenkt und jeden anderen Host ABLEHNT — der Produktivcode bleibt ohne Test-Naht. ⚠️ `npm run build` MUSS vorher laufen (der Vorlauf tut das als D05); sonst misst der Lauf den alten Bau-Ausgang. Suite 2 (Aufstieg) wartet per `waitForCompletedPoll` auf einen ABGESCHLOSSENEN Poll — ihr Objektsatz ist gesät, ein Warten darauf wäre sofort erfüllt (v0.12.1)
 docs/en/ + docs/de/      → Nutzerdoku (README/scripting/faq, gleiche Kapitel je Sprache), verlinkt über io-package.json:common.docs; NICHT im npm-Paket (kein `docs` im files-Feld) — das Doku-Portal liest sie roh aus dem Repo
