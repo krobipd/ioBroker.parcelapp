@@ -358,8 +358,11 @@ export class ParcelClient {
   async getCarrierName(carrierCode: unknown): Promise<string> {
     // API-drift guard: non-string codes fall back to "UNKNOWN"
     if (typeof carrierCode !== "string" || carrierCode.length === 0) {
-      // v0.4.3 (D4): trace non-string code drift. Helps diagnose "all my
-      // packages show UNKNOWN carrier" reports.
+      // v0.4.3 (D4): trace non-string code drift. "UNKNOWN" is for a missing or
+      // non-string CODE; a code whose name is unknown falls back to the code in
+      // upper case below. (A report of "every package shows its code" is the
+      // other defect: the carrier list arriving in a shape the client cannot
+      // read — v0.13.0/B1, warned once per process from `fetchCarrierNames`.)
       this.log?.debug(`getCarrierName: non-string code (got ${typeof carrierCode}), returning UNKNOWN`);
       return "UNKNOWN";
     }
