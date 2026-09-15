@@ -607,6 +607,7 @@ export class ParcelClient {
    * @param statusCode HTTP status code (non-2xx)
    * @param statusMessage HTTP status message
    * @param retryAfterHeader Raw Retry-After header value (429 only)
+   * @param detail parcel.app's own `error_message` from the body, when it sent one
    */
   private static mapHttpStatusError(
     statusCode: number,

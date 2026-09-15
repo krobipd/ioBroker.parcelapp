@@ -353,8 +353,9 @@ describe("ParcelappAdapter onReady", () => {
       built += 1;
       return client;
     };
-    i.extendObject.mockImplementationOnce(async () => {
+    i.extendObject.mockImplementationOnce(() => {
       i.onUnload(vi.fn());
+      return Promise.resolve();
     });
     await i.onReady();
     expect(built).toBe(0);
