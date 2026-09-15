@@ -10,6 +10,7 @@ import {
   type DriftLogger,
   type StatusedDelivery,
 } from "./delivery-view";
+import { carrierIcon } from "./device-icons";
 import { packageName, statusLabel, tName } from "./i18n";
 import type { ParcelDelivery } from "./types";
 import { UNKNOWN_STATUS_CODE } from "./types";
@@ -273,6 +274,34 @@ export class StateManager {
   }
 
   /**
+   * Write the device object when name or icon differ from what this process last
+   * wrote for that package. One write per package per process in the normal case.
+   *
+   * @param pkgId Package id (signature key).
+   * @param devicePath Relative object id of the device.
+   * @param name Device name — the description from parcel.app, or the localized
+   *   fallback when it sent none.
+   * @param icon Inline pictogram URI, or `undefined` to leave the field untouched.
+   */
+  private async writeDeviceObject(
+    pkgId: string,
+    devicePath: string,
+    name: ioBroker.StringOrTranslated,
+    icon: string | undefined,
+  ): Promise<void> {
+    const signature = JSON.stringify([name, icon ?? null]);
+    if (this.deviceSignature.get(pkgId) === signature) {
+      return;
+    }
+    const common: ioBroker.DeviceCommon = { name };
+    if (icon !== undefined) {
+      common.icon = icon;
+    }
+    await this.adapter.extendObject(devicePath, { type: "device", common, native: {} });
+    this.deviceSignature.set(pkgId, signature);
+  }
+
+  /**
    * Extract the package-id segment from a relative object id
    * (`deliveries.<pkgId>` or `deliveries.<pkgId>.<state>`); "" when the id is
    * outside the deliveries tree. Single source for the id-schema knowledge
@@ -303,16 +332,12 @@ export class StateManager {
     // v0.13.0 (B2): write the device object when its signature changed — once per
     // package per process as before, and again when parcel.app reports a new
     // description. No `preserve`: the adapter owns the name.
+    // The icon is an INPUT here, not derived inside the write: only that way does
+    // a stored object without an icon differ from the fresh one, so every existing
+    // package gets its pictogram exactly once after the update (fleet recipe).
     const deviceName = description || packageName(trackingNumber || pkgId);
-    const signature = JSON.stringify([deviceName]);
-    if (this.deviceSignature.get(pkgId) !== signature) {
-      await this.adapter.extendObject(devicePath, {
-        type: "device",
-        common: { name: deviceName },
-        native: {},
-      });
-      this.deviceSignature.set(pkgId, signature);
-    }
+    const icon = carrierIcon(delivery.carrier_code);
+    await this.writeDeviceObject(pkgId, devicePath, deviceName, icon);
     this.knownDeliveryIds?.add(pkgId);
 
     const statusCode = this.parseStatus(delivery);

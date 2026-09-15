@@ -105,6 +105,12 @@ the shipment in parcel.app and follows it: change the description there and the 
 the next poll. The adapter owns that name, so renaming the device in the ioBroker admin does not
 stick — for a label of your own use an alias or a datapoint in `0_userdata`.
 
+Every package also carries the **pictogram of its carrier** in the object tree, so you can see who
+is delivering before you read the name: DHL, Deutsche Post, Hermes/Evri, DPD, GLS, UPS, Amazon,
+USPS, TNT, Apple, Vinted and DoorDash have their own mark, national postal operators share an
+envelope, and every other carrier gets a delivery van. The marks are drawn monochrome and follow
+your admin theme.
+
 | Datapoint          | Type   | Meaning                                                                                                                                                                                                                                                                                                                   |
 | ------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `carrier`          | string | Display name of the carrier (e.g. `DHL Express`). Falls back to the uppercase carrier code when parcel.app has no name for it.                                                                                                                                                                                            |

@@ -40,6 +40,7 @@ vi.mock("@iobroker/adapter-core", () => ({
   },
 }));
 
+import { carrierIcon } from "./device-icons";
 import { StateManager } from "./state-manager";
 import type { ParcelDelivery } from "./types";
 
@@ -2196,6 +2197,77 @@ describe("StateManager", () => {
       // An unchanged description stays one write — no churn on every poll.
       await updateDeliveryT(manager, { ...delivery, description: "New name" }, "DHL");
       expect(deviceWrites()).toBe(2);
+    });
+
+    it("v0.13.0: an existing device WITHOUT an icon gets its pictogram — exactly once", async () => {
+      // The icon is an input of the device write, so "stored has no icon" is a real
+      // difference. Were it derived inside the write, the signature would carry it
+      // on both sides, match itself, and no existing package would ever get one.
+      const adapter = createMockAdapter();
+      const manager = new StateManager(adapter as never);
+      const delivery = makeDelivery({ description: "Headphones", carrier_code: "dhl" });
+      const pkgId = manager.packageId(delivery);
+      // An installation from before the pictograms: name in place, no icon.
+      adapter.objects.set(`deliveries.${pkgId}`, {
+        type: "device",
+        common: { name: "Headphones" },
+        native: {},
+      });
+      const deviceWrites = countDeviceWrites(adapter, `deliveries.${pkgId}`);
+
+      await updateDeliveryT(manager, delivery, "DHL Express");
+      const icon = adapter.objects.get(`deliveries.${pkgId}`)!.common.icon as string;
+      expect(icon.startsWith("data:image/svg+xml;base64,")).toBe(true);
+      expect(icon).toBe(carrierIcon("dhl"));
+      expect(deviceWrites()).toBe(1);
+
+      // Second poll, nothing changed: no further write.
+      await updateDeliveryT(manager, delivery, "DHL Express");
+      expect(deviceWrites()).toBe(1);
+    });
+
+    it("v0.13.0: a changed description rewrites name AND icon in ONE write", async () => {
+      const adapter = createMockAdapter();
+      const manager = new StateManager(adapter as never);
+      const delivery = makeDelivery({ description: "Old", carrier_code: "ups" });
+      const pkgId = manager.packageId(delivery);
+      const deviceWrites = countDeviceWrites(adapter, `deliveries.${pkgId}`);
+      await updateDeliveryT(manager, delivery, "UPS");
+      await updateDeliveryT(manager, { ...delivery, description: "New" }, "UPS");
+      expect(deviceWrites()).toBe(2);
+      const device = adapter.objects.get(`deliveries.${pkgId}`)!.common;
+      expect(device.name).toBe("New");
+      expect(device.icon).toBe(carrierIcon("ups"));
+    });
+
+    it("v0.13.0: the same name under a NEW carrier still updates the pictogram", async () => {
+      // The signature has to carry the icon, not only the name. A collision
+      // hand-over reassigns a bare package id to a different delivery, which may
+      // ride with another carrier while the description reads the same — with a
+      // name-only signature that package would keep the previous carrier's logo.
+      const adapter = createMockAdapter();
+      const manager = new StateManager(adapter as never);
+      const dhl = makeDelivery({ tracking_number: "HANDOVER", description: "Parcel", carrier_code: "dhl" });
+      const ups = { ...dhl, carrier_code: "ups" };
+      const pkgId = manager.packageId(dhl);
+      const deviceWrites = countDeviceWrites(adapter, `deliveries.${pkgId}`);
+
+      await manager.updateDelivery(dhl, "DHL Express", pkgId);
+      expect(adapter.objects.get(`deliveries.${pkgId}`)!.common.icon).toBe(carrierIcon("dhl"));
+
+      await manager.updateDelivery(ups, "UPS", pkgId);
+      expect(adapter.objects.get(`deliveries.${pkgId}`)!.common.icon).toBe(carrierIcon("ups"));
+      expect(deviceWrites()).toBe(2);
+    });
+
+    it("v0.13.0: an unlisted carrier gets the generic van, not an empty icon field", async () => {
+      const adapter = createMockAdapter();
+      const manager = new StateManager(adapter as never);
+      const delivery = makeDelivery({ carrier_code: "no-such-carrier" });
+      await updateDeliveryT(manager, delivery, "NO-SUCH-CARRIER");
+      const device = adapter.objects.get(`deliveries.${manager.packageId(delivery)}`)!.common;
+      expect(device.icon).toBe(carrierIcon("no-such-carrier"));
+      expect(device.icon).toBe(carrierIcon("whatever-else"));
     });
 
     it("re-extends after remove + re-add (cache follows lifecycle)", async () => {

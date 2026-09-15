@@ -16,6 +16,7 @@ ioBroker adapter for the [parcel.app](https://parcelapp.net) API. Supports all c
 
 - **All parcel.app carriers** — DHL, FedEx, UPS, Amazon, Hermes, GLS, DPD, and everything else parcel.app supports
 - **Per-package ioBroker states** — carrier, status, tracking number, delivery window, last event, last location
+- **Carrier pictogram on every package** in the object tree — theme-aware, with a delivery van for carriers without a mark of their own
 - **Summary states** — active count, today count, combined delivery window
 - **Delivery time estimates** — today, tomorrow, in X days with combined time window
 - **Configurable poll interval** (5–60 minutes)

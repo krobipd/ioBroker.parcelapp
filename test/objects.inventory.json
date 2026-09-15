@@ -22,7 +22,8 @@
   "parcelapp.0.deliveries.inv_drift_format": {
     "type": "device",
     "common": {
-      "name": "Ambiguous date format"
+      "name": "Ambiguous date format",
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSJjdXJyZW50Q29sb3IiPgogIDxnIHRyYW5zZm9ybT0ic2NhbGUoMi42NjY2NjY2NykiPjxwYXRoIGQ9Ik0xNi4wMSAxMC43MWEuMzY0LjM2NCAwIDAxLS4zNDMtLjAwNmwtLjU1OC0uMzMxYS40My40MyAwIDAxLS4xODItLjMxMmwtLjAxNC0uNjVhLjM2My4zNjMgMCAwMS4xNjUtLjNsNi43LTMuOTAyTDEyLjM3Ny4wODVBLjc5OS43OTkgMCAwMDEyIDBhLjc5OC43OTggMCAwMC0uMzc3LjA4NWwtOS40IDUuMTI0IDEwLjUzIDYuMTNjLjA5OC4wNTQuMTcyLjE4MS4xNzIuMjk1djguOTQ0YzAgLjExMi0uMDguMjQxLS4xNzguMjk0bC0uNTY3LjMxNWMtLjE3MS4wNjItLjI1Ni4wNDMtLjM2MSAwbC0uNTY5LS4zMTVhLjM2Mi4zNjIgMCAwMS0uMTc1LS4yOTR2LTcuOTczYS4yMjMuMjIzIDAgMDAtLjA5NS0uMTU2TDEuNzAyIDcuMDQ4djEwLjU3OWMwIC4yMzYuMTY3LjUyOC4zNzEuNjQ4bDkuNTU2IDUuNjM2Yy4xMDIuMDYuMjM3LjA5LjM3MS4wODlhLjc0NS43NDUgMCAwMC4zNzEtLjA5bDkuNTU3LTUuNjM1YS44MzUuODM1IDAgMDAuMzctLjY0OFY3LjA0N1oiLz48L2c+Cjwvc3ZnPgo="
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_drift_format"
@@ -424,7 +425,8 @@
   "parcelapp.0.deliveries.inv_drift_numstr": {
     "type": "device",
     "common": {
-      "name": "Numeric string status"
+      "name": "Numeric string status",
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSJjdXJyZW50Q29sb3IiPgogIDxnIHRyYW5zZm9ybT0ic2NhbGUoMi42NjY2NjY2NykiPjxwYXRoIGQ9Ik0xMS4wNTcgMTguMjIxIDcuODM5IDIxLjQ3SDQuNjUybDMuMjE5LTMuMjQ5em0tNC4yOTkgMEwzLjU0MSAyMS40N0guMzU0bDMuMjE5LTMuMjQ5em04LjIyNyAwIDMuMjE5IDMuMjQ5aC0zLjE4N2wtMy4yMi0zLjI0OXptNC4zIDAgMy4yMTcgMy4yNDloLTMuMTg3bC0zLjIxOC0zLjI0OXpNMTAuNDY1IDIuNTNjMy43NjUtLjAwMyA2Ljg4IDIuNzQgNi44NjUgNi42NzYuNTUzLTEuNTAyLjkzNy0zLjc4OSAxLjAxNi01LjM5TDI0IDUuMjJjLS40NTIgNi42MjEtNS40MyAxMi40Mi0xMi44MTUgMTIuNDE2QzIuODMyIDE3LjYzNS0uMzk3IDEwLjM4OS4wMzkgNC44OTlsMi40NTMtLjc3OWMtLjM5OSAzLjEyNS41NyA1LjM3OCAxLjIzOCA2LjQxLS43OTUtNC40MiAyLjU0OS03Ljk5OCA2LjczNS04bS4wMTEgMi4zMDFhNC41MTkgNC41MTkgMCAwIDAtNC41MjQgNC41MTQgNC41MTkgNC41MTkgMCAwIDAgNC41MjQgNC41MTQgNC41MTggNC41MTggMCAwIDAgNC41MjUtNC41MTQgNC41MTggNC41MTggMCAwIDAtNC41MjUtNC41MTQiLz48L2c+Cjwvc3ZnPgo="
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_drift_numstr"
@@ -826,7 +828,8 @@
   "parcelapp.0.deliveries.inv_drift_unknown": {
     "type": "device",
     "common": {
-      "name": "Unparseable status"
+      "name": "Unparseable status",
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPgogIDxnIHRyYW5zZm9ybT0ic2tld1goLTE0KSB0cmFuc2xhdGUoNCAwKSI+PHBhdGggdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNCAyMCkiIGQ9Ik0wIDB2MjRoNmExMiAxMiAwIDAgMCAwLTI0eiIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDI1IDIwKSIgZD0iTTAgMHYyNE0xNCAwdjI0TTAgMTJoMTQiLz48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSg0NiAyMCkiIGQ9Ik0wIDB2MjRoMTQiLz48L2c+Cjwvc3ZnPgo="
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_drift_unknown"
@@ -1228,7 +1231,8 @@
   "parcelapp.0.deliveries.inv_extra_50733": {
     "type": "device",
     "common": {
-      "name": "With extra information"
+      "name": "With extra information",
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPgogIDxnIHRyYW5zZm9ybT0ic2tld1goLTE0KSB0cmFuc2xhdGUoNCAwKSI+PHBhdGggdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNCAyMCkiIGQ9Ik0wIDB2MjRoNmExMiAxMiAwIDAgMCAwLTI0eiIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDI1IDIwKSIgZD0iTTAgMHYyNE0xNCAwdjI0TTAgMTJoMTQiLz48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSg0NiAyMCkiIGQ9Ik0wIDB2MjRoMTQiLz48L2c+Cjwvc3ZnPgo="
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_extra_50733"
@@ -1642,7 +1646,8 @@
         "ru": "Посылка INV-NO-DESCRIPTION",
         "uk": "Посилка INV-NO-DESCRIPTION",
         "zh-cn": "包裹 INV-NO-DESCRIPTION"
-      }
+      },
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSJjdXJyZW50Q29sb3IiPgogIDxnIHRyYW5zZm9ybT0ic2NhbGUoMi42NjY2NjY2NykiPjxwYXRoIGQ9Ik0xMS42NjggMTQuNTQ0bC0uMDI4LTUuMjI2Yy4xMzgtLjA1NS4zODctLjExMS42MDgtLjExMS45OTUgMCAxLjQxLjc3NCAxLjQxIDIuNjgyIDAgMS44NTMtLjQ3IDIuNzY1LTEuNDM4IDIuNzY1LS4yMiAwLS40NDEtLjA1NS0uNTUyLS4xMXpNMy4xMjQgNy40MzhjNC4yMDMtMy44NDMgOS4yOS00Ljg2NiAxNC4wMTgtNC44NjYgMS4zIDAgMi41NDQuMDgzIDMuNzYuMTk0aC0uMDI4djExLjI1M2MwIDIuMTg0LS43NzQgMy45MjYtMi4yOTUgNS4xNzEtMS4zNTUgMS4xMzQtNS40NDcgMi45NTktNi41ODEgMy40NTYtMS4xNjEtLjUyNS01LjI1My0yLjM3OC02LjU4MS0zLjQ1Ni0xLjQ5My0xLjI0NC0yLjI5NS0zLjAxNC0yLjI5NS01LjE3MVY3LjQzOHptMTIuNjY0IDIuNTk5Yy4wMjguOTEyLjI3NiAxLjU3NiAxLjY4NyAyLjQwNi43NDcuNDQyIDEuMDUxLjc0NyAxLjA1MSAxLjI3MiAwIC41ODEtLjM4Ny45NC0xLjAyMy45NC0uNTUzIDAtMS4xODktLjMwNC0xLjYzMS0uNjkxdjEuNTc2Yy41NTMuMzA0IDEuMjE3LjUyNSAxLjg4LjUyNSAxLjY4NyAwIDIuNDMzLTEuMTg5IDIuNDYxLTIuMjY3LjAyOC0uOTk1LS4yNDktMS43NDItMS42NTktMi41NzEtLjYwOC0uMzg3LTEuMTM0LS42MzYtMS4xMDYtMS4yNDQgMC0uNTgxLjUyNS0uODAyLjk5NS0uODAyLjU4MSAwIDEuMTYxLjMzMiAxLjUyMS42OTFWOC4zNzhjLS4zMDQtLjIyMS0uOTQtLjU4MS0xLjg4LS41NTMtMS4xMzUuMDI4LTIuMjk2LjgyOS0yLjI5NiAyLjIxMnptLTUuODM0IDkuNDg0aDEuNzE0bC0uMDI4LTMuNTk0Yy4xNjYuMDI4LjQxNS4wODMuNzc0LjA4MyAxLjkwOCAwIDIuOTg2LTEuNjg3IDIuOTg2LTQuMTc1IDAtMi40NjEtMS4xMDYtNC4wMDktMy4xNTItNC4wMDktLjk0IDAtMS42ODcuMjIxLTIuMjk1LjYwOHYxMS4wODd6bS01Ljk0NS02LjE2NmMwIDEuNzk3LjgyOSAyLjcxIDIuNTE2IDIuNzEgMS4wNTEgMCAxLjkwOC0uMjQ5IDIuNTcxLS42OTFWNy45OTFINy40MXY2LjM4N2MtLjE5NC4xMzgtLjQ3LjIyMS0uODAyLjIyMS0uNzc0IDAtLjg4NS0uNzE5LS44ODUtMS4xODlWNy45OTFINC4wMDl2NS4zNjR6TTIyLjEyIDIuMjk1djExLjcyM2MwIDIuNTE2LS45NCA0LjY0NS0yLjc2NSA2LjExMS0xLjU0OSAxLjMtNi4zMzIgMy40MjktNy4zNTUgMy44NzEtMS4wMjMtLjQ0Mi01LjgwNi0yLjU3MS03LjM1NS0zLjg0My0xLjc5Ny0xLjQ2NS0yLjc2NS0zLjU5NC0yLjc2NS02LjExMVYyLjI5NUM0Ljc1Ni43NDcgOC4wNzQgMCAxMiAwczcuMjQ0Ljc0NyAxMC4xMiAyLjI5NXptLS4zMDQuMjIxYy0yLjcxLTEuNDY1LTYtMi4xODQtOS43ODgtMi4xODRzLTcuMDc5Ljc0Ni05Ljc4OCAyLjE4NHYxMS41MDJjMCAyLjQzMy45MTIgNC40NTIgMi42MjcgNS44NjIgMS41NzYgMS4zIDYuNTgxIDMuNDg0IDcuMTYxIDMuNzYuNTgxLS4yNDkgNS41ODUtMi40MzMgNy4xNjEtMy43MzMgMS43MTQtMS40MSAyLjYyNy0zLjQyOSAyLjYyNy01Ljg2MlYyLjUxNnptLTIuNDMzIDIwLjI5NWMwIC40Ny0uMzg3LjgyOS0uODI5LjgyOWEuODMxLjgzMSAwIDAgMS0uODI5LS44MjljMC0uNDcuMzg3LS44MjkuODI5LS44MjkuNDQxIDAgLjgwMS4zNTkuODI5LjgyOXptLS4xNjYgMGEuNjc5LjY3OSAwIDAgMC0uNjY0LS42OTFjLS4zNTkgMC0uNjY0LjMzMi0uNjY0LjY5MSAwIC4zNTkuMzA0LjY2NC42NjQuNjY0YS42NzMuNjczIDAgMCAwIC42NjQtLjY2NHptLS41NTMuMDU1Yy4wMjguMDU1LjMwNC40NDIuMzA0LjQ0MmgtLjIyMXMtLjI3Ni0uMzg3LS4yNzYtLjQxNWgtLjAyOHYuNDE1aC0uMTk0di0uOTk1bC4zMDQtLjAyOGMuMjQ5IDAgLjMzMi4xNjYuMzMyLjMwNHMtLjA4My4yNS0uMjIxLjI3N3ptLjAyNy0uMjc2YzAtLjA1NSAwLS4xMzgtLjE2Ni0uMTM4aC0uMDgzdi4zMDRoLjAyOGMuMTk0IDAgLjIyMS0uMDgzLjIyMS0uMTY2eiIvPjwvZz4KPC9zdmc+Cg=="
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_no_description"
@@ -2044,7 +2049,8 @@
   "parcelapp.0.deliveries.inv_status_0": {
     "type": "device",
     "common": {
-      "name": "Delivered parcel"
+      "name": "Delivered parcel",
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPgogIDxnIHRyYW5zZm9ybT0ic2tld1goLTE0KSB0cmFuc2xhdGUoNCAwKSI+PHBhdGggdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNCAyMCkiIGQ9Ik0wIDB2MjRoNmExMiAxMiAwIDAgMCAwLTI0eiIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDI1IDIwKSIgZD0iTTAgMHYyNE0xNCAwdjI0TTAgMTJoMTQiLz48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSg0NiAyMCkiIGQ9Ik0wIDB2MjRoMTQiLz48L2c+Cjwvc3ZnPgo="
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_0"
@@ -2446,7 +2452,8 @@
   "parcelapp.0.deliveries.inv_status_1": {
     "type": "device",
     "common": {
-      "name": "Frozen parcel"
+      "name": "Frozen parcel",
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSJjdXJyZW50Q29sb3IiPgogIDxnIHRyYW5zZm9ybT0ic2NhbGUoMi42NjY2NjY2NykiPjxwYXRoIGQ9Ik0xNi4wMSAxMC43MWEuMzY0LjM2NCAwIDAxLS4zNDMtLjAwNmwtLjU1OC0uMzMxYS40My40MyAwIDAxLS4xODItLjMxMmwtLjAxNC0uNjVhLjM2My4zNjMgMCAwMS4xNjUtLjNsNi43LTMuOTAyTDEyLjM3Ny4wODVBLjc5OS43OTkgMCAwMDEyIDBhLjc5OC43OTggMCAwMC0uMzc3LjA4NWwtOS40IDUuMTI0IDEwLjUzIDYuMTNjLjA5OC4wNTQuMTcyLjE4MS4xNzIuMjk1djguOTQ0YzAgLjExMi0uMDguMjQxLS4xNzguMjk0bC0uNTY3LjMxNWMtLjE3MS4wNjItLjI1Ni4wNDMtLjM2MSAwbC0uNTY5LS4zMTVhLjM2Mi4zNjIgMCAwMS0uMTc1LS4yOTR2LTcuOTczYS4yMjMuMjIzIDAgMDAtLjA5NS0uMTU2TDEuNzAyIDcuMDQ4djEwLjU3OWMwIC4yMzYuMTY3LjUyOC4zNzEuNjQ4bDkuNTU2IDUuNjM2Yy4xMDIuMDYuMjM3LjA5LjM3MS4wODlhLjc0NS43NDUgMCAwMC4zNzEtLjA5bDkuNTU3LTUuNjM1YS44MzUuODM1IDAgMDAuMzctLjY0OFY3LjA0N1oiLz48L2c+Cjwvc3ZnPgo="
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_1"
@@ -2848,7 +2855,8 @@
   "parcelapp.0.deliveries.inv_status_2": {
     "type": "device",
     "common": {
-      "name": "In transit, same-day window"
+      "name": "In transit, same-day window",
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSJjdXJyZW50Q29sb3IiPgogIDxnIHRyYW5zZm9ybT0ic2NhbGUoMi42NjY2NjY2NykiPjxwYXRoIGQ9Ik0xMS42NjggMTQuNTQ0bC0uMDI4LTUuMjI2Yy4xMzgtLjA1NS4zODctLjExMS42MDgtLjExMS45OTUgMCAxLjQxLjc3NCAxLjQxIDIuNjgyIDAgMS44NTMtLjQ3IDIuNzY1LTEuNDM4IDIuNzY1LS4yMiAwLS40NDEtLjA1NS0uNTUyLS4xMXpNMy4xMjQgNy40MzhjNC4yMDMtMy44NDMgOS4yOS00Ljg2NiAxNC4wMTgtNC44NjYgMS4zIDAgMi41NDQuMDgzIDMuNzYuMTk0aC0uMDI4djExLjI1M2MwIDIuMTg0LS43NzQgMy45MjYtMi4yOTUgNS4xNzEtMS4zNTUgMS4xMzQtNS40NDcgMi45NTktNi41ODEgMy40NTYtMS4xNjEtLjUyNS01LjI1My0yLjM3OC02LjU4MS0zLjQ1Ni0xLjQ5My0xLjI0NC0yLjI5NS0zLjAxNC0yLjI5NS01LjE3MVY3LjQzOHptMTIuNjY0IDIuNTk5Yy4wMjguOTEyLjI3NiAxLjU3NiAxLjY4NyAyLjQwNi43NDcuNDQyIDEuMDUxLjc0NyAxLjA1MSAxLjI3MiAwIC41ODEtLjM4Ny45NC0xLjAyMy45NC0uNTUzIDAtMS4xODktLjMwNC0xLjYzMS0uNjkxdjEuNTc2Yy41NTMuMzA0IDEuMjE3LjUyNSAxLjg4LjUyNSAxLjY4NyAwIDIuNDMzLTEuMTg5IDIuNDYxLTIuMjY3LjAyOC0uOTk1LS4yNDktMS43NDItMS42NTktMi41NzEtLjYwOC0uMzg3LTEuMTM0LS42MzYtMS4xMDYtMS4yNDQgMC0uNTgxLjUyNS0uODAyLjk5NS0uODAyLjU4MSAwIDEuMTYxLjMzMiAxLjUyMS42OTFWOC4zNzhjLS4zMDQtLjIyMS0uOTQtLjU4MS0xLjg4LS41NTMtMS4xMzUuMDI4LTIuMjk2LjgyOS0yLjI5NiAyLjIxMnptLTUuODM0IDkuNDg0aDEuNzE0bC0uMDI4LTMuNTk0Yy4xNjYuMDI4LjQxNS4wODMuNzc0LjA4MyAxLjkwOCAwIDIuOTg2LTEuNjg3IDIuOTg2LTQuMTc1IDAtMi40NjEtMS4xMDYtNC4wMDktMy4xNTItNC4wMDktLjk0IDAtMS42ODcuMjIxLTIuMjk1LjYwOHYxMS4wODd6bS01Ljk0NS02LjE2NmMwIDEuNzk3LjgyOSAyLjcxIDIuNTE2IDIuNzEgMS4wNTEgMCAxLjkwOC0uMjQ5IDIuNTcxLS42OTFWNy45OTFINy40MXY2LjM4N2MtLjE5NC4xMzgtLjQ3LjIyMS0uODAyLjIyMS0uNzc0IDAtLjg4NS0uNzE5LS44ODUtMS4xODlWNy45OTFINC4wMDl2NS4zNjR6TTIyLjEyIDIuMjk1djExLjcyM2MwIDIuNTE2LS45NCA0LjY0NS0yLjc2NSA2LjExMS0xLjU0OSAxLjMtNi4zMzIgMy40MjktNy4zNTUgMy44NzEtMS4wMjMtLjQ0Mi01LjgwNi0yLjU3MS03LjM1NS0zLjg0My0xLjc5Ny0xLjQ2NS0yLjc2NS0zLjU5NC0yLjc2NS02LjExMVYyLjI5NUM0Ljc1Ni43NDcgOC4wNzQgMCAxMiAwczcuMjQ0Ljc0NyAxMC4xMiAyLjI5NXptLS4zMDQuMjIxYy0yLjcxLTEuNDY1LTYtMi4xODQtOS43ODgtMi4xODRzLTcuMDc5Ljc0Ni05Ljc4OCAyLjE4NHYxMS41MDJjMCAyLjQzMy45MTIgNC40NTIgMi42MjcgNS44NjIgMS41NzYgMS4zIDYuNTgxIDMuNDg0IDcuMTYxIDMuNzYuNTgxLS4yNDkgNS41ODUtMi40MzMgNy4xNjEtMy43MzMgMS43MTQtMS40MSAyLjYyNy0zLjQyOSAyLjYyNy01Ljg2MlYyLjUxNnptLTIuNDMzIDIwLjI5NWMwIC40Ny0uMzg3LjgyOS0uODI5LjgyOWEuODMxLjgzMSAwIDAgMS0uODI5LS44MjljMC0uNDcuMzg3LS44MjkuODI5LS44MjkuNDQxIDAgLjgwMS4zNTkuODI5LjgyOXptLS4xNjYgMGEuNjc5LjY3OSAwIDAgMC0uNjY0LS42OTFjLS4zNTkgMC0uNjY0LjMzMi0uNjY0LjY5MSAwIC4zNTkuMzA0LjY2NC42NjQuNjY0YS42NzMuNjczIDAgMCAwIC42NjQtLjY2NHptLS41NTMuMDU1Yy4wMjguMDU1LjMwNC40NDIuMzA0LjQ0MmgtLjIyMXMtLjI3Ni0uMzg3LS4yNzYtLjQxNWgtLjAyOHYuNDE1aC0uMTk0di0uOTk1bC4zMDQtLjAyOGMuMjQ5IDAgLjMzMi4xNjYuMzMyLjMwNHMtLjA4My4yNS0uMjIxLjI3N3ptLjAyNy0uMjc2YzAtLjA1NSAwLS4xMzgtLjE2Ni0uMTM4aC0uMDgzdi4zMDRoLjAyOGMuMTk0IDAgLjIyMS0uMDgzLjIyMS0uMTY2eiIvPjwvZz4KPC9zdmc+Cg=="
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_2"
@@ -3250,7 +3258,8 @@
   "parcelapp.0.deliveries.inv_status_3": {
     "type": "device",
     "common": {
-      "name": "Awaiting pickup"
+      "name": "Awaiting pickup",
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSJjdXJyZW50Q29sb3IiPgogIDxnIHRyYW5zZm9ybT0ic2NhbGUoMi42NjY2NjY2NykiPjxwYXRoIGQ9Im0yMS44MTggNC41MTYtMS4wNSA0LjE0OGgyLjE3NUwyNCA0LjUxNk0xOS40MSAxNC4wNGgyLjE3bDEuMDQtNC4wOGgtMi4xNzhtLTIuNDEgOS41MjNoMi4xNTRsMS4wNTYtNC4xNDdoLTIuMTZtLjE5My01LjM3N0g1LjU1di45MmwzLjM0MSAzLjE2MWg5LjM0OW0yLjQxLTkuNTI1SDB2MS4xMTZsMy4yMDYgMy4wMzJIMTkuNm0tOC4zNzIgNy41OCAzLjQzIDMuMjRoMi4yMDVsMS4wNS00LjE0N2gtNi42ODUiLz48L2c+Cjwvc3ZnPgo="
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_3"
@@ -3652,7 +3661,8 @@
   "parcelapp.0.deliveries.inv_status_4": {
     "type": "device",
     "common": {
-      "name": "Out for delivery, epoch window"
+      "name": "Out for delivery, epoch window",
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPgogIDxwYXRoIGQ9Ik02IDE2aDM0djI4SDZ6TTQwIDI0aDEwbDggMTB2MTBINDB6Ii8+PGNpcmNsZSBjeD0iMTgiIGN5PSI0OCIgcj0iNSIvPjxjaXJjbGUgY3g9IjQ4IiBjeT0iNDgiIHI9IjUiLz4KPC9zdmc+Cg=="
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_4"
@@ -4054,7 +4064,8 @@
   "parcelapp.0.deliveries.inv_status_5": {
     "type": "device",
     "common": {
-      "name": "Not found"
+      "name": "Not found",
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPgogIDxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQgMjApIiBkPSJNMTQgNWE5IDEyIDAgMSAwIDAgMTR2LTdoLTciLz48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSgyNSAyMCkiIGQ9Ik0wIDB2MjRoMTQiLz48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSg0NiAyMCkiIGQ9Ik0xNCA0YTcgNSAwIDAgMC03LTNjLTQgMC03IDItNyA1czMgNSA3IDYgNyAzIDcgNi0zIDUtNyA1LTctMi04LTQiLz4KPC9zdmc+Cg=="
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_5"
@@ -4456,7 +4467,8 @@
   "parcelapp.0.deliveries.inv_status_6": {
     "type": "device",
     "common": {
-      "name": "Delivery attempt failed"
+      "name": "Delivery attempt failed",
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPgogIDxwYXRoIGQ9Ik02IDE2aDM0djI4SDZ6TTQwIDI0aDEwbDggMTB2MTBINDB6Ii8+PGNpcmNsZSBjeD0iMTgiIGN5PSI0OCIgcj0iNSIvPjxjaXJjbGUgY3g9IjQ4IiBjeT0iNDgiIHI9IjUiLz4KPC9zdmc+Cg=="
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_6"
@@ -4858,7 +4870,8 @@
   "parcelapp.0.deliveries.inv_status_7": {
     "type": "device",
     "common": {
-      "name": "Exception"
+      "name": "Exception",
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSJjdXJyZW50Q29sb3IiPgogIDxnIHRyYW5zZm9ybT0ic2NhbGUoMi42NjY2NjY2NykiPjxwYXRoIGQ9Ik0zLjE0NSA0LjU3N0wwIDE5LjQyM2gyMC44NTVMMjQgNC41NzdIMy4xNDV6bS0uMTU3IDMuODA2aDkuNDM2Yy4xNTcgMCA1LjA2NCAwIDUuMTU5Ljk3NUg5LjA5bDEuMzIxIDQuMDI2YzEuNTEtLjcyMyA1LjIyMi0yLjIzMyA3LjQ1NS0yLjMyOC45NDQtLjAzMSAxLjMyMS4xMjYgMS4xMzIuMjUyLS4xMjYuMDYzLTEuMDM4LjE4OS0xLjc2MS4zNzctMS4yNTguMzE1LTEuMzIxLjMxNS0yLjY0Mi43NTUtMS40NzguNTAzLTIuNzA1IDEuMDY5LTQuNTMgMS45MTlMLjcyMyAxOC45ODNsMi4yNjUtMTAuNnptMTYuNDgzIDEuNjk4Yy0uNTM1LS4wOTQtMi43NjguMDYzLTMuMzM0LjA2My0uMTI2IDAtLjQ3Mi4wMzEtLjQ3Mi0uMDYzIDAtLjA2My4xMjYtLjA2My4zNzctLjA5NHMxLjAwNi0uMTU3IDEuMjU4LS4yODNjLjA2My0uMDYzLjIyLS4xNTcuMzE1LS4yNTIuMDMxLS4wNjMuMDYzLS4wOTQuMTU3LS4wOTRoMS4xNjRjLjc1NSAwIDEuMTk1LjA5NCAxLjEzMi43MjMtLjAzMS4zMTUtLjQ3MiAxLjEzMi0uNjI5IDEuMzg0LS4wNjMuMDk0LS4xODkuMTg5LS4xNTcgMCAuMTI2LS41MDMuNTk3LTEuMzIxLjE4OS0xLjM4NHptLjg4IDguOTAySDIuMDc2czE3LjM2My02Ljc5NCAxNy41NTItNi45MmMwIDAgMS41NDEtMi4wNzYuNjI5LTIuOTI1LS4yODMtLjI4My0uNjkyLS4yODMtMi4yNjUtLjI4MyAwIDAtLjA2My0uNTk4LTIuNDg1LTEuMTY0LS4yODMtLjA2My0xMS44NTgtMi41MTctMTEuODU4LTIuNTE3aDE5LjYyOGwtMi45MjYgMTMuODA5em0yLjkyNS0uNjk1YzAtLjE5NS0uMTE0LS4yOTMtLjM1OC0uMjkzaC0uNDA2djEuMDA4aC4xNDZ2LS40MzloLjE3OWwuMjc2LjQ1NWguMTc5TDIzIDE4LjU2NGMuMTYyLS4wMTYuMjc2LS4wOTcuMjc2LS4yNzZ6bS0uNDU1LjE0NmgtLjE2M3YtLjM0MWguMjExYy4xMTQgMCAuMjI4LjAxNi4yMjguMTYzIDAgLjE2Mi0uMTMuMTc4LS4yNzYuMTc4em0uMDE2LS44MjlhLjg2OC44NjggMCAwIDAtLjg5NC44NzhjMCAuNTA0LjQwNi44OTQuODk0Ljg5NHMuODk0LS4zOS44OTQtLjg5NGEuODc4Ljg3OCAwIDAgMC0uODk0LS44Nzh6bTAgMS42NDJjLS40MjMgMC0uNzMxLS4zMjUtLjczMS0uNzY0IDAtLjQyMy4zMjUtLjc0OC43MzEtLjc0OC40MDYgMCAuNzMxLjMyNS43MzEuNzQ4IDAgLjQzOS0uMzI1Ljc2NC0uNzMxLjc2NHoiLz48L2c+Cjwvc3ZnPgo="
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_7"
@@ -5260,7 +5273,8 @@
   "parcelapp.0.deliveries.inv_status_8": {
     "type": "device",
     "common": {
-      "name": "Info received, month-name date"
+      "name": "Info received, month-name date",
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPgogIDxwYXRoIGQ9Ik04IDM0YzEwIDEyIDM4IDEyIDQ4LTIiLz48cGF0aCBkPSJNNDcgMjRsOSA4LTExIDMiLz4KPC9zdmc+Cg=="
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_status_8"
@@ -5662,7 +5676,8 @@
   "parcelapp.0.deliveries.inv_unknown_carrier": {
     "type": "device",
     "common": {
-      "name": "Carrier code not in the list"
+      "name": "Carrier code not in the list",
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPgogIDxwYXRoIGQ9Ik02IDE2aDM0djI4SDZ6TTQwIDI0aDEwbDggMTB2MTBINDB6Ii8+PGNpcmNsZSBjeD0iMTgiIGN5PSI0OCIgcj0iNSIvPjxjaXJjbGUgY3g9IjQ4IiBjeT0iNDgiIHI9IjUiLz4KPC9zdmc+Cg=="
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_unknown_carrier"

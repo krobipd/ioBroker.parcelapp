@@ -111,6 +111,12 @@ bei der nächsten Abfrage umbenannt. Der Name gehört dem Adapter — eine Umben
 ioBroker-Admin hält also nicht; für eine eigene Bezeichnung nimm einen Alias oder einen Datenpunkt
 in `0_userdata`.
 
+Jede Sendung trägt im Objektbaum außerdem das **Zeichen ihres Zustellers**, damit du siehst, wer
+liefert, bevor du den Namen liest: DHL, Deutsche Post, Hermes/Evri, DPD, GLS, UPS, Amazon, USPS,
+TNT, Apple, Vinted und DoorDash haben ihr eigenes Zeichen, nationale Postgesellschaften einen
+Briefumschlag, alle übrigen Zusteller einen Lieferwagen. Die Zeichen sind einfarbig gezeichnet und
+folgen deinem Admin-Thema.
+
 | Datenpunkt         | Typ    | Bedeutung                                                                                                                                                                                                                                                                                                                                                     |
 | ------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `carrier`          | string | Anzeigename des Zustellers (z. B. `DHL Express`). Ersatzweise das Zustellerkürzel in Großbuchstaben, wenn parcel.app keinen Namen kennt.                                                                                                                                                                                                                      |
