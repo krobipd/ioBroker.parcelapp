@@ -256,6 +256,27 @@ tests.integration(ADAPTER_DIR, {
           assert.ok(objects[id], `fixture coverage gap: ${id} was never created`);
         }
       });
+
+      // PACKAGE_STATES is a hand-kept copy of what the StateManager creates. Without this
+      // assertion a new datapoint would simply be missing from the inventory — and from every
+      // gate that judges it — while the suite stayed green (audit 2026-09-15, T4). Comparing in
+      // BOTH directions also catches a datapoint that was removed from the code but not here.
+      it("PACKAGE_STATES lists exactly the datapoints a package really creates", async function () {
+        this.timeout(30000);
+        const objects = await dumpObjects(harness);
+        const pkgId = packageId(DELIVERIES[0]);
+        const prefix = `${NS}deliveries.${pkgId}.`;
+        const actual = Object.keys(objects)
+          .filter(id => id.startsWith(prefix))
+          .map(id => id.slice(prefix.length))
+          .filter(rest => !rest.includes("."))
+          .sort();
+        assert.deepStrictEqual(
+          actual,
+          [...PACKAGE_STATES].sort(),
+          "PACKAGE_STATES and the datapoints of a real package have drifted apart",
+        );
+      });
     });
 
     const previousFile = process.env.INVENTORY_PREVIOUS;
