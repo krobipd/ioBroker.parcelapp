@@ -1297,6 +1297,25 @@ describe("ParcelappAdapter onMessage", () => {
     expect(client.getDeliveries).not.toHaveBeenCalled();
   });
 
+  it("addDelivery: a rejected POST answers the script with parcel.app's own reason (v0.13.0)", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    const rejected = Object.assign(new Error("HTTP 400: Unknown carrier code: dhll"), { code: "HTTP_ERROR" });
+    client.addDelivery.mockRejectedValueOnce(rejected);
+    await i.onMessage({
+      command: "addDelivery",
+      from: "system.adapter.admin.0",
+      callback: { id: 1 },
+      message: { tracking_number: "NEW9", carrier_code: "dhll", description: "Parcel" },
+    });
+    expect(i.sendTo).toHaveBeenCalledWith(
+      "system.adapter.admin.0",
+      "addDelivery",
+      { success: false, error_message: "HTTP 400: Unknown carrier code: dhll" },
+      expect.anything(),
+    );
+  });
+
   it("addDelivery: missing description yields the validation error", async () => {
     const { adapter, client } = await setupReady();
     const i = internalOf(adapter);

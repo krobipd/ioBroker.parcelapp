@@ -94,7 +94,9 @@ is stable — scripts written against it keep working.
 
 `success: false` can mean several things, and `error_message` says which: an unknown
 `carrier_code`, a tracking number the carrier does not recognise, the daily POST limit, or a
-validation error from the adapter itself before the request was even sent.
+validation error from the adapter itself before the request was even sent. When parcel.app rejects
+the request, `error_message` carries parcel.app's own reason behind the HTTP status — for example
+`HTTP 400: Unknown carrier code` — not just the status line.
 
 ### Rules the adapter enforces before sending
 

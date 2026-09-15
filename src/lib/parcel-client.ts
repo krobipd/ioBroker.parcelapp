@@ -28,6 +28,15 @@ export const RETRY_AFTER_DEFAULT_SEC = 5 * 60;
 const BODY_SNIPPET_LEN = 200;
 
 /**
+ * v0.13.0: the one explanation for HTTP 403 — parcel.app answers Forbidden when
+ * the account has no active Premium subscription or the key was revoked.
+ * Shared by the poll error path (main.ts) and the admin connection test, so
+ * both tell the user the same thing.
+ */
+export const FORBIDDEN_HINT =
+  "parcel.app returned 403 Forbidden — your account may not have an active Premium subscription, or the API key was revoked. Check your account on parcelapp.net.";
+
+/**
  * v0.4.3: optional logger injected by the adapter so the HTTPS client can
  * trace its own request/response lifecycle. When omitted (e.g. in tests),
  * every `this.log?.debug(...)` call is a no-op — keeps the bare-`apiKey`
@@ -374,6 +383,11 @@ export class ParcelClient {
       if (error.code === "INVALID_API_KEY") {
         return { success: false, message: "Invalid API key" };
       }
+      if (error.code === "FORBIDDEN") {
+        // v0.13.0: the poll path has explained 403 since v0.4.2; the admin's
+        // Test Connection button only said "HTTP 403: Forbidden".
+        return { success: false, message: FORBIDDEN_HINT };
+      }
       return { success: false, message: error.message };
     }
   }
@@ -496,10 +510,15 @@ export class ParcelClient {
           const raw = Buffer.concat(chunks).toString("utf-8");
 
           if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
+            // v0.13.0: parcel.app puts the reason into the body on 400/401/403 too
+            // (`{"success":false,"error_message":"…"}`, measured 2026-09-15). Until
+            // now only the HTTP reason phrase reached the user — a script author
+            // with a wrong carrier code saw "HTTP 400: Bad Request" and nothing else.
             const httpError = ParcelClient.mapHttpStatusError(
               res.statusCode,
               res.statusMessage,
               res.headers["retry-after"],
+              ParcelClient.errorMessageOf(raw),
             );
             // v0.4.3 (A3/A4): trace 4xx/5xx with code, retry-after and body-snippet.
             this.log?.debug(
@@ -593,6 +612,7 @@ export class ParcelClient {
     statusCode: number,
     statusMessage: string | undefined,
     retryAfterHeader: string | undefined,
+    detail?: string,
   ): ApiError {
     if (statusCode === 429) {
       // v0.4.2 (P6): clamp Retry-After. Bogus values (0, negative, NaN) fall
@@ -608,6 +628,37 @@ export class ParcelClient {
     // Adapter treats them differently — INVALID_API_KEY says "fix the key",
     // FORBIDDEN says "fix the account".
     const code: ApiErrorCode = statusCode === 401 ? "INVALID_API_KEY" : statusCode === 403 ? "FORBIDDEN" : "HTTP_ERROR";
-    return apiError(`HTTP ${statusCode}: ${statusMessage}`, code);
+    // The body's own reason beats the generic reason phrase; the codes above stay
+    // the adapter's classification either way.
+    return apiError(`HTTP ${statusCode}: ${detail ?? statusMessage}`, code);
+  }
+
+  /**
+   * The `error_message` of a parcel.app error body, flattened and capped like
+   * every other external text that ends up in a log line — or `undefined` when
+   * the body is not that JSON object (proxies answer with HTML, an empty body,
+   * or nothing).
+   *
+   * @param raw The response body as received.
+   */
+  private static errorMessageOf(raw: string): string | undefined {
+    if (raw.length === 0 || raw.length > MAX_BODY_BYTES) {
+      return undefined;
+    }
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return undefined;
+    }
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return undefined;
+    }
+    const message = (parsed as { error_message?: unknown }).error_message;
+    if (typeof message !== "string") {
+      return undefined;
+    }
+    const flat = oneLine(message).slice(0, BODY_SNIPPET_LEN);
+    return flat.length > 0 ? flat : undefined;
   }
 }

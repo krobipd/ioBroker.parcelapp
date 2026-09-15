@@ -3,7 +3,7 @@ import { I18n } from "@iobroker/adapter-core";
 import { join } from "node:path";
 import { coerceClampedInt, errText, isTrueish, oneLine } from "./lib/coerce";
 import { tName } from "./lib/i18n";
-import { ParcelClient, RETRY_AFTER_DEFAULT_SEC, RETRY_AFTER_MAX_SEC } from "./lib/parcel-client";
+import { FORBIDDEN_HINT, ParcelClient, RETRY_AFTER_DEFAULT_SEC, RETRY_AFTER_MAX_SEC } from "./lib/parcel-client";
 import { StateManager } from "./lib/state-manager";
 import { DELIVERED_STATUS_CODE } from "./lib/types";
 import type { AddDeliveryRequest, ParcelDelivery } from "./lib/types";
@@ -852,8 +852,7 @@ export class ParcelappAdapter extends utils.Adapter {
         // expired). Reauth wouldn't help — surface a clear hint.
         // v0.10.0 (M3): once at error level, repeats at debug — not 144
         // identical error lines per day for one unchanged account problem.
-        const line =
-          "parcel.app returned 403 Forbidden — your account may not have an active Premium subscription, or the API key was revoked. Check your account on parcelapp.net.";
+        const line = FORBIDDEN_HINT;
         if (isRepeat) {
           this.log.debug(line);
         } else {

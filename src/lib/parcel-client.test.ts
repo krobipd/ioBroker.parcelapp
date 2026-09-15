@@ -1,6 +1,6 @@
 import * as http from "node:http";
 import type { AddressInfo } from "node:net";
-import { ParcelClient } from "./parcel-client";
+import { FORBIDDEN_HINT, ParcelClient } from "./parcel-client";
 
 /**
  * Node's global agent keeps sockets alive (measured: ONE TCP connection serves
@@ -311,6 +311,73 @@ describe("ParcelClient", () => {
         const error = err as Error & { code: string };
         expect(error.code).toBe("HTTP_ERROR");
         expect(error.message).toContain("500");
+      } finally {
+        await stopServer(server);
+      }
+    });
+
+    it("carries parcel.app's own error_message from a 400 body into the error (v0.13.0)", async () => {
+      // parcel.app answers non-2xx with the same `{success:false, error_message}` body
+      // as a 200 failure (measured 2026-09-15 on a 401). Only the reason phrase
+      // reached the caller before — "HTTP 400: Bad Request" for a wrong carrier code.
+      const { server, port } = await startMockServer((_req, res) => {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ success: false, error_message: "Unknown carrier code: dhll" }));
+      });
+
+      try {
+        const client = createTestClient("key", port);
+        await client.addDelivery({ tracking_number: "1", carrier_code: "dhll", description: "x" });
+        throw new Error("Should have thrown");
+      } catch (err) {
+        const error = err as Error & { code: string };
+        expect(error.code).toBe("HTTP_ERROR");
+        expect(error.message).toBe("HTTP 400: Unknown carrier code: dhll");
+      } finally {
+        await stopServer(server);
+      }
+    });
+
+    it("keeps the INVALID_API_KEY classification on a 401 body and adds its text", async () => {
+      const { server, port } = await startMockServer((_req, res) => {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ success: false, error_message: "Missing or invalid API key\nline two" }));
+      });
+
+      try {
+        const client = createTestClient("key", port);
+        await client.getDeliveries("active");
+        throw new Error("Should have thrown");
+      } catch (err) {
+        const error = err as Error & { code: string };
+        expect(error.code).toBe("INVALID_API_KEY");
+        // Flattened like every other external text that reaches a log line.
+        expect(error.message).toBe("HTTP 401: Missing or invalid API key line two");
+      } finally {
+        await stopServer(server);
+      }
+    });
+
+    it("falls back to the reason phrase when the non-2xx body is not that JSON object", async () => {
+      const bodies = ["<html>Bad Gateway</html>", "", JSON.stringify(["nope"]), JSON.stringify({ error_message: "" })];
+      let n = 0;
+      const { server, port } = await startMockServer((_req, res) => {
+        res.writeHead(502, { "Content-Type": "text/html" });
+        res.end(bodies[n++ % bodies.length]);
+      });
+
+      try {
+        const client = createTestClient("key", port);
+        for (const body of bodies) {
+          try {
+            await client.getDeliveries("active");
+            throw new Error("Should have thrown");
+          } catch (err) {
+            const error = err as Error & { code: string };
+            expect(error.code, body).toBe("HTTP_ERROR");
+            expect(error.message, body).toBe("HTTP 502: Bad Gateway");
+          }
+        }
       } finally {
         await stopServer(server);
       }
@@ -900,6 +967,23 @@ describe("ParcelClient", () => {
         const result = await client.testConnection();
         expect(result.success).toBe(false);
         expect(result.message).toBe("Invalid API key");
+      } finally {
+        await stopServer(server);
+      }
+    });
+
+    it("explains a 403 the same way the poll path does — Premium subscription or revoked key (v0.13.0)", async () => {
+      const { server, port } = await startMockServer((_req, res) => {
+        res.writeHead(403, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ success: false, error_message: "Forbidden" }));
+      });
+
+      try {
+        const client = createTestClient("key", port);
+        const result = await client.testConnection();
+        expect(result.success).toBe(false);
+        expect(result.message).toBe(FORBIDDEN_HINT);
+        expect(result.message).toContain("Premium");
       } finally {
         await stopServer(server);
       }
