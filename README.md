@@ -148,7 +148,7 @@ sendTo("parcelapp.0", "addDelivery", {
     ### **WORK IN PROGRESS**
 -->
 
-### 0.13.0 (2026-09-15)
+### 0.13.0 (2026-09-15) — stable
 
 - Fixed: Every package showed the carrier's short code instead of its name — parcel.app changed the format of its carrier list, and the adapter could no longer read it.
 - New: Each package now carries the pictogram of its carrier in the object tree, drawn to read in the light and the dark theme.
