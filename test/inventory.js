@@ -3,8 +3,8 @@
 // an update reaches every object of an existing installation.
 //
 // Suite 1 "object inventory": start the adapter in the throwaway js-controller,
-//   drive it with fixtures covering EVERY status code and window shape the adapter
-//   supports (feedFixtures), then dump every parcelapp.0.* object to
+//   drive it with fixtures covering every status code, the unknown status, and the date forms
+//   listed under "Fixture provenance" (feedFixtures), then dump every parcelapp.0.* object to
 //   test/objects.inventory.json in the ioBroker object-structure bot's format.
 // Suite 2 "upgrade from the previous release" (only when INVENTORY_PREVIOUS is
 //   set — pre-release.py exports the last tag's inventory): seed the previous
@@ -28,6 +28,20 @@ const INVENTORY = path.join(__dirname, "objects.inventory.json");
 const VOLATILE = ["ts", "from", "user", "acl"];
 const COMPARED = ["name", "desc", "role", "type", "unit"];
 
+// Fixture provenance (audit 2026-09-25, T6). `deliveries.json` is written by hand, but every BASIC
+// shape in it is one seen in a public recording of a real `GET /deliveries/` answer:
+//   - `date_expected` as `YYYY-MM-DD HH:MM:SS`, a day range at midnight (`… 00:00:00` → `… 00:00:00`,
+//     Amazon DE) and an hour window on one day (Amazon US): datadrowner/parcel-app-cli DEVELOPER.md
+//     (https://github.com/datadrowner), home-assistant parcel integration issues #51 and #55
+//     (https://github.com/ParcelTracking/parcel-ha/issues/55);
+//   - event dates in the weekday form without a year (English day-month and month-day, German with
+//     a dot after the day), the UPS dotted month-first form `MM.dd.yyyy HH:mm`: the same sources and
+//     the parcel.app developer's reply in raycast/extensions PR #22239;
+//   - `events[].additional`: documented at https://parcelapp.net/help/api-view-deliveries.html
+//     ("Additional information from the carrier"), read by the adapter nowhere.
+// SYNTHETIC drift cases, marked by their tracking number: INV-DRIFT-NUMSTR (status as a numeric
+// string), INV-DRIFT-UNKNOWN (unreadable status), INV-DRIFT-FORMAT (a dotted expected date nobody
+// reads), INV-UNKNOWN-CARRIER, INV-NO-DESCRIPTION, and the collision triple INV-SAME-NUMBER.
 const FIXTURE_DIR = path.join(__dirname, "fixtures", "inventory");
 const DELIVERIES = JSON.parse(fs.readFileSync(path.join(FIXTURE_DIR, "deliveries.json"), "utf8"));
 // supported_carriers.json is a RECORDED excerpt of https://api.parcel.app/external/supported_carriers.json
@@ -35,6 +49,7 @@ const DELIVERIES = JSON.parse(fs.readFileSync(path.join(FIXTURE_DIR, "deliveries
 // `{ name, extra_required?, name_variations? }`). Never hand-write this shape — the v0.9.0
 // hand-made `{ code: "Name" }` fixture kept the whole suite green while the real file had
 // changed and the adapter showed carrier CODES on every installation (audit 2026-09-15, B1).
+// `amzlus` was added on 2026-09-25 from the same recording.
 const CARRIERS = JSON.parse(fs.readFileSync(path.join(FIXTURE_DIR, "supported_carriers.json"), "utf8"));
 const HOOK = path.join(__dirname, "inventory-https-hook.cjs");
 
@@ -245,11 +260,53 @@ tests.integration(ADAPTER_DIR, {
         fs.writeFileSync(INVENTORY, `${JSON.stringify(objects, null, 2)}\n`);
       });
 
-      it("covers every status code and window shape the adapter supports", async function () {
+      it("covers every fixture delivery with its complete object set", async function () {
         this.timeout(30000);
         const objects = await dumpObjects(harness);
         for (const id of expectedObjectIds()) {
           assert.ok(objects[id], `fixture coverage gap: ${id} was never created`);
+        }
+      });
+
+      // The inventory holds OBJECTS; a wrong VALUE — every carrier showing its code, as in
+      // 0.9.0-0.12.1 — leaves it unchanged (audit 2026-09-25, T6). These values are checked here.
+      it("writes the carrier's NAME from the list, its code only where the list knows none", async function () {
+        this.timeout(30000);
+        const ids = packageIds();
+        for (const [index, delivery] of DELIVERIES.entries()) {
+          const state = await harness.states.getState(`${NS}deliveries.${ids[index]}.carrier`);
+          const known = CARRIERS[delivery.carrier_code];
+          const expected = known ? known.name : String(delivery.carrier_code).toUpperCase();
+          assert.strictEqual(state && state.val, expected, `carrier of ${delivery.tracking_number}`);
+        }
+      });
+
+      it("gives every package device an inline pictogram", async function () {
+        this.timeout(30000);
+        const objects = await dumpObjects(harness);
+        for (const pkgId of packageIds()) {
+          const icon = objects[`${NS}deliveries.${pkgId}`].common.icon;
+          assert.ok(
+            typeof icon === "string" && icon.startsWith("data:image/svg+xml;base64,"),
+            `device ${pkgId} has no inline icon`,
+          );
+        }
+      });
+
+      it("lists the plain-text meaning of every status code on statusCode", async function () {
+        this.timeout(30000);
+        const objects = await dumpObjects(harness);
+        for (const pkgId of packageIds()) {
+          const states = objects[`${NS}deliveries.${pkgId}.statusCode`].common.states;
+          assert.deepStrictEqual(
+            Object.keys(states).sort(),
+            ["-1", "0", "1", "2", "3", "4", "5", "6", "7", "8"],
+            `statusCode of ${pkgId}`,
+          );
+          assert.ok(
+            Object.values(states).every(v => typeof v === "string" && v.length > 0),
+            `statusCode of ${pkgId} carries a non-string label`,
+          );
         }
       });
 

@@ -29,7 +29,8 @@
       {
         "event": "Arrived at delivery depot",
         "date": "2026-06-14 22:10:00",
-        "location": "Cologne"
+        "location": "Cologne",
+        "additional": "Left at the depot counter"
       }
     ]
   },
@@ -49,7 +50,7 @@
     "events": [
       {
         "event": "Out for delivery",
-        "date": "2026-06-15 07:30:00",
+        "date": "2026-06-18 07:30:00",
         "location": "Bonn"
       }
     ]
