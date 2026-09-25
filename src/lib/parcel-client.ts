@@ -75,6 +75,8 @@ export interface ParcelClientTimeouts {
  * v0.14.0 (audit L10): the timers the client may use. The adapter passes its own
  * `this.setTimeout`/`this.clearTimeout` (fleet rule: never a native timer in adapter code — the
  * adapter's timers are cleared on unload and refused during shutdown); tests pass plain ones.
+ * Declared as function-typed properties, not method signatures: the repository checker (S5005)
+ * reads `setTimeout(` in a method signature as a bare native timer call.
  */
 export interface ParcelClientTimers {
   /** Arm a one-shot timer; the returned handle goes back into `clearTimeout`. */

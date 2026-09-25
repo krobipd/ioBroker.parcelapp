@@ -64,7 +64,8 @@ _Jede Entscheidung steht hier als Regel-Satz; Beleg, Messung und Verlauf stehen 
 17. **`common.desc` = Erklärung, sonst leer** — Entscheidung gehört D08 über `test/self-explaining.json`.
 18. **Der Gerätename gehört dem Adapter** — kein `preserve`; der Name ist die parcel.app-Beschreibung.
 19. **Carrier-Piktogramm über den CODE** — Inline-URI nach Flotten-Rezept, Eingang und Teil der Signatur von `writeDeviceObject`; FedEx/InPost-Monogramme abgenommen 2026-09-25.
-20. **Timer nur über den Adapter** — auch die Frist im Client läuft über die injizierte Timer-Naht (`this.setTimeout`).
+20. **Timer nur über den Adapter** — auch die Frist im Client läuft über die injizierte Timer-Naht (`this.setTimeout`); ihre Felder sind Funktions-Eigenschaften, weil der Repochecker (S5005) `setTimeout(` in einer Methodensignatur als nackten Timer wertet.
+21. **Startfehler endet mit `UNCAUGHT_EXCEPTION`** — nur dieser Exit-Code zählt im js-controller als Absturz (`crashCount`); ein anderer startet die Instanz jede Sekunde ohne Schleifenschutz neu.
 
 ## Status-Codes
 
