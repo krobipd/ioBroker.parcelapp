@@ -123,7 +123,7 @@ function expectedObjectIds() {
 }
 
 /**
- * Wait until a poll has actually COMPLETED — every package carries a `carrier` VALUE.
+ * Wait until a poll has actually COMPLETED — every package carries a `carrier` VALUE and the summary is written.
  *
  * `feedFixtures` waits for the object SET, which is the right criterion for suite 1 (only the
  * adapter creates those objects) and a hollow one for suite 2: the upgrade suite SEEDS exactly
@@ -142,6 +142,11 @@ function expectedObjectIds() {
  */
 async function waitForCompletedPoll(harness) {
   const wanted = expectedObjectIds().filter(id => id.endsWith(".carrier"));
+  // The summary is written LAST in a poll, after every package — waiting for the carriers alone let
+  // the suite judge the three summary objects before the poll had reached them (CI, 2026-09-25:
+  // "desc still …" on summary.* only). `deliveryWindow` may legitimately be "", so the summary
+  // counts as written once each state carries any value.
+  const summary = ["activeCount", "todayCount", "deliveryWindow"].map(state => `${NS}summary.${state}`);
   const deadline = Date.now() + 60000;
   for (;;) {
     const missing = [];
@@ -151,12 +156,18 @@ async function waitForCompletedPoll(harness) {
         missing.push(id);
       }
     }
+    for (const id of summary) {
+      const state = await harness.states.getState(id);
+      if (!state || state.val === undefined || state.val === null) {
+        missing.push(id);
+      }
+    }
     if (missing.length === 0) {
       return;
     }
     if (Date.now() > deadline) {
       throw new Error(
-        `no completed poll — ${missing.length} package(s) without a carrier value, e.g. ${missing.slice(0, 5).join(", ")}`,
+        `no completed poll — ${missing.length} state(s) without a value, e.g. ${missing.slice(0, 5).join(", ")}`,
       );
     }
     await new Promise(resolve => setTimeout(resolve, 250));
