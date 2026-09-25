@@ -3,7 +3,7 @@ import { I18n } from "@iobroker/adapter-core";
 import { join } from "node:path";
 import { coerceClampedInt, errText, isTrueish, oneLine } from "./lib/coerce";
 import { tName } from "./lib/i18n";
-import { FORBIDDEN_HINT, ParcelClient, RETRY_AFTER_DEFAULT_SEC, RETRY_AFTER_MAX_SEC } from "./lib/parcel-client";
+import { FORBIDDEN_HINT, ParcelClient, RETRY_AFTER_DEFAULT_SEC } from "./lib/parcel-client";
 import { StateManager } from "./lib/state-manager";
 import { DELIVERED_STATUS_CODE } from "./lib/types";
 import type { AddDeliveryRequest, ParcelDelivery } from "./lib/types";
@@ -87,7 +87,15 @@ export class ParcelappAdapter extends utils.Adapter {
    * @param apiKey parcel.app API key
    */
   private makeClient: (apiKey: string) => ClientLike = apiKey =>
-    new ParcelClient(apiKey, { debug: (m: string) => this.log.debug(m), warn: (m: string) => this.log.warn(m) });
+    new ParcelClient(
+      apiKey,
+      // v0.14.0 (audit L10): the request deadline is an adapter timer — arrow wrappers keep `this`.
+      {
+        setTimeout: (cb: () => void, ms: number) => this.setTimeout(cb, ms),
+        clearTimeout: (handle: unknown) => this.clearTimeout(handle as ioBroker.Timeout | undefined),
+      },
+      { debug: (m: string) => this.log.debug(m), warn: (m: string) => this.log.warn(m) },
+    );
   private makeStateManager: () => StateManagerLike = () => new StateManager(this);
   private pollTimer: ioBroker.Interval | undefined = undefined;
   private isPolling = false;
@@ -159,7 +167,7 @@ export class ParcelappAdapter extends utils.Adapter {
    *    (`true !== false`), which is why this only broke with the v0.10.3 correction.
    * 2. `native.filterMode` (dropped in v0.2.0) and `native.language` (dropped before v0.5.0).
    *    Dead config keys nothing reads — the adapter owns its own configuration inventory the
-   *    same way it owns its states (`cleanupObsoleteStates`).
+   *    same way it owns its states.
    *
    * Both are corrected in ONE write, because every instance-object change restarts the instance:
    * two writes would mean two restarts. And it is written only when something is actually stale,
@@ -260,19 +268,29 @@ export class ParcelappAdapter extends utils.Adapter {
       if (await this.correctInstanceObject()) {
         return;
       }
+      // v0.14.0 (audit B11): every await below can outlive a stop — check before each next step.
+      if (this.unloaded) {
+        return;
+      }
       // I18n.init resolves system.config.language itself (adapter-core reads
       // the foreign object internally; unknown languages fall back to English)
       // — the former separate getForeignObject round-trip and the local
       // resolveLanguage step are gone with the STATUS_LABELS table (L20).
       await I18n.init(join(this.adapterDir, "admin"), this);
+      if (this.unloaded) {
+        return;
+      }
       this.log.debug(`onReady: starting (autoRemoveDelivered=${this.config.autoRemoveDelivered})`);
 
       try {
         await this.refreshManifestObjects();
       } catch (err) {
-        // Same class as cleanupObsoleteStates (C8): a broker hiccup while refreshing object
-        // texts must not abort the start — the next start reapplies them. Degrade to a warning.
+        // A broker hiccup while refreshing object texts must not abort the start — the next
+        // start reapplies them. Degrade to a warning.
         this.log.warn(`Refreshing the manifest objects failed (continuing): ${errText(err)}`);
+      }
+      if (this.unloaded) {
+        return;
       }
 
       await this.setState("info.connection", { val: false, ack: true });
@@ -294,15 +312,6 @@ export class ParcelappAdapter extends utils.Adapter {
       this.client = this.makeClient(apiKey.trim());
       this.stateManager = this.makeStateManager();
 
-      try {
-        await this.cleanupObsoleteStates();
-      } catch (err) {
-        // C8: a cleanup failure must not abort startup. Without this guard the
-        // outer catch would skip arming the poll interval below, and the adapter
-        // would never poll until a manual restart. Degrade to a warning.
-        this.log.warn(`cleanupObsoleteStates failed (continuing): ${errText(err)}`);
-      }
-
       await this.poll();
 
       // v0.10.0 (L2): a stop during the awaits above must not arm a timer or
@@ -320,6 +329,11 @@ export class ParcelappAdapter extends utils.Adapter {
 
       this.log.info(`Parcel tracking started — polling every ${interval} minutes`);
     } catch (err: unknown) {
+      // After a stop the broker tears down under our feet — that failure is expected, not an error.
+      if (this.unloaded) {
+        this.log.debug(`onReady interrupted by the stop: ${errText(err)}`);
+        return;
+      }
       this.log.error(`onReady failed: ${errText(err)}`);
       // v0.10.0 (L4): a transient startup failure (i18n files, DB hiccup) used
       // to leave a green-looking zombie — no client, no timer, no retry until
@@ -396,12 +410,17 @@ export class ParcelappAdapter extends utils.Adapter {
       this.log.debug(
         `onMessage: command='${oneLine(String(obj?.command ?? ""))}' from='${obj?.from}' has-callback=${!!obj?.callback}`,
       );
-      if (!obj?.command || !obj.callback) {
+      if (!obj?.command) {
         return;
       }
 
       switch (obj.command) {
         case "checkConnection":
+          // The admin button always asks for an answer; without a reply channel there is no
+          // one to tell the result to, and a test GET would only spend the hourly budget.
+          if (!obj.callback) {
+            return;
+          }
           await this.handleCheckConnection(obj);
           break;
         case "addDelivery":
@@ -410,7 +429,9 @@ export class ParcelappAdapter extends utils.Adapter {
         default:
           // v0.4.3 (F6): trace unknown command before sendTo.
           this.log.debug(`onMessage: unknown command '${oneLine(String(obj.command))}'`);
-          this.sendTo(obj.from, obj.command, { error: "Unknown command" }, obj.callback);
+          if (obj.callback) {
+            this.sendTo(obj.from, obj.command, { error: "Unknown command" }, obj.callback);
+          }
       }
     } catch (err) {
       // v0.4.3 (F7): trace catch so the debug log shows what failed. The
@@ -443,6 +464,12 @@ export class ParcelappAdapter extends utils.Adapter {
    * @param obj The sendTo message (validated: command + callback present)
    */
   private async handleCheckConnection(obj: ioBroker.Message): Promise<void> {
+    // v0.14.0 (audit B11): after onUnload the test clients are no longer tracked — a client built
+    // now would escape cancelAll and send a real GET from an instance that is shutting down.
+    if (this.unloaded) {
+      this.sendTo(obj.from, obj.command, { error: "Adapter is stopping" }, obj.callback);
+      return;
+    }
     const msg = obj.message as { apiKey?: unknown } | null | undefined;
     // API-boundary guard: a script may put anything here — a number used to
     // surface as "trim is not a function" instead of the plain rejection.
@@ -504,7 +531,11 @@ export class ParcelappAdapter extends utils.Adapter {
    * @param message Human-readable failure reason
    */
   private replyAddError(obj: ioBroker.Message, message: string): void {
-    this.sendTo(obj.from, obj.command, { success: false, error_message: message }, obj.callback);
+    // v0.14.0 (audit B6): a script may call addDelivery without a callback — the delivery is
+    // still added, only the answer has nowhere to go.
+    if (obj.callback) {
+      this.sendTo(obj.from, obj.command, { success: false, error_message: message }, obj.callback);
+    }
   }
 
   /**
@@ -598,7 +629,9 @@ export class ParcelappAdapter extends utils.Adapter {
     // API flag; a drifted `success: "false"` string must not read as truthy.
     const added = isTrueish(addResult.success);
     this.log.debug(`addDelivery: '${oneLine(request.tracking_number)}' result=${added ? "ok" : "fail"}`);
-    this.sendTo(obj.from, obj.command, addResult, obj.callback);
+    if (obj.callback) {
+      this.sendTo(obj.from, obj.command, addResult, obj.callback);
+    }
     if (added) {
       // v0.10.0 (L5): plain poll, no force — a single add still polls right
       // away (the last poll is usually >60s back), but an add-burst can no
@@ -606,22 +639,6 @@ export class ParcelappAdapter extends utils.Adapter {
       // the server caches the list ~45-90 min, a fresh package rarely shows
       // tracking data immediately anyway.
       void this.poll().catch(err => this.log.error(`Poll after addDelivery failed: ${errText(err)}`));
-    }
-  }
-
-  private async cleanupObsoleteStates(): Promise<void> {
-    // One getObject per adapter start, forever — deliberately kept (I3/ARCH-24):
-    // a one-shot migration marker would cost more mechanics than this read.
-    // Drop the list entirely at the next major once 0.1.x installs are gone.
-    const obsoleteStates = [
-      "summary.json", // removed in 0.2.0
-    ];
-    for (const stateId of obsoleteStates) {
-      const obj = await this.getObjectAsync(stateId);
-      if (obj) {
-        await this.delObjectAsync(stateId);
-        this.log.debug(`Removed obsolete state: ${stateId}`);
-      }
     }
   }
 
@@ -740,6 +757,11 @@ export class ParcelappAdapter extends utils.Adapter {
   }
 
   private async poll(): Promise<void> {
+    // v0.14.0 (audit B11): a poll triggered after the stop (the one after an addDelivery, a late
+    // timer tick) must not touch the client or the broker any more.
+    if (this.unloaded) {
+      return;
+    }
     if (this.isPolling || !this.client || !this.stateManager) {
       // v0.10.0 (M4): make the re-entry/uninitialized skip visible like the
       // rate-limit/throttle skips below — this used to be the one silent spot
@@ -779,6 +801,11 @@ export class ParcelappAdapter extends utils.Adapter {
     try {
       // When keeping delivered packages, use "recent" to get them from API
       const deliveries = await client.getDeliveries(autoRemoveMode ? "active" : "recent");
+      // A stop that arrived while the GET was in flight: onUnload already wrote connection=false
+      // and called back — writing `true` now would leave a stopped instance claiming a connection.
+      if (this.unloaded) {
+        return;
+      }
 
       // Reset error state on success
       this.rateLimitedUntil = 0;
@@ -879,13 +906,12 @@ export class ParcelappAdapter extends utils.Adapter {
         this.log.debug(`Poll aborted: ${errText(error)}`);
         break;
       case "RATE_LIMITED": {
-        // v0.4.2 (M9): clamp Retry-After into [60s, 24h] (shared constants
-        // with the client parser, L7). A bogus 0/negative/fractional value
-        // must neither wipe the cooldown nor set it for milliseconds.
-        const rawCooldown = error.retryAfterSeconds ?? 0;
+        // v0.14.0 (audit L8): the client already clamped Retry-After into [60 s, 24 h] — the one
+        // place that rule lives. Only a missing or broken value falls back to the default here.
+        const rawCooldown = error.retryAfterSeconds;
         const cooldownSec =
-          Number.isFinite(rawCooldown) && rawCooldown > 0
-            ? Math.min(RETRY_AFTER_MAX_SEC, Math.max(60, Math.floor(rawCooldown)))
+          typeof rawCooldown === "number" && Number.isFinite(rawCooldown) && rawCooldown > 0
+            ? rawCooldown
             : RETRY_AFTER_DEFAULT_SEC;
         this.rateLimitedUntil = Date.now() + cooldownSec * 1000;
         // v0.10.0 (M3): warn once — a persistent 429 repeats at debug.

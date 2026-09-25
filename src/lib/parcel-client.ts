@@ -1,6 +1,6 @@
 import * as http from "node:http";
 import * as https from "node:https";
-import { errText, isTrueish, oneLine } from "./coerce";
+import { errText, isTrueish, LOG_SNIPPET_LEN, oneLine } from "./coerce";
 import type {
   ApiError,
   ApiErrorCode,
@@ -24,8 +24,12 @@ const REQUEST_DEADLINE_MS = 60_000;
 /** Shared Retry-After clamps (used by the client parser and the adapter cooldown). */
 export const RETRY_AFTER_MAX_SEC = 24 * 3600;
 export const RETRY_AFTER_DEFAULT_SEC = 5 * 60;
-/** Max chars of a response body quoted into a debug log line. */
-const BODY_SNIPPET_LEN = 200;
+/**
+ * v0.14.0 (audit L8): the floor of the cooldown. A server asking for a few seconds would otherwise
+ * let the next poll run into the same limit; the adapter used to apply this floor a second time in
+ * main.ts — the clamp now lives here, once.
+ */
+export const RETRY_AFTER_MIN_SEC = 60;
 
 /**
  * v0.13.0: the one explanation for HTTP 403 — parcel.app answers Forbidden when
@@ -67,6 +71,18 @@ export interface ParcelClientTimeouts {
   /** Hard per-request deadline (ms). */
   deadlineMs?: number;
 }
+/**
+ * v0.14.0 (audit L10): the timers the client may use. The adapter passes its own
+ * `this.setTimeout`/`this.clearTimeout` (fleet rule: never a native timer in adapter code — the
+ * adapter's timers are cleared on unload and refused during shutdown); tests pass plain ones.
+ */
+export interface ParcelClientTimers {
+  /** Arm a one-shot timer; the returned handle goes back into {@link clearTimeout}. */
+  setTimeout(callback: () => void, ms: number): unknown;
+  /** Cancel a timer armed by {@link setTimeout}; an `undefined` handle is a no-op. */
+  clearTimeout(handle: unknown): void;
+}
+
 /**
  * v0.4.2 (P9): hard cap on response body size. parcel.app deliveries lists
  * are tiny (~1 kB per package, max ~50 packages = 50 kB), so a 1 MiB cap is
@@ -122,20 +138,25 @@ export class ParcelClient {
   private readonly idleTimeoutMs: number;
   /** Hard per-request deadline in ms — see {@link ParcelClientTimeouts}. */
   private readonly deadlineMs: number;
+  /** Timer seam for the per-request deadline — see {@link ParcelClientTimers}. */
+  private readonly timers: ParcelClientTimers;
 
   /**
    * @param apiKey The parcel.app API key
+   * @param timers The adapter's timers (v0.14.0 — the deadline is an adapter timer, never a native one)
    * @param log Optional adapter logger for HTTPS-layer trace (v0.4.3)
    * @param baseUrl API base URL — defaults to the production endpoint; overridden in tests
    * @param timeouts Timeout overrides — production always uses the defaults
    */
   constructor(
     apiKey: string,
+    timers: ParcelClientTimers,
     log?: ParcelClientLogger,
     baseUrl: string = API_BASE,
     timeouts: ParcelClientTimeouts = {},
   ) {
     this.apiKey = apiKey;
+    this.timers = timers;
     this.log = log;
     this.baseUrl = baseUrl;
     this.idleTimeoutMs = timeouts.idleMs ?? REQUEST_TIMEOUT;
@@ -188,7 +209,7 @@ export class ParcelClient {
       // reaches any log sink — it bubbles into the poll error-log via the Error
       // message, and an unsanitized multi-line value would forge log lines.
       const rawMsg =
-        typeof response.error_message === "string" ? oneLine(response.error_message).slice(0, BODY_SNIPPET_LEN) : "";
+        typeof response.error_message === "string" ? oneLine(response.error_message).slice(0, LOG_SNIPPET_LEN) : "";
       // v0.4.3 (A11b): trace API-side error before throwing. An invalid key is
       // reported via HTTP 401 (handled in request()), not via a body field —
       // so a `success:false` body is always a generic API_ERROR.
@@ -431,12 +452,26 @@ export class ParcelClient {
         return;
       }
 
+      // v0.14.0 (audit X3): serialize ONCE, before anything is registered — a body that cannot be
+      // stringified (circular) fails here without stranding a controller in `inflight`, and the
+      // byte length goes out as Content-Length instead of a chunked POST.
+      let payload: string | undefined;
+      if (body !== undefined) {
+        try {
+          payload = JSON.stringify(body);
+        } catch (err) {
+          reject(apiError(`Request write failed: ${errText(err)}`, "API_ERROR"));
+          return;
+        }
+      }
+
       const headers: Record<string, string> = {};
       if (authenticated) {
         headers["api-key"] = this.apiKey;
       }
-      if (body) {
+      if (payload !== undefined) {
         headers["Content-Type"] = "application/json";
+        headers["Content-Length"] = String(Buffer.byteLength(payload));
       }
 
       const options: https.RequestOptions = {
@@ -453,12 +488,13 @@ export class ParcelClient {
       // the configured timeout.
       const ctrl = new AbortController();
       this.inflight.add(ctrl);
-      // Marks the request as finished for the deadline listener below —
-      // every terminal path runs cleanup().
-      let settled = false;
+      // Every terminal path runs cleanup(): the controller leaves `inflight` and the deadline timer
+      // is cancelled (v0.14.0 — the former platform timer lingered for the full deadline).
+      // A holder, not a `let`: the timer is armed further down, once `req` exists.
+      const deadline: { handle?: unknown } = {};
       const cleanup = (): void => {
-        settled = true;
         this.inflight.delete(ctrl);
+        this.timers.clearTimeout(deadline.handle);
       };
 
       // Pick transport from the URL protocol so tests can run the real
@@ -468,7 +504,10 @@ export class ParcelClient {
         callback: (res: http.IncomingMessage) => void,
       ) => http.ClientRequest = url.protocol === "http:" ? http.request : https.request;
 
-      const req = transportRequest(options, res => {
+      // `req` is assigned in the try below (a synchronous throw from the transport must reach
+      // cleanup); the response handler only ever runs after that assignment.
+      let req: http.ClientRequest;
+      const onResponse = (res: http.IncomingMessage): void => {
         const chunks: Buffer[] = [];
         let bodyBytes = 0;
         let oversized = false;
@@ -527,7 +566,7 @@ export class ParcelClient {
             this.log?.debug(
               `HTTP ${method} ${path} → ${res.statusCode} ${httpError.code}` +
                 `${httpError.retryAfterSeconds !== undefined ? ` retry-after=${httpError.retryAfterSeconds}s` : ""}` +
-                ` (body=${oneLine(raw.substring(0, BODY_SNIPPET_LEN))})`,
+                ` (body=${oneLine(raw.substring(0, LOG_SNIPPET_LEN))})`,
             );
             reject(httpError);
             return;
@@ -540,27 +579,44 @@ export class ParcelClient {
             resolve(parsed);
           } catch {
             // v0.4.3 (A8): trace JSON parse-fail with snippet (debug only).
-            this.log?.debug(`HTTP JSON parse fail ${path}: ${oneLine(raw.substring(0, BODY_SNIPPET_LEN))}`);
+            this.log?.debug(`HTTP JSON parse fail ${path}: ${oneLine(raw.substring(0, LOG_SNIPPET_LEN))}`);
             // v0.9.0 (S1): keep the raw body OUT of the Error message — it
             // bubbles to a poll error-log; a malformed PII-bearing body must
             // not reach error level. The snippet stays in the debug line above.
             reject(apiError(`JSON parse error (${raw.length} bytes)`, "PARSE_ERROR"));
           }
         });
-      });
+      };
 
-      // v0.10.0 (M4): arm the hard deadline via AbortSignal.timeout — an
-      // unref'd platform timer (never keeps the process alive, no adapter
-      // context needed). Destroying with a TIMEOUT-coded ApiError routes
-      // through req.on("error") below, which rejects + cleans up — a trickle
-      // response (a byte every few seconds) can no longer pin the poll loop.
-      AbortSignal.timeout(this.deadlineMs).addEventListener("abort", () => {
-        if (settled) {
-          return; // request finished long ago — nothing to kill, nothing to log
-        }
+      // v0.14.0 (audit L6): the transport throws SYNCHRONOUSLY for a header it cannot send — an
+      // API key with an invisible character copied along (`"key\u200B".trim()` keeps it). Before,
+      // the throw left the controller in `inflight` for good and reached the log as a bare
+      // "Invalid character in header content" without naming the key.
+      try {
+        req = transportRequest(options, onResponse);
+      } catch (err) {
+        cleanup();
+        const code = err instanceof Error && "code" in err ? err.code : undefined;
+        this.log?.debug(`HTTP ${method} ${path} could not be sent: ${errText(err)}`);
+        reject(
+          code === "ERR_INVALID_CHAR"
+            ? apiError(
+                "API key contains characters that cannot be sent — re-enter it without spaces or invisible characters",
+                "INVALID_API_KEY",
+              )
+            : apiError(`Request could not be sent: ${errText(err)}`, "API_ERROR"),
+        );
+        return;
+      }
+
+      // v0.10.0 (M4) / v0.14.0 (audit L10): the hard deadline — destroying with a TIMEOUT-coded
+      // ApiError routes through req.on("error") below, which rejects and cleans up, so a trickle
+      // response (a byte every few seconds) can no longer pin the poll loop. It is an ADAPTER timer
+      // (fleet rule), cancelled by cleanup() the moment the request settles.
+      deadline.handle = this.timers.setTimeout(() => {
         this.log?.debug(`HTTP deadline ${method} ${path} (${Date.now() - startedAt}ms > ${this.deadlineMs}ms)`);
         req.destroy(apiError(`Request deadline exceeded (${this.deadlineMs / 1000}s)`, "TIMEOUT"));
-      });
+      }, this.deadlineMs);
 
       ctrl.signal.addEventListener("abort", () => {
         // v0.4.3: A6 deliberately omitted — `req.destroy(Error)` propagates
@@ -591,8 +647,8 @@ export class ParcelClient {
       // body, stream state) must not strand the AbortController in `inflight`
       // — cancelAll's invariant is "inflight mirrors live requests exactly".
       try {
-        if (body) {
-          req.write(JSON.stringify(body));
+        if (payload !== undefined) {
+          req.write(payload);
         }
         req.end();
       } catch (err) {
@@ -619,14 +675,9 @@ export class ParcelClient {
     detail?: string,
   ): ApiError {
     if (statusCode === 429) {
-      // v0.4.2 (P6): clamp Retry-After. Bogus values (0, negative, NaN) fall
-      // back to the default; extreme values are capped.
-      const retryAfter = parseInt(retryAfterHeader || "", 10);
-      const retryAfterSeconds =
-        Number.isFinite(retryAfter) && retryAfter > 0
-          ? Math.min(RETRY_AFTER_MAX_SEC, retryAfter)
-          : RETRY_AFTER_DEFAULT_SEC;
-      return apiError("Rate limit exceeded", "RATE_LIMITED", { retryAfterSeconds });
+      return apiError("Rate limit exceeded", "RATE_LIMITED", {
+        retryAfterSeconds: ParcelClient.parseRetryAfter(retryAfterHeader),
+      });
     }
     // v0.4.2 (P3): split 401 (invalid key) from 403 (permission / no premium).
     // Adapter treats them differently — INVALID_API_KEY says "fix the key",
@@ -634,7 +685,38 @@ export class ParcelClient {
     const code: ApiErrorCode = statusCode === 401 ? "INVALID_API_KEY" : statusCode === 403 ? "FORBIDDEN" : "HTTP_ERROR";
     // The body's own reason beats the generic reason phrase; the codes above stay
     // the adapter's classification either way.
-    return apiError(`HTTP ${statusCode}: ${detail ?? statusMessage}`, code);
+    // v0.14.0 (audit X1): an empty or missing reason phrase used to read "HTTP 502: " / "…: undefined".
+    return apiError(
+      `HTTP ${statusCode}: ${detail ?? (statusMessage || http.STATUS_CODES[statusCode] || "unknown status")}`,
+      code,
+    );
+  }
+
+  /**
+   * The cooldown a 429 asks for, in seconds. RFC 9110 §10.2.3 allows delay-seconds OR an
+   * HTTP-date; both are read (v0.14.0, audit L8 — a date used to fall back to the default).
+   * Anything unusable (missing, zero, negative, garbage, a date in the past) takes
+   * {@link RETRY_AFTER_DEFAULT_SEC}; a usable value is clamped to
+   * [{@link RETRY_AFTER_MIN_SEC}, {@link RETRY_AFTER_MAX_SEC}] — the one place that clamp lives.
+   *
+   * @param header Raw Retry-After header value
+   * @param nowMs Reference time for an HTTP-date (tests pass a fixed one)
+   */
+  static parseRetryAfter(header: string | undefined, nowMs: number = Date.now()): number {
+    const raw = (header ?? "").trim();
+    let seconds = NaN;
+    if (/^\d+$/.test(raw)) {
+      seconds = Number(raw);
+    } else if (raw.length > 0) {
+      const at = Date.parse(raw);
+      if (Number.isFinite(at)) {
+        seconds = Math.ceil((at - nowMs) / 1000);
+      }
+    }
+    if (!Number.isFinite(seconds) || seconds <= 0) {
+      return RETRY_AFTER_DEFAULT_SEC;
+    }
+    return Math.min(RETRY_AFTER_MAX_SEC, Math.max(RETRY_AFTER_MIN_SEC, seconds));
   }
 
   /**
@@ -646,7 +728,7 @@ export class ParcelClient {
    * @param raw The response body as received.
    */
   private static errorMessageOf(raw: string): string | undefined {
-    if (raw.length === 0 || raw.length > MAX_BODY_BYTES) {
+    if (raw.length === 0) {
       return undefined;
     }
     let parsed: unknown;
@@ -662,7 +744,7 @@ export class ParcelClient {
     if (typeof message !== "string") {
       return undefined;
     }
-    const flat = oneLine(message).slice(0, BODY_SNIPPET_LEN);
+    const flat = oneLine(message).slice(0, LOG_SNIPPET_LEN);
     return flat.length > 0 ? flat : undefined;
   }
 }

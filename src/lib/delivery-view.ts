@@ -8,7 +8,7 @@
  * DB; the only outside contact is the optional drift logger and the i18n lookup for the estimate
  * wording.
  */
-import { coerceFiniteNumber } from "./coerce";
+import { coerceFiniteNumber, LOG_SNIPPET_LEN, oneLine } from "./coerce";
 import { tText } from "./i18n";
 import type { ParcelDelivery, ParcelEvent } from "./types";
 
@@ -109,6 +109,17 @@ function matchDateParts(raw: string): DateParts | null {
 }
 
 /**
+ * An untrusted date value as it may appear in a drift line: one line, bounded length. The value
+ * comes straight from the carrier via parcel.app — a line break in it would forge a second log line.
+ *
+ * @param raw The rejected value
+ * @returns the value flattened and capped for a log line
+ */
+function quoteForLog(raw: string): string {
+  return oneLine(raw).slice(0, LOG_SNIPPET_LEN);
+}
+
+/**
  * Parse a parcel.app expected-date string to LOCAL epoch-millis.
  *
  * The API delivers `date_expected`/`date_expected_end` "without specific timezone information";
@@ -135,24 +146,24 @@ export function parseExpectedToMs(value: unknown, log?: DriftLogger): { ms: numb
   }
   const parts = matchDateParts(raw);
   if (!parts) {
-    log?.debug(`expected-date drift: unsupported format '${raw}' — no window/estimate for this package`);
+    log?.debug(`expected-date drift: unsupported format '${quoteForLog(raw)}' — no window/estimate for this package`);
     return null;
   }
   // Range-validate the components. The patterns only check digit COUNT, not value range, and
   // `new Date(2026, 12, 40, 25, …)` silently ROLLS OVER to a wrong date (getTime() is NOT NaN).
   if (parts.month < 0 || parts.month > 11 || parts.day < 1 || parts.day > 31) {
-    log?.debug(`expected-date drift: month/day out of range in '${raw}'`);
+    log?.debug(`expected-date drift: month/day out of range in '${quoteForLog(raw)}'`);
     return null;
   }
   if (parts.hour > 23 || parts.minute > 59 || parts.second > 59) {
-    log?.debug(`expected-date drift: time out of range in '${raw}'`);
+    log?.debug(`expected-date drift: time out of range in '${quoteForLog(raw)}'`);
     return null;
   }
   const date = new Date(parts.year, parts.month, parts.day, parts.hour, parts.minute, parts.second);
   // Catch day-of-month overflow the range check misses (Feb 30, Apr 31, …): a real date
   // round-trips the month and day it was built from.
   if (Number.isNaN(date.getTime()) || date.getMonth() !== parts.month || date.getDate() !== parts.day) {
-    log?.debug(`expected-date drift: '${raw}' is not a real calendar date`);
+    log?.debug(`expected-date drift: '${quoteForLog(raw)}' is not a real calendar date`);
     return null;
   }
   const hasTime = parts.hasClock && !(parts.hour === 0 && parts.minute === 0 && parts.second === 0);

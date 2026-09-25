@@ -1,5 +1,5 @@
 import { type AdapterInstance } from "@iobroker/adapter-core";
-import { errText, oneLine } from "./coerce";
+import { errText, LOG_SNIPPET_LEN, oneLine } from "./coerce";
 import {
   calculateCombinedWindow,
   calculateDeliveryEstimate,
@@ -20,6 +20,9 @@ import { UNKNOWN_STATUS_CODE } from "./types";
  * code unit, so the range covers every possible sanitized package id.
  */
 const ID_RANGE_END = "￿";
+
+/** A status string the parser accepts: an optional minus and digits, nothing else. */
+const STRICT_INT_RE = /^-?\d+$/;
 
 /** Max length of a sanitized package-id segment (collision suffix handles truncation clashes). */
 const MAX_ID_LENGTH = 50;
@@ -160,18 +163,18 @@ export class StateManager {
     if (typeof raw === "number" && Number.isFinite(raw)) {
       return Math.trunc(raw);
     }
-    if (typeof raw === "string") {
-      const n = parseInt(raw, 10);
-      if (Number.isFinite(n)) {
-        return n;
-      }
+    // v0.14.0 (audit X9): a string must be an integer and nothing else. parseInt accepted any
+    // numeric PREFIX — "0abc" became 0 = delivered, and in autoRemove mode the package was deleted.
+    // A number is a value and is truncated (2.7 → 2); a string with a fraction is drift.
+    if (typeof raw === "string" && STRICT_INT_RE.test(raw.trim())) {
+      return Number(raw.trim());
     }
     // API drift (non-numeric / non-string status_code). Return a visible
     // "unknown" sentinel instead of 0 (Delivered) — otherwise a garbage
     // status_code would silently filter the package out and remove it in
     // autoRemove mode. The active filter is `status !== 0`, so -1 stays visible.
     this.adapter.log.debug(
-      `parseStatus drift: ${JSON.stringify(raw)} (type ${typeof raw}) → ${UNKNOWN_STATUS_CODE} (unknown, kept visible)`,
+      `parseStatus drift: ${oneLine(JSON.stringify(raw) ?? String(raw)).slice(0, LOG_SNIPPET_LEN)} (type ${typeof raw}) → ${UNKNOWN_STATUS_CODE} (unknown, kept visible)`,
     );
     return UNKNOWN_STATUS_CODE;
   }

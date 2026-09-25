@@ -366,6 +366,12 @@ describe("coerceClampedInt (X5 v0.4.2)", () => {
 });
 
 describe("oneLine", () => {
+  it("renders a non-string instead of throwing (audit B5: a drifted number used to throw here)", () => {
+    expect(oneLine(12345)).toBe("12345");
+    expect(oneLine(undefined)).toBe("undefined");
+    expect(oneLine({ a: "x\ny" })).toBe('{"a":"x\\ny"}');
+  });
+
   it("collapses CR / LF / TAB runs to single spaces (log-injection guard)", () => {
     expect(oneLine("a\r\nb")).toBe("a b");
     expect(oneLine("evil\nINFO 2026 forged log line")).toBe("evil INFO 2026 forged log line");

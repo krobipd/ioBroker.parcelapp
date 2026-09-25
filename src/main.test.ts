@@ -1,4 +1,5 @@
 import { vi } from "vitest";
+import { I18n } from "@iobroker/adapter-core";
 
 // Stub the adapter-core base so ParcelappAdapter can be instantiated without
 // the ioBroker runtime. Tests drive the private methods directly and assert
@@ -14,6 +15,8 @@ vi.mock("@iobroker/adapter-core", () => {
     public setState = vi.fn(async () => {});
     public setInterval = vi.fn(() => ({}));
     public clearInterval = vi.fn();
+    public setTimeout = vi.fn(() => ({}));
+    public clearTimeout = vi.fn();
     public sendTo = vi.fn();
     public terminate = vi.fn();
     public getObjectAsync = vi.fn(() => Promise.resolve(null));
@@ -174,8 +177,12 @@ function setup(configOverrides: Record<string, unknown> = {}): {
   // number sanitizes to "unknown", never the string "undefined".
   const stateMgr: FakeStateMgr = {
     parseStatus: vi.fn((d: ParcelDelivery) => {
-      const n = typeof d.status_code === "number" ? d.status_code : parseInt(String(d.status_code ?? ""), 10);
-      return Number.isFinite(n) ? Math.trunc(n) : -1;
+      // Same strictness as the real parser (audit X9): a string must be an integer, nothing else.
+      const raw = d.status_code;
+      if (typeof raw === "number") {
+        return Number.isFinite(raw) ? Math.trunc(raw) : -1;
+      }
+      return typeof raw === "string" && /^-?\d+$/.test(raw.trim()) ? Number(raw.trim()) : -1;
     }),
     resetPollState: vi.fn(),
     packageId: vi.fn((d: ParcelDelivery) =>
@@ -276,6 +283,28 @@ describe("ParcelappAdapter default factories (the seams' production side)", () =
       expect(typeof stateManager[member], member).toBe("function");
     }
   });
+
+  it("wires the client's warn logger and the ADAPTER's timers — no native timer (T4c, audit L10)", () => {
+    const adapter = new ParcelappAdapter();
+    const i = internalOf(adapter) as unknown as {
+      makeClient: (apiKey: string) => Record<string, unknown>;
+      log: { warn: ReturnType<typeof vi.fn> };
+      setTimeout: ReturnType<typeof vi.fn>;
+      clearTimeout: ReturnType<typeof vi.fn>;
+    };
+    const client = i.makeClient("0123456789abcdef") as unknown as {
+      log: { warn: (m: string) => void };
+      timers: { setTimeout: (cb: () => void, ms: number) => unknown; clearTimeout: (h: unknown) => void };
+    };
+    // The carrier-list drift warning (v0.13.0) travels through this logger — without the wiring it
+    // silently fell back to debug.
+    client.log.warn("carrier names unavailable");
+    expect(i.log.warn).toHaveBeenCalledWith("carrier names unavailable");
+    const handle = client.timers.setTimeout(() => undefined, 1234);
+    expect(i.setTimeout).toHaveBeenCalledWith(expect.any(Function), 1234);
+    client.timers.clearTimeout(handle);
+    expect(i.clearTimeout).toHaveBeenCalledWith(handle);
+  });
 });
 
 describe("ParcelappAdapter onReady", () => {
@@ -330,7 +359,9 @@ describe("ParcelappAdapter onReady", () => {
       return Promise.reject(new Error("host is gone"));
     });
     await i.onReady();
-    expect(i.log.error).toHaveBeenCalledWith(expect.stringContaining("onReady failed"));
+    // v0.14.0 (audit B11): a failure caused by the stop is expected teardown — debug, not error.
+    expect(i.log.error).not.toHaveBeenCalled();
+    expect(i.log.debug).toHaveBeenCalledWith(expect.stringContaining("onReady interrupted by the stop"));
     expect(i.terminate).not.toHaveBeenCalled();
   });
 
@@ -434,31 +465,6 @@ describe("ParcelappAdapter onReady", () => {
       expect(i.setInterval.mock.calls[0][1], `pollInterval=${JSON.stringify(raw)}`).toBe(expectedMinutes * 60 * 1000);
       expect(i.log.info).toHaveBeenCalledWith(expect.stringContaining(`every ${expectedMinutes} minutes`));
     }
-  });
-
-  it("removes the obsolete summary.json state from pre-0.2.0 installs", async () => {
-    const { adapter } = setup();
-    const i = internalOf(adapter);
-    (adapter as unknown as { getObjectAsync: ReturnType<typeof vi.fn> }).getObjectAsync.mockResolvedValueOnce({
-      type: "state",
-    });
-    await i.onReady();
-    expect((adapter as unknown as { delObjectAsync: ReturnType<typeof vi.fn> }).delObjectAsync).toHaveBeenCalledWith(
-      "summary.json",
-    );
-  });
-
-  it("a failing cleanupObsoleteStates does not abort startup — polling still arms (C8)", async () => {
-    const { adapter, client } = setup();
-    const i = internalOf(adapter);
-    (adapter as unknown as { getObjectAsync: ReturnType<typeof vi.fn> }).getObjectAsync.mockRejectedValueOnce(
-      new Error("db down"),
-    );
-    await i.onReady();
-    // C8: the cleanup failure is contained, so the poll interval is still armed.
-    expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("cleanupObsoleteStates failed"));
-    expect(client.getDeliveries).toHaveBeenCalled();
-    expect(i.setInterval).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -911,10 +917,39 @@ describe("ParcelappAdapter poll — per-delivery failure dedup", () => {
     const i = internalOf(adapter);
     const partial = makeDelivery({ tracking_number: undefined, carrier_code: undefined });
     client.getDeliveries.mockResolvedValue([partial]);
+    // setupReady() already polled once — without clearing, "was called" held before this poll ran.
+    stateMgr.updateDelivery.mockClear();
 
-    // The optional-field guards (`?? ""`) must keep the poll from throwing.
     await expect(i.poll()).resolves.toBeUndefined();
-    expect(stateMgr.updateDelivery).toHaveBeenCalled();
+    expect(stateMgr.updateDelivery).toHaveBeenCalledWith(partial, expect.any(String), expect.any(String));
+    expect(i.log.error).not.toHaveBeenCalled();
+    expect(i.lastErrorCode).toBe("");
+  });
+
+  it("one delivery with a drifted field type does not fail the others or the poll (audit B5)", async () => {
+    // The API documents tracking_number/carrier_code as strings. A number there used to throw in
+    // the log sanitizer — outside the per-delivery guard — and the whole poll failed: error line,
+    // info.connection false, no cleanup, no summary, on every poll while that delivery existed.
+    const { adapter, client, stateMgr } = await setupReady();
+    const i = internalOf(adapter);
+    const drifted = makeDelivery({
+      tracking_number: 12345 as unknown as string,
+      carrier_code: 7 as unknown as string,
+    });
+    const good = makeDelivery({ tracking_number: "OK1" });
+    client.getDeliveries.mockResolvedValue([drifted, good]);
+    stateMgr.updateDelivery.mockClear();
+    stateMgr.cleanupDeliveries.mockClear();
+    stateMgr.updateSummary.mockClear();
+
+    await i.poll();
+
+    expect(stateMgr.updateDelivery).toHaveBeenCalledWith(good, expect.any(String), "ok1");
+    expect(stateMgr.cleanupDeliveries).toHaveBeenCalledTimes(1);
+    expect(stateMgr.updateSummary).toHaveBeenCalledTimes(1);
+    expect(i.log.error).not.toHaveBeenCalled();
+    expect(i.lastErrorCode).toBe("");
+    expect(i.setStateChangedAsync).toHaveBeenCalledWith("info.connection", { val: true, ack: true });
   });
 
   it("prunes failedDeliveries entries for trackings that vanished from the API", async () => {
@@ -1004,13 +1039,13 @@ describe("ParcelappAdapter poll — error routing", () => {
     expect(i.rateLimitedUntil).toBeLessThanOrEqual(Date.now() + 121_000);
   });
 
-  it("RATE_LIMITED clamps a tiny retry-after UP to the 60 s floor (never a cooldown of a few seconds)", async () => {
+  it("RATE_LIMITED takes the client's already-clamped cooldown as it is (the clamp lives in the client, L8)", async () => {
     const { adapter, client } = await setupReady();
     const i = internalOf(adapter);
-    client.getDeliveries.mockRejectedValueOnce(codeError("429", "RATE_LIMITED", { retryAfterSeconds: 5 }));
+    client.getDeliveries.mockRejectedValueOnce(codeError("429", "RATE_LIMITED", { retryAfterSeconds: 90 }));
     await i.poll();
-    expect(i.rateLimitedUntil).toBeGreaterThanOrEqual(Date.now() + 59_000);
-    expect(i.rateLimitedUntil).toBeLessThanOrEqual(Date.now() + 61_000);
+    expect(i.rateLimitedUntil).toBeGreaterThanOrEqual(Date.now() + 89_000);
+    expect(i.rateLimitedUntil).toBeLessThanOrEqual(Date.now() + 91_000);
   });
 
   it("RATE_LIMITED with a bogus retry-after falls back to 5 minutes", async () => {
@@ -1152,6 +1187,14 @@ describe("ParcelappAdapter poll — error routing", () => {
     expect(i.log.error).toHaveBeenCalledWith(expect.stringContaining("Poll failed: boom"));
   });
 
+  it("a broker that refuses the connection=false write on the error path does not make poll() reject (T13)", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    client.getDeliveries.mockRejectedValueOnce(codeError("socket hang up", "ECONNRESET"));
+    i.setStateChangedAsync.mockImplementationOnce(() => Promise.reject(new Error("objects DB gone")));
+    await expect(i.poll()).resolves.toBeUndefined();
+  });
+
   it("a plain object with a string code keeps it, so it still classifies (audit X5)", async () => {
     const { adapter, client } = await setupReady();
     const i = internalOf(adapter);
@@ -1163,8 +1206,12 @@ describe("ParcelappAdapter poll — error routing", () => {
   it("a per-delivery failure during shutdown stays at debug — teardown noise is not a warning (L2)", async () => {
     const { adapter, stateMgr } = await setupReady();
     const i = internalOf(adapter);
-    stateMgr.updateDelivery.mockRejectedValue(new Error("broker closed"));
-    i.unloaded = true; // stop arrived while the batch was in flight
+    // The stop arrives while the batch is in flight: the flag flips INSIDE the write, after the
+    // poll passed its entry check (a poll started after the stop returns before any write, B11).
+    stateMgr.updateDelivery.mockImplementation(() => {
+      i.unloaded = true;
+      return Promise.reject(new Error("broker closed"));
+    });
     await i.poll();
     expect(i.log.warn).not.toHaveBeenCalledWith(expect.stringContaining("Failed to update"));
     expect(i.log.debug).toHaveBeenCalledWith(expect.stringContaining("during shutdown"));
@@ -1181,6 +1228,108 @@ describe("ParcelappAdapter poll — error routing", () => {
     expect(i.log.error).not.toHaveBeenCalled();
     expect(i.log.warn).not.toHaveBeenCalledWith(expect.stringContaining("aborted"));
     expect(i.log.debug).toHaveBeenCalledWith(expect.stringContaining("Poll aborted"));
+  });
+});
+
+describe("ParcelappAdapter stop and reply channel (audit 2026-09-25)", () => {
+  it("addDelivery without a callback still adds the delivery — only the answer has nowhere to go (B6)", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    i.sendTo.mockClear();
+    await i.onMessage({
+      command: "addDelivery",
+      from: "system.adapter.javascript.0",
+      message: { tracking_number: "NEW1", carrier_code: "dhl", description: "Parcel" },
+    });
+    expect(client.addDelivery).toHaveBeenCalledTimes(1);
+    expect(i.sendTo).not.toHaveBeenCalled();
+  });
+
+  it("an unknown command without a callback is dropped without a reply (B6)", async () => {
+    const { adapter } = await setupReady();
+    const i = internalOf(adapter);
+    i.sendTo.mockClear();
+    await i.onMessage({ command: "bogus", from: "x" });
+    expect(i.sendTo).not.toHaveBeenCalled();
+  });
+
+  it("a GET that returns after the stop does not flip info.connection back to true (B11)", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    client.getDeliveries.mockImplementationOnce(() => {
+      i.onUnload(vi.fn());
+      return Promise.resolve([makeDelivery()]);
+    });
+    i.setStateChangedAsync.mockClear();
+    await i.poll();
+    expect(i.setStateChangedAsync).not.toHaveBeenCalledWith("info.connection", { val: true, ack: true });
+  });
+
+  it("a connection test after the stop builds no client and answers that the adapter is stopping (B11)", async () => {
+    const { adapter } = await setupReady();
+    const i = internalOf(adapter);
+    const makeClient = vi.spyOn(i, "makeClient");
+    i.onUnload(vi.fn());
+    await i.onMessage({
+      command: "checkConnection",
+      from: "system.adapter.admin.0",
+      callback: { id: 1 },
+      message: { apiKey: "0123456789abcdef" },
+    });
+    expect(makeClient).not.toHaveBeenCalled();
+    expect(i.sendTo).toHaveBeenCalledWith(
+      "system.adapter.admin.0",
+      "checkConnection",
+      { error: "Adapter is stopping" },
+      expect.anything(),
+    );
+  });
+
+  it("a poll started after the stop touches neither the client nor the broker (B11)", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    i.onUnload(vi.fn());
+    client.getDeliveries.mockClear();
+    await i.poll();
+    expect(client.getDeliveries).not.toHaveBeenCalled();
+  });
+
+  it("a stop during the instance-object check ends the start right there (B11)", async () => {
+    const { adapter } = setup();
+    const i = internalOf(adapter);
+    i.getForeignObjectAsync.mockImplementationOnce(() => {
+      i.onUnload(vi.fn());
+      return Promise.resolve({ common: {}, native: {} });
+    });
+    vi.mocked(I18n.init).mockClear();
+    await i.onReady();
+    expect(I18n.init).not.toHaveBeenCalled();
+  });
+
+  it("a stop during the manifest refresh writes nothing more afterwards (B11)", async () => {
+    const { adapter } = setup();
+    const i = internalOf(adapter);
+    i.extendObject.mockImplementationOnce(() => {
+      i.onUnload(vi.fn());
+      return Promise.resolve();
+    });
+    i.setState.mockClear();
+    await i.onReady();
+    // Exactly the one disconnect write of onUnload — no start-time write after the stop.
+    const connectionWrites = i.setState.mock.calls.filter(c => c[0] === "info.connection");
+    expect(connectionWrites).toHaveLength(1);
+  });
+
+  it("a stop during I18n.init writes no manifest objects afterwards (B11)", async () => {
+    const { adapter } = setup();
+    const i = internalOf(adapter);
+    vi.mocked(I18n.init).mockImplementationOnce(() => {
+      i.onUnload(vi.fn());
+      return Promise.resolve();
+    });
+    i.extendObject.mockClear();
+    await i.onReady();
+    expect(i.extendObject).not.toHaveBeenCalled();
   });
 });
 

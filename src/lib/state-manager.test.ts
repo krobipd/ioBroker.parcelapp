@@ -1376,8 +1376,25 @@ describe("StateManager", () => {
         // of 2 — the very drift the branch exists for.
         expect(manager.parseStatus(makeDelivery({ status_code: "2" as unknown as number }))).toBe(2);
         expect(manager.parseStatus(makeDelivery({ status_code: "0" as unknown as number }))).toBe(0);
-        // parseInt semantics: a trailing suffix is tolerated, the number wins.
+        // Surrounding whitespace is tolerated — the value is still exactly an integer.
         expect(manager.parseStatus(makeDelivery({ status_code: "4 " as unknown as number }))).toBe(4);
+        expect(manager.parseStatus(makeDelivery({ status_code: " 2 " as unknown as number }))).toBe(2);
+      });
+
+      it("never reads a string with a numeric PREFIX as that number (audit X9)", () => {
+        // parseInt took "0abc" as 0 = delivered: hidden from the active list and, with
+        // autoRemoveDelivered, deleted — exactly what the -1 sentinel exists to prevent.
+        expect(manager.parseStatus(makeDelivery({ status_code: "0abc" as unknown as number }))).toBe(-1);
+        expect(manager.parseStatus(makeDelivery({ status_code: "2.5" as unknown as number }))).toBe(-1);
+        expect(manager.parseStatus(makeDelivery({ status_code: "4x" as unknown as number }))).toBe(-1);
+      });
+
+      it("a drifted status value cannot split the log line (audit X8)", () => {
+        const debug = vi.spyOn(adapter.log, "debug");
+        manager.parseStatus(makeDelivery({ status_code: "a\u2028FORGED" as unknown as number }));
+        const lines = debug.mock.calls.map(c => String(c[0])).filter(l => l.includes("parseStatus drift"));
+        expect(lines).toHaveLength(1);
+        expect(lines[0]).not.toMatch(/[\u2028\u2029\n\r]/);
       });
 
       it("keeps a numeric-string status code visible end-to-end (label + code state)", async () => {

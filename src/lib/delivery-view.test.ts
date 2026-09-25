@@ -71,6 +71,17 @@ afterEach(() => {
 });
 
 describe("parseExpectedToMs", () => {
+  it("a rejected value cannot split the log line and is capped (audit X4)", () => {
+    const log = makeLog();
+    const lines = log.lines;
+    expect(parseExpectedToMs("2026-06-15\nFORGED LINE", log)).toBeNull();
+    expect(parseExpectedToMs("x".repeat(500), log)).toBeNull();
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).not.toMatch(/[\n\r]/);
+    expect(lines[0]).toContain("2026-06-15 FORGED LINE");
+    expect(lines[1].length).toBeLessThan(300);
+  });
+
   it("parses the documented default format with a time of day", () => {
     const parsed = parseExpectedToMs("2026-06-15 14:30:00");
     expect(parsed).not.toBeNull();

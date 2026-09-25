@@ -1,6 +1,7 @@
 import * as http from "node:http";
+import * as net from "node:net";
 import type { AddressInfo } from "node:net";
-import { FORBIDDEN_HINT, ParcelClient } from "./parcel-client";
+import { FORBIDDEN_HINT, ParcelClient, type ParcelClientTimers } from "./parcel-client";
 
 /**
  * Node's global agent keeps sockets alive (measured: ONE TCP connection serves
@@ -61,6 +62,15 @@ function stopServer(server: http.Server): Promise<void> {
 }
 
 /**
+ * Plain timers for the client's deadline seam — production passes the adapter's own
+ * `this.setTimeout`/`this.clearTimeout` (fleet rule), tests use the platform ones.
+ */
+const testTimers: ParcelClientTimers = {
+  setTimeout: (cb: () => void, ms: number): unknown => setTimeout(cb, ms),
+  clearTimeout: (handle: unknown): void => clearTimeout(handle as ReturnType<typeof setTimeout> | undefined),
+};
+
+/**
  * Create a ParcelClient pointed at a local HTTP mock server. Uses the REAL
  * `request()` (transport is selected from the baseUrl protocol), so the
  * production transport hardening — AbortController/cancelAll, body-size cap,
@@ -71,8 +81,85 @@ function stopServer(server: http.Server): Promise<void> {
  * @param port Port of the local mock server
  */
 function createTestClient(apiKey: string, port: number): ParcelClient {
-  return new ParcelClient(apiKey, undefined, `http://127.0.0.1:${port}/external`);
+  return new ParcelClient(apiKey, testTimers, undefined, `http://127.0.0.1:${port}/external`);
 }
+
+describe("ParcelClient transport details (audit 2026-09-25)", () => {
+  it("an API key with an invisible character fails as INVALID_API_KEY and leaves nothing in flight (L6)", async () => {
+    const { server, port } = await startMockServer((_req, res) => {
+      res.end("{}");
+    });
+    try {
+      const client = createTestClient("abcdefghijk\u200B", port);
+      await expect(client.getDeliveries("active")).rejects.toMatchObject({ code: "INVALID_API_KEY" });
+      expect((client as unknown as { inflight: Set<unknown> }).inflight.size).toBe(0);
+    } finally {
+      await stopServer(server);
+    }
+  });
+
+  it("the deadline timer is cancelled as soon as the request settles (L10)", async () => {
+    const cleared: unknown[] = [];
+    const timers: ParcelClientTimers = {
+      setTimeout: (cb: () => void, ms: number): unknown => testTimers.setTimeout(cb, ms),
+      clearTimeout: (handle: unknown): void => {
+        cleared.push(handle);
+        testTimers.clearTimeout(handle);
+      },
+    };
+    const { server, port } = await startMockServer((_req, res) => {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ success: true, deliveries: [] }));
+    });
+    try {
+      const client = new ParcelClient("key", timers, undefined, `http://127.0.0.1:${port}/external`);
+      await client.getDeliveries("active");
+      expect(cleared.filter(h => h !== undefined)).toHaveLength(1);
+    } finally {
+      await stopServer(server);
+    }
+  });
+
+  it("a POST carries Content-Length, never a chunked body (audit X3)", async () => {
+    let seen: http.IncomingHttpHeaders = {};
+    const { server, port } = await startMockServer((req, res) => {
+      seen = req.headers;
+      req.resume();
+      req.on("end", () => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ success: true }));
+      });
+    });
+    try {
+      const client = createTestClient("key", port);
+      await client.addDelivery({ tracking_number: "T1", carrier_code: "dhl", description: "Päckchen" });
+      const expected = Buffer.byteLength(
+        JSON.stringify({ tracking_number: "T1", carrier_code: "dhl", description: "Päckchen" }),
+      );
+      expect(seen["content-length"]).toBe(String(expected));
+      expect(seen["transfer-encoding"]).toBeUndefined();
+    } finally {
+      await stopServer(server);
+    }
+  });
+});
+
+describe("ParcelClient.parseRetryAfter (audit L8 — the one place the cooldown is clamped)", () => {
+  const now = Date.UTC(2026, 8, 25, 12, 0, 0);
+  it("reads delay-seconds and clamps a tiny value UP to the 60 s floor", () => {
+    expect(ParcelClient.parseRetryAfter("120", now)).toBe(120);
+    expect(ParcelClient.parseRetryAfter("30", now)).toBe(60);
+    expect(ParcelClient.parseRetryAfter("999999999", now)).toBe(24 * 3600);
+  });
+  it("reads an HTTP-date (RFC 9110) as the seconds until then", () => {
+    expect(ParcelClient.parseRetryAfter(new Date(now + 2 * 3600_000).toUTCString(), now)).toBe(7200);
+  });
+  it("falls back to 5 minutes for anything unusable", () => {
+    for (const v of [undefined, "", "0", "-5", "abc", "120abc", new Date(now - 60_000).toUTCString()]) {
+      expect(ParcelClient.parseRetryAfter(v, now), String(v)).toBe(300);
+    }
+  });
+});
 
 describe("ParcelClient", () => {
   describe("getDeliveries", () => {
@@ -358,6 +445,44 @@ describe("ParcelClient", () => {
       }
     });
 
+    it("a non-string error_message is ignored, never thrown on (T4d)", async () => {
+      const bodies = [JSON.stringify({ error_message: 42 }), JSON.stringify({})];
+      let n = 0;
+      const { server, port } = await startMockServer((_req, res) => {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(bodies[n++ % bodies.length]);
+      });
+      try {
+        const client = createTestClient("key", port);
+        for (const body of bodies) {
+          await expect(client.getDeliveries("active"), body).rejects.toMatchObject({
+            code: "HTTP_ERROR",
+            message: "HTTP 400: Bad Request",
+          });
+        }
+      } finally {
+        await stopServer(server);
+      }
+    });
+
+    it("an empty reason phrase is replaced by the standard one, never 'HTTP 502: ' (audit X1)", async () => {
+      // A raw socket: Node's own HTTP server always fills in the standard reason phrase, so only a
+      // hand-written status line can send the empty one a proxy may send.
+      const raw = net.createServer(socket => {
+        socket.once("data", () => {
+          socket.end("HTTP/1.1 502 \r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+        });
+      });
+      await new Promise<void>(resolve => raw.listen(0, "127.0.0.1", () => resolve()));
+      const port = (raw.address() as AddressInfo).port;
+      try {
+        const client = createTestClient("key", port);
+        await expect(client.getDeliveries("active")).rejects.toMatchObject({ message: "HTTP 502: Bad Gateway" });
+      } finally {
+        await new Promise<void>(resolve => raw.close(() => resolve()));
+      }
+    });
+
     it("falls back to the reason phrase when the non-2xx body is not that JSON object", async () => {
       const bodies = ["<html>Bad Gateway</html>", "", JSON.stringify(["nope"]), JSON.stringify({ error_message: "" })];
       let n = 0;
@@ -497,6 +622,7 @@ describe("ParcelClient", () => {
       try {
         const client = new ParcelClient(
           "key",
+          testTimers,
           { debug: (m: string) => debugged.push(m), warn: (m: string) => warned.push(m) },
           `http://127.0.0.1:${port}/external`,
         );
@@ -521,6 +647,7 @@ describe("ParcelClient", () => {
       try {
         const client = new ParcelClient(
           "key",
+          testTimers,
           { debug: (m: string) => debugged.push(m) },
           `http://127.0.0.1:${port}/external`,
         );
@@ -1230,7 +1357,7 @@ describe("ParcelClient", () => {
     });
 
     it("rejects a malformed base URL with INVALID_URL (E3)", async () => {
-      const client = new ParcelClient("key", undefined, "not-a-valid-url");
+      const client = new ParcelClient("key", testTimers, undefined, "not-a-valid-url");
       try {
         await client.getDeliveries("active");
         throw new Error("Should have thrown");
@@ -1276,7 +1403,9 @@ describe("ParcelClient", () => {
         /* deliberately never responds */
       });
       try {
-        const client = new ParcelClient("key", undefined, `http://127.0.0.1:${port}/external`, { idleMs: 120 });
+        const client = new ParcelClient("key", testTimers, undefined, `http://127.0.0.1:${port}/external`, {
+          idleMs: 120,
+        });
         await expect(client.getDeliveries("active")).rejects.toMatchObject({
           code: "TIMEOUT",
           message: "Request timeout",
@@ -1298,7 +1427,7 @@ describe("ParcelClient", () => {
         }
       });
       try {
-        const client = new ParcelClient("key", undefined, `http://127.0.0.1:${port}/external`, {
+        const client = new ParcelClient("key", testTimers, undefined, `http://127.0.0.1:${port}/external`, {
           idleMs: 5_000, // deliberately far above the trickle interval
           deadlineMs: 250,
         });
@@ -1331,6 +1460,7 @@ describe("ParcelClient", () => {
         // the deadline — a tighter value would make THIS test the flaky one.
         const client = new ParcelClient(
           "key",
+          testTimers,
           { debug: (m: string) => lines.push(m) },
           `http://127.0.0.1:${port}/external`,
           { deadlineMs: 400 },

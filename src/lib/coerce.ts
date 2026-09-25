@@ -125,6 +125,13 @@ export function coerceClampedInt(raw: unknown, min: number, max: number, default
 }
 
 /**
+ * Longest stretch of an external value quoted into one log line (API bodies, rejected dates,
+ * drifted status values) — long enough to recognise the value, short enough to keep the line one
+ * line. Shared by every file that logs untrusted text (v0.14.0; was private to the client).
+ */
+export const LOG_SNIPPET_LEN = 200;
+
+/**
  * Collapse control-character runs in an untrusted string to a single space
  * before it is interpolated into a log line — prevents log-injection (a forged
  * second log line) and smuggled terminal escapes from external values
@@ -135,13 +142,21 @@ export function coerceClampedInt(raw: unknown, min: number, max: number, default
  * in 0.10.4 — as a character loop, because a regex literal with control
  * characters is rejected by the lint (no-control-regex).
  *
- * @param value Untrusted string to flatten for single-line logging.
+ * v0.14.0 (audit B5): accepts ANY value. The API documents its text fields as strings, but a
+ * drifted field (a number as `tracking_number`) used to throw here — `for…of` over a number — and
+ * the throw sat outside the per-delivery guard, so one malformed delivery failed the whole poll.
+ * A non-string is rendered through {@link errText} first.
+ *
+ * @param value Untrusted value to flatten for single-line logging.
  */
-export function oneLine(value: string): string {
+export function oneLine(value: unknown): string {
+  const text = typeof value === "string" ? value : errText(value);
   let out = "";
   let inRun = false;
-  for (const ch of value) {
-    const code = ch.codePointAt(0) ?? 0;
+  for (const ch of text) {
+    // A surrogate pair's first unit is >= 0xD800, so a UTF-16 unit is enough for every
+    // character this looks for (C0, DEL, U+2028/29 all sit in the BMP).
+    const code = ch.charCodeAt(0);
     if (code < 0x20 || code === 0x7f || code === 0x2028 || code === 0x2029) {
       if (!inRun) {
         out += " ";
