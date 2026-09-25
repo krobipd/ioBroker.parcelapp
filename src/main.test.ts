@@ -1343,6 +1343,10 @@ describe("ParcelappAdapter request budget and auth backoff (audit 2026-09-25)", 
   /**
    * Drive `minutes` of adapter life on a fake clock: a regular poll every `interval` minutes, and
    * whatever `each(minute)` does on top. Returns the time of every GET the adapter sent.
+   *
+   * @param interval Poll interval in minutes
+   * @param minutes How long to simulate
+   * @param each Extra action per simulated minute
    */
   async function simulate(
     interval: number,
