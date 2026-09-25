@@ -65,7 +65,7 @@ vi.mock("@iobroker/adapter-core", () => {
   }
   return {
     Adapter,
-    EXIT_CODES: { START_IMMEDIATELY_AFTER_STOP: 156 },
+    EXIT_CODES: { START_IMMEDIATELY_AFTER_STOP: 156, UNCAUGHT_EXCEPTION: 6 },
     I18n: {
       init: vi.fn(async () => {}),
       getTranslatedObject: (k: string) => ({ en: k }),
@@ -366,9 +366,10 @@ describe("ParcelappAdapter onReady", () => {
     i.setState.mockRejectedValueOnce(new Error("db down"));
     await i.onReady();
     expect(i.log.error).toHaveBeenCalledWith(expect.stringContaining("onReady failed: db down"));
-    // v0.10.0 (L4): terminate with the restart exit code — js-controller
-    // brings the instance back up, which self-heals a transient failure.
-    expect(i.terminate).toHaveBeenCalledWith(expect.stringContaining("restart"), 156);
+    // v0.10.0 (L4): terminate so js-controller brings the instance back up, which self-heals a
+    // transient failure. v0.14.0: with UNCAUGHT_EXCEPTION (6) — the only code js-controller counts
+    // as a crash; 156 reset the count, restarted after 1 s and never stopped a persistent failure.
+    expect(i.terminate).toHaveBeenCalledWith(expect.stringContaining("restart"), 6);
   });
 
   it("does not terminate when the failure happened because of an unload mid-start (L2)", async () => {
@@ -376,8 +377,8 @@ describe("ParcelappAdapter onReady", () => {
     const i = internalOf(adapter);
     // A rejected getDeliveries never reaches onReady's catch (poll handles it
     // itself), so make the start step itself fail AFTER the unload arrived —
-    // that is the only way into the `if (!this.unloaded)` guard around terminate.
-    // Mutation-checked 2026-09-02 (P8): guard removed → terminate called → red.
+    // that is the only way into the early return of the catch for a stop mid-start.
+    // Mutation-checked (P8): return removed → terminate called → red.
     vi.spyOn(i, "poll").mockImplementationOnce(() => {
       i.onUnload(vi.fn());
       return Promise.reject(new Error("host is gone"));

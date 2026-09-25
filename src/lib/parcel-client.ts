@@ -77,10 +77,10 @@ export interface ParcelClientTimeouts {
  * adapter's timers are cleared on unload and refused during shutdown); tests pass plain ones.
  */
 export interface ParcelClientTimers {
-  /** Arm a one-shot timer; the returned handle goes back into {@link clearTimeout}. */
-  setTimeout(callback: () => void, ms: number): unknown;
-  /** Cancel a timer armed by {@link setTimeout}; an `undefined` handle is a no-op. */
-  clearTimeout(handle: unknown): void;
+  /** Arm a one-shot timer; the returned handle goes back into `clearTimeout`. */
+  setTimeout: (callback: () => void, ms: number) => unknown;
+  /** Cancel a timer armed by `setTimeout`; an `undefined` handle is a no-op. */
+  clearTimeout: (handle: unknown) => void;
 }
 
 /**

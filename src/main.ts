@@ -367,10 +367,13 @@ export class ParcelappAdapter extends utils.Adapter {
       this.log.error(`onReady failed: ${errText(err)}`);
       // v0.10.0 (L4): a transient startup failure (i18n files, DB hiccup) used
       // to leave a green-looking zombie — no client, no timer, no retry until
-      // a manual restart. Terminate instead: js-controller restarts the
-      // instance, which self-heals the transient case; its restart-loop guard
-      // backstops a persistent one. (A stop mid-start returned above — no restart is requested then.)
-      this.terminate("startup failed — requesting restart", utils.EXIT_CODES.START_IMMEDIATELY_AFTER_STOP);
+      // a manual restart. Terminate instead: js-controller restarts the instance,
+      // which self-heals the transient case. v0.14.0: with UNCAUGHT_EXCEPTION, because
+      // js-controller counts crashes only for that code — START_IMMEDIATELY_AFTER_STOP
+      // reset the count and restarted after one second, so a persistent failure looped
+      // every second and the restart-loop guard never stopped it. (A stop mid-start
+      // returned above — no restart is requested then.)
+      this.terminate("startup failed — requesting restart", utils.EXIT_CODES.UNCAUGHT_EXCEPTION);
     }
   }
 

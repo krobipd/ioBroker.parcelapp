@@ -164,6 +164,7 @@ sendTo("parcelapp.0", "addDelivery", {
 - Fixed: addDelivery without a callback now adds the delivery; the result is written to the log.
 - Fixed: One damaged entry from parcel.app no longer stops the whole poll, and a garbled status is never taken for delivered.
 - Improved: The carrier list is refreshed daily; FedEx and InPost have their own pictogram, PostNL, PostNord and Bring the envelope.
+- Fixed: A start that keeps failing no longer restarts the instance every second — the host now stops it after three attempts.
 - Fixed: The documentation said error reporting is off by default — it is on unless switched off in the system settings.
 
 ### 0.13.0 (2026-09-15) — stable
