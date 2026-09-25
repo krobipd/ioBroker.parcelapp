@@ -319,6 +319,15 @@ describe("timestamps in milliseconds (audit O9)", () => {
   });
 });
 
+describe("a zero or negative timestamp is no date (audit O9)", () => {
+  it("falls back to the date string, or to nothing", () => {
+    const zero = makeDelivery({ timestamp_expected: 0, date_expected: "2026-06-16" });
+    expect(calculateDeliveryEstimate(zero, 2)).toBe("tomorrow");
+    expect(calculateDeliveryEstimate(makeDelivery({ timestamp_expected: -5 }), 2)).toBe("");
+    expect(windowBoundsMs(makeDelivery({ timestamp_expected: 0 }), 2)).toBeNull();
+  });
+});
+
 describe("expected day range (audit B1)", () => {
   const sec = (d: Date): number => Math.floor(d.getTime() / 1000);
 

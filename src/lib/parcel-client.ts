@@ -770,9 +770,7 @@ export class ParcelClient {
    * @param raw The response body as received.
    */
   private static errorMessageOf(raw: string): string | undefined {
-    if (raw.length === 0) {
-      return undefined;
-    }
+    // An empty body fails the parse below like any other non-JSON body.
     let parsed: unknown;
     try {
       parsed = JSON.parse(raw);

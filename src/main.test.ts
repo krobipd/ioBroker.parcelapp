@@ -1292,6 +1292,24 @@ describe("ParcelappAdapter stop and reply channel (audit 2026-09-25)", () => {
     expect(i.sendTo).not.toHaveBeenCalled();
   });
 
+  it("checkConnection without a callback spends no request — nobody would read the answer", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    client.testConnection.mockClear();
+    await i.onMessage({
+      command: "checkConnection",
+      from: "system.adapter.admin.0",
+      message: { apiKey: "0123456789abcdef" },
+    });
+    expect(client.testConnection).not.toHaveBeenCalled();
+    expect(i.sendTo).not.toHaveBeenCalledWith(
+      "system.adapter.admin.0",
+      "checkConnection",
+      expect.anything(),
+      undefined,
+    );
+  });
+
   it("an unknown command without a callback is dropped without a reply (B6)", async () => {
     const { adapter } = await setupReady();
     const i = internalOf(adapter);

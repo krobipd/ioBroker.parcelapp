@@ -233,7 +233,10 @@ export class StateManager {
         return takeOver;
       }
     }
-    for (const candidate of idCandidates(delivery)) {
+    // idCandidates never ends, so this loop always returns.
+    const chain = idCandidates(delivery);
+    for (;;) {
+      const candidate = chain.next().value;
       const owner = this.idOwner.get(candidate);
       if (owner === rawKey) {
         return candidate;
@@ -248,8 +251,6 @@ export class StateManager {
         return candidate;
       }
     }
-    // idCandidates never ends — unreachable, but the compiler cannot know.
-    throw new Error("no package id candidate left");
   }
 
   /**
