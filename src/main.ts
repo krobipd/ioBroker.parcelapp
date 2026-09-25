@@ -11,10 +11,23 @@ import type { AddDeliveryRequest, ParcelDelivery } from "./lib/types";
 const MIN_POLL_INTERVAL = 5;
 const MAX_POLL_INTERVAL = 60;
 const DEFAULT_POLL_INTERVAL = 10;
-// Minimum 60s between polls. Also the natural pacing after addDelivery: a
-// typical single add still polls immediately (the last poll is >60s ago),
-// while a burst of adds collapses to at most one extra GET per minute.
+// Minimum 60s between two polls of any kind. A poll after addDelivery is additionally limited
+// to one per poll interval and to the hourly GET budget (v0.14.0, audit B8 — see GetLedger).
 const MIN_POLL_GAP_MS = 60_000;
+/**
+ * v0.14.0 (audit B8): parcel.app allows 20 GET requests per hour and per key — every poll, every
+ * poll after an addDelivery and every connection test with the configured key count. The adapter
+ * keeps its own sliding-hour ledger so it never asks for the 21st.
+ */
+const GET_BUDGET_PER_HOUR = 20;
+const GET_WINDOW_MS = 60 * 60_000;
+/**
+ * v0.14.0 (audit X6, fleet rule "auth backoff on repeated auth failures", CLAUDE_CODING.md):
+ * after the n-th invalid-key/forbidden answer in a row, the next 2^(n-1) - 1 regular polls are
+ * skipped — counted in poll TICKS, not clock time, so the GET duration cannot shift an attempt by
+ * a whole interval. Never more than six hours of silence.
+ */
+const AUTH_BACKOFF_MAX_MS = 6 * 60 * 60_000;
 /** v0.4.2 (M6): minimum length for an apiKey value to even be considered valid. */
 const MIN_API_KEY_LENGTH = 10;
 // v0.9.0 (S5): cap addDelivery field lengths. A sendTo caller is local, but a
@@ -25,12 +38,11 @@ const MAX_ADD_FIELD_LEN = 512;
 // size instead of all deliveries at once, so an abnormally large API response
 // can't flood the broker with thousands of concurrent writes.
 const UPDATE_BATCH_SIZE = 25;
-// v0.9.0 (S4): client-side throttle on addDelivery POSTs. parcel.app enforces
-// ~20 POST/day server-side; this caps a runaway/buggy script's burst so it can't
-// hammer the API. The window is generous enough never to block a real batch-add
-// (the daily server limit is the real cap).
-const MAX_ADDS_PER_WINDOW = 20;
-const ADD_WINDOW_MS = 60_000;
+// v0.14.0 (audit B8): parcel.app allows 20 POST requests per day — failed ones included. The
+// former 20-per-minute throttle let a runaway script spend the whole day's budget in one minute;
+// the adapter now keeps the same sliding 24 hours itself.
+const MAX_ADDS_PER_DAY = 20;
+const ADD_WINDOW_MS = 24 * 60 * 60_000;
 /**
  * v0.11.0: config keys past versions wrote into the instance object and that nothing reads any
  * more — `filterMode` was replaced by `autoRemoveDelivered` in v0.2.0, `language` by the system
@@ -115,8 +127,20 @@ export class ParcelappAdapter extends utils.Adapter {
    * missing tracking number; pruned each poll against the visible pkgIds.
    */
   private failedDeliveries = new Set<string>();
-  /** Timestamps of recent addDelivery POSTs — the S4 throttle window. */
+  /** Timestamps of recent addDelivery POSTs — the sliding 24-hour window (B8). */
   private addTimestamps: number[] = [];
+  /** The daily-limit warning is logged once per window; repeats go to debug (B8). */
+  private addLimitWarned = false;
+  /** Timestamps of every GET sent with the configured key during the last hour (B8). */
+  private getLedger: number[] = [];
+  /** Timestamps of the polls advanced by an addDelivery during the last hour (B8). */
+  private advancedLedger: number[] = [];
+  /** When the last advanced poll ran — at most one per poll interval (B8). */
+  private lastAdvancedPollAt = 0;
+  /** Invalid-key/forbidden answers in a row (X6). */
+  private authFailures = 0;
+  /** Regular poll ticks still to skip after an auth failure (X6). */
+  private authSkipTicks = 0;
   /**
    * L2: true while a checkConnection test GET is in flight. A test hits the same
    * 20/hour GET budget as polling; this guards against a concurrent second test
@@ -490,6 +514,32 @@ export class ParcelappAdapter extends utils.Adapter {
       this.sendTo(obj.from, obj.command, { error: "A connection test is already running — please wait" }, obj.callback);
       return;
     }
+    // v0.14.0 (audit B8): a test with the CONFIGURED key spends the same hourly budget as the poll
+    // and is refused by parcel.app during a rate-limit cooldown — answer locally instead of asking.
+    const configuredKey = typeof this.config.apiKey === "string" ? this.config.apiKey.trim() : "";
+    if (key === configuredKey) {
+      const now = Date.now();
+      if (now < this.rateLimitedUntil) {
+        const waitMin = Math.ceil((this.rateLimitedUntil - now) / 60_000);
+        this.sendTo(
+          obj.from,
+          obj.command,
+          { error: `Rate limited by parcel.app — try again in ${waitMin} minute(s)` },
+          obj.callback,
+        );
+        return;
+      }
+      if (this.getBudgetFree(now) < 1) {
+        this.sendTo(
+          obj.from,
+          obj.command,
+          { error: "The hourly request budget of parcel.app is used up — try again later" },
+          obj.callback,
+        );
+        return;
+      }
+      this.getLedger.push(now);
+    }
     // v0.12.0: the flag is raised and everything that could fail happens INSIDE the try, so
     // setting and clearing are welded together structurally. Before, the client construction and
     // the registry insert sat between the two — a throw there would have latched the flag for the
@@ -611,35 +661,73 @@ export class ParcelappAdapter extends utils.Adapter {
     if (typeof msg.email === "string" && msg.email.length > 0) {
       request.email = msg.email;
     }
-    // v0.9.0 (S4): throttle addDelivery POSTs. parcel.app caps ~20/day
-    // server-side; this stops a runaway/buggy script from hammering the API
-    // with a burst. Record the attempt before the await so concurrent
-    // callers count too.
+    // v0.14.0 (audit B8): parcel.app's 20 POST requests per day, as a sliding 24 hours. Recorded
+    // before the await so concurrent callers count too.
     const nowMs = Date.now();
     this.addTimestamps = this.addTimestamps.filter(t => nowMs - t < ADD_WINDOW_MS);
-    if (this.addTimestamps.length >= MAX_ADDS_PER_WINDOW) {
-      this.log.warn(`addDelivery throttled: more than ${MAX_ADDS_PER_WINDOW} requests within ${ADD_WINDOW_MS / 1000}s`);
-      this.replyAddError(obj, `too many addDelivery requests; max ${MAX_ADDS_PER_WINDOW} per ${ADD_WINDOW_MS / 1000}s`);
+    if (this.addTimestamps.length >= MAX_ADDS_PER_DAY) {
+      const nextAt = new Date(this.addTimestamps[0] + ADD_WINDOW_MS);
+      const next = `${nextAt.getHours().toString().padStart(2, "0")}:${nextAt.getMinutes().toString().padStart(2, "0")}`;
+      const line = `addDelivery refused: parcel.app allows ${MAX_ADDS_PER_DAY} additions per day, the next one is possible at ${next}`;
+      if (this.addLimitWarned) {
+        this.log.debug(line);
+      } else {
+        this.addLimitWarned = true;
+        this.log.warn(line);
+      }
+      this.replyAddError(
+        obj,
+        `daily limit of ${MAX_ADDS_PER_DAY} addDelivery requests reached; next possible at ${next}`,
+      );
       return;
     }
+    this.addLimitWarned = false;
     this.addTimestamps.push(nowMs);
     const addResult = await this.client.addDelivery(request);
-    // v0.4.3 (F5): trace addDelivery result with the (flattened) tracking number.
     // v0.10.0 (L9): the drift-guarded isTrueish — getDeliveries hardens the same
     // API flag; a drifted `success: "false"` string must not read as truthy.
     const added = isTrueish(addResult.success);
-    this.log.debug(`addDelivery: '${oneLine(request.tracking_number)}' result=${added ? "ok" : "fail"}`);
+    // v0.14.0 (audit B7): a user action reports its result on info.
+    const tracking = oneLine(request.tracking_number);
+    if (added) {
+      this.log.info(`addDelivery: added '${tracking}'`);
+    } else {
+      const reason = typeof addResult.error_message === "string" ? oneLine(addResult.error_message) : "no reason given";
+      this.log.info(`addDelivery: parcel.app rejected '${tracking}': ${reason}`);
+    }
     if (obj.callback) {
       this.sendTo(obj.from, obj.command, addResult, obj.callback);
     }
     if (added) {
-      // v0.10.0 (L5): plain poll, no force — a single add still polls right
-      // away (the last poll is usually >60s back), but an add-burst can no
-      // longer stack force-GETs past the 20/h API budget. Nothing is lost:
-      // the server caches the list ~45-90 min, a fresh package rarely shows
-      // tracking data immediately anyway.
-      void this.poll().catch(err => this.log.error(`Poll after addDelivery failed: ${errText(err)}`));
+      // v0.14.0 (audit B8): an ADVANCED poll — at most one per poll interval and within the hourly
+      // budget; otherwise the next regular poll picks the delivery up. parcel.app shows tracking
+      // data for a new delivery only once the carrier reports it (45 minutes on average, up to 90
+      // — parcel.app FAQ), so nothing is lost by waiting for the regular poll.
+      void this.poll("advanced").catch(err => this.log.error(`Poll after addDelivery failed: ${errText(err)}`));
     }
+  }
+
+  /** The configured poll interval in minutes, clamped. */
+  private pollIntervalMinutes(): number {
+    return ParcelappAdapter.coercePollInterval(this.config.pollInterval);
+  }
+
+  /**
+   * GET requests still allowed in the current sliding hour (B8). Prunes the ledger as a side effect.
+   *
+   * @param now Reference time
+   */
+  private getBudgetFree(now: number): number {
+    this.getLedger = this.getLedger.filter(t => now - t < GET_WINDOW_MS);
+    return GET_BUDGET_PER_HOUR - this.getLedger.length;
+  }
+
+  /**
+   * How many polls an addDelivery may advance per hour: the budget minus every regular poll of
+   * that hour minus one connection test — so an advanced poll never takes a regular one's place.
+   */
+  private maxAdvancedPerHour(): number {
+    return Math.max(0, GET_BUDGET_PER_HOUR - Math.ceil(60 / this.pollIntervalMinutes()) - 1);
   }
 
   /**
@@ -756,7 +844,13 @@ export class ParcelappAdapter extends utils.Adapter {
     }
   }
 
-  private async poll(): Promise<void> {
+  /**
+   * One poll cycle.
+   *
+   * @param kind `regular` (the interval and the start), or `advanced` (after an addDelivery — at
+   *   most one per interval, within the hourly budget, never during an auth failure)
+   */
+  private async poll(kind: "regular" | "advanced" = "regular"): Promise<void> {
     // v0.14.0 (audit B11): a poll triggered after the stop (the one after an addDelivery, a late
     // timer tick) must not touch the client or the broker any more.
     if (this.unloaded) {
@@ -796,6 +890,39 @@ export class ParcelappAdapter extends utils.Adapter {
       return;
     }
 
+    // v0.14.0 (audit X6): auth backoff — counted in regular ticks.
+    if (kind === "advanced" && this.authFailures > 0) {
+      this.log.debug("Skipping the advanced poll — the API key was rejected");
+      return;
+    }
+    if (kind === "regular" && this.authSkipTicks > 0) {
+      this.authSkipTicks--;
+      this.log.debug(`Skipping poll — the API key was rejected, next attempt in ${this.authSkipTicks + 1} poll(s)`);
+      return;
+    }
+
+    // v0.14.0 (audit B8): the hourly GET budget. Checked and booked in the same synchronous step,
+    // before the await, so two callers can never both take the last request.
+    const free = this.getBudgetFree(now);
+    if (kind === "advanced") {
+      this.advancedLedger = this.advancedLedger.filter(t => now - t < GET_WINDOW_MS);
+      const intervalMs = this.pollIntervalMinutes() * 60_000;
+      if (
+        now - this.lastAdvancedPollAt < intervalMs ||
+        this.advancedLedger.length >= this.maxAdvancedPerHour() ||
+        free < 2
+      ) {
+        this.log.debug("Skipping the advanced poll — the next regular poll picks the delivery up");
+        return;
+      }
+      this.advancedLedger.push(now);
+      this.lastAdvancedPollAt = now;
+    } else if (free < 1) {
+      this.log.debug("Skipping poll — the hourly request budget of parcel.app is used up");
+      return;
+    }
+    this.getLedger.push(now);
+
     this.isPolling = true;
     this.lastPollTime = now;
     try {
@@ -809,8 +936,11 @@ export class ParcelappAdapter extends utils.Adapter {
 
       // Reset error state on success
       this.rateLimitedUntil = 0;
+      this.authFailures = 0;
+      this.authSkipTicks = 0;
       if (this.lastErrorCode) {
-        this.log.info("Connection restored");
+        // v0.14.0 (audit B7): the connection is a state (info.connection), not a log event.
+        this.log.debug("Connection restored");
         this.lastErrorCode = "";
       }
       // The GET succeeded — from here on a failure is the broker's, not the
@@ -923,50 +1053,36 @@ export class ParcelappAdapter extends utils.Adapter {
         }
         break;
       }
-      case "FORBIDDEN": {
-        // v0.4.2 (P3): 403 is a permission issue (e.g. Premium subscription
-        // expired). Reauth wouldn't help — surface a clear hint.
-        // v0.10.0 (M3): once at error level, repeats at debug — not 144
-        // identical error lines per day for one unchanged account problem.
-        const line = FORBIDDEN_HINT;
-        if (isRepeat) {
-          this.log.debug(line);
-        } else {
-          this.log.error(line);
-        }
-        break;
-      }
+      case "FORBIDDEN":
       case "INVALID_API_KEY": {
-        // v0.10.0 (M3): first occurrence at error (the user must fix the
-        // config; info.connection goes red too) — repeats at debug.
-        const line = "Invalid API key — please check your parcel.app API key";
+        // v0.4.2 (P3): 403 is a permission issue (e.g. Premium subscription expired), 401 a wrong
+        // key — the user has to act, so the first one is a warning (v0.14.0, audit B7: warn like
+        // every other API failure, not error), repeats go to debug.
+        const line =
+          errorCode === "FORBIDDEN" ? FORBIDDEN_HINT : "Invalid API key — please check your parcel.app API key";
         if (isRepeat) {
           this.log.debug(line);
         } else {
-          this.log.error(line);
+          this.log.warn(line);
         }
+        // v0.14.0 (audit X6): auth backoff in regular ticks, never more than six hours.
+        this.authFailures++;
+        const maxTicks = Math.ceil(AUTH_BACKOFF_MAX_MS / (this.pollIntervalMinutes() * 60_000));
+        this.authSkipTicks = Math.min(2 ** (this.authFailures - 1) - 1, maxTicks);
         break;
       }
       case "NETWORK":
-        if (isRepeat) {
-          this.log.debug(`Poll failed (ongoing): ${errText(error)}`);
-        } else {
-          this.log.warn("Cannot reach parcel.app API — will keep retrying");
-        }
-        break;
       case "TIMEOUT":
-        if (isRepeat) {
-          this.log.debug(`Poll failed (ongoing): ${errText(error)}`);
-        } else {
-          this.log.warn("API request timeout — will retry next cycle");
-        }
+        // v0.14.0 (audit B7, fleet rule 2026-09-22): an outage is a STATE — info.connection shows
+        // it. A log line per outage would only repeat the datapoint.
+        this.log.debug(`Poll failed (${errorCode}): ${errText(error)}`);
         break;
       default:
         if (isRepeat) {
           // Same error as last time — don't spam the log
           this.log.debug(`Poll failed (ongoing): ${errText(error)}`);
         } else {
-          this.log.error(`Poll failed: ${errText(error)}`);
+          this.log.warn(`Poll failed: ${errText(error)}`);
         }
     }
 

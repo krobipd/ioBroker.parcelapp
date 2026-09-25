@@ -118,6 +118,11 @@ function internalOf(adapter: ParcelappAdapter): {
   unloaded: boolean;
   failedDeliveries: Set<string>;
   addTimestamps: number[];
+  authFailures: number;
+  authSkipTicks: number;
+  getLedger: number[];
+  advancedLedger: number[];
+  lastAdvancedPollAt: number;
   testClients: Set<{ cancelAll: () => void }>;
   makeClient: (apiKey: string) => FakeClient;
   pollTimer: unknown;
@@ -1080,99 +1085,89 @@ describe("ParcelappAdapter poll — error routing", () => {
     expect(i.rateLimitedUntil).toBe(0);
   });
 
-  it("INVALID_API_KEY logs one error, repeats demote to debug (M3)", async () => {
+  it("INVALID_API_KEY warns once, repeats demote to debug (M3, audit B7)", async () => {
     const { adapter, client } = await setupReady();
     const i = internalOf(adapter);
     client.getDeliveries.mockRejectedValue(codeError("401", "INVALID_API_KEY"));
     await i.poll();
-    expect(i.log.error).toHaveBeenCalledWith(expect.stringContaining("Invalid API key"));
+    expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("Invalid API key"));
+    expect(i.log.error).not.toHaveBeenCalled();
 
     i.lastPollTime = 0;
-    i.log.error.mockClear();
+    i.authSkipTicks = 0; // the backoff is its own test (X6)
+    i.log.warn.mockClear();
     await i.poll();
-    // v0.10.0 (M3): no more 144 identical error lines/day — repeats at debug.
-    expect(i.log.error).not.toHaveBeenCalled();
+    // v0.10.0 (M3): no more 144 identical lines/day — repeats at debug.
+    expect(i.log.warn).not.toHaveBeenCalled();
     expect(i.log.debug).toHaveBeenCalledWith(expect.stringContaining("Invalid API key"));
   });
 
-  it("FORBIDDEN surfaces the premium-subscription hint", async () => {
+  it("FORBIDDEN surfaces the premium-subscription hint as a warning", async () => {
     const { adapter, client } = await setupReady();
     const i = internalOf(adapter);
     client.getDeliveries.mockRejectedValueOnce(codeError("403", "FORBIDDEN"));
     await i.poll();
-    expect(i.log.error).toHaveBeenCalledWith(expect.stringContaining("Premium subscription"));
+    expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("Premium subscription"));
+    expect(i.log.error).not.toHaveBeenCalled();
   });
 
-  it("NETWORK errors warn once, demote repeats to debug, and recovery logs once", async () => {
+  it("a NETWORK outage is a state, not a log line: debug only, and recovery is silent too (audit B7)", async () => {
+    // Fleet rule 2026-09-22: info.connection carries the outage; a warn/info pair per outage only
+    // repeated the datapoint.
     const { adapter, client } = await setupReady();
     const i = internalOf(adapter);
     client.getDeliveries.mockRejectedValueOnce(codeError("refused", "ECONNREFUSED"));
     await i.poll();
-    expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("Cannot reach parcel.app"));
+    expect(i.log.warn).not.toHaveBeenCalled();
+    expect(i.log.debug).toHaveBeenCalledWith(expect.stringContaining("Poll failed (NETWORK)"));
     expect(i.setStateChangedAsync).toHaveBeenCalledWith("info.connection", { val: false, ack: true });
-
-    client.getDeliveries.mockRejectedValueOnce(codeError("refused", "ECONNREFUSED"));
-    i.lastPollTime = 0;
-    i.log.warn.mockClear();
-    await i.poll();
-    expect(i.log.warn).not.toHaveBeenCalled(); // repeat → debug
 
     i.lastPollTime = 0;
     await i.poll(); // success
-    expect(i.log.info).toHaveBeenCalledWith("Connection restored");
+    expect(i.log.info).not.toHaveBeenCalledWith("Connection restored");
+    expect(i.log.debug).toHaveBeenCalledWith("Connection restored");
     expect(i.lastErrorCode).toBe("");
   });
 
-  it("TIMEOUT warns with the retry hint", async () => {
+  it("a TIMEOUT is a state as well — debug only (audit B7)", async () => {
     const { adapter, client } = await setupReady();
     const i = internalOf(adapter);
     client.getDeliveries.mockRejectedValueOnce(codeError("Request timeout", "TIMEOUT"));
     await i.poll();
-    expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("timeout"));
+    expect(i.log.warn).not.toHaveBeenCalled();
+    expect(i.log.debug).toHaveBeenCalledWith(expect.stringContaining("Poll failed (TIMEOUT)"));
   });
 
-  it("FORBIDDEN repeats demote to debug — not 144 identical error lines a day (M3)", async () => {
+  it("FORBIDDEN repeats demote to debug — not 144 identical lines a day (M3)", async () => {
     const { adapter, client } = await setupReady();
     const i = internalOf(adapter);
     client.getDeliveries.mockRejectedValue(codeError("403", "FORBIDDEN"));
     await i.poll();
-    expect(i.log.error).toHaveBeenCalledWith(expect.stringContaining("Premium subscription"));
+    expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("Premium subscription"));
 
     i.lastPollTime = 0;
-    i.log.error.mockClear();
+    i.authSkipTicks = 0; // the backoff is its own test (X6)
+    i.log.warn.mockClear();
     await i.poll();
-    expect(i.log.error).not.toHaveBeenCalled();
+    expect(i.log.warn).not.toHaveBeenCalled();
     expect(i.log.debug).toHaveBeenCalledWith(expect.stringContaining("Premium subscription"));
   });
 
-  it("TIMEOUT repeats demote to debug as well", async () => {
+  it("an unclassified failure warns once, then repeats at debug (default branch, audit B7)", async () => {
+    // Everything without a known code — e.g. a PARSE_ERROR from the client or a
+    // foreign error — takes the default branch.
     const { adapter, client } = await setupReady();
     const i = internalOf(adapter);
-    client.getDeliveries.mockRejectedValue(codeError("Request timeout", "TIMEOUT"));
+    client.getDeliveries.mockRejectedValue(codeError("JSON parse error (12 bytes)", "PARSE_ERROR"));
     await i.poll();
-    expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("timeout"));
+    expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("Poll failed: JSON parse error"));
+    expect(i.log.error).not.toHaveBeenCalled();
+    expect(i.lastErrorCode).toBe("PARSE_ERROR");
 
     i.lastPollTime = 0;
     i.log.warn.mockClear();
     await i.poll();
     expect(i.log.warn).not.toHaveBeenCalled();
-    expect(i.log.debug).toHaveBeenCalledWith(expect.stringContaining("Poll failed (ongoing)"));
-  });
-
-  it("an unclassified failure errors once, then repeats at debug (default branch)", async () => {
-    // Everything without a known code — e.g. a PARSE_ERROR from the client or a
-    // foreign error — takes the default branch, which had no coverage at all.
-    const { adapter, client } = await setupReady();
-    const i = internalOf(adapter);
-    client.getDeliveries.mockRejectedValue(codeError("JSON parse error (12 bytes)", "PARSE_ERROR"));
-    await i.poll();
-    expect(i.log.error).toHaveBeenCalledWith(expect.stringContaining("Poll failed: JSON parse error"));
-    expect(i.lastErrorCode).toBe("PARSE_ERROR");
-
-    i.lastPollTime = 0;
-    i.log.error.mockClear();
-    await i.poll();
-    expect(i.log.error).not.toHaveBeenCalled();
     expect(i.log.debug).toHaveBeenCalledWith(expect.stringContaining("Poll failed (ongoing)"));
   });
 
@@ -1184,7 +1179,7 @@ describe("ParcelappAdapter poll — error routing", () => {
     client.getDeliveries.mockRejectedValueOnce("boom");
     await expect(i.poll()).resolves.toBeUndefined();
     expect(i.lastErrorCode).toBe("UNKNOWN");
-    expect(i.log.error).toHaveBeenCalledWith(expect.stringContaining("Poll failed: boom"));
+    expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("Poll failed: boom"));
   });
 
   it("a broker that refuses the connection=false write on the error path does not make poll() reject (T13)", async () => {
@@ -1330,6 +1325,230 @@ describe("ParcelappAdapter stop and reply channel (audit 2026-09-25)", () => {
     i.extendObject.mockClear();
     await i.onReady();
     expect(i.extendObject).not.toHaveBeenCalled();
+  });
+});
+
+describe("ParcelappAdapter request budget and auth backoff (audit 2026-09-25)", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /** Let the fire-and-forget poll after an addDelivery run to completion. */
+  async function settle(): Promise<void> {
+    for (let n = 0; n < 5; n++) {
+      await new Promise<void>(resolve => setImmediate(resolve));
+    }
+  }
+
+  /**
+   * Drive `minutes` of adapter life on a fake clock: a regular poll every `interval` minutes, and
+   * whatever `each(minute)` does on top. Returns the time of every GET the adapter sent.
+   */
+  async function simulate(
+    interval: number,
+    minutes: number,
+    each: (i: ReturnType<typeof internalOf>, minute: number) => Promise<void>,
+  ): Promise<{ gets: number[]; i: ReturnType<typeof internalOf> }> {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    const start = new Date(2026, 5, 15, 8, 0, 0).getTime();
+    vi.setSystemTime(start);
+    const { adapter, client } = setup({ pollInterval: interval });
+    const i = internalOf(adapter);
+    const gets: number[] = [];
+    client.getDeliveries.mockImplementation(() => {
+      gets.push(Date.now());
+      return Promise.resolve([makeDelivery()]);
+    });
+    client.testConnection.mockImplementation(() => {
+      gets.push(Date.now());
+      return Promise.resolve({ success: true, message: "Connection successful" });
+    });
+    await i.onReady(); // the start poll at minute 0
+    for (let minute = 1; minute <= minutes; minute++) {
+      vi.setSystemTime(start + minute * 60_000);
+      if (minute % interval === 0) {
+        await i.poll();
+      }
+      await each(i, minute);
+      await settle();
+    }
+    return { gets, i };
+  }
+
+  function maxPerHour(gets: number[]): number {
+    return Math.max(0, ...gets.map(t => gets.filter(u => u >= t && u < t + 60 * 60_000).length));
+  }
+
+  function everyIntervalHasAGet(gets: number[], interval: number, minutes: number): boolean {
+    const start = gets[0];
+    for (let k = 0; k * interval < minutes - interval; k++) {
+      const from = start + k * interval * 60_000;
+      if (!gets.some(t => t >= from && t < from + interval * 60_000)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  const add = (i: ReturnType<typeof internalOf>, n: number): Promise<void> =>
+    i.onMessage({
+      command: "addDelivery",
+      from: "system.adapter.javascript.0",
+      callback: { id: n },
+      message: { tracking_number: `B${n}`, carrier_code: "dhl", description: "x" },
+    });
+
+  for (const interval of [5, 10, 60]) {
+    it(`one add per interval never exceeds 20 GET per hour, every interval still polls (interval ${interval} min, B8)`, async () => {
+      const { gets } = await simulate(interval, 180, async (i, minute) => {
+        if (minute % interval === 2) {
+          await add(i, minute);
+        }
+      });
+      expect(maxPerHour(gets)).toBeLessThanOrEqual(20);
+      expect(everyIntervalHasAGet(gets, interval, 180)).toBe(true);
+    });
+
+    it(`20 adds a minute apart never exceed 20 GET per hour (interval ${interval} min, B8)`, async () => {
+      const { gets } = await simulate(interval, 180, async (i, minute) => {
+        if (minute >= 3 && minute < 23) {
+          await add(i, minute);
+        }
+      });
+      expect(maxPerHour(gets)).toBeLessThanOrEqual(20);
+      expect(everyIntervalHasAGet(gets, interval, 180)).toBe(true);
+    });
+
+    it(`connection tests with the configured key share the budget (interval ${interval} min, B8)`, async () => {
+      const { gets, i } = await simulate(interval, 120, async (inst, minute) => {
+        if (minute % 3 === 0) {
+          await inst.onMessage({
+            command: "checkConnection",
+            from: "system.adapter.admin.0",
+            callback: { id: minute },
+            message: { apiKey: "0123456789abcdef" },
+          });
+        }
+      });
+      expect(maxPerHour(gets)).toBeLessThanOrEqual(20);
+      expect(i.sendTo).toHaveBeenCalledWith(
+        "system.adapter.admin.0",
+        "checkConnection",
+        { error: expect.stringContaining("hourly request budget") },
+        expect.anything(),
+      );
+    });
+  }
+
+  it("at most one advanced poll per interval (B8)", async () => {
+    const { gets } = await simulate(10, 10, async (i, minute) => {
+      if (minute === 2 || minute === 4 || minute === 6) {
+        await add(i, minute);
+      }
+    });
+    // Start poll (minute 0), ONE advanced poll (minute 2), the regular one at minute 10.
+    expect(gets).toHaveLength(3);
+  });
+
+  it("the auth backoff counts poll ticks: attempts at tick 1, 2, 4 and 8 even when a GET takes time (X6)", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    const start = new Date(2026, 5, 15, 8, 0, 0).getTime();
+    vi.setSystemTime(start);
+    const { adapter, client } = setup({ pollInterval: 10 });
+    const i = internalOf(adapter);
+    const attempts: number[] = [];
+    let tick = 0;
+    client.getDeliveries.mockImplementation(() => {
+      attempts.push(tick);
+      // A real GET takes time — a clock-based backoff would slip by a whole interval here.
+      vi.setSystemTime(Date.now() + 3_000);
+      return Promise.reject(codeError("401", "INVALID_API_KEY"));
+    });
+    i.client = client;
+    i.stateManager = setup().stateMgr;
+    for (tick = 1; tick <= 8; tick++) {
+      vi.setSystemTime(start + tick * 10 * 60_000);
+      await i.poll();
+    }
+    expect(attempts).toEqual([1, 2, 4, 8]);
+  });
+
+  it("a success ends the auth backoff (X6)", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    client.getDeliveries.mockRejectedValueOnce(codeError("401", "INVALID_API_KEY"));
+    client.getDeliveries.mockRejectedValueOnce(codeError("401", "INVALID_API_KEY"));
+    await i.poll();
+    i.lastPollTime = 0;
+    await i.poll();
+    expect(i.authSkipTicks).toBe(1);
+    i.authSkipTicks = 0;
+    i.lastPollTime = 0;
+    await i.poll(); // success
+    expect(i.authFailures).toBe(0);
+    expect(i.authSkipTicks).toBe(0);
+  });
+
+  it("no advanced poll while the API key is rejected (X6)", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    i.authFailures = 1;
+    client.getDeliveries.mockClear();
+    await add(i, 1);
+    await settle();
+    expect(client.getDeliveries).not.toHaveBeenCalled();
+  });
+
+  it("the result of an addDelivery is reported on info — a user action reports its result (B7)", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    await add(i, 1);
+    expect(i.log.info).toHaveBeenCalledWith("addDelivery: added 'B1'");
+    client.addDelivery.mockResolvedValueOnce({ success: false, error_message: "Unknown carrier code" });
+    await add(i, 2);
+    expect(i.log.info).toHaveBeenCalledWith("addDelivery: parcel.app rejected 'B2': Unknown carrier code");
+  });
+
+  it("a connection test with the configured key during a rate-limit cooldown is answered locally (B8)", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    i.rateLimitedUntil = Date.now() + 10 * 60_000;
+    await i.onMessage({
+      command: "checkConnection",
+      from: "system.adapter.admin.0",
+      callback: { id: 1 },
+      message: { apiKey: "0123456789abcdef" },
+    });
+    expect(client.testConnection).not.toHaveBeenCalled();
+    expect(i.sendTo).toHaveBeenCalledWith(
+      "system.adapter.admin.0",
+      "checkConnection",
+      { error: expect.stringContaining("Rate limited by parcel.app") },
+      expect.anything(),
+    );
+  });
+
+  it("a connection test with a DIFFERENT key is not held back by this key's budget (B8)", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    i.rateLimitedUntil = Date.now() + 10 * 60_000;
+    i.getLedger = Array.from({ length: 20 }, () => Date.now());
+    await i.onMessage({
+      command: "checkConnection",
+      from: "system.adapter.admin.0",
+      callback: { id: 1 },
+      message: { apiKey: "another-key-0123456789" },
+    });
+    expect(client.testConnection).toHaveBeenCalledTimes(1);
+  });
+
+  it("a failing advanced poll is logged, never an unhandled rejection (T13b)", async () => {
+    const { adapter } = await setupReady();
+    const i = internalOf(adapter);
+    vi.spyOn(i, "poll").mockImplementation(() => Promise.reject(new Error("boom")));
+    await add(i, 1);
+    await settle();
+    expect(i.log.error).toHaveBeenCalledWith(expect.stringContaining("Poll after addDelivery failed"));
   });
 });
 
@@ -1655,7 +1874,7 @@ describe("ParcelappAdapter onMessage", () => {
     );
   });
 
-  it("addDelivery: throttles a burst beyond the per-window limit (S4)", async () => {
+  it("addDelivery: parcel.app's 20 additions per day are the limit — the 21st is refused, warned once (S4, audit B8)", async () => {
     const { adapter, client } = await setupReady();
     const i = internalOf(adapter);
     const add = (n: number): Promise<void> =>
@@ -1666,30 +1885,36 @@ describe("ParcelappAdapter onMessage", () => {
         message: { tracking_number: `T${n}`, carrier_code: "dhl", description: "x" },
       });
 
-    // The first 20 (MAX_ADDS_PER_WINDOW) go through within the same window...
+    // The first 20 (MAX_ADDS_PER_DAY) go through within the same 24 hours...
     for (let n = 0; n < 20; n++) {
       await add(n);
     }
     expect(client.addDelivery).toHaveBeenCalledTimes(20);
 
-    // ...the 21st is throttled — not sent to the API, clear error back.
+    // ...the 21st is refused — not sent to the API, clear error back.
     i.sendTo.mockClear();
+    i.log.warn.mockClear();
     await add(99);
     expect(client.addDelivery).toHaveBeenCalledTimes(20);
     expect(i.sendTo).toHaveBeenCalledWith(
       "system.adapter.admin.0",
       "addDelivery",
-      expect.objectContaining({ success: false, error_message: expect.stringContaining("too many") }),
+      expect.objectContaining({ success: false, error_message: expect.stringContaining("daily limit of 20") }),
       expect.anything(),
     );
+    // Five more refusals: still exactly one warning in this window.
+    for (let n = 100; n < 105; n++) {
+      await add(n);
+    }
+    expect(i.log.warn).toHaveBeenCalledTimes(1);
+    expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("20 additions per day"));
   });
 
-  it("addDelivery: the throttle window expires — a request goes through again after 60s (L25)", async () => {
+  it("addDelivery: the daily window slides — a request goes through again 24 h later (L25, audit B8)", async () => {
     const { adapter, client } = await setupReady();
     const i = internalOf(adapter);
-    // Simulate 20 adds that happened 61s ago: a sign/comparison bug in the
-    // window filter would keep the throttle closed forever.
-    i.addTimestamps = Array.from({ length: 20 }, () => Date.now() - 61_000);
+    // 20 adds 24 h + 1 min ago: a sign/comparison bug in the window filter would keep it closed forever.
+    i.addTimestamps = Array.from({ length: 20 }, () => Date.now() - 24 * 60 * 60_000 - 60_000);
     client.addDelivery.mockClear();
     await i.onMessage({
       command: "addDelivery",
@@ -1698,6 +1923,20 @@ describe("ParcelappAdapter onMessage", () => {
       message: { tracking_number: "AFTER_WINDOW", carrier_code: "dhl", description: "x" },
     });
     expect(client.addDelivery).toHaveBeenCalledTimes(1);
+  });
+
+  it("addDelivery: 20 adds an hour ago still count — the window is a day, not a minute (audit B8)", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    i.addTimestamps = Array.from({ length: 20 }, () => Date.now() - 60 * 60_000);
+    client.addDelivery.mockClear();
+    await i.onMessage({
+      command: "addDelivery",
+      from: "system.adapter.admin.0",
+      callback: { id: 1 },
+      message: { tracking_number: "WITHIN_DAY", carrier_code: "dhl", description: "x" },
+    });
+    expect(client.addDelivery).not.toHaveBeenCalled();
   });
 
   it("addDelivery: a null message yields a clear validation error (v0.7.2 hardening)", async () => {
