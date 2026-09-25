@@ -1,3 +1,4 @@
+import type * as fs from "node:fs";
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
@@ -53,6 +54,30 @@ describe("carrierIcon", () => {
 
   it("returns the identical value when asked repeatedly (cached, stable)", () => {
     expect(carrierIcon("ups")).toBe(carrierIcon("ups"));
+  });
+
+  it("an unreadable file gives no icon and is NOT cached — the next call reads again (audit T4a)", async () => {
+    const actual = await vi.importActual<typeof fs>("node:fs");
+    let failNext = true;
+    vi.doMock("node:fs", () => ({
+      ...actual,
+      readFileSync: (...args: Parameters<typeof actual.readFileSync>) => {
+        if (failNext) {
+          failNext = false;
+          throw new Error("EACCES");
+        }
+        return actual.readFileSync(...args);
+      },
+    }));
+    try {
+      vi.resetModules();
+      const fresh: FreshModule = await import("./device-icons.js");
+      expect(fresh.carrierIcon("gls")).toBeUndefined();
+      expect(fresh.carrierIcon("gls")).toBe(carrierIcon("gls"));
+    } finally {
+      vi.doUnmock("node:fs");
+      vi.resetModules();
+    }
   });
 
   it("a CRLF checkout produces the SAME URI as an LF checkout", async () => {

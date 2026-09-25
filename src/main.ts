@@ -87,6 +87,7 @@ type StateManagerLike = Pick<
   | "updateSummary"
   | "cleanupDeliveries"
   | "refreshDerived"
+  | "loadExisting"
 >;
 
 /**
@@ -147,6 +148,8 @@ export class ParcelappAdapter extends utils.Adapter {
   private advancedLedger: number[] = [];
   /** When the last advanced poll ran — at most one per poll interval (B8). */
   private lastAdvancedPollAt = 0;
+  /** Reading the existing package devices failed and was reported on warn — repeats go to debug (S2). */
+  private loadExistingWarned = false;
   /** Invalid-key/forbidden answers in a row (X6). */
   private authFailures = 0;
   /** Regular poll ticks still to skip after an auth failure (X6). */
@@ -1025,7 +1028,24 @@ export class ParcelappAdapter extends utils.Adapter {
       // package id in a deterministic sequential pre-pass (stable array order)
       // BEFORE the parallel updates — collision-suffixing is then deterministic
       // and packageId runs exactly once per delivery instead of twice.
-      stateManager.resetPollState();
+      // v0.14.0 (audit S2): the existing devices and their stored identities first — they decide
+      // which package owns which id after a restart. A broker failure here is not an API failure;
+      // the ids are then handed out as before and the next poll tries again.
+      try {
+        await stateManager.loadExisting();
+        this.loadExistingWarned = false;
+      } catch (err) {
+        const line = `Reading the existing packages failed (API connection is fine, retrying next poll): ${errText(err)}`;
+        if (this.loadExistingWarned) {
+          this.log.debug(line);
+        } else {
+          this.log.warn(line);
+          this.loadExistingWarned = true;
+        }
+      }
+      // With EVERY delivery of the answer — also those not shown — so a vanished shipment can be
+      // told from a present one (audit S1/S3).
+      stateManager.resetPollState(deliveries);
       const pkgIds = visibleDeliveries.map(d => stateManager.packageId(d));
 
       // v0.4.2 (M4): per-delivery updates run in parallel, each wrapped in

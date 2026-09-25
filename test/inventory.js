@@ -64,34 +64,31 @@ const PACKAGE_STATES = [
 ];
 
 /**
- * The adapter's own id rule (`StateManager.sanitize` + `packageId`), mirrored so the test knows
- * exactly which objects to wait for instead of waiting for "the tree stopped growing".
- *
- * @param {string} value Raw value to sanitize
- * @returns {string} the sanitized id segment
+ * The adapter's own id rule, loaded from the BUILT module (`src/lib/package-id.ts`) — no mirror that
+ * could drift. The module has no adapter-core import on purpose: loading `state-manager.js` here
+ * would pull adapter-core in, and that ends a process without a js-controller behind it.
  */
-function sanitize(value) {
-  return (
-    String(value)
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "_")
-      .replace(/^_+|_+$/g, "")
-      .slice(0, 50) || "unknown"
-  );
-}
+const { idCandidates, identityOf, rawIdKey } = require("../build/lib/package-id.js");
 
 /**
- * Package id of a fixture delivery.
+ * The package ids of all fixture deliveries, handed out like the adapter's first poll does on an
+ * empty tree: each delivery takes its first candidate that no earlier one owns.
  *
- * @param {Record<string, unknown>} delivery Fixture delivery
- * @returns {string} the package id
+ * @returns {string[]} the package ids, index-aligned to DELIVERIES
  */
-function packageId(delivery) {
-  let id = sanitize(delivery.tracking_number);
-  if (typeof delivery.extra_information === "string" && delivery.extra_information.length > 0) {
-    id += `_${sanitize(delivery.extra_information)}`;
-  }
-  return id;
+function packageIds() {
+  const owner = new Map();
+  return DELIVERIES.map(delivery => {
+    const key = rawIdKey(identityOf(delivery));
+    for (const candidate of idCandidates(delivery)) {
+      const current = owner.get(candidate);
+      if (current === undefined || current === key) {
+        owner.set(candidate, key);
+        return candidate;
+      }
+    }
+    throw new Error("unreachable");
+  });
 }
 
 /** Every object id the fixtures must produce — the wait criterion, and a completeness assertion. */
@@ -100,8 +97,7 @@ function expectedObjectIds() {
   for (const state of ["activeCount", "todayCount", "deliveryWindow"]) {
     ids.push(`${NS}summary.${state}`);
   }
-  for (const delivery of DELIVERIES) {
-    const pkgId = packageId(delivery);
+  for (const pkgId of packageIds()) {
     ids.push(`${NS}deliveries.${pkgId}`);
     for (const state of PACKAGE_STATES) {
       ids.push(`${NS}deliveries.${pkgId}.${state}`);
@@ -264,7 +260,7 @@ tests.integration(ADAPTER_DIR, {
       it("PACKAGE_STATES lists exactly the datapoints a package really creates", async function () {
         this.timeout(30000);
         const objects = await dumpObjects(harness);
-        const pkgId = packageId(DELIVERIES[0]);
+        const pkgId = packageIds()[0];
         const prefix = `${NS}deliveries.${pkgId}.`;
         const actual = Object.keys(objects)
           .filter(id => id.startsWith(prefix))

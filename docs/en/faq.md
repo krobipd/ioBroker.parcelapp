@@ -83,11 +83,20 @@ as long as parcel.app still returns the shipment.
 
 ## I have the same tracking number twice, under two carriers
 
-Both are tracked, each with its own device. That happens when a number was first added with the
-wrong carrier: the API has no delete endpoint, so the entry stays and you add the number again with
-the right carrier. The second package gets a suffix on its object id so the two never overwrite each
-other. Once the wrong entry is gone from parcel.app, the remaining package moves up to the plain id
-on the next poll.
+Both are tracked, each with its own device — also three or more carriers, and also entries without
+any tracking number. That happens when a number was first added with the wrong carrier: the API has
+no delete endpoint, so the entry stays and you add the number again with the right carrier. The
+second package gets a suffix on its object id so the two never overwrite each other. Once the wrong
+entry is gone from parcel.app, the poll that notices removes its objects, and the remaining package
+moves up to the plain id on the poll after that.
+
+If you instead **correct the carrier of the existing entry** in parcel.app, the package keeps its
+device and all its datapoints — the adapter recognises the same shipment by tracking number and
+extra information. The same holds for a number re-typed in other letter case. `lastUpdated` moves,
+because the carrier changed.
+
+Which package owns which id is stored in the device object (`native.identity`), so a restart of the
+adapter never swaps the ids of two packages, whatever order parcel.app sends them in.
 
 ## Why is `lastUpdated` old even though the adapter is polling?
 

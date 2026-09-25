@@ -40,6 +40,13 @@ vi.mock("@iobroker/adapter-core", () => ({
   },
 }));
 
+// The real pictograms, wrapped so one test can make a file unreadable (audit T4a).
+vi.mock("./device-icons", async importOriginal => {
+  const actual = await importOriginal<typeof DeviceIcons>();
+  return { ...actual, carrierIcon: vi.fn(actual.carrierIcon) };
+});
+
+import type * as DeviceIcons from "./device-icons";
 import { carrierIcon } from "./device-icons";
 import { StateManager } from "./state-manager";
 import type { ParcelDelivery } from "./types";
@@ -89,7 +96,7 @@ interface MockAdapter {
   log: { debug: (msg: string) => void };
   extendObject: (id: string, obj: Partial<ObjectDef>, options?: { preserve?: { common?: string[] } }) => Promise<void>;
   setStateChangedAsync: (id: string, state: StateValue) => Promise<{ id: string; notChanged: boolean }>;
-  delObjectAsync: (id: string, opts?: { recursive: boolean }) => Promise<void>;
+  delObjectAsync: (id: string, opts?: { recursive?: boolean }) => Promise<void>;
   getObjectViewAsync: (
     design: string,
     search: string,
@@ -151,14 +158,17 @@ function createMockAdapter(): MockAdapter {
       states.set(id, state);
       return Promise.resolve({ id, notChanged: false });
     },
-    delObjectAsync: (id: string, _opts?: { recursive: boolean }): Promise<void> => {
+    delObjectAsync: (id: string, opts?: { recursive?: boolean }): Promise<void> => {
+      // Like the controller: the children go only with `recursive` (audit T1 — a mock that always
+      // deleted the subtree could not see the option missing).
+      const hit = (key: string): boolean => key === id || (opts?.recursive === true && key.startsWith(`${id}.`));
       for (const key of objects.keys()) {
-        if (key === id || key.startsWith(`${id}.`)) {
+        if (hit(key)) {
           objects.delete(key);
         }
       }
       for (const key of states.keys()) {
-        if (key === id || key.startsWith(`${id}.`)) {
+        if (hit(key)) {
           states.delete(key);
         }
       }
@@ -385,6 +395,281 @@ describe("StateManager", () => {
       fresh.resetPollState();
       fresh.packageId(a);
       expect(fresh.packageId(bOtherCarrier)).toBe(suffixed);
+    });
+  });
+
+  describe("package identity (audit 2026-09-25, S1/S2/S3/B4b/X11)", () => {
+    /**
+     * One poll the way main.ts runs it: known devices first, the full list, the ids, the writes,
+     * the cleanup. Returns the ids and every delete the poll sent.
+     *
+     * @param mgr State manager under test
+     * @param deliveries The API answer
+     * @param carrier Carrier display name to write
+     * @returns the package ids and the deleted object ids
+     */
+    async function pollOnce(
+      mgr: StateManager,
+      deliveries: ParcelDelivery[],
+      carrier = "Carrier",
+    ): Promise<{ ids: string[]; deleted: string[] }> {
+      const deleted: string[] = [];
+      const del = adapter.delObjectAsync;
+      adapter.delObjectAsync = (id: string, opts?: { recursive?: boolean }): Promise<void> => {
+        deleted.push(id);
+        return del(id, opts);
+      };
+      try {
+        await mgr.loadExisting();
+        mgr.resetPollState(deliveries);
+        const ids = deliveries.map(d => mgr.packageId(d));
+        for (const [index, delivery] of deliveries.entries()) {
+          await mgr.updateDelivery(delivery, carrier, ids[index]);
+        }
+        await mgr.cleanupDeliveries(ids);
+        return { ids, deleted };
+      } finally {
+        adapter.delObjectAsync = del;
+      }
+    }
+
+    it("three carriers with the same number stay three packages (S1/S3)", async () => {
+      const deliveries = ["dhl", "ups", "fedex"].map(c => makeDelivery({ tracking_number: "SAME-1", carrier_code: c }));
+      const first = await pollOnce(manager, deliveries);
+      expect(new Set(first.ids).size).toBe(3);
+      expect(first.ids[0]).toBe("same_1");
+      const second = await pollOnce(manager, [...deliveries].reverse());
+      expect(second.ids).toEqual([...first.ids].reverse());
+      expect(second.deleted).toEqual([]);
+    });
+
+    it("three deliveries without a number stay three packages", async () => {
+      const deliveries = ["dhl", "ups", "gls"].map(c => makeDelivery({ tracking_number: "", carrier_code: c }));
+      const { ids } = await pollOnce(manager, deliveries);
+      expect(new Set(ids).size).toBe(3);
+    });
+
+    it("a corrected carrier code keeps the package: no rename, no delete (S1)", async () => {
+      const wrong = makeDelivery({ tracking_number: "JJD000390007", carrier_code: "pholder" });
+      const first = await pollOnce(manager, [wrong]);
+      const objectsBefore = [...adapter.objects.keys()].sort();
+      const right = { ...wrong, carrier_code: "dhl" };
+      const second = await pollOnce(manager, [right]);
+      expect(second.ids).toEqual(first.ids);
+      expect(second.deleted).toEqual([]);
+      expect([...adapter.objects.keys()].sort()).toEqual(objectsBefore);
+    });
+
+    it("a suffixed package keeps its suffix when its carrier is corrected — takeover before a free id", async () => {
+      const other = makeDelivery({ tracking_number: "ABC-123", carrier_code: "dhl" });
+      const wrong = makeDelivery({ tracking_number: "ABC.123", carrier_code: "pholder" });
+      const first = await pollOnce(manager, [other, wrong]);
+      expect(first.ids[1]).toMatch(/^abc_123__/);
+      const second = await pollOnce(manager, [other, { ...wrong, carrier_code: "dhl" }]);
+      expect(second.ids).toEqual(first.ids);
+      expect(second.deleted).toEqual([]);
+    });
+
+    it("a number re-typed in other letter case keeps the package", async () => {
+      const first = await pollOnce(manager, [makeDelivery({ tracking_number: "ABC123" })]);
+      const second = await pollOnce(manager, [makeDelivery({ tracking_number: "abc123" })]);
+      expect(second.ids).toEqual(first.ids);
+      expect(second.deleted).toEqual([]);
+    });
+
+    it("two deliveries without a number are never taken for the same shipment", async () => {
+      const first = await pollOnce(manager, [makeDelivery({ tracking_number: "", carrier_code: "dhl" })]);
+      expect(first.ids).toEqual(["unknown"]);
+      manager.resetPollState([makeDelivery({ tracking_number: "", carrier_code: "ups" })]);
+      expect(manager.packageId(makeDelivery({ tracking_number: "", carrier_code: "ups" }))).not.toBe("unknown");
+    });
+
+    it("the correct entry does not take over the wrong one's objects while those still exist (audit case)", async () => {
+      const wrong = makeDelivery({ tracking_number: "SAME-2", carrier_code: "pholder" });
+      const right = makeDelivery({ tracking_number: "SAME-2", carrier_code: "dhl" });
+      const both = await pollOnce(manager, [wrong, right]);
+      // The wrong one is deleted in parcel.app: the right one keeps its own suffix this poll...
+      manager.resetPollState([right]);
+      expect(manager.packageId(right)).toBe(both.ids[1]);
+      // ...and moves up once the wrong one's objects are gone.
+      await manager.cleanupDeliveries([both.ids[1]]);
+      manager.resetPollState([right]);
+      expect(manager.packageId(right)).toBe(both.ids[0]);
+    });
+
+    it("a different shipment never takes over an id, even when its owner is gone", async () => {
+      const a = makeDelivery({ tracking_number: "ABC-123" });
+      const first = await pollOnce(manager, [a]);
+      // `a` is gone from the answer, its objects not yet removed: `b` must not move into them.
+      const b = makeDelivery({ tracking_number: "ABC.123" });
+      manager.resetPollState([b]);
+      expect(manager.packageId(b)).not.toBe(first.ids[0]);
+    });
+
+    it("the same number with other extra information is another shipment", async () => {
+      const a = makeDelivery({ tracking_number: "N1", extra_information: "A B" });
+      const first = await pollOnce(manager, [a]);
+      const b = makeDelivery({ tracking_number: "N1", extra_information: "A-B" });
+      manager.resetPollState([b]);
+      expect(manager.packageId(b)).not.toBe(first.ids[0]);
+    });
+
+    it("of two ids a vanished shipment still holds, the takeover picks the earliest", async () => {
+      const x = makeDelivery({ tracking_number: "T9", carrier_code: "x1" });
+      const y = makeDelivery({ tracking_number: "T9", carrier_code: "y1" });
+      const first = await pollOnce(manager, [x, y]);
+      // `x` is gone; `y` moves up to the bare id, but deleting its old suffixed objects fails —
+      // so `y` holds both ids, the suffixed one claimed first.
+      const del = adapter.delObjectAsync;
+      adapter.delObjectAsync = (id: string, opts?: { recursive?: boolean }): Promise<void> =>
+        id === `deliveries.${first.ids[1]}` ? Promise.reject(new Error("busy")) : del(id, opts);
+      await manager.cleanupDeliveries([first.ids[1]]);
+      manager.resetPollState([y]);
+      expect(manager.packageId(y)).toBe(first.ids[0]);
+      await expect(manager.cleanupDeliveries([first.ids[0]])).rejects.toThrow("busy");
+      adapter.delObjectAsync = del;
+      // `y` is corrected to another code: of its two ids it takes the earlier one.
+      const z = { ...y, carrier_code: "z1" };
+      manager.resetPollState([z]);
+      expect(manager.packageId(z)).toBe(first.ids[0]);
+    });
+
+    it("without the poll's list nothing is taken over", async () => {
+      await pollOnce(manager, [makeDelivery({ tracking_number: "T1", carrier_code: "pholder" })]);
+      manager.resetPollState();
+      expect(manager.packageId(makeDelivery({ tracking_number: "T1", carrier_code: "dhl" }))).not.toBe("t1");
+    });
+
+    it("a restart keeps every id, whatever order the API sends (S2)", async () => {
+      const a = makeDelivery({ tracking_number: "ABC-123" });
+      const b = makeDelivery({ tracking_number: "ABC.123" });
+      const first = await pollOnce(manager, [a, b]);
+      expect(adapter.objects.get(`deliveries.${first.ids[1]}`)!.native.identity).toEqual(["ABC.123", "", "dhl"]);
+
+      const restarted = new StateManager(adapter as never);
+      const second = await pollOnce(restarted, [b, a]);
+      expect(second.ids).toEqual([first.ids[1], first.ids[0]]);
+      expect(second.deleted).toEqual([]);
+    });
+
+    it("a device from before v0.14.0 has no identity: first come keeps the bare id, then it gets one", async () => {
+      adapter.objects.set("deliveries.abc_123", { type: "device", common: { name: "old" }, native: {} });
+      const b = makeDelivery({ tracking_number: "ABC.123" });
+      const { ids } = await pollOnce(manager, [b]);
+      expect(ids).toEqual(["abc_123"]);
+      expect(adapter.objects.get("deliveries.abc_123")!.native.identity).toEqual(["ABC.123", "", "dhl"]);
+    });
+
+    it("a stored identity that is not three strings is ignored", async () => {
+      adapter.objects.set("deliveries.abc_123", {
+        type: "device",
+        common: { name: "odd" },
+        native: { identity: ["ABC-123", 42, "dhl"] },
+      });
+      const restarted = new StateManager(adapter as never);
+      await restarted.loadExisting();
+      restarted.resetPollState([makeDelivery({ tracking_number: "ABC.123" })]);
+      expect(restarted.packageId(makeDelivery({ tracking_number: "ABC.123" }))).toBe("abc_123");
+    });
+
+    it("a claim made in this process wins over a stored identity", async () => {
+      adapter.objects.set("deliveries.abc_123", {
+        type: "device",
+        common: { name: "stored" },
+        native: { identity: ["ABC-123", "", "dhl"] },
+      });
+      const fresh = new StateManager(adapter as never);
+      fresh.resetPollState();
+      expect(fresh.packageId(makeDelivery({ tracking_number: "ABC.123" }))).toBe("abc_123");
+      await fresh.loadExisting();
+      expect(fresh.packageId(makeDelivery({ tracking_number: "ABC.123" }))).toBe("abc_123");
+    });
+
+    describe("a carrier-code change is a change of the tracking (B4b)", () => {
+      const stamp = (id: string): unknown => adapter.states.get(`deliveries.${id}.lastUpdated`)?.val;
+      const later = (): void => {
+        vi.setSystemTime(new Date(Date.now() + 5_000));
+      };
+
+      it("stamps lastUpdated when the code changes", async () => {
+        const wrong = makeDelivery({ tracking_number: "C1", carrier_code: "pholder" });
+        const { ids } = await pollOnce(manager, [wrong], "Same Name");
+        const before = stamp(ids[0]);
+        later();
+        await pollOnce(manager, [{ ...wrong, carrier_code: "dhl" }], "Same Name");
+        expect(stamp(ids[0])).not.toBe(before);
+      });
+
+      it("does not stamp for other letter case of the same code", async () => {
+        const d = makeDelivery({ tracking_number: "C2", carrier_code: "dhl" });
+        const { ids } = await pollOnce(manager, [d], "Same Name");
+        const before = stamp(ids[0]);
+        later();
+        await pollOnce(manager, [{ ...d, carrier_code: "DHL" }], "Same Name");
+        expect(stamp(ids[0])).toBe(before);
+      });
+
+      it("stamps across a restart — the stored identity remembers the old code", async () => {
+        const wrong = makeDelivery({ tracking_number: "C3", carrier_code: "pholder" });
+        const { ids } = await pollOnce(manager, [wrong], "Same Name");
+        const before = stamp(ids[0]);
+        later();
+        await pollOnce(new StateManager(adapter as never), [{ ...wrong, carrier_code: "dhl" }], "Same Name");
+        expect(stamp(ids[0])).not.toBe(before);
+      });
+
+      it("the first poll after the update, without a stored identity, stamps nothing", async () => {
+        const d = makeDelivery({ tracking_number: "C4" });
+        const { ids } = await pollOnce(manager, [d], "Same Name");
+        const before = stamp(ids[0]);
+        // A device written by v0.13.0: no identity stored.
+        adapter.objects.get(`deliveries.${ids[0]}`)!.native = {};
+        later();
+        await pollOnce(new StateManager(adapter as never), [d], "Same Name");
+        expect(stamp(ids[0])).toBe(before);
+      });
+    });
+
+    it("a package whose device write failed is still cleaned up and releases its id (X11)", async () => {
+      const a = makeDelivery({ tracking_number: "ABC-123" });
+      await manager.loadExisting();
+      manager.resetPollState([a]);
+      const id = manager.packageId(a);
+      const extend = adapter.extendObject;
+      adapter.extendObject = (oid, obj, options): Promise<void> =>
+        oid === `deliveries.${id}` ? Promise.reject(new Error("broker hiccup")) : extend(oid, obj, options);
+      await expect(manager.updateDelivery(a, "DHL", id)).rejects.toThrow("broker hiccup");
+      adapter.extendObject = extend;
+
+      const deleted: string[] = [];
+      const del = adapter.delObjectAsync;
+      adapter.delObjectAsync = (oid: string, opts?: { recursive?: boolean }): Promise<void> => {
+        deleted.push(oid);
+        return del(oid, opts);
+      };
+      await manager.cleanupDeliveries([]);
+      expect(deleted).toEqual([`deliveries.${id}`]);
+      const b = makeDelivery({ tracking_number: "ABC.123" });
+      manager.resetPollState([b]);
+      expect(manager.packageId(b)).toBe(id);
+    });
+
+    it("the cleanup removes the whole package subtree — recursive (T1)", async () => {
+      const { ids } = await pollOnce(manager, [makeDelivery({ tracking_number: "GONE" })]);
+      expect(adapter.objects.has(`deliveries.${ids[0]}.status`)).toBe(true);
+      await manager.cleanupDeliveries([]);
+      expect(adapter.objects.has(`deliveries.${ids[0]}`)).toBe(false);
+      expect(adapter.objects.has(`deliveries.${ids[0]}.status`)).toBe(false);
+      expect(adapter.states.has(`deliveries.${ids[0]}.status`)).toBe(false);
+    });
+
+    it("an unreadable pictogram leaves the device without icon, and the next poll adds it (T4a)", async () => {
+      vi.mocked(carrierIcon).mockReturnValueOnce(undefined);
+      const d = makeDelivery({ tracking_number: "ICON-1" });
+      const { ids } = await pollOnce(manager, [d]);
+      expect(adapter.objects.get(`deliveries.${ids[0]}`)!.common.icon).toBeUndefined();
+      await pollOnce(manager, [d]);
+      expect(adapter.objects.get(`deliveries.${ids[0]}`)!.common.icon).toMatch(/^data:image\/svg\+xml;base64,/);
     });
   });
 
@@ -1892,9 +2177,9 @@ describe("StateManager", () => {
       function failDeleteFor(
         adapter: MockAdapter,
         failingId: string,
-      ): (id: string, opts?: { recursive: boolean }) => Promise<void> {
+      ): (id: string, opts?: { recursive?: boolean }) => Promise<void> {
         const original = adapter.delObjectAsync;
-        adapter.delObjectAsync = (id: string, opts?: { recursive: boolean }): Promise<void> =>
+        adapter.delObjectAsync = (id: string, opts?: { recursive?: boolean }): Promise<void> =>
           id === failingId ? Promise.reject(new Error("objects db closed")) : original(id, opts);
         return original;
       }
@@ -1933,7 +2218,7 @@ describe("StateManager", () => {
 
         // Broker recovers; the retry must still target the package.
         const retried: string[] = [];
-        adapter.delObjectAsync = (id: string, opts?: { recursive: boolean }): Promise<void> => {
+        adapter.delObjectAsync = (id: string, opts?: { recursive?: boolean }): Promise<void> => {
           retried.push(id);
           return healthyDelete(id, opts);
         };
@@ -1957,7 +2242,7 @@ describe("StateManager", () => {
         const stuckId = manager.packageId(stuck);
         await updateDeliveryT(manager, stuck, "DHL");
         const original = adapter.delObjectAsync;
-        adapter.delObjectAsync = (id: string, opts?: { recursive: boolean }): Promise<void> =>
+        adapter.delObjectAsync = (id: string, opts?: { recursive?: boolean }): Promise<void> =>
           id === `deliveries.${stuckId}` ? Promise.reject(DB_CLOSED) : original(id, opts);
 
         // `toThrow` alone would NOT prove anything here: it matches a thrown string just as
@@ -2525,7 +2810,7 @@ describe("StateManager", () => {
       const manager = new StateManager(adapter as never);
       const deleted: string[] = [];
       const origDel = adapter.delObjectAsync;
-      adapter.delObjectAsync = async (id: string, opts?: { recursive: boolean }): Promise<void> => {
+      adapter.delObjectAsync = async (id: string, opts?: { recursive?: boolean }): Promise<void> => {
         deleted.push(id);
         return origDel(id, opts);
       };

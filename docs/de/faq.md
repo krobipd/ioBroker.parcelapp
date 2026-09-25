@@ -84,12 +84,22 @@ sie wieder an, solange parcel.app die Sendung noch liefert.
 
 ## Ich habe dieselbe Sendungsnummer zweimal, bei zwei Zustellern
 
-Beide werden verfolgt, jede mit ihrem eigenen Gerät. Das passiert, wenn eine Nummer zuerst mit dem
-falschen Zusteller angelegt wurde: die API hat keinen Lösch-Endpunkt, der Eintrag bleibt also, und
-man legt die Nummer mit dem richtigen Zusteller erneut an. Die zweite Sendung bekommt einen Anhang
-an ihrer Objekt-Kennung, damit sich die beiden nie gegenseitig überschreiben. Ist der falsche
-Eintrag in parcel.app weg, rückt die verbliebene Sendung bei der nächsten Abfrage auf die
-Kennung ohne Anhang.
+Beide werden verfolgt, jede mit ihrem eigenen Gerät — auch bei drei oder mehr Zustellern und auch
+bei Einträgen ganz ohne Sendungsnummer. Das passiert, wenn eine Nummer zuerst mit dem falschen
+Zusteller angelegt wurde: die API hat keinen Lösch-Endpunkt, der Eintrag bleibt also, und man legt
+die Nummer mit dem richtigen Zusteller erneut an. Die zweite Sendung bekommt einen Anhang an ihrer
+Objekt-Kennung, damit sich die beiden nie gegenseitig überschreiben. Ist der falsche Eintrag in
+parcel.app weg, entfernt die Abfrage, die das bemerkt, seine Objekte, und die verbliebene Sendung
+rückt bei der Abfrage danach auf die Kennung ohne Anhang.
+
+**Korrigiert** man stattdessen den Zusteller des bestehenden Eintrags in parcel.app, behält die
+Sendung ihr Gerät und alle Datenpunkte — der Adapter erkennt dieselbe Sendung an Sendungsnummer und
+Zusatzinformation. Dasselbe gilt für eine Nummer, die in anderer Groß-/Kleinschreibung neu eingegeben
+wurde. `lastUpdated` springt dabei, weil sich der Zusteller geändert hat.
+
+Welche Sendung welche Kennung besitzt, steht im Geräte-Objekt (`native.identity`); ein Neustart des
+Adapters vertauscht deshalb nie die Kennungen zweier Sendungen, egal in welcher Reihenfolge
+parcel.app sie liefert.
 
 ## Warum ist `lastUpdated` alt, obwohl der Adapter abfragt?
 

@@ -83,6 +83,7 @@ interface FakeStateMgr {
   cleanupDeliveries: ReturnType<typeof vi.fn>;
   updateSummary: ReturnType<typeof vi.fn>;
   refreshDerived: ReturnType<typeof vi.fn>;
+  loadExisting: ReturnType<typeof vi.fn>;
 }
 
 function makeDelivery(overrides: Partial<ParcelDelivery> = {}): ParcelDelivery {
@@ -204,6 +205,7 @@ function setup(configOverrides: Record<string, unknown> = {}): {
     cleanupDeliveries: vi.fn(async () => {}),
     updateSummary: vi.fn(async () => {}),
     refreshDerived: vi.fn(async () => {}),
+    loadExisting: vi.fn(async () => {}),
   };
   const internal = adapter as unknown as {
     makeClient: () => FakeClient;
@@ -1559,6 +1561,48 @@ describe("ParcelappAdapter request budget and auth backoff (audit 2026-09-25)", 
     await add(i, 1);
     await settle();
     expect(i.log.error).toHaveBeenCalledWith(expect.stringContaining("Poll after addDelivery failed"));
+  });
+});
+
+describe("ParcelappAdapter package identity wiring (audit S1/S2/S3)", () => {
+  it("reads the existing packages before handing out ids, and passes EVERY delivery of the answer", async () => {
+    const { adapter, client, stateMgr } = await setupReady();
+    const i = internalOf(adapter);
+    const delivered = makeDelivery({ tracking_number: "DONE", status_code: 0 });
+    const active = makeDelivery({ tracking_number: "OPEN" });
+    client.getDeliveries.mockResolvedValueOnce([delivered, active]);
+    stateMgr.loadExisting.mockClear();
+    await i.poll();
+    expect(stateMgr.loadExisting).toHaveBeenCalledTimes(1);
+    expect(stateMgr.resetPollState).toHaveBeenLastCalledWith([delivered, active]);
+    const loadOrder = stateMgr.loadExisting.mock.invocationCallOrder[0];
+    expect(loadOrder).toBeLessThan(stateMgr.packageId.mock.invocationCallOrder.at(-1)!);
+    // autoRemove mode: only the active one gets states.
+    expect(stateMgr.packageId).toHaveBeenLastCalledWith(active);
+  });
+
+  it("a broker failure while reading them warns once, repeats at debug, and the poll goes on", async () => {
+    const { adapter, stateMgr } = await setupReady();
+    const i = internalOf(adapter);
+    stateMgr.loadExisting.mockRejectedValue(new Error("objects DB busy"));
+    await i.poll();
+    expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("Reading the existing packages failed"));
+    expect(stateMgr.updateDelivery).toHaveBeenCalled();
+    expect(i.setStateChangedAsync).toHaveBeenCalledWith("info.connection", { val: true, ack: true });
+
+    i.log.warn.mockClear();
+    i.lastPollTime = 0;
+    await i.poll();
+    expect(i.log.warn).not.toHaveBeenCalled();
+    expect(i.log.debug).toHaveBeenCalledWith(expect.stringContaining("Reading the existing packages failed"));
+
+    stateMgr.loadExisting.mockResolvedValue(undefined);
+    i.lastPollTime = 0;
+    await i.poll();
+    stateMgr.loadExisting.mockRejectedValue(new Error("objects DB busy again"));
+    i.lastPollTime = 0;
+    await i.poll();
+    expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("objects DB busy again"));
   });
 });
 

@@ -12,6 +12,7 @@ import {
 } from "./delivery-view";
 import { carrierIcon } from "./device-icons";
 import { packageName, statusLabel, tName } from "./i18n";
+import { bareId, candidateIndex, identityOf, idCandidates, rawIdKey, sanitize } from "./package-id";
 import type { ParcelDelivery } from "./types";
 import { UNKNOWN_STATUS_CODE } from "./types";
 
@@ -23,9 +24,6 @@ const ID_RANGE_END = "￿";
 
 /** A status string the parser accepts: an optional minus and digits, nothing else. */
 const STRICT_INT_RE = /^-?\d+$/;
-
-/** Max length of a sanitized package-id segment (collision suffix handles truncation clashes). */
-const MAX_ID_LENGTH = 50;
 
 /**
  * v0.10.0 (I2): cap the parallel recursive deletes in cleanupDeliveries the
@@ -76,9 +74,9 @@ export class StateManager {
 
   /**
    * v0.7.2: package ids known to exist as device objects. Filled from the
-   * object view ONCE after adapter start (reconciles leftovers from previous
-   * runs), afterwards maintained in memory — `cleanupDeliveries` no longer
-   * needs a DB round-trip per poll.
+   * object view ONCE after adapter start by `loadExisting()` (reconciles leftovers
+   * from previous runs), afterwards maintained in memory — `cleanupDeliveries` no
+   * longer needs a DB round-trip per poll.
    */
   private knownDeliveryIds: Set<string> | null = null;
 
@@ -88,6 +86,22 @@ export class StateManager {
    * the same delivery keeps its bare id as long as it's unique.
    */
   private readonly idOwner = new Map<string, string>();
+
+  /**
+   * v0.14.0 (audit S1/S3): raw keys of EVERY delivery the API returned in this poll, set by
+   * `resetPollState(deliveries)`. A candidate id whose owner is missing here belongs to a shipment
+   * that is gone — or to the same shipment under a corrected carrier code, which may take it over.
+   * `null` when the caller passed no list: then nothing is taken over.
+   */
+  private presentKeys: Set<string> | null = null;
+
+  /**
+   * v0.14.0 (audit S2/B4b): package id → identity (tracking number, extra information, carrier
+   * code) as stored in the device's `native.identity`. Filled by `loadExisting()` after a start and
+   * by every successful device write; it keeps the ids stable across a restart and tells a
+   * carrier-code change apart from a first sight.
+   */
+  private readonly storedIdentity = new Map<string, [string, string, string]>();
 
   /**
    * L1: per-delivery-object memo for `parseStatus`. A poll parses the SAME
@@ -138,16 +152,7 @@ export class StateManager {
    * @param name Raw value to sanitize (any type)
    */
   sanitize(name: unknown): string {
-    if (typeof name !== "string") {
-      return "unknown";
-    }
-    return (
-      name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "_")
-        .replace(/^_+|_+$/g, "")
-        .slice(0, MAX_ID_LENGTH) || "unknown"
-    );
+    return sanitize(name);
   }
 
   /**
@@ -197,90 +202,93 @@ export class StateManager {
   }
 
   /**
-   * Build a unique package ID from a delivery.
+   * The package id of a delivery — the id segment of its device (`deliveries.<id>`).
    *
-   * v0.4.2 (S3): when the bare `sanitize(tracking_number)` collides with
-   * another active package (e.g. two trackings differ only in special
-   * chars that strip down to the same id), append a stable hash of the
-   * full tracking number so both end up at distinct state IDs.
+   * The candidates come from `package-id.ts` (bare id, then collision suffixes). Which delivery OWNS
+   * which id lives here, in `idOwner`, and is decided in a fixed order (v0.14.0, audit S1/S3):
+   *
+   * 1. a delivery that already owns an id takes the first candidate that is free or its own — so
+   *    a suffixed package moves up to the bare id once its partner is gone (v0.13.0, S1b);
+   * 2. a delivery that owns nothing takes over an id whose owner is missing from this poll, when
+   *    that owner was the SAME shipment (same non-empty tracking number and extra information,
+   *    letter case aside) — a carrier code corrected in parcel.app, or a number re-typed in other
+   *    letter case, keeps its objects instead of losing them to a delete plus a create;
+   * 3. otherwise it takes the first free candidate.
    *
    * @param delivery The delivery to build an ID for
+   * @returns the package id
    */
   packageId(delivery: ParcelDelivery): string {
-    let id = this.sanitize(delivery.tracking_number);
-    // API-drift guard: only string values extend the id
-    if (typeof delivery.extra_information === "string" && delivery.extra_information.length > 0) {
-      id += `_${this.sanitize(delivery.extra_information)}`;
+    const identity = identityOf(delivery);
+    const rawKey = rawIdKey(identity);
+    const ownsOne = [...this.idOwner.values()].includes(rawKey);
+    if (!ownsOne && this.presentKeys !== null) {
+      const takeOver = this.takeOverCandidate(delivery, identity);
+      if (takeOver !== undefined) {
+        this.adapter.log.debug(
+          `packageId: '${takeOver}' passes from '${oneLine(this.idOwner.get(takeOver) ?? "")}' to '${oneLine(rawKey)}' (same shipment)`,
+        );
+        this.idOwner.set(takeOver, rawKey);
+        return takeOver;
+      }
     }
-    // v0.4.2 (S3): collision suffix when two distinct (raw) trackings would
-    // collapse to the same id. Bare id is kept as long as it's unique
-    // within this poll (back-compat with existing installs).
-    const owner = this.idOwner.get(id);
-    const rawKey = StateManager.rawIdKey(delivery);
-    if (owner !== undefined && owner !== rawKey) {
-      const suffixed = `${id}__${StateManager.shortHash(StateManager.suffixKey(delivery))}`;
-      // v0.4.3 (C3): trace the collision-suffix path. Rare event but the
-      // resulting state-id divergence is hard to diagnose without a log.
-      this.adapter.log.debug(
-        `packageId collision: bare='${id}' owner='${oneLine(owner)}' new='${oneLine(rawKey)}' → suffixed='${suffixed}'`,
-      );
-      this.idOwner.set(suffixed, rawKey);
-      return suffixed;
+    for (const candidate of idCandidates(delivery)) {
+      const owner = this.idOwner.get(candidate);
+      if (owner === rawKey) {
+        return candidate;
+      }
+      if (owner === undefined) {
+        if (candidate !== bareId(delivery)) {
+          // v0.4.3 (C3): trace the collision-suffix path. Rare event, but the resulting
+          // state-id divergence is hard to diagnose without a log.
+          this.adapter.log.debug(`packageId collision: '${oneLine(rawKey)}' → suffixed='${candidate}'`);
+        }
+        this.idOwner.set(candidate, rawKey);
+        return candidate;
+      }
     }
-    this.idOwner.set(id, rawKey);
-    return id;
+    // idCandidates never ends — unreachable, but the compiler cannot know.
+    throw new Error("no package id candidate left");
   }
 
   /**
-   * v0.4.2 (S3): build a stable raw-key for collision tracking.
+   * Step 2 of `packageId`: the earliest candidate of this delivery owned by a shipment that is
+   * missing from this poll and is the same shipment.
    *
-   * @param delivery The delivery whose raw tracking identifies it.
+   * @param delivery The delivery looking for an id
+   * @param identity Its identity fields
+   * @returns the id to take over, or undefined
    */
-  private static rawIdKey(delivery: ParcelDelivery): string {
-    const t = typeof delivery.tracking_number === "string" ? delivery.tracking_number : "";
-    const e = typeof delivery.extra_information === "string" ? delivery.extra_information : "";
-    // v0.13.0 (audit S1): the carrier belongs to a delivery's IDENTITY. Without it
-    // the same tracking number under two carriers produced one identical key, so
-    // `packageId` saw no collision, both deliveries mapped to one state id and one
-    // of the two packages was invisible in ioBroker — silently, with the keep-set
-    // holding a single entry for both. The realistic path: a number added with the
-    // wrong carrier (the API has no DELETE) and then added again correctly.
-    const c = typeof delivery.carrier_code === "string" ? delivery.carrier_code : "";
-    return `${t}\u0000${e}\u0000${c}`;
-  }
-
-  /**
-   * v0.13.0: the material of the collision SUFFIX — deliberately without the
-   * carrier. The suffix is part of a state id that exists on installations, and
-   * feeding the carrier into the hash would rename those objects (a rename means
-   * delete + create, taking the user's recording settings with it). Identity and
-   * suffix material are therefore two functions.
-   *
-   * @param delivery The delivery whose suffix material is built.
-   */
-  private static suffixKey(delivery: ParcelDelivery): string {
-    const t = typeof delivery.tracking_number === "string" ? delivery.tracking_number : "";
-    const e = typeof delivery.extra_information === "string" ? delivery.extra_information : "";
-    return `${t}\u0000${e}`;
-  }
-
-  /**
-   * v0.4.2 (S3): FNV-1a 32-bit short hash → 6 hex chars.
-   *
-   * @param s Input string to hash.
-   */
-  private static shortHash(s: string): string {
-    let h = 0x811c9dc5;
-    for (let i = 0; i < s.length; i++) {
-      h ^= s.charCodeAt(i);
-      h = Math.imul(h, 0x01000193);
+  private takeOverCandidate(delivery: ParcelDelivery, identity: [string, string, string]): string | undefined {
+    const [tracking, extra] = identity;
+    if (tracking === "") {
+      // Two deliveries without a number are no evidence of being the same shipment.
+      return undefined;
     }
-    return (h >>> 0).toString(16).padStart(8, "0").slice(0, 6);
+    let best: { id: string; index: number } | undefined;
+    for (const [id, owner] of this.idOwner) {
+      if (this.presentKeys?.has(owner)) {
+        continue;
+      }
+      const [ownerTracking, ownerExtra] = owner.split("\u0000");
+      if (
+        ownerTracking.toLowerCase() !== tracking.toLowerCase() ||
+        (ownerExtra ?? "").toLowerCase() !== extra.toLowerCase()
+      ) {
+        continue;
+      }
+      const index = candidateIndex(id, delivery);
+      if (index >= 0 && (best === undefined || index < best.index)) {
+        best = { id, index };
+      }
+    }
+    return best?.id;
   }
 
   /**
    * v0.4.2 (S3): reset the per-poll drift dedup. Call from main.ts before
-   * iterating deliveries.
+   * iterating deliveries — with the FULL list the API returned (v0.14.0, audit S1/S3),
+   * so `packageId` can tell a vanished shipment from a present one.
    *
    * v0.13.0 (audit S1b): the collision tracker is NOT cleared any more. It used
    * to be, so the bare id went to whichever colliding delivery came first in the
@@ -288,9 +296,12 @@ export class StateManager {
    * could therefore swap their state ids between two polls. The owner now keeps
    * the bare id for as long as it is present; `cleanupDeliveries` releases the
    * entry when the package is gone, and the other one moves up on the next poll.
+   *
+   * @param deliveries Every delivery of this poll; without it no id is taken over
    */
-  resetPollState(): void {
+  resetPollState(deliveries?: ParcelDelivery[]): void {
     this.driftReported.clear();
+    this.presentKeys = deliveries ? new Set(deliveries.map(d => rawIdKey(identityOf(d)))) : null;
   }
 
   /**
@@ -302,14 +313,17 @@ export class StateManager {
    * @param name Device name — the description from parcel.app, or the localized
    *   fallback when it sent none.
    * @param icon Inline pictogram URI, or `undefined` to leave the field untouched.
+   * @param identity Tracking number, extra information and carrier code — stored in
+   *   `native.identity` so the next start knows which shipment owns this id (v0.14.0, audit S2).
    */
   private async writeDeviceObject(
     pkgId: string,
     devicePath: string,
     name: ioBroker.StringOrTranslated,
     icon: string | undefined,
+    identity: [string, string, string],
   ): Promise<void> {
-    const signature = JSON.stringify([name, icon ?? null]);
+    const signature = JSON.stringify([name, icon ?? null, identity]);
     if (this.deviceSignature.get(pkgId) === signature) {
       return;
     }
@@ -317,7 +331,7 @@ export class StateManager {
     if (icon !== undefined) {
       common.icon = icon;
     }
-    await this.adapter.extendObject(devicePath, { type: "device", common, native: {} });
+    await this.adapter.extendObject(devicePath, { type: "device", common, native: { identity } });
     this.deviceSignature.set(pkgId, signature);
   }
 
@@ -357,8 +371,17 @@ export class StateManager {
     // package gets its pictogram exactly once after the update (fleet recipe).
     const deviceName = description || packageName(trackingNumber || pkgId);
     const icon = carrierIcon(delivery.carrier_code);
-    await this.writeDeviceObject(pkgId, devicePath, deviceName, icon);
+    const identity = identityOf(delivery);
+    // v0.14.0 (audit B4b): the identity stored before this write. No stored one (first sight, or a
+    // device from before v0.14.0) counts as unchanged — otherwise the first poll after the update
+    // would stamp every package.
+    const previous = this.storedIdentity.get(pkgId);
+    // v0.14.0 (audit X11): known BEFORE the write. If the write throws, the package still gets
+    // cleaned up once it is gone, and its claim on the id is released.
     this.knownDeliveryIds?.add(pkgId);
+    await this.writeDeviceObject(pkgId, devicePath, deviceName, icon, identity);
+    this.storedIdentity.set(pkgId, identity);
+    const carrierChanged = previous !== undefined && previous[2].toLowerCase() !== identity[2].toLowerCase();
 
     const statusCode = this.parseStatus(delivery);
     let statusText = statusLabel(statusCode);
@@ -443,7 +466,9 @@ export class StateManager {
       "date",
       tName("descLastUpdated"),
     );
-    if (changed.some(Boolean)) {
+    // v0.14.0 (audit B4b): a new carrier CODE is a change of the tracking — the state values may all
+    // look the same (the carrier's display name does not count, see StateDef).
+    if (carrierChanged || changed.some(Boolean)) {
       // No `desc` argument here on purpose: ensureStateObject above already wrote the object and
       // put the id in the cache, so anything passed along would be dead weight.
       await this.createAndSet(
@@ -554,6 +579,64 @@ export class StateManager {
   }
 
   /**
+   * Read the package devices that already exist — ONCE after adapter start (v0.7.2), and since
+   * v0.14.0 (audit S2) BEFORE the ids of the first poll are handed out: every device written since
+   * v0.14.0 carries its identity in `native.identity`, which seeds the id owners. Without it, a
+   * restart handed the bare id to whichever colliding delivery came first in the API's array, and
+   * two packages swapped their whole state subtrees. main.ts calls this in every poll until it
+   * succeeded; afterwards it returns at once.
+   */
+  async loadExisting(): Promise<void> {
+    if (this.knownDeliveryIds !== null) {
+      return;
+    }
+    const objects = await this.adapter.getObjectViewAsync("system", "device", {
+      startkey: `${this.adapter.namespace}.deliveries.`,
+      endkey: `${this.adapter.namespace}.deliveries.${ID_RANGE_END}`,
+    });
+    if (!objects?.rows) {
+      // v0.4.3 (E2): trace the no-op path — happens when getObjectViewAsync returns falsy.
+      // The known-set stays unseeded, so cleanup deletes nothing and the next poll asks again.
+      this.adapter.log.debug("loadExisting: no objects view available, skipping");
+      return;
+    }
+    const known = new Set<string>();
+    for (const row of objects.rows) {
+      // The range query guarantees the namespace prefix — cut it instead of
+      // pattern-replacing (v0.10.0, KISS-13).
+      const pkgId = StateManager.pkgIdOf(row.id.slice(this.adapter.namespace.length + 1));
+      if (!pkgId) {
+        continue;
+      }
+      known.add(pkgId);
+      const identity = StateManager.identityFrom(row.value?.native?.identity);
+      if (identity !== null) {
+        // A claim made in this process wins over the stored one.
+        if (!this.idOwner.has(pkgId)) {
+          this.idOwner.set(pkgId, rawIdKey(identity));
+        }
+        if (!this.storedIdentity.has(pkgId)) {
+          this.storedIdentity.set(pkgId, identity);
+        }
+      }
+    }
+    this.knownDeliveryIds = known;
+  }
+
+  /**
+   * A stored `native.identity`, accepted only as exactly three strings — the object DB is outside
+   * this process and anyone can have edited it.
+   *
+   * @param value The stored value
+   * @returns the identity, or null
+   */
+  private static identityFrom(value: unknown): [string, string, string] | null {
+    return Array.isArray(value) && value.length === 3 && value.every(part => typeof part === "string")
+      ? [value[0], value[1], value[2]]
+      : null;
+  }
+
+  /**
    * Remove deliveries that are no longer present in the API response.
    *
    * @param keepIds Package IDs the API still returns this poll (kept). Every
@@ -566,27 +649,9 @@ export class StateManager {
     // reconcile leftovers from previous runs; afterwards the in-memory set
     // (maintained by updateDelivery + this prune) replaces the per-poll DB
     // round-trip.
+    await this.loadExisting();
     if (this.knownDeliveryIds === null) {
-      const objects = await this.adapter.getObjectViewAsync("system", "device", {
-        startkey: `${this.adapter.namespace}.deliveries.`,
-        endkey: `${this.adapter.namespace}.deliveries.${ID_RANGE_END}`,
-      });
-      if (!objects?.rows) {
-        // v0.4.3 (E2): trace the no-op path — happens on fresh installs or
-        // when getObjectViewAsync returns falsy. Without this the early-return
-        // is invisible (and the known-set stays unseeded for the next poll).
-        this.adapter.log.debug("cleanupDeliveries: no objects view available, skipping");
-        return;
-      }
-      this.knownDeliveryIds = new Set<string>();
-      for (const row of objects.rows) {
-        // The range query guarantees the namespace prefix — cut it instead of
-        // pattern-replacing (v0.10.0, KISS-13).
-        const pkgId = StateManager.pkgIdOf(row.id.slice(this.adapter.namespace.length + 1));
-        if (pkgId) {
-          this.knownDeliveryIds.add(pkgId);
-        }
-      }
+      return;
     }
 
     const keepSet = new Set(keepIds);
@@ -631,6 +696,7 @@ export class StateManager {
     if (deleted.size > 0) {
       for (const pkgId of deleted) {
         this.deviceSignature.delete(pkgId);
+        this.storedIdentity.delete(pkgId);
         // v0.13.0 (S1b): the collision tracker outlives a poll now, so a removed
         // package must release its id here — otherwise the bare id stays claimed
         // by a delivery that no longer exists and the surviving one keeps its suffix.

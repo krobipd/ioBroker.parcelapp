@@ -196,5 +196,23 @@
         "date": "06.15.2026 13:31"
       }
     ]
+  },
+  {
+    "tracking_number": "INV-SAME-NUMBER",
+    "carrier_code": "dhl",
+    "description": "Same number, carrier dhl",
+    "status_code": 2
+  },
+  {
+    "tracking_number": "INV-SAME-NUMBER",
+    "carrier_code": "ups",
+    "description": "Same number, carrier ups",
+    "status_code": 2
+  },
+  {
+    "tracking_number": "INV-SAME-NUMBER",
+    "carrier_code": "dpdpcode",
+    "description": "Same number, carrier dpdpcode",
+    "status_code": 2
   }
 ]
