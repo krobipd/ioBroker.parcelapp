@@ -382,16 +382,16 @@ export class ParcelClient {
       await this.getDeliveries("active");
       return { success: true, message: "Connection successful" };
     } catch (err) {
-      const error = err as Error & { code?: string };
-      if (error.code === "INVALID_API_KEY") {
+      const code = err instanceof Error && "code" in err ? err.code : undefined;
+      if (code === "INVALID_API_KEY") {
         return { success: false, message: "Invalid API key" };
       }
-      if (error.code === "FORBIDDEN") {
+      if (code === "FORBIDDEN") {
         // v0.13.0: the poll path has explained 403 since v0.4.2; the admin's
         // Test Connection button only said "HTTP 403: Forbidden".
         return { success: false, message: FORBIDDEN_HINT };
       }
-      return { success: false, message: error.message };
+      return { success: false, message: errText(err) };
     }
   }
 
@@ -583,7 +583,7 @@ export class ParcelClient {
         // v0.4.3 (A7): trace network / abort / TLS / DNS errors with elapsed.
         // Also catches the abort case (req.destroy(ApiError)) — A6 deliberately
         // not emitted to avoid double-log.
-        this.log?.debug(`HTTP error ${method} ${path} (${Date.now() - startedAt}ms): ${err.message}`);
+        this.log?.debug(`HTTP error ${method} ${path} (${Date.now() - startedAt}ms): ${errText(err)}`);
         reject(err);
       });
 

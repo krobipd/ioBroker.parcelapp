@@ -626,6 +626,25 @@ export class ParcelappAdapter extends utils.Adapter {
   }
 
   /**
+   * v0.14.0 (audit X5): a rejection can carry anything — a string, a plain object, `undefined`. The
+   * poll error policy reads `.message` and `.code`, so every value becomes an Error here exactly
+   * once; a plain object's string `code` survives, so `{ code: "ECONNRESET" }` still classifies as
+   * NETWORK.
+   *
+   * @param err The rejected value
+   */
+  private static asError(err: unknown): Error & { code?: string; retryAfterSeconds?: number } {
+    if (err instanceof Error) {
+      return err;
+    }
+    const wrapped: Error & { code?: string } = new Error(errText(err));
+    if (err !== null && typeof err === "object" && "code" in err && typeof err.code === "string") {
+      wrapped.code = err.code;
+    }
+    return wrapped;
+  }
+
+  /**
    * Classify an error for deduplication and log-level decisions.
    *
    * v0.10.0 (M1): the client codes every failure it raises (TIMEOUT,
@@ -832,7 +851,7 @@ export class ParcelappAdapter extends utils.Adapter {
 
       this.log.debug(`Polled ${visibleDeliveries.length} deliveries (${activeDeliveries.length} active)`);
     } catch (err) {
-      await this.handlePollError(err as Error & { code?: string; retryAfterSeconds?: number });
+      await this.handlePollError(err);
     } finally {
       this.isPolling = false;
     }
@@ -845,9 +864,10 @@ export class ParcelappAdapter extends utils.Adapter {
    * classifyError. Dispatches on the CLASSIFIED code only (L6) — one source
    * of truth for the error class.
    *
-   * @param error The poll failure (usually an ApiError from the client)
+   * @param err The poll failure (usually an ApiError from the client — but a rejection can carry anything)
    */
-  private async handlePollError(error: Error & { code?: string; retryAfterSeconds?: number }): Promise<void> {
+  private async handlePollError(err: unknown): Promise<void> {
+    const error = ParcelappAdapter.asError(err);
     const errorCode = this.classifyError(error);
     const isRepeat = errorCode === this.lastErrorCode;
     this.lastErrorCode = errorCode;
@@ -856,7 +876,7 @@ export class ParcelappAdapter extends utils.Adapter {
       case "ABORTED":
         // v0.10.0 (M1): expected during shutdown — cancelAll aborts the
         // in-flight GET. A deliberate stop must not paint a red error line.
-        this.log.debug(`Poll aborted: ${error.message}`);
+        this.log.debug(`Poll aborted: ${errText(error)}`);
         break;
       case "RATE_LIMITED": {
         // v0.4.2 (M9): clamp Retry-After into [60s, 24h] (shared constants
@@ -903,14 +923,14 @@ export class ParcelappAdapter extends utils.Adapter {
       }
       case "NETWORK":
         if (isRepeat) {
-          this.log.debug(`Poll failed (ongoing): ${error.message}`);
+          this.log.debug(`Poll failed (ongoing): ${errText(error)}`);
         } else {
           this.log.warn("Cannot reach parcel.app API — will keep retrying");
         }
         break;
       case "TIMEOUT":
         if (isRepeat) {
-          this.log.debug(`Poll failed (ongoing): ${error.message}`);
+          this.log.debug(`Poll failed (ongoing): ${errText(error)}`);
         } else {
           this.log.warn("API request timeout — will retry next cycle");
         }
@@ -918,9 +938,9 @@ export class ParcelappAdapter extends utils.Adapter {
       default:
         if (isRepeat) {
           // Same error as last time — don't spam the log
-          this.log.debug(`Poll failed (ongoing): ${error.message}`);
+          this.log.debug(`Poll failed (ongoing): ${errText(error)}`);
         } else {
-          this.log.error(`Poll failed: ${error.message}`);
+          this.log.error(`Poll failed: ${errText(error)}`);
         }
     }
 

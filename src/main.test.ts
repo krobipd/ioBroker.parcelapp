@@ -34,12 +34,17 @@ vi.mock("@iobroker/adapter-core", () => {
       common: {},
       native: { apiKey: "encrypted", pollInterval: 10, autoRemoveDelivered: true },
     };
-    public getForeignObjectAsync = vi.fn(() => Promise.resolve(this.instanceObject));
+    // Reads hand out a COPY, like the controller does (package check `read-stub-copy`): with a
+    // shared reference the code's in-place change would already sit in the store before any write,
+    // and no assertion on `instanceObject` could tell a missing write from a done one.
+    public getForeignObjectAsync = vi.fn(() =>
+      Promise.resolve(this.instanceObject ? structuredClone(this.instanceObject) : null),
+    );
     // setForeignObject, not extendObject: the deep merge behind extendObject SETS a key given
     // as null instead of dropping it, so removing an obsolete native key needs a full write.
     public setForeignObject = vi.fn(
       (_id: string, obj: { common?: Record<string, unknown>; native?: Record<string, unknown> }) => {
-        this.instanceObject = obj;
+        this.instanceObject = structuredClone(obj);
         return Promise.resolve();
       },
     );
@@ -1134,6 +1139,25 @@ describe("ParcelappAdapter poll — error routing", () => {
     await i.poll();
     expect(i.log.error).not.toHaveBeenCalled();
     expect(i.log.debug).toHaveBeenCalledWith(expect.stringContaining("Poll failed (ongoing)"));
+  });
+
+  it("a rejection that is not an Error is classified, not thrown again (audit X5)", async () => {
+    // classifyError read `.message` of whatever arrived — a rejected string made the error path
+    // itself throw, so poll() rejected and the poll loop lost its own failure handling.
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    client.getDeliveries.mockRejectedValueOnce("boom");
+    await expect(i.poll()).resolves.toBeUndefined();
+    expect(i.lastErrorCode).toBe("UNKNOWN");
+    expect(i.log.error).toHaveBeenCalledWith(expect.stringContaining("Poll failed: boom"));
+  });
+
+  it("a plain object with a string code keeps it, so it still classifies (audit X5)", async () => {
+    const { adapter, client } = await setupReady();
+    const i = internalOf(adapter);
+    client.getDeliveries.mockRejectedValueOnce({ code: "ECONNRESET" });
+    await i.poll();
+    expect(i.lastErrorCode).toBe("NETWORK");
   });
 
   it("a per-delivery failure during shutdown stays at debug — teardown noise is not a warning (L2)", async () => {
