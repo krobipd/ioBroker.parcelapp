@@ -109,10 +109,23 @@ function apiError(message: string, code: ApiErrorCode, extra?: Record<string, un
   return err;
 }
 
+/**
+ * v0.14.0 (audit B9): the carrier list is re-read once a day. It changes — carriers are added,
+ * renamed (Bartolini → BRT) and removed — and the adapter used to keep the first copy for the whole
+ * process lifetime.
+ */
+const CARRIER_LIST_TTL_MS = 24 * 60 * 60_000;
+/** After a failed refresh the known names stay, and the next attempt waits this long. */
+const CARRIER_LIST_RETRY_MS = 60 * 60_000;
+
 /** HTTP client for the parcel.app API */
 export class ParcelClient {
   private apiKey: string;
   private carrierCache: CarrierMap | null = null;
+  /** When the cached carrier list was last read successfully (B9). */
+  private carrierFetchedAt = 0;
+  /** Earliest time of the next refresh attempt after a failed one (B9). */
+  private carrierRetryAt = 0;
   /**
    * v0.7.2: in-flight fetch for the carrier list. The per-delivery updates run
    * in parallel (Promise.all) and each resolves carrier names — without this
@@ -271,15 +284,20 @@ export class ParcelClient {
     return response as AddDeliveryResponse;
   }
 
-  /** Get carrier names (cached after first call; concurrent callers share one fetch) */
+  /**
+   * Get carrier names — cached for a day (B9); concurrent callers share one fetch.
+   *
+   * @returns code → display name
+   */
   async getCarrierNames(): Promise<CarrierMap> {
-    if (this.carrierCache) {
+    const now = Date.now();
+    if (this.carrierCache && (now - this.carrierFetchedAt < CARRIER_LIST_TTL_MS || now < this.carrierRetryAt)) {
       return this.carrierCache;
     }
     // v0.7.2: share one in-flight fetch between the parallel per-delivery
     // updates instead of firing N identical requests on the first poll.
     if (!this.carrierFetchInFlight) {
-      this.carrierFetchInFlight = this.fetchCarrierNames().finally(() => {
+      this.carrierFetchInFlight = this.refreshCarrierNames().finally(() => {
         this.carrierFetchInFlight = null;
       });
     }
@@ -287,12 +305,38 @@ export class ParcelClient {
   }
 
   /**
-   * One actual carrier-list fetch. Failure → empty map, NOT cached — retried by
-   * the next update batch (the mutex above only dedupes CONCURRENT callers, so
-   * a poll with several 25er batches may retry once per batch; the endpoint is
-   * a static, unauthenticated file without a rate limit).
+   * v0.14.0 (audit B9): fetch the list and MERGE it into the cache — a code parcel.app dropped from
+   * the file keeps the name it had (a package added under it still exists). A failed refresh keeps
+   * the known names and waits an hour; without any cache the failure returns an empty map and the
+   * next call tries again, as before.
+   *
+   * @returns the merged map, or the old/empty one after a failure
    */
-  private async fetchCarrierNames(): Promise<CarrierMap> {
+  private async refreshCarrierNames(): Promise<CarrierMap> {
+    const fresh = await this.fetchCarrierNames();
+    if (fresh === null) {
+      if (this.carrierCache) {
+        this.carrierRetryAt = Date.now() + CARRIER_LIST_RETRY_MS;
+        this.log?.debug("carriers: refresh failed, keeping the known names — next attempt in an hour");
+        return this.carrierCache;
+      }
+      return {};
+    }
+    this.carrierCache = { ...(this.carrierCache ?? {}), ...fresh };
+    this.carrierFetchedAt = Date.now();
+    return this.carrierCache;
+  }
+
+  /**
+   * One actual carrier-list fetch. Failure → null, and the caller decides (see
+   * `refreshCarrierNames`). Without a cache the next update batch retries (the
+   * mutex above only dedupes CONCURRENT callers, so a poll with several 25er
+   * batches may retry once per batch; the endpoint is a static,
+   * unauthenticated file without a rate limit).
+   *
+   * @returns the names read from the file, or null
+   */
+  private async fetchCarrierNames(): Promise<CarrierMap | null> {
     try {
       const raw = await this.request<unknown>("GET", "/supported_carriers.json", false);
       // API-drift guard: must be a plain object (not null, array, or primitive)
@@ -325,28 +369,26 @@ export class ParcelClient {
             this.carrierDriftWarned = true;
             this.log.warn(line);
           }
-          return {};
+          return null;
         }
-        this.carrierCache = clean;
-        // v0.4.3 (D1): trace the one-time cache fill so a successful warm-up
-        // is visible in the debug log (happens once per adapter restart).
+        // v0.4.3 (D1): trace the cache fill so a successful read is visible in the
+        // debug log (once per adapter start, then once a day).
         this.log?.debug(`carriers: fetched ${count} entries`);
-        return this.carrierCache;
+        return clean;
       }
       // v0.4.3 (D3): non-object drift — supported_carriers.json returned
       // something that isn't an object. Empty map is returned, NOT cached.
       this.log?.debug(
-        `carriers: drift (got ${Array.isArray(raw) ? "array" : typeof raw}, expected object), kept empty`,
+        `carriers: drift (got ${Array.isArray(raw) ? "array" : typeof raw}, expected object), not cached`,
       );
-      return {};
+      return null;
     } catch (err) {
       // v0.4.3 (D2): trace the fetch-fail so the empty-map fallback isn't
       // silent. NOT cached — next poll retries; the trace then shows the
       // retry, too. Without this the user sees carrier codes instead of
       // names with no log entry explaining why.
-      this.log?.debug(`carriers: fetch failed (kept empty, will retry): ${errText(err)}`);
-      // Return empty map but don't cache it — allow retry next time
-      return {};
+      this.log?.debug(`carriers: fetch failed (not cached, will retry): ${errText(err)}`);
+      return null;
     }
   }
 

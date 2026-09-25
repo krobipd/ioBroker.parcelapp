@@ -107,8 +107,8 @@ stick — for a label of your own use an alias or a datapoint in `0_userdata`.
 
 Every package also carries the **pictogram of its carrier** in the object tree, so you can see who
 is delivering before you read the name: DHL, Deutsche Post, Hermes/Evri, DPD, GLS, UPS, Amazon,
-USPS, TNT, Apple, Vinted and DoorDash have their own mark, national postal operators share an
-envelope, and every other carrier gets a delivery van. The marks are drawn monochrome and follow
+USPS, TNT, FedEx, InPost, Apple, Vinted and DoorDash have their own mark, national postal operators
+and their express arms share an envelope, and every other carrier gets a delivery van. The marks are drawn monochrome and follow
 your admin theme.
 
 | Datapoint          | Type   | Meaning                                                                                                                                                                                                                                                                                                                   |

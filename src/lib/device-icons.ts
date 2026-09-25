@@ -14,10 +14,11 @@ import { join } from "node:path";
  *    theme family.
  * 2. Only `currentColor` or `none` as fill/stroke, so the same file reads on
  *    light and on dark themes.
- * 3. Only `path` and `circle`. The id-cell CSS reaches INTO the inlined markup
+ * 3. Nothing that comes out 0 px wide: drawn with `path` and `circle`, and
+ *    `g` (also with `transform`) as a container — a group has no width of its
+ *    own. The id-cell CSS reaches INTO the inlined markup
  *    (`cellId: { "& *": { width: "initial" } }`), and for `rect`, `image`,
- *    `use`, nested `svg` and `foreignObject` `initial` means 0 — such an
- *    element comes out 0 px wide.
+ *    `use`, nested `svg` and `foreignObject` `initial` means 0.
  * 4. Drawn for 28 px (`ROW_HEIGHT - 4`): one or two features, no hairlines.
  *
  * The map is keyed on `carrier_code`, not on the carrier NAME: the code is what
@@ -87,26 +88,35 @@ export const ICON_BY_CARRIER: Readonly<Record<string, string>> = {
   amzluk: "amazon.svg",
   amzlus: "amazon.svg",
   swiship: "amazon.svg",
-  // USPS — 1 codes
+  // USPS — 1 code
   usps: "usps.svg",
   // TNT — 4 codes
   tnt: "tnt.svg",
   tntau: "tnt.svg",
   tntfr: "tnt.svg",
   tntit: "tnt.svg",
+  // FedEx — 2 codes (monogram approved by krobi 2026-09-25)
+  fedex: "fedex.svg",
+  fedpl: "fedex.svg",
+  // InPost — 4 codes (monogram in a locker frame, approved by krobi 2026-09-25)
+  inpespcode: "inpost.svg",
+  inpost: "inpost.svg",
+  inpostit: "inpost.svg",
+  inpostuk: "inpost.svg",
   // Apple Store — 2 codes
   apple: "apple.svg",
   appleexp: "apple.svg",
-  // Vinted Go — 1 codes
+  // Vinted Go — 1 code
   vinted: "vinted.svg",
-  // DoorDash — 1 codes
+  // DoorDash — 1 code
   doordash: "doordash.svg",
-  // national postal operators — 68 codes
+  // national postal operators and their express arms — 72 codes
   anpost: "post.svg",
   at: "post.svg",
   au: "post.svg",
   azer: "post.svg",
   blp: "post.svg",
+  bring: "post.svg",
   bolg: "post.svg",
   bpost: "post.svg",
   cems: "post.svg",
@@ -129,7 +139,6 @@ export const ICON_BY_CARRIER: Readonly<Record<string, string>> = {
   elta: "post.svg",
   emirates: "post.svg",
   ems: "post.svg",
-  geniki: "post.svg",
   hk: "post.svg",
   hr: "post.svg",
   hung: "post.svg",
@@ -147,10 +156,12 @@ export const ICON_BY_CARRIER: Readonly<Record<string, string>> = {
   malpos: "post.svg",
   malta: "post.svg",
   moldov: "post.svg",
-  newp: "post.svg",
   nor: "post.svg",
+  // NZ Post — dropped from parcel.app's carrier list by 2026-09-25; kept, so a package
+  // added under it before keeps its mark.
   nzp: "post.svg",
   phlpost: "post.svg",
+  postnord: "post.svg",
   pk: "post.svg",
   poland: "post.svg",
   posti: "post.svg",
@@ -167,6 +178,12 @@ export const ICON_BY_CARRIER: Readonly<Record<string, string>> = {
   slv: "post.svg",
   swiss: "post.svg",
   thai: "post.svg",
+  // PostNL — its national and international codes
+  tntp: "post.svg",
+  tntpit: "post.svg",
+  tntpitp: "post.svg",
+  // CTT Express — the express arm of CTT (Portugal)
+  tourline: "post.svg",
   turk: "post.svg",
   tw: "post.svg",
   ukr: "post.svg",

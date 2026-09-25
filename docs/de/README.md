@@ -113,8 +113,9 @@ in `0_userdata`.
 
 Jede Sendung trägt im Objektbaum außerdem das **Zeichen ihres Zustellers**, damit du siehst, wer
 liefert, bevor du den Namen liest: DHL, Deutsche Post, Hermes/Evri, DPD, GLS, UPS, Amazon, USPS,
-TNT, Apple, Vinted und DoorDash haben ihr eigenes Zeichen, nationale Postgesellschaften einen
-Briefumschlag, alle übrigen Zusteller einen Lieferwagen. Die Zeichen sind einfarbig gezeichnet und
+TNT, FedEx, InPost, Apple, Vinted und DoorDash haben ihr eigenes Zeichen, nationale
+Postgesellschaften und ihre Express-Töchter einen Briefumschlag, alle übrigen Zusteller einen
+Lieferwagen. Die Zeichen sind einfarbig gezeichnet und
 folgen deinem Admin-Thema.
 
 | Datenpunkt         | Typ    | Bedeutung                                                                                                                                                                                                                                                                                                                                                     |

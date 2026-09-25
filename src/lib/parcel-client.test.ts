@@ -611,6 +611,94 @@ describe("ParcelClient", () => {
       }
     });
 
+    describe("daily refresh (audit B9)", () => {
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      it("reads the list again after a day, merges it, and a removed code keeps its name", async () => {
+        vi.useFakeTimers({ toFake: ["Date"] });
+        vi.setSystemTime(new Date(2026, 5, 15, 12, 0, 0));
+        let calls = 0;
+        const { server, port } = await startMockServer((_req, res) => {
+          calls += 1;
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(
+            JSON.stringify(
+              calls === 1
+                ? { brt: { name: "Bartolini" }, gone: { name: "Gone Express" } }
+                : { brt: { name: "BRT" }, fresh: { name: "Fresh Post" } },
+            ),
+          );
+        });
+        try {
+          const client = createTestClient("key", port);
+          expect(await client.getCarrierName("brt")).toBe("Bartolini");
+          vi.setSystemTime(new Date(2026, 5, 16, 11, 59, 0));
+          expect(await client.getCarrierName("brt")).toBe("Bartolini");
+          expect(calls).toBe(1);
+          vi.setSystemTime(new Date(2026, 5, 16, 12, 0, 1));
+          expect(await client.getCarrierNames()).toEqual({
+            brt: "BRT",
+            gone: "Gone Express",
+            fresh: "Fresh Post",
+          });
+          expect(calls).toBe(2);
+        } finally {
+          await stopServer(server);
+        }
+      });
+
+      it("a failed refresh keeps the known names and waits an hour", async () => {
+        vi.useFakeTimers({ toFake: ["Date"] });
+        vi.setSystemTime(new Date(2026, 5, 15, 12, 0, 0));
+        let calls = 0;
+        const { server, port } = await startMockServer((_req, res) => {
+          calls += 1;
+          if (calls === 2) {
+            res.writeHead(500);
+            res.end();
+            return;
+          }
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ brt: { name: calls === 1 ? "Bartolini" : "BRT" } }));
+        });
+        try {
+          const client = createTestClient("key", port);
+          expect(await client.getCarrierName("brt")).toBe("Bartolini");
+          vi.setSystemTime(new Date(2026, 5, 16, 12, 1, 0));
+          expect(await client.getCarrierName("brt")).toBe("Bartolini"); // refresh fails, names stay
+          vi.setSystemTime(new Date(2026, 5, 16, 12, 50, 0));
+          expect(await client.getCarrierName("brt")).toBe("Bartolini");
+          expect(calls).toBe(2); // no second attempt within the hour
+          vi.setSystemTime(new Date(2026, 5, 16, 13, 2, 0));
+          expect(await client.getCarrierName("brt")).toBe("BRT");
+          expect(calls).toBe(3);
+        } finally {
+          await stopServer(server);
+        }
+      });
+
+      it("an unreadable refresh keeps the known names too", async () => {
+        vi.useFakeTimers({ toFake: ["Date"] });
+        vi.setSystemTime(new Date(2026, 5, 15, 12, 0, 0));
+        let calls = 0;
+        const { server, port } = await startMockServer((_req, res) => {
+          calls += 1;
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify(calls === 1 ? { brt: { name: "Bartolini" } } : { brt: { title: "x" } }));
+        });
+        try {
+          const client = createTestClient("key", port);
+          expect(await client.getCarrierName("brt")).toBe("Bartolini");
+          vi.setSystemTime(new Date(2026, 5, 16, 12, 1, 0));
+          expect(await client.getCarrierName("brt")).toBe("Bartolini");
+        } finally {
+          await stopServer(server);
+        }
+      });
+    });
+
     it("warns exactly once per process about an unreadable carrier list, then repeats at debug", async () => {
       const warned: string[] = [];
       const debugged: string[] = [];

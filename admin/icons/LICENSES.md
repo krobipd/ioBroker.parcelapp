@@ -22,6 +22,8 @@ and `foreignObject`.
 | `dhl.svg`          | drawn for this adapter                                               | MIT, like the rest of the adapter         |
 | `gls.svg`          | drawn for this adapter                                               | MIT, like the rest of the adapter         |
 | `tnt.svg`          | drawn for this adapter                                               | MIT, like the rest of the adapter         |
+| `fedex.svg`        | drawn for this adapter (monogram FDX)                                | MIT, like the rest of the adapter         |
+| `inpost.svg`       | drawn for this adapter (monogram IP in a locker frame)               | MIT, like the rest of the adapter         |
 | `post.svg`         | drawn for this adapter (envelope, national postal operators)         | MIT, like the rest of the adapter         |
 | `truck.svg`        | drawn for this adapter (delivery van, every other carrier)           | MIT, like the rest of the adapter         |
 

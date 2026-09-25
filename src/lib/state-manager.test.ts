@@ -193,6 +193,18 @@ function createMockAdapter(): MockAdapter {
   };
 }
 
+/**
+ * The inline URI of a pictogram file, built from the file itself — independent of the code under
+ * test (audit T7a: comparing with `carrierIcon(...)` would also pass when both were undefined).
+ *
+ * @param file File name in admin/icons
+ * @returns the expected `common.icon`
+ */
+function iconUri(file: string): string {
+  const svg = readFileSync(join(__dirname, "../../admin/icons", file), "utf8").replace(/\r\n/g, "\n");
+  return `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
+}
+
 function makeDelivery(overrides: Partial<ParcelDelivery> = {}): ParcelDelivery {
   return {
     carrier_code: "dhl",
@@ -2562,7 +2574,7 @@ describe("StateManager", () => {
       await updateDeliveryT(manager, delivery, "DHL Express");
       const icon = adapter.objects.get(`deliveries.${pkgId}`)!.common.icon as string;
       expect(icon.startsWith("data:image/svg+xml;base64,")).toBe(true);
-      expect(icon).toBe(carrierIcon("dhl"));
+      expect(icon).toBe(iconUri("dhl.svg"));
       expect(deviceWrites()).toBe(1);
 
       // Second poll, nothing changed: no further write.
@@ -2581,7 +2593,7 @@ describe("StateManager", () => {
       expect(deviceWrites()).toBe(2);
       const device = adapter.objects.get(`deliveries.${pkgId}`)!.common;
       expect(device.name).toBe("New");
-      expect(device.icon).toBe(carrierIcon("ups"));
+      expect(device.icon).toBe(iconUri("ups.svg"));
     });
 
     it("v0.13.0: the same name under a NEW carrier still updates the pictogram", async () => {
@@ -2597,10 +2609,10 @@ describe("StateManager", () => {
       const deviceWrites = countDeviceWrites(adapter, `deliveries.${pkgId}`);
 
       await manager.updateDelivery(dhl, "DHL Express", pkgId);
-      expect(adapter.objects.get(`deliveries.${pkgId}`)!.common.icon).toBe(carrierIcon("dhl"));
+      expect(adapter.objects.get(`deliveries.${pkgId}`)!.common.icon).toBe(iconUri("dhl.svg"));
 
       await manager.updateDelivery(ups, "UPS", pkgId);
-      expect(adapter.objects.get(`deliveries.${pkgId}`)!.common.icon).toBe(carrierIcon("ups"));
+      expect(adapter.objects.get(`deliveries.${pkgId}`)!.common.icon).toBe(iconUri("ups.svg"));
       expect(deviceWrites()).toBe(2);
     });
 
@@ -2610,8 +2622,7 @@ describe("StateManager", () => {
       const delivery = makeDelivery({ carrier_code: "no-such-carrier" });
       await updateDeliveryT(manager, delivery, "NO-SUCH-CARRIER");
       const device = adapter.objects.get(`deliveries.${manager.packageId(delivery)}`)!.common;
-      expect(device.icon).toBe(carrierIcon("no-such-carrier"));
-      expect(device.icon).toBe(carrierIcon("whatever-else"));
+      expect(device.icon).toBe(iconUri("truck.svg"));
     });
 
     it("re-extends after remove + re-add (cache follows lifecycle)", async () => {

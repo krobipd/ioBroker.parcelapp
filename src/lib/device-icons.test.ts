@@ -1,5 +1,5 @@
 import type * as fs from "node:fs";
-import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { carrierIcon, FALLBACK_ICON, ICON_BY_CARRIER, ICON_URI_PREFIX, normaliseLineEndings } from "./device-icons";
@@ -83,23 +83,66 @@ describe("carrierIcon", () => {
   it("a CRLF checkout produces the SAME URI as an LF checkout", async () => {
     // The Windows runner checks out with CRLF. Embedding the raw bytes would
     // yield a different URI there, so every comparison against a recorded
-    // inventory would be red on Windows only. Proven without Windows: rewrite one
-    // file with CRLF, read it through a FRESH module (the URI cache is
-    // module-level) and compare against the LF value.
-    const file = join(ICON_DIR, "dpd.svg");
-    const lf = readFileSync(file, "utf8").replace(/\r\n/g, "\n");
+    // inventory would be red on Windows only. Proven without Windows: a FRESH
+    // module (the URI cache is module-level) reads the file through a CRLF
+    // lens and must produce the LF value. Nothing is written into admin/icons
+    // (audit T10 — an interrupted run used to leave a CRLF file in the tree).
+    const lf = readFileSync(join(ICON_DIR, "dpd.svg"), "utf8").replace(/\r\n/g, "\n");
     expect(normaliseLineEndings(lf.replace(/\n/g, "\r\n"))).toBe(lf);
 
     const before = carrierIcon("dpdpcode");
+    const actual = await vi.importActual<typeof fs>("node:fs");
+    vi.doMock("node:fs", () => ({
+      ...actual,
+      readFileSync: (...args: Parameters<typeof actual.readFileSync>) =>
+        String(actual.readFileSync(...args)).replace(/\r?\n/g, "\r\n"),
+    }));
     try {
-      writeFileSync(file, lf.replace(/\n/g, "\r\n"), "utf8");
       vi.resetModules();
       const fresh: FreshModule = await import("./device-icons.js");
       expect(fresh.carrierIcon("dpdpcode")).toBe(before);
     } finally {
-      writeFileSync(file, lf, "utf8");
+      vi.doUnmock("node:fs");
       vi.resetModules();
     }
+  });
+
+  describe("the map against parcel.app's carrier list (audit B10)", () => {
+    /** The public list as served on 2026-09-25 (302 entries), recorded unchanged. */
+    const recorded: Record<string, { name: string }> = JSON.parse(
+      readFileSync(join(__dirname, "..", "..", "test", "fixtures", "supported_carriers-2026-09-25.json"), "utf8"),
+    );
+    /** Codes parcel.app dropped that stay mapped, so packages added under them keep their mark. */
+    const removedButKept = new Set(["nzp"]);
+
+    it("maps only codes parcel.app lists — or ones it dropped, on purpose", () => {
+      expect(Object.keys(recorded)).toHaveLength(302);
+      const unknown = Object.keys(ICON_BY_CARRIER).filter(code => !(code in recorded) && !removedButKept.has(code));
+      expect(unknown).toEqual([]);
+      for (const code of removedButKept) {
+        expect(code in recorded, code).toBe(false);
+      }
+    });
+
+    it("gives national postal operators and their express arms the envelope — private couriers the van", () => {
+      for (const code of ["tntp", "tntpit", "tntpitp", "postnord", "bring", "tourline", "anpost"]) {
+        expect(ICON_BY_CARRIER[code], code).toBe("post.svg");
+      }
+      // Nova Poshta and Geniki Taxydromiki are private couriers, not postal operators.
+      for (const code of ["newp", "geniki"]) {
+        expect(Object.hasOwn(ICON_BY_CARRIER, code), code).toBe(false);
+      }
+      expect(Object.values(ICON_BY_CARRIER).filter(file => file === "post.svg")).toHaveLength(72);
+    });
+
+    it("gives FedEx and InPost their own monogram (audit B10b)", () => {
+      for (const code of ["fedex", "fedpl"]) {
+        expect(ICON_BY_CARRIER[code], code).toBe("fedex.svg");
+      }
+      for (const code of ["inpost", "inpostit", "inpostuk", "inpespcode"]) {
+        expect(ICON_BY_CARRIER[code], code).toBe("inpost.svg");
+      }
+    });
   });
 });
 
