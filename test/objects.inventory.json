@@ -10,7 +10,7 @@
         "pt": "Entregas",
         "nl": "Zendingen",
         "fr": "Livraisons",
-        "it": "Consegne",
+        "it": "Spedizioni",
         "es": "Envíos",
         "pl": "Przesyłki",
         "uk": "Доставки",
@@ -38,7 +38,7 @@
     "type": "state",
     "common": {
       "name": {
-        "de": "Versanddienst",
+        "de": "Zusteller",
         "en": "Carrier",
         "es": "Transportista",
         "fr": "Transporteur",
@@ -92,17 +92,17 @@
       "read": true,
       "write": false,
       "desc": {
-        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
-        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
-        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
-        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
-        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
-        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
-        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
-        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
-        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
-        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
-        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+        "de": "Erwartete Zustellung in Worten - heute, morgen, in einigen Tagen oder überfällig.",
+        "en": "Expected delivery in words - today, tomorrow, in a number of days or overdue.",
+        "es": "Entrega prevista en palabras - hoy, mañana, dentro de unos días o atrasado.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain, dans quelques jours ou en retard.",
+        "it": "Consegna prevista a parole - oggi, domani, fra alcuni giorni o in ritardo.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen, over een aantal dagen of te laat.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro, za kilka dni lub zaległe.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã, dentro de alguns dias ou atrasado.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра, через несколько дней или просрочено.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра, за кілька днів або прострочено.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天、若干天后或已逾期。"
       }
     },
     "native": {},
@@ -281,7 +281,7 @@
         "en": "Where the carrier last scanned the package - not a live position.",
         "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
         "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
-        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "it": "Dove il corriere ha registrato la spedizione l'ultima volta - non è la posizione attuale.",
         "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
         "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
         "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
@@ -353,7 +353,7 @@
       "desc": {
         "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
         "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
-        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts usa statusCode, que no cambia con el idioma.",
         "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
         "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
         "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
@@ -399,6 +399,18 @@
         "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
         "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
         "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      },
+      "states": {
+        "0": "Delivered",
+        "1": "Frozen",
+        "2": "In Transit",
+        "3": "Awaiting Pickup",
+        "4": "Out for Delivery",
+        "5": "Not Found",
+        "6": "Delivery Attempt Failed",
+        "7": "Exception",
+        "8": "Info Received",
+        "-1": "Unknown (-1)"
       }
     },
     "native": {},
@@ -447,7 +459,7 @@
     "type": "state",
     "common": {
       "name": {
-        "de": "Versanddienst",
+        "de": "Zusteller",
         "en": "Carrier",
         "es": "Transportista",
         "fr": "Transporteur",
@@ -501,17 +513,17 @@
       "read": true,
       "write": false,
       "desc": {
-        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
-        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
-        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
-        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
-        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
-        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
-        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
-        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
-        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
-        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
-        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+        "de": "Erwartete Zustellung in Worten - heute, morgen, in einigen Tagen oder überfällig.",
+        "en": "Expected delivery in words - today, tomorrow, in a number of days or overdue.",
+        "es": "Entrega prevista en palabras - hoy, mañana, dentro de unos días o atrasado.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain, dans quelques jours ou en retard.",
+        "it": "Consegna prevista a parole - oggi, domani, fra alcuni giorni o in ritardo.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen, over een aantal dagen of te laat.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro, za kilka dni lub zaległe.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã, dentro de alguns dias ou atrasado.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра, через несколько дней или просрочено.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра, за кілька днів або прострочено.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天、若干天后或已逾期。"
       }
     },
     "native": {},
@@ -690,7 +702,7 @@
         "en": "Where the carrier last scanned the package - not a live position.",
         "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
         "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
-        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "it": "Dove il corriere ha registrato la spedizione l'ultima volta - non è la posizione attuale.",
         "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
         "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
         "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
@@ -762,7 +774,7 @@
       "desc": {
         "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
         "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
-        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts usa statusCode, que no cambia con el idioma.",
         "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
         "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
         "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
@@ -808,6 +820,18 @@
         "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
         "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
         "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      },
+      "states": {
+        "0": "Delivered",
+        "1": "Frozen",
+        "2": "In Transit",
+        "3": "Awaiting Pickup",
+        "4": "Out for Delivery",
+        "5": "Not Found",
+        "6": "Delivery Attempt Failed",
+        "7": "Exception",
+        "8": "Info Received",
+        "-1": "Unknown (-1)"
       }
     },
     "native": {},
@@ -856,7 +880,7 @@
     "type": "state",
     "common": {
       "name": {
-        "de": "Versanddienst",
+        "de": "Zusteller",
         "en": "Carrier",
         "es": "Transportista",
         "fr": "Transporteur",
@@ -910,17 +934,17 @@
       "read": true,
       "write": false,
       "desc": {
-        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
-        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
-        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
-        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
-        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
-        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
-        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
-        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
-        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
-        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
-        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+        "de": "Erwartete Zustellung in Worten - heute, morgen, in einigen Tagen oder überfällig.",
+        "en": "Expected delivery in words - today, tomorrow, in a number of days or overdue.",
+        "es": "Entrega prevista en palabras - hoy, mañana, dentro de unos días o atrasado.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain, dans quelques jours ou en retard.",
+        "it": "Consegna prevista a parole - oggi, domani, fra alcuni giorni o in ritardo.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen, over een aantal dagen of te laat.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro, za kilka dni lub zaległe.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã, dentro de alguns dias ou atrasado.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра, через несколько дней или просрочено.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра, за кілька днів або прострочено.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天、若干天后或已逾期。"
       }
     },
     "native": {},
@@ -1099,7 +1123,7 @@
         "en": "Where the carrier last scanned the package - not a live position.",
         "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
         "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
-        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "it": "Dove il corriere ha registrato la spedizione l'ultima volta - non è la posizione attuale.",
         "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
         "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
         "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
@@ -1171,7 +1195,7 @@
       "desc": {
         "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
         "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
-        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts usa statusCode, que no cambia con el idioma.",
         "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
         "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
         "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
@@ -1217,6 +1241,18 @@
         "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
         "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
         "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      },
+      "states": {
+        "0": "Delivered",
+        "1": "Frozen",
+        "2": "In Transit",
+        "3": "Awaiting Pickup",
+        "4": "Out for Delivery",
+        "5": "Not Found",
+        "6": "Delivery Attempt Failed",
+        "7": "Exception",
+        "8": "Info Received",
+        "-1": "Unknown (-1)"
       }
     },
     "native": {},
@@ -1265,7 +1301,7 @@
     "type": "state",
     "common": {
       "name": {
-        "de": "Versanddienst",
+        "de": "Zusteller",
         "en": "Carrier",
         "es": "Transportista",
         "fr": "Transporteur",
@@ -1319,17 +1355,17 @@
       "read": true,
       "write": false,
       "desc": {
-        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
-        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
-        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
-        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
-        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
-        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
-        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
-        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
-        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
-        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
-        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+        "de": "Erwartete Zustellung in Worten - heute, morgen, in einigen Tagen oder überfällig.",
+        "en": "Expected delivery in words - today, tomorrow, in a number of days or overdue.",
+        "es": "Entrega prevista en palabras - hoy, mañana, dentro de unos días o atrasado.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain, dans quelques jours ou en retard.",
+        "it": "Consegna prevista a parole - oggi, domani, fra alcuni giorni o in ritardo.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen, over een aantal dagen of te laat.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro, za kilka dni lub zaległe.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã, dentro de alguns dias ou atrasado.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра, через несколько дней или просрочено.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра, за кілька днів або прострочено.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天、若干天后或已逾期。"
       }
     },
     "native": {},
@@ -1508,7 +1544,7 @@
         "en": "Where the carrier last scanned the package - not a live position.",
         "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
         "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
-        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "it": "Dove il corriere ha registrato la spedizione l'ultima volta - non è la posizione attuale.",
         "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
         "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
         "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
@@ -1580,7 +1616,7 @@
       "desc": {
         "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
         "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
-        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts usa statusCode, que no cambia con el idioma.",
         "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
         "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
         "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
@@ -1626,6 +1662,18 @@
         "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
         "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
         "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      },
+      "states": {
+        "0": "Delivered",
+        "1": "Frozen",
+        "2": "In Transit",
+        "3": "Awaiting Pickup",
+        "4": "Out for Delivery",
+        "5": "Not Found",
+        "6": "Delivery Attempt Failed",
+        "7": "Exception",
+        "8": "Info Received",
+        "-1": "Unknown (-1)"
       }
     },
     "native": {},
@@ -1674,7 +1722,7 @@
     "type": "state",
     "common": {
       "name": {
-        "de": "Versanddienst",
+        "de": "Zusteller",
         "en": "Carrier",
         "es": "Transportista",
         "fr": "Transporteur",
@@ -1728,17 +1776,17 @@
       "read": true,
       "write": false,
       "desc": {
-        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
-        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
-        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
-        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
-        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
-        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
-        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
-        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
-        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
-        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
-        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+        "de": "Erwartete Zustellung in Worten - heute, morgen, in einigen Tagen oder überfällig.",
+        "en": "Expected delivery in words - today, tomorrow, in a number of days or overdue.",
+        "es": "Entrega prevista en palabras - hoy, mañana, dentro de unos días o atrasado.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain, dans quelques jours ou en retard.",
+        "it": "Consegna prevista a parole - oggi, domani, fra alcuni giorni o in ritardo.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen, over een aantal dagen of te laat.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro, za kilka dni lub zaległe.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã, dentro de alguns dias ou atrasado.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра, через несколько дней или просрочено.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра, за кілька днів або прострочено.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天、若干天后或已逾期。"
       }
     },
     "native": {},
@@ -1917,7 +1965,7 @@
         "en": "Where the carrier last scanned the package - not a live position.",
         "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
         "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
-        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "it": "Dove il corriere ha registrato la spedizione l'ultima volta - non è la posizione attuale.",
         "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
         "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
         "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
@@ -1989,7 +2037,7 @@
       "desc": {
         "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
         "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
-        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts usa statusCode, que no cambia con el idioma.",
         "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
         "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
         "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
@@ -2035,6 +2083,18 @@
         "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
         "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
         "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      },
+      "states": {
+        "0": "Delivered",
+        "1": "Frozen",
+        "2": "In Transit",
+        "3": "Awaiting Pickup",
+        "4": "Out for Delivery",
+        "5": "Not Found",
+        "6": "Delivery Attempt Failed",
+        "7": "Exception",
+        "8": "Info Received",
+        "-1": "Unknown (-1)"
       }
     },
     "native": {},
@@ -2083,7 +2143,7 @@
     "type": "state",
     "common": {
       "name": {
-        "de": "Versanddienst",
+        "de": "Zusteller",
         "en": "Carrier",
         "es": "Transportista",
         "fr": "Transporteur",
@@ -2137,17 +2197,17 @@
       "read": true,
       "write": false,
       "desc": {
-        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
-        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
-        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
-        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
-        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
-        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
-        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
-        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
-        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
-        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
-        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+        "de": "Erwartete Zustellung in Worten - heute, morgen, in einigen Tagen oder überfällig.",
+        "en": "Expected delivery in words - today, tomorrow, in a number of days or overdue.",
+        "es": "Entrega prevista en palabras - hoy, mañana, dentro de unos días o atrasado.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain, dans quelques jours ou en retard.",
+        "it": "Consegna prevista a parole - oggi, domani, fra alcuni giorni o in ritardo.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen, over een aantal dagen of te laat.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro, za kilka dni lub zaległe.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã, dentro de alguns dias ou atrasado.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра, через несколько дней или просрочено.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра, за кілька днів або прострочено.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天、若干天后或已逾期。"
       }
     },
     "native": {},
@@ -2326,7 +2386,7 @@
         "en": "Where the carrier last scanned the package - not a live position.",
         "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
         "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
-        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "it": "Dove il corriere ha registrato la spedizione l'ultima volta - non è la posizione attuale.",
         "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
         "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
         "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
@@ -2398,7 +2458,7 @@
       "desc": {
         "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
         "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
-        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts usa statusCode, que no cambia con el idioma.",
         "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
         "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
         "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
@@ -2444,6 +2504,18 @@
         "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
         "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
         "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      },
+      "states": {
+        "0": "Delivered",
+        "1": "Frozen",
+        "2": "In Transit",
+        "3": "Awaiting Pickup",
+        "4": "Out for Delivery",
+        "5": "Not Found",
+        "6": "Delivery Attempt Failed",
+        "7": "Exception",
+        "8": "Info Received",
+        "-1": "Unknown (-1)"
       }
     },
     "native": {},
@@ -2492,7 +2564,7 @@
     "type": "state",
     "common": {
       "name": {
-        "de": "Versanddienst",
+        "de": "Zusteller",
         "en": "Carrier",
         "es": "Transportista",
         "fr": "Transporteur",
@@ -2546,17 +2618,17 @@
       "read": true,
       "write": false,
       "desc": {
-        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
-        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
-        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
-        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
-        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
-        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
-        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
-        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
-        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
-        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
-        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+        "de": "Erwartete Zustellung in Worten - heute, morgen, in einigen Tagen oder überfällig.",
+        "en": "Expected delivery in words - today, tomorrow, in a number of days or overdue.",
+        "es": "Entrega prevista en palabras - hoy, mañana, dentro de unos días o atrasado.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain, dans quelques jours ou en retard.",
+        "it": "Consegna prevista a parole - oggi, domani, fra alcuni giorni o in ritardo.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen, over een aantal dagen of te laat.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro, za kilka dni lub zaległe.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã, dentro de alguns dias ou atrasado.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра, через несколько дней или просрочено.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра, за кілька днів або прострочено.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天、若干天后或已逾期。"
       }
     },
     "native": {},
@@ -2735,7 +2807,7 @@
         "en": "Where the carrier last scanned the package - not a live position.",
         "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
         "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
-        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "it": "Dove il corriere ha registrato la spedizione l'ultima volta - non è la posizione attuale.",
         "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
         "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
         "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
@@ -2807,7 +2879,7 @@
       "desc": {
         "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
         "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
-        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts usa statusCode, que no cambia con el idioma.",
         "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
         "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
         "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
@@ -2853,6 +2925,18 @@
         "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
         "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
         "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      },
+      "states": {
+        "0": "Delivered",
+        "1": "Frozen",
+        "2": "In Transit",
+        "3": "Awaiting Pickup",
+        "4": "Out for Delivery",
+        "5": "Not Found",
+        "6": "Delivery Attempt Failed",
+        "7": "Exception",
+        "8": "Info Received",
+        "-1": "Unknown (-1)"
       }
     },
     "native": {},
@@ -2901,7 +2985,7 @@
     "type": "state",
     "common": {
       "name": {
-        "de": "Versanddienst",
+        "de": "Zusteller",
         "en": "Carrier",
         "es": "Transportista",
         "fr": "Transporteur",
@@ -2955,17 +3039,17 @@
       "read": true,
       "write": false,
       "desc": {
-        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
-        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
-        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
-        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
-        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
-        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
-        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
-        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
-        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
-        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
-        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+        "de": "Erwartete Zustellung in Worten - heute, morgen, in einigen Tagen oder überfällig.",
+        "en": "Expected delivery in words - today, tomorrow, in a number of days or overdue.",
+        "es": "Entrega prevista en palabras - hoy, mañana, dentro de unos días o atrasado.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain, dans quelques jours ou en retard.",
+        "it": "Consegna prevista a parole - oggi, domani, fra alcuni giorni o in ritardo.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen, over een aantal dagen of te laat.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro, za kilka dni lub zaległe.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã, dentro de alguns dias ou atrasado.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра, через несколько дней или просрочено.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра, за кілька днів або прострочено.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天、若干天后或已逾期。"
       }
     },
     "native": {},
@@ -3144,7 +3228,7 @@
         "en": "Where the carrier last scanned the package - not a live position.",
         "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
         "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
-        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "it": "Dove il corriere ha registrato la spedizione l'ultima volta - non è la posizione attuale.",
         "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
         "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
         "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
@@ -3216,7 +3300,7 @@
       "desc": {
         "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
         "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
-        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts usa statusCode, que no cambia con el idioma.",
         "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
         "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
         "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
@@ -3262,6 +3346,18 @@
         "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
         "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
         "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      },
+      "states": {
+        "0": "Delivered",
+        "1": "Frozen",
+        "2": "In Transit",
+        "3": "Awaiting Pickup",
+        "4": "Out for Delivery",
+        "5": "Not Found",
+        "6": "Delivery Attempt Failed",
+        "7": "Exception",
+        "8": "Info Received",
+        "-1": "Unknown (-1)"
       }
     },
     "native": {},
@@ -3310,7 +3406,7 @@
     "type": "state",
     "common": {
       "name": {
-        "de": "Versanddienst",
+        "de": "Zusteller",
         "en": "Carrier",
         "es": "Transportista",
         "fr": "Transporteur",
@@ -3364,17 +3460,17 @@
       "read": true,
       "write": false,
       "desc": {
-        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
-        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
-        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
-        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
-        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
-        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
-        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
-        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
-        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
-        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
-        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+        "de": "Erwartete Zustellung in Worten - heute, morgen, in einigen Tagen oder überfällig.",
+        "en": "Expected delivery in words - today, tomorrow, in a number of days or overdue.",
+        "es": "Entrega prevista en palabras - hoy, mañana, dentro de unos días o atrasado.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain, dans quelques jours ou en retard.",
+        "it": "Consegna prevista a parole - oggi, domani, fra alcuni giorni o in ritardo.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen, over een aantal dagen of te laat.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro, za kilka dni lub zaległe.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã, dentro de alguns dias ou atrasado.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра, через несколько дней или просрочено.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра, за кілька днів або прострочено.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天、若干天后或已逾期。"
       }
     },
     "native": {},
@@ -3553,7 +3649,7 @@
         "en": "Where the carrier last scanned the package - not a live position.",
         "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
         "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
-        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "it": "Dove il corriere ha registrato la spedizione l'ultima volta - non è la posizione attuale.",
         "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
         "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
         "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
@@ -3625,7 +3721,7 @@
       "desc": {
         "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
         "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
-        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts usa statusCode, que no cambia con el idioma.",
         "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
         "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
         "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
@@ -3671,6 +3767,18 @@
         "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
         "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
         "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      },
+      "states": {
+        "0": "Delivered",
+        "1": "Frozen",
+        "2": "In Transit",
+        "3": "Awaiting Pickup",
+        "4": "Out for Delivery",
+        "5": "Not Found",
+        "6": "Delivery Attempt Failed",
+        "7": "Exception",
+        "8": "Info Received",
+        "-1": "Unknown (-1)"
       }
     },
     "native": {},
@@ -3719,7 +3827,7 @@
     "type": "state",
     "common": {
       "name": {
-        "de": "Versanddienst",
+        "de": "Zusteller",
         "en": "Carrier",
         "es": "Transportista",
         "fr": "Transporteur",
@@ -3773,17 +3881,17 @@
       "read": true,
       "write": false,
       "desc": {
-        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
-        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
-        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
-        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
-        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
-        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
-        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
-        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
-        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
-        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
-        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+        "de": "Erwartete Zustellung in Worten - heute, morgen, in einigen Tagen oder überfällig.",
+        "en": "Expected delivery in words - today, tomorrow, in a number of days or overdue.",
+        "es": "Entrega prevista en palabras - hoy, mañana, dentro de unos días o atrasado.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain, dans quelques jours ou en retard.",
+        "it": "Consegna prevista a parole - oggi, domani, fra alcuni giorni o in ritardo.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen, over een aantal dagen of te laat.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro, za kilka dni lub zaległe.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã, dentro de alguns dias ou atrasado.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра, через несколько дней или просрочено.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра, за кілька днів або прострочено.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天、若干天后或已逾期。"
       }
     },
     "native": {},
@@ -3962,7 +4070,7 @@
         "en": "Where the carrier last scanned the package - not a live position.",
         "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
         "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
-        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "it": "Dove il corriere ha registrato la spedizione l'ultima volta - non è la posizione attuale.",
         "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
         "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
         "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
@@ -4034,7 +4142,7 @@
       "desc": {
         "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
         "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
-        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts usa statusCode, que no cambia con el idioma.",
         "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
         "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
         "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
@@ -4080,6 +4188,18 @@
         "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
         "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
         "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      },
+      "states": {
+        "0": "Delivered",
+        "1": "Frozen",
+        "2": "In Transit",
+        "3": "Awaiting Pickup",
+        "4": "Out for Delivery",
+        "5": "Not Found",
+        "6": "Delivery Attempt Failed",
+        "7": "Exception",
+        "8": "Info Received",
+        "-1": "Unknown (-1)"
       }
     },
     "native": {},
@@ -4128,7 +4248,7 @@
     "type": "state",
     "common": {
       "name": {
-        "de": "Versanddienst",
+        "de": "Zusteller",
         "en": "Carrier",
         "es": "Transportista",
         "fr": "Transporteur",
@@ -4182,17 +4302,17 @@
       "read": true,
       "write": false,
       "desc": {
-        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
-        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
-        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
-        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
-        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
-        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
-        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
-        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
-        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
-        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
-        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+        "de": "Erwartete Zustellung in Worten - heute, morgen, in einigen Tagen oder überfällig.",
+        "en": "Expected delivery in words - today, tomorrow, in a number of days or overdue.",
+        "es": "Entrega prevista en palabras - hoy, mañana, dentro de unos días o atrasado.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain, dans quelques jours ou en retard.",
+        "it": "Consegna prevista a parole - oggi, domani, fra alcuni giorni o in ritardo.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen, over een aantal dagen of te laat.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro, za kilka dni lub zaległe.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã, dentro de alguns dias ou atrasado.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра, через несколько дней или просрочено.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра, за кілька днів або прострочено.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天、若干天后或已逾期。"
       }
     },
     "native": {},
@@ -4371,7 +4491,7 @@
         "en": "Where the carrier last scanned the package - not a live position.",
         "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
         "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
-        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "it": "Dove il corriere ha registrato la spedizione l'ultima volta - non è la posizione attuale.",
         "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
         "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
         "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
@@ -4443,7 +4563,7 @@
       "desc": {
         "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
         "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
-        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts usa statusCode, que no cambia con el idioma.",
         "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
         "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
         "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
@@ -4489,6 +4609,18 @@
         "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
         "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
         "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      },
+      "states": {
+        "0": "Delivered",
+        "1": "Frozen",
+        "2": "In Transit",
+        "3": "Awaiting Pickup",
+        "4": "Out for Delivery",
+        "5": "Not Found",
+        "6": "Delivery Attempt Failed",
+        "7": "Exception",
+        "8": "Info Received",
+        "-1": "Unknown (-1)"
       }
     },
     "native": {},
@@ -4526,7 +4658,7 @@
         "en": "Package INV-NO-DESCRIPTION",
         "es": "Paquete INV-NO-DESCRIPTION",
         "fr": "Colis INV-NO-DESCRIPTION",
-        "it": "Pacco INV-NO-DESCRIPTION",
+        "it": "Spedizione INV-NO-DESCRIPTION",
         "nl": "Pakket INV-NO-DESCRIPTION",
         "pl": "Paczka INV-NO-DESCRIPTION",
         "pt": "Encomenda INV-NO-DESCRIPTION",
@@ -4549,7 +4681,7 @@
     "type": "state",
     "common": {
       "name": {
-        "de": "Versanddienst",
+        "de": "Zusteller",
         "en": "Carrier",
         "es": "Transportista",
         "fr": "Transporteur",
@@ -4603,17 +4735,17 @@
       "read": true,
       "write": false,
       "desc": {
-        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
-        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
-        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
-        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
-        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
-        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
-        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
-        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
-        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
-        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
-        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+        "de": "Erwartete Zustellung in Worten - heute, morgen, in einigen Tagen oder überfällig.",
+        "en": "Expected delivery in words - today, tomorrow, in a number of days or overdue.",
+        "es": "Entrega prevista en palabras - hoy, mañana, dentro de unos días o atrasado.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain, dans quelques jours ou en retard.",
+        "it": "Consegna prevista a parole - oggi, domani, fra alcuni giorni o in ritardo.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen, over een aantal dagen of te laat.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro, za kilka dni lub zaległe.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã, dentro de alguns dias ou atrasado.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра, через несколько дней или просрочено.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра, за кілька днів або прострочено.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天、若干天后或已逾期。"
       }
     },
     "native": {},
@@ -4792,7 +4924,7 @@
         "en": "Where the carrier last scanned the package - not a live position.",
         "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
         "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
-        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "it": "Dove il corriere ha registrato la spedizione l'ultima volta - non è la posizione attuale.",
         "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
         "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
         "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
@@ -4864,7 +4996,7 @@
       "desc": {
         "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
         "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
-        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts usa statusCode, que no cambia con el idioma.",
         "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
         "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
         "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
@@ -4910,6 +5042,18 @@
         "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
         "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
         "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      },
+      "states": {
+        "0": "Delivered",
+        "1": "Frozen",
+        "2": "In Transit",
+        "3": "Awaiting Pickup",
+        "4": "Out for Delivery",
+        "5": "Not Found",
+        "6": "Delivery Attempt Failed",
+        "7": "Exception",
+        "8": "Info Received",
+        "-1": "Unknown (-1)"
       }
     },
     "native": {},
@@ -4973,7 +5117,7 @@
     "type": "state",
     "common": {
       "name": {
-        "de": "Versanddienst",
+        "de": "Zusteller",
         "en": "Carrier",
         "es": "Transportista",
         "fr": "Transporteur",
@@ -5027,17 +5171,17 @@
       "read": true,
       "write": false,
       "desc": {
-        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
-        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
-        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
-        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
-        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
-        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
-        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
-        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
-        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
-        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
-        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+        "de": "Erwartete Zustellung in Worten - heute, morgen, in einigen Tagen oder überfällig.",
+        "en": "Expected delivery in words - today, tomorrow, in a number of days or overdue.",
+        "es": "Entrega prevista en palabras - hoy, mañana, dentro de unos días o atrasado.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain, dans quelques jours ou en retard.",
+        "it": "Consegna prevista a parole - oggi, domani, fra alcuni giorni o in ritardo.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen, over een aantal dagen of te laat.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro, za kilka dni lub zaległe.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã, dentro de alguns dias ou atrasado.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра, через несколько дней или просрочено.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра, за кілька днів або прострочено.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天、若干天后或已逾期。"
       }
     },
     "native": {},
@@ -5216,7 +5360,7 @@
         "en": "Where the carrier last scanned the package - not a live position.",
         "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
         "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
-        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "it": "Dove il corriere ha registrato la spedizione l'ultima volta - non è la posizione attuale.",
         "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
         "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
         "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
@@ -5288,7 +5432,7 @@
       "desc": {
         "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
         "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
-        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts usa statusCode, que no cambia con el idioma.",
         "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
         "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
         "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
@@ -5334,6 +5478,18 @@
         "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
         "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
         "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      },
+      "states": {
+        "0": "Delivered",
+        "1": "Frozen",
+        "2": "In Transit",
+        "3": "Awaiting Pickup",
+        "4": "Out for Delivery",
+        "5": "Not Found",
+        "6": "Delivery Attempt Failed",
+        "7": "Exception",
+        "8": "Info Received",
+        "-1": "Unknown (-1)"
       }
     },
     "native": {},
@@ -5382,7 +5538,7 @@
     "type": "state",
     "common": {
       "name": {
-        "de": "Versanddienst",
+        "de": "Zusteller",
         "en": "Carrier",
         "es": "Transportista",
         "fr": "Transporteur",
@@ -5436,17 +5592,17 @@
       "read": true,
       "write": false,
       "desc": {
-        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
-        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
-        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
-        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
-        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
-        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
-        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
-        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
-        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
-        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
-        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+        "de": "Erwartete Zustellung in Worten - heute, morgen, in einigen Tagen oder überfällig.",
+        "en": "Expected delivery in words - today, tomorrow, in a number of days or overdue.",
+        "es": "Entrega prevista en palabras - hoy, mañana, dentro de unos días o atrasado.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain, dans quelques jours ou en retard.",
+        "it": "Consegna prevista a parole - oggi, domani, fra alcuni giorni o in ritardo.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen, over een aantal dagen of te laat.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro, za kilka dni lub zaległe.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã, dentro de alguns dias ou atrasado.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра, через несколько дней или просрочено.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра, за кілька днів або прострочено.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天、若干天后或已逾期。"
       }
     },
     "native": {},
@@ -5625,7 +5781,7 @@
         "en": "Where the carrier last scanned the package - not a live position.",
         "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
         "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
-        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "it": "Dove il corriere ha registrato la spedizione l'ultima volta - non è la posizione attuale.",
         "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
         "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
         "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
@@ -5697,7 +5853,7 @@
       "desc": {
         "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
         "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
-        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts usa statusCode, que no cambia con el idioma.",
         "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
         "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
         "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
@@ -5743,6 +5899,18 @@
         "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
         "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
         "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      },
+      "states": {
+        "0": "Delivered",
+        "1": "Frozen",
+        "2": "In Transit",
+        "3": "Awaiting Pickup",
+        "4": "Out for Delivery",
+        "5": "Not Found",
+        "6": "Delivery Attempt Failed",
+        "7": "Exception",
+        "8": "Info Received",
+        "-1": "Unknown (-1)"
       }
     },
     "native": {},
@@ -5776,7 +5944,7 @@
     "type": "state",
     "common": {
       "name": {
-        "de": "Versanddienst",
+        "de": "Zusteller",
         "en": "Carrier",
         "es": "Transportista",
         "fr": "Transporteur",
@@ -5830,17 +5998,17 @@
       "read": true,
       "write": false,
       "desc": {
-        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
-        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
-        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
-        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
-        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
-        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
-        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
-        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
-        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
-        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
-        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+        "de": "Erwartete Zustellung in Worten - heute, morgen, in einigen Tagen oder überfällig.",
+        "en": "Expected delivery in words - today, tomorrow, in a number of days or overdue.",
+        "es": "Entrega prevista en palabras - hoy, mañana, dentro de unos días o atrasado.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain, dans quelques jours ou en retard.",
+        "it": "Consegna prevista a parole - oggi, domani, fra alcuni giorni o in ritardo.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen, over een aantal dagen of te laat.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro, za kilka dni lub zaległe.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã, dentro de alguns dias ou atrasado.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра, через несколько дней или просрочено.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра, за кілька днів або прострочено.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天、若干天后或已逾期。"
       }
     },
     "native": {},
@@ -6019,7 +6187,7 @@
         "en": "Where the carrier last scanned the package - not a live position.",
         "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
         "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
-        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "it": "Dove il corriere ha registrato la spedizione l'ultima volta - non è la posizione attuale.",
         "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
         "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
         "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
@@ -6091,7 +6259,7 @@
       "desc": {
         "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
         "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
-        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts usa statusCode, que no cambia con el idioma.",
         "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
         "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
         "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
@@ -6137,6 +6305,18 @@
         "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
         "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
         "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      },
+      "states": {
+        "0": "Delivered",
+        "1": "Frozen",
+        "2": "In Transit",
+        "3": "Awaiting Pickup",
+        "4": "Out for Delivery",
+        "5": "Not Found",
+        "6": "Delivery Attempt Failed",
+        "7": "Exception",
+        "8": "Info Received",
+        "-1": "Unknown (-1)"
       }
     },
     "native": {},
@@ -6185,7 +6365,7 @@
     "type": "state",
     "common": {
       "name": {
-        "de": "Versanddienst",
+        "de": "Zusteller",
         "en": "Carrier",
         "es": "Transportista",
         "fr": "Transporteur",
@@ -6239,17 +6419,17 @@
       "read": true,
       "write": false,
       "desc": {
-        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
-        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
-        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
-        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
-        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
-        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
-        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
-        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
-        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
-        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
-        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+        "de": "Erwartete Zustellung in Worten - heute, morgen, in einigen Tagen oder überfällig.",
+        "en": "Expected delivery in words - today, tomorrow, in a number of days or overdue.",
+        "es": "Entrega prevista en palabras - hoy, mañana, dentro de unos días o atrasado.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain, dans quelques jours ou en retard.",
+        "it": "Consegna prevista a parole - oggi, domani, fra alcuni giorni o in ritardo.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen, over een aantal dagen of te laat.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro, za kilka dni lub zaległe.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã, dentro de alguns dias ou atrasado.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра, через несколько дней или просрочено.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра, за кілька днів або прострочено.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天、若干天后或已逾期。"
       }
     },
     "native": {},
@@ -6428,7 +6608,7 @@
         "en": "Where the carrier last scanned the package - not a live position.",
         "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
         "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
-        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "it": "Dove il corriere ha registrato la spedizione l'ultima volta - non è la posizione attuale.",
         "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
         "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
         "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
@@ -6500,7 +6680,7 @@
       "desc": {
         "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
         "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
-        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts usa statusCode, que no cambia con el idioma.",
         "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
         "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
         "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
@@ -6546,6 +6726,18 @@
         "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
         "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
         "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      },
+      "states": {
+        "0": "Delivered",
+        "1": "Frozen",
+        "2": "In Transit",
+        "3": "Awaiting Pickup",
+        "4": "Out for Delivery",
+        "5": "Not Found",
+        "6": "Delivery Attempt Failed",
+        "7": "Exception",
+        "8": "Info Received",
+        "-1": "Unknown (-1)"
       }
     },
     "native": {},
@@ -6594,7 +6786,7 @@
     "type": "state",
     "common": {
       "name": {
-        "de": "Versanddienst",
+        "de": "Zusteller",
         "en": "Carrier",
         "es": "Transportista",
         "fr": "Transporteur",
@@ -6648,17 +6840,17 @@
       "read": true,
       "write": false,
       "desc": {
-        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
-        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
-        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
-        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
-        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
-        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
-        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
-        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
-        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
-        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
-        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+        "de": "Erwartete Zustellung in Worten - heute, morgen, in einigen Tagen oder überfällig.",
+        "en": "Expected delivery in words - today, tomorrow, in a number of days or overdue.",
+        "es": "Entrega prevista en palabras - hoy, mañana, dentro de unos días o atrasado.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain, dans quelques jours ou en retard.",
+        "it": "Consegna prevista a parole - oggi, domani, fra alcuni giorni o in ritardo.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen, over een aantal dagen of te laat.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro, za kilka dni lub zaległe.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã, dentro de alguns dias ou atrasado.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра, через несколько дней или просрочено.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра, за кілька днів або прострочено.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天、若干天后或已逾期。"
       }
     },
     "native": {},
@@ -6837,7 +7029,7 @@
         "en": "Where the carrier last scanned the package - not a live position.",
         "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
         "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
-        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "it": "Dove il corriere ha registrato la spedizione l'ultima volta - non è la posizione attuale.",
         "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
         "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
         "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
@@ -6909,7 +7101,7 @@
       "desc": {
         "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
         "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
-        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts usa statusCode, que no cambia con el idioma.",
         "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
         "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
         "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
@@ -6955,6 +7147,18 @@
         "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
         "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
         "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      },
+      "states": {
+        "0": "Delivered",
+        "1": "Frozen",
+        "2": "In Transit",
+        "3": "Awaiting Pickup",
+        "4": "Out for Delivery",
+        "5": "Not Found",
+        "6": "Delivery Attempt Failed",
+        "7": "Exception",
+        "8": "Info Received",
+        "-1": "Unknown (-1)"
       }
     },
     "native": {},
@@ -7003,7 +7207,7 @@
     "type": "state",
     "common": {
       "name": {
-        "de": "Versanddienst",
+        "de": "Zusteller",
         "en": "Carrier",
         "es": "Transportista",
         "fr": "Transporteur",
@@ -7057,17 +7261,17 @@
       "read": true,
       "write": false,
       "desc": {
-        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
-        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
-        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
-        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
-        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
-        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
-        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
-        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
-        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
-        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
-        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+        "de": "Erwartete Zustellung in Worten - heute, morgen, in einigen Tagen oder überfällig.",
+        "en": "Expected delivery in words - today, tomorrow, in a number of days or overdue.",
+        "es": "Entrega prevista en palabras - hoy, mañana, dentro de unos días o atrasado.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain, dans quelques jours ou en retard.",
+        "it": "Consegna prevista a parole - oggi, domani, fra alcuni giorni o in ritardo.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen, over een aantal dagen of te laat.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro, za kilka dni lub zaległe.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã, dentro de alguns dias ou atrasado.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра, через несколько дней или просрочено.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра, за кілька днів або прострочено.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天、若干天后或已逾期。"
       }
     },
     "native": {},
@@ -7246,7 +7450,7 @@
         "en": "Where the carrier last scanned the package - not a live position.",
         "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
         "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
-        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "it": "Dove il corriere ha registrato la spedizione l'ultima volta - non è la posizione attuale.",
         "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
         "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
         "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
@@ -7318,7 +7522,7 @@
       "desc": {
         "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
         "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
-        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts usa statusCode, que no cambia con el idioma.",
         "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
         "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
         "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
@@ -7364,6 +7568,18 @@
         "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
         "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
         "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      },
+      "states": {
+        "0": "Delivered",
+        "1": "Frozen",
+        "2": "In Transit",
+        "3": "Awaiting Pickup",
+        "4": "Out for Delivery",
+        "5": "Not Found",
+        "6": "Delivery Attempt Failed",
+        "7": "Exception",
+        "8": "Info Received",
+        "-1": "Unknown (-1)"
       }
     },
     "native": {},
@@ -7412,7 +7628,7 @@
     "type": "state",
     "common": {
       "name": {
-        "de": "Versanddienst",
+        "de": "Zusteller",
         "en": "Carrier",
         "es": "Transportista",
         "fr": "Transporteur",
@@ -7466,17 +7682,17 @@
       "read": true,
       "write": false,
       "desc": {
-        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
-        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
-        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
-        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
-        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
-        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
-        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
-        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
-        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
-        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
-        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+        "de": "Erwartete Zustellung in Worten - heute, morgen, in einigen Tagen oder überfällig.",
+        "en": "Expected delivery in words - today, tomorrow, in a number of days or overdue.",
+        "es": "Entrega prevista en palabras - hoy, mañana, dentro de unos días o atrasado.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain, dans quelques jours ou en retard.",
+        "it": "Consegna prevista a parole - oggi, domani, fra alcuni giorni o in ritardo.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen, over een aantal dagen of te laat.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro, za kilka dni lub zaległe.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã, dentro de alguns dias ou atrasado.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра, через несколько дней или просрочено.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра, за кілька днів або прострочено.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天、若干天后或已逾期。"
       }
     },
     "native": {},
@@ -7655,7 +7871,7 @@
         "en": "Where the carrier last scanned the package - not a live position.",
         "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
         "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
-        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "it": "Dove il corriere ha registrato la spedizione l'ultima volta - non è la posizione attuale.",
         "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
         "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
         "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
@@ -7727,7 +7943,7 @@
       "desc": {
         "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
         "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
-        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts usa statusCode, que no cambia con el idioma.",
         "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
         "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
         "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
@@ -7773,6 +7989,18 @@
         "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
         "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
         "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      },
+      "states": {
+        "0": "Delivered",
+        "1": "Frozen",
+        "2": "In Transit",
+        "3": "Awaiting Pickup",
+        "4": "Out for Delivery",
+        "5": "Not Found",
+        "6": "Delivery Attempt Failed",
+        "7": "Exception",
+        "8": "Info Received",
+        "-1": "Unknown (-1)"
       }
     },
     "native": {},
@@ -7821,7 +8049,7 @@
     "type": "state",
     "common": {
       "name": {
-        "de": "Versanddienst",
+        "de": "Zusteller",
         "en": "Carrier",
         "es": "Transportista",
         "fr": "Transporteur",
@@ -7875,17 +8103,17 @@
       "read": true,
       "write": false,
       "desc": {
-        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
-        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
-        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
-        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
-        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
-        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
-        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
-        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
-        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
-        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
-        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+        "de": "Erwartete Zustellung in Worten - heute, morgen, in einigen Tagen oder überfällig.",
+        "en": "Expected delivery in words - today, tomorrow, in a number of days or overdue.",
+        "es": "Entrega prevista en palabras - hoy, mañana, dentro de unos días o atrasado.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain, dans quelques jours ou en retard.",
+        "it": "Consegna prevista a parole - oggi, domani, fra alcuni giorni o in ritardo.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen, over een aantal dagen of te laat.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro, za kilka dni lub zaległe.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã, dentro de alguns dias ou atrasado.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра, через несколько дней или просрочено.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра, за кілька днів або прострочено.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天、若干天后或已逾期。"
       }
     },
     "native": {},
@@ -8064,7 +8292,7 @@
         "en": "Where the carrier last scanned the package - not a live position.",
         "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
         "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
-        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "it": "Dove il corriere ha registrato la spedizione l'ultima volta - non è la posizione attuale.",
         "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
         "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
         "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
@@ -8136,7 +8364,7 @@
       "desc": {
         "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
         "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
-        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts usa statusCode, que no cambia con el idioma.",
         "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
         "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
         "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
@@ -8182,6 +8410,18 @@
         "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
         "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
         "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      },
+      "states": {
+        "0": "Delivered",
+        "1": "Frozen",
+        "2": "In Transit",
+        "3": "Awaiting Pickup",
+        "4": "Out for Delivery",
+        "5": "Not Found",
+        "6": "Delivery Attempt Failed",
+        "7": "Exception",
+        "8": "Info Received",
+        "-1": "Unknown (-1)"
       }
     },
     "native": {},
@@ -8230,7 +8470,7 @@
     "type": "state",
     "common": {
       "name": {
-        "de": "Versanddienst",
+        "de": "Zusteller",
         "en": "Carrier",
         "es": "Transportista",
         "fr": "Transporteur",
@@ -8284,17 +8524,17 @@
       "read": true,
       "write": false,
       "desc": {
-        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
-        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
-        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
-        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
-        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
-        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
-        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
-        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
-        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
-        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
-        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+        "de": "Erwartete Zustellung in Worten - heute, morgen, in einigen Tagen oder überfällig.",
+        "en": "Expected delivery in words - today, tomorrow, in a number of days or overdue.",
+        "es": "Entrega prevista en palabras - hoy, mañana, dentro de unos días o atrasado.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain, dans quelques jours ou en retard.",
+        "it": "Consegna prevista a parole - oggi, domani, fra alcuni giorni o in ritardo.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen, over een aantal dagen of te laat.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro, za kilka dni lub zaległe.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã, dentro de alguns dias ou atrasado.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра, через несколько дней или просрочено.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра, за кілька днів або прострочено.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天、若干天后或已逾期。"
       }
     },
     "native": {},
@@ -8473,7 +8713,7 @@
         "en": "Where the carrier last scanned the package - not a live position.",
         "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
         "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
-        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "it": "Dove il corriere ha registrato la spedizione l'ultima volta - non è la posizione attuale.",
         "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
         "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
         "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
@@ -8545,7 +8785,7 @@
       "desc": {
         "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
         "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
-        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts usa statusCode, que no cambia con el idioma.",
         "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
         "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
         "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
@@ -8591,6 +8831,18 @@
         "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
         "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
         "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      },
+      "states": {
+        "0": "Delivered",
+        "1": "Frozen",
+        "2": "In Transit",
+        "3": "Awaiting Pickup",
+        "4": "Out for Delivery",
+        "5": "Not Found",
+        "6": "Delivery Attempt Failed",
+        "7": "Exception",
+        "8": "Info Received",
+        "-1": "Unknown (-1)"
       }
     },
     "native": {},
@@ -8639,7 +8891,7 @@
     "type": "state",
     "common": {
       "name": {
-        "de": "Versanddienst",
+        "de": "Zusteller",
         "en": "Carrier",
         "es": "Transportista",
         "fr": "Transporteur",
@@ -8693,17 +8945,17 @@
       "read": true,
       "write": false,
       "desc": {
-        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
-        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
-        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
-        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
-        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
-        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
-        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
-        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
-        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
-        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
-        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+        "de": "Erwartete Zustellung in Worten - heute, morgen, in einigen Tagen oder überfällig.",
+        "en": "Expected delivery in words - today, tomorrow, in a number of days or overdue.",
+        "es": "Entrega prevista en palabras - hoy, mañana, dentro de unos días o atrasado.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain, dans quelques jours ou en retard.",
+        "it": "Consegna prevista a parole - oggi, domani, fra alcuni giorni o in ritardo.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen, over een aantal dagen of te laat.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro, za kilka dni lub zaległe.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã, dentro de alguns dias ou atrasado.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра, через несколько дней или просрочено.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра, за кілька днів або прострочено.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天、若干天后或已逾期。"
       }
     },
     "native": {},
@@ -8882,7 +9134,7 @@
         "en": "Where the carrier last scanned the package - not a live position.",
         "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
         "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
-        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "it": "Dove il corriere ha registrato la spedizione l'ultima volta - non è la posizione attuale.",
         "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
         "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
         "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
@@ -8954,7 +9206,7 @@
       "desc": {
         "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
         "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
-        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts usa statusCode, que no cambia con el idioma.",
         "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
         "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
         "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
@@ -9000,6 +9252,18 @@
         "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
         "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
         "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      },
+      "states": {
+        "0": "Delivered",
+        "1": "Frozen",
+        "2": "In Transit",
+        "3": "Awaiting Pickup",
+        "4": "Out for Delivery",
+        "5": "Not Found",
+        "6": "Delivery Attempt Failed",
+        "7": "Exception",
+        "8": "Info Received",
+        "-1": "Unknown (-1)"
       }
     },
     "native": {},
@@ -9048,7 +9312,7 @@
     "type": "state",
     "common": {
       "name": {
-        "de": "Versanddienst",
+        "de": "Zusteller",
         "en": "Carrier",
         "es": "Transportista",
         "fr": "Transporteur",
@@ -9102,17 +9366,17 @@
       "read": true,
       "write": false,
       "desc": {
-        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
-        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
-        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
-        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
-        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
-        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
-        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
-        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
-        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
-        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
-        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+        "de": "Erwartete Zustellung in Worten - heute, morgen, in einigen Tagen oder überfällig.",
+        "en": "Expected delivery in words - today, tomorrow, in a number of days or overdue.",
+        "es": "Entrega prevista en palabras - hoy, mañana, dentro de unos días o atrasado.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain, dans quelques jours ou en retard.",
+        "it": "Consegna prevista a parole - oggi, domani, fra alcuni giorni o in ritardo.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen, over een aantal dagen of te laat.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro, za kilka dni lub zaległe.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã, dentro de alguns dias ou atrasado.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра, через несколько дней или просрочено.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра, за кілька днів або прострочено.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天、若干天后或已逾期。"
       }
     },
     "native": {},
@@ -9291,7 +9555,7 @@
         "en": "Where the carrier last scanned the package - not a live position.",
         "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
         "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
-        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "it": "Dove il corriere ha registrato la spedizione l'ultima volta - non è la posizione attuale.",
         "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
         "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
         "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
@@ -9363,7 +9627,7 @@
       "desc": {
         "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
         "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
-        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts usa statusCode, que no cambia con el idioma.",
         "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
         "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
         "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
@@ -9409,6 +9673,18 @@
         "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
         "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
         "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      },
+      "states": {
+        "0": "Delivered",
+        "1": "Frozen",
+        "2": "In Transit",
+        "3": "Awaiting Pickup",
+        "4": "Out for Delivery",
+        "5": "Not Found",
+        "6": "Delivery Attempt Failed",
+        "7": "Exception",
+        "8": "Info Received",
+        "-1": "Unknown (-1)"
       }
     },
     "native": {},
@@ -9457,7 +9733,7 @@
     "type": "state",
     "common": {
       "name": {
-        "de": "Versanddienst",
+        "de": "Zusteller",
         "en": "Carrier",
         "es": "Transportista",
         "fr": "Transporteur",
@@ -9511,17 +9787,17 @@
       "read": true,
       "write": false,
       "desc": {
-        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
-        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
-        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
-        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
-        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
-        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
-        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
-        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
-        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
-        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
-        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+        "de": "Erwartete Zustellung in Worten - heute, morgen, in einigen Tagen oder überfällig.",
+        "en": "Expected delivery in words - today, tomorrow, in a number of days or overdue.",
+        "es": "Entrega prevista en palabras - hoy, mañana, dentro de unos días o atrasado.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain, dans quelques jours ou en retard.",
+        "it": "Consegna prevista a parole - oggi, domani, fra alcuni giorni o in ritardo.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen, over een aantal dagen of te laat.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro, za kilka dni lub zaległe.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã, dentro de alguns dias ou atrasado.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра, через несколько дней или просрочено.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра, за кілька днів або прострочено.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天、若干天后或已逾期。"
       }
     },
     "native": {},
@@ -9700,7 +9976,7 @@
         "en": "Where the carrier last scanned the package - not a live position.",
         "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
         "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
-        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "it": "Dove il corriere ha registrato la spedizione l'ultima volta - non è la posizione attuale.",
         "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
         "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
         "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
@@ -9772,7 +10048,7 @@
       "desc": {
         "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
         "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
-        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts usa statusCode, que no cambia con el idioma.",
         "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
         "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
         "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
@@ -9818,6 +10094,18 @@
         "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
         "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
         "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      },
+      "states": {
+        "0": "Delivered",
+        "1": "Frozen",
+        "2": "In Transit",
+        "3": "Awaiting Pickup",
+        "4": "Out for Delivery",
+        "5": "Not Found",
+        "6": "Delivery Attempt Failed",
+        "7": "Exception",
+        "8": "Info Received",
+        "-1": "Unknown (-1)"
       }
     },
     "native": {},
@@ -9866,7 +10154,7 @@
     "type": "state",
     "common": {
       "name": {
-        "de": "Versanddienst",
+        "de": "Zusteller",
         "en": "Carrier",
         "es": "Transportista",
         "fr": "Transporteur",
@@ -9920,17 +10208,17 @@
       "read": true,
       "write": false,
       "desc": {
-        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
-        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
-        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
-        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
-        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
-        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
-        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
-        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
-        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
-        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
-        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+        "de": "Erwartete Zustellung in Worten - heute, morgen, in einigen Tagen oder überfällig.",
+        "en": "Expected delivery in words - today, tomorrow, in a number of days or overdue.",
+        "es": "Entrega prevista en palabras - hoy, mañana, dentro de unos días o atrasado.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain, dans quelques jours ou en retard.",
+        "it": "Consegna prevista a parole - oggi, domani, fra alcuni giorni o in ritardo.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen, over een aantal dagen of te laat.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro, za kilka dni lub zaległe.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã, dentro de alguns dias ou atrasado.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра, через несколько дней или просрочено.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра, за кілька днів або прострочено.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天、若干天后或已逾期。"
       }
     },
     "native": {},
@@ -10109,7 +10397,7 @@
         "en": "Where the carrier last scanned the package - not a live position.",
         "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
         "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
-        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "it": "Dove il corriere ha registrato la spedizione l'ultima volta - non è la posizione attuale.",
         "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
         "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
         "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
@@ -10181,7 +10469,7 @@
       "desc": {
         "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
         "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
-        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts usa statusCode, que no cambia con el idioma.",
         "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
         "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
         "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
@@ -10227,6 +10515,18 @@
         "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
         "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
         "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      },
+      "states": {
+        "0": "Delivered",
+        "1": "Frozen",
+        "2": "In Transit",
+        "3": "Awaiting Pickup",
+        "4": "Out for Delivery",
+        "5": "Not Found",
+        "6": "Delivery Attempt Failed",
+        "7": "Exception",
+        "8": "Info Received",
+        "-1": "Unknown (-1)"
       }
     },
     "native": {},
@@ -10359,13 +10659,13 @@
         "en": "Number of packages that have not been delivered yet.",
         "es": "Número de paquetes que aún no se han entregado.",
         "fr": "Nombre de colis qui ne sont pas encore livrés.",
-        "it": "Numero di pacchi non ancora consegnati.",
+        "it": "Numero di spedizioni non ancora consegnate.",
         "nl": "Aantal pakketten dat nog niet is bezorgd.",
         "pl": "Liczba przesyłek, które nie zostały jeszcze doręczone.",
         "pt": "Número de encomendas que ainda não foram entregues.",
         "ru": "Количество посылок, которые ещё не доставлены.",
         "uk": "Кількість посилок, які ще не доставлено.",
-        "zh-cn": "尚未派送的包裹数量。"
+        "zh-cn": "尚未送达的包裹数量。"
       }
     },
     "native": {},
@@ -10396,7 +10696,7 @@
         "en": "Combined window of all packages expected today - earliest start to latest end.",
         "es": "Ventana combinada de todos los paquetes esperados hoy - del inicio más temprano al final más tardío.",
         "fr": "Créneau combiné de tous les colis attendus aujourd'hui - du début le plus tôt à la fin la plus tardive.",
-        "it": "Finestra combinata di tutti i pacchi attesi oggi - dall'inizio più precoce alla fine più tarda.",
+        "it": "Finestra combinata di tutte le spedizioni attese oggi - dall'inizio più precoce alla fine più tarda.",
         "nl": "Gecombineerd venster van alle vandaag verwachte pakketten - vroegste start tot laatste einde.",
         "pl": "Wspólne okno wszystkich przesyłek oczekiwanych dzisiaj - od najwcześniejszego początku do najpóźniejszego końca.",
         "pt": "Janela combinada de todas as encomendas previstas para hoje - do início mais cedo ao fim mais tarde.",
@@ -10433,7 +10733,7 @@
         "en": "Number of packages expected to arrive today.",
         "es": "Número de paquetes que se esperan hoy.",
         "fr": "Nombre de colis attendus aujourd'hui.",
-        "it": "Numero di pacchi attesi oggi.",
+        "it": "Numero di spedizioni attese oggi.",
         "nl": "Aantal pakketten dat vandaag wordt verwacht.",
         "pl": "Liczba przesyłek oczekiwanych dzisiaj.",
         "pt": "Número de encomendas previstas para hoje.",

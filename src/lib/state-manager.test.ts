@@ -398,6 +398,47 @@ describe("StateManager", () => {
     });
   });
 
+  describe("statusCode carries its plain-text list (audit O7/O8)", () => {
+    it("lists every documented code and the unknown sentinel, in the system language", async () => {
+      const d = makeDelivery({ tracking_number: "STATES" });
+      await updateDeliveryT(manager, d, "DHL");
+      const states = adapter.objects.get(`deliveries.${manager.packageId(d)}.statusCode`)!.common.states as Record<
+        string,
+        unknown
+      >;
+      expect(Object.keys(states).sort()).toEqual(["-1", "0", "1", "2", "3", "4", "5", "6", "7", "8"]);
+      expect(states["4"]).toBe(i18nData.de.status_4);
+      expect(states["-1"]).toBe("Unbekannt (-1)");
+    });
+
+    it("every value is a plain string — a translation object there is React error #31 in the admin", async () => {
+      for (const lang of ["en", "de", "zh-cn"]) {
+        mockLang = lang;
+        const fresh = createMockAdapter();
+        const mgr = new StateManager(fresh as never);
+        const d = makeDelivery({ tracking_number: `STATES-${lang}` });
+        await updateDeliveryT(mgr, d, "DHL");
+        const states = fresh.objects.get(`deliveries.${mgr.packageId(d)}.statusCode`)!.common.states as Record<
+          string,
+          unknown
+        >;
+        expect(
+          Object.values(states).every(v => typeof v === "string" && v.length > 0),
+          lang,
+        ).toBe(true);
+      }
+    });
+
+    it("no other datapoint gets a value list", async () => {
+      const d = makeDelivery({ tracking_number: "ONLY" });
+      await updateDeliveryT(manager, d, "DHL");
+      const withStates = [...adapter.objects.entries()]
+        .filter(([, o]) => o.common.states !== undefined)
+        .map(([id]) => id);
+      expect(withStates).toEqual([`deliveries.${manager.packageId(d)}.statusCode`]);
+    });
+  });
+
   describe("package identity (audit 2026-09-25, S1/S2/S3/B4b/X11)", () => {
     /**
      * One poll the way main.ts runs it: known devices first, the full list, the ids, the writes,
@@ -744,7 +785,8 @@ describe("StateManager", () => {
 
       const pkgId = manager.packageId(delivery);
       const state = adapter.states.get(`deliveries.${pkgId}.status`);
-      expect(state?.val).toBe("Unknown (99)");
+      // v0.14.0 (audit O8): the fallback is translated like every other status text.
+      expect(state?.val).toBe("Unbekannt (99)");
     });
 
     it("should handle non-numeric status code as unknown (kept visible)", async () => {
@@ -755,7 +797,7 @@ describe("StateManager", () => {
       const statusCode = adapter.states.get(`deliveries.${pkgId}.statusCode`);
       expect(statusCode?.val).toBe(-1); // drift → unknown sentinel, NOT 0 (Delivered)
       const status = adapter.states.get(`deliveries.${pkgId}.status`);
-      expect(status?.val).toBe("Unknown (-1)");
+      expect(status?.val).toBe("Unbekannt (-1)");
     });
 
     it("should set trackingNumber as original string", async () => {
@@ -2020,11 +2062,11 @@ describe("StateManager", () => {
   });
 
   describe("status label resolution (v0.10.0 — single i18n source)", () => {
-    it("renders 'Unknown (N)' for a status code without a status_* key", async () => {
+    it("renders the translated 'Unknown (N)' for a status code without a status_* key", async () => {
       const delivery = makeDelivery({ status_code: 9, tracking_number: "trk_unknown" });
       await updateDeliveryT(manager, delivery, "DHL");
       const pkgId = manager.packageId(delivery);
-      expect(adapter.states.get(`deliveries.${pkgId}.status`)?.val).toBe("Unknown (9)");
+      expect(adapter.states.get(`deliveries.${pkgId}.status`)?.val).toBe("Unbekannt (9)");
     });
 
     it("interpolates the day count into estimateDays via %s", async () => {
@@ -2090,7 +2132,7 @@ describe("StateManager", () => {
       const carrier = adapter.objects.get(`deliveries.${pkgId}.carrier`);
       const name = carrier!.common.name as CommonNameTranslated;
       expect(name.en).toBe("Carrier");
-      expect(name.de).toBe("Versanddienst");
+      expect(name.de).toBe("Zusteller");
     });
 
     it("summary state common.name is a translation object", async () => {

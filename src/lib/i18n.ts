@@ -35,6 +35,9 @@ const STATUS_KEYS = {
   8: "status_8",
 } as const satisfies Record<number, I18nKey>;
 
+/** The status codes parcel.app documents (0-8), in order. */
+export const KNOWN_STATUS_CODES: readonly number[] = Object.keys(STATUS_KEYS).map(Number);
+
 /**
  * Localized status label for a parsed status code, or undefined for codes the
  * table does not know (API drift) — the caller renders its own fallback.

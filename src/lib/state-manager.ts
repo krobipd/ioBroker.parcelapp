@@ -11,7 +11,7 @@ import {
   type StatusedDelivery,
 } from "./delivery-view";
 import { carrierIcon } from "./device-icons";
-import { packageName, statusLabel, tName } from "./i18n";
+import { KNOWN_STATUS_CODES, packageName, statusLabel, tName, tText } from "./i18n";
 import { bareId, candidateIndex, identityOf, idCandidates, rawIdKey, sanitize } from "./package-id";
 import type { ParcelDelivery } from "./types";
 import { UNKNOWN_STATUS_CODE } from "./types";
@@ -46,6 +46,7 @@ type StateDef = [
   val: ioBroker.StateValue,
   desc: ioBroker.StringOrTranslated | undefined,
   tracksChange: boolean,
+  states?: Record<string, string>,
 ];
 
 /** Manages ioBroker states for parcel deliveries */
@@ -390,7 +391,8 @@ export class StateManager {
       // parcel.app status (e.g. 9, 10) would render as "Unknown (N)"
       // without any log clue that the label table is out of date.
       this.adapter.log.debug(`status code ${statusCode} has no status_* label, using fallback`);
-      statusText = `Unknown (${statusCode})`;
+      // v0.14.0 (audit O8): in the system language like every other status text.
+      statusText = tText("status_unknown", statusCode);
     }
 
     const deliveryWindow = calculateDeliveryWindow(delivery, statusCode, this.viewLog);
@@ -409,7 +411,16 @@ export class StateManager {
     const stateDefs: StateDef[] = [
       [`${devicePath}.carrier`, tName("carrier"), "string", "text", carrierName, tName("descCarrier"), false],
       [`${devicePath}.status`, tName("status"), "string", "text", statusText, tName("descStatus"), false],
-      [`${devicePath}.statusCode`, tName("statusCode"), "number", "value", statusCode, tName("descStatusCode"), true],
+      [
+        `${devicePath}.statusCode`,
+        tName("statusCode"),
+        "number",
+        "value",
+        statusCode,
+        tName("descStatusCode"),
+        true,
+        StateManager.statusStates(),
+      ],
       [
         `${devicePath}.description`,
         tName("description"),
@@ -445,8 +456,8 @@ export class StateManager {
     // A write counts for `lastUpdated` only where the row tracks the parcel (audit B4a).
     const changed = await Promise.all(
       stateDefs.map(
-        async ([id, name, type, role, val, desc, tracksChange]) =>
-          (await this.createAndSet(id, name, type, role, val, desc)) && tracksChange,
+        async ([id, name, type, role, val, desc, tracksChange, states]) =>
+          (await this.createAndSet(id, name, type, role, val, desc, states)) && tracksChange,
       ),
     );
 
@@ -479,6 +490,24 @@ export class StateManager {
         new Date().toISOString(),
       );
     }
+  }
+
+  /**
+   * v0.14.0 (audit O7): the plain-text list the admin shows next to `statusCode` — every documented
+   * code plus the unknown sentinel. PLAIN strings in the system language: the admin's value
+   * renderer takes `common.states` values as React children, and a translation object there is
+   * React error #31 (the whole object view goes blank).
+   *
+   * @returns code → label
+   */
+  private static statusStates(): Record<string, string> {
+    const states: Record<string, string> = {
+      [String(UNKNOWN_STATUS_CODE)]: tText("status_unknown", UNKNOWN_STATUS_CODE),
+    };
+    for (const code of KNOWN_STATUS_CODES) {
+      states[String(code)] = statusLabel(code) ?? String(code);
+    }
+    return states;
   }
 
   /**
@@ -724,23 +753,6 @@ export class StateManager {
   }
 
   /**
-   * Make sure the state's object is current, then write its value.
-   *
-   * The object part lives in {@link ensureStateObject} since v0.11.1 — this method only forwards
-   * to it and then sets the value. Callers whose value is conditional must call
-   * ensureStateObject themselves, unconditionally; see the note there.
-   *
-   * @param id State ID relative to adapter namespace
-   * @param name Display name (translation object or plain string)
-   * @param type Value type
-   * @param role ioBroker role
-   * @param val Value to set
-   * @param desc Short explanation, or undefined where there is nothing to explain
-   * @returns true when the broker actually wrote the value (it differed or the
-   *   state was new) — the DB-backed "did anything change" signal driving
-   *   `lastUpdated` (v0.10.0, M5)
-   */
-  /**
    * Write a state's OBJECT once per process — name, description, type and role.
    *
    * Split out of {@link createAndSet} in v0.11.1 because `lastUpdated` writes its VALUE only
@@ -769,6 +781,7 @@ export class StateManager {
    * @param type Value type
    * @param role ioBroker role
    * @param desc Short explanation, or undefined where there is nothing to explain
+   * @param states Plain-text value list for the admin, where the value is a code
    */
   private async ensureStateObject(
     id: string,
@@ -776,6 +789,7 @@ export class StateManager {
     type: ioBroker.CommonType,
     role: string,
     desc?: ioBroker.StringOrTranslated,
+    states?: Record<string, string>,
   ): Promise<void> {
     if (this.createdIds.has(id)) {
       return;
@@ -784,10 +798,31 @@ export class StateManager {
     if (desc !== undefined) {
       common.desc = desc;
     }
+    if (states !== undefined) {
+      common.states = states;
+    }
     await this.adapter.extendObject(id, { type: "state", common, native: {} });
     this.createdIds.add(id);
   }
 
+  /**
+   * Make sure the state's object is current, then write its value.
+   *
+   * The object part lives in {@link ensureStateObject} since v0.11.1 — this method only forwards
+   * to it and then sets the value. Callers whose value is conditional must call
+   * ensureStateObject themselves, unconditionally; see the note there.
+   *
+   * @param id State ID relative to adapter namespace
+   * @param name Display name (translation object or plain string)
+   * @param type Value type
+   * @param role ioBroker role
+   * @param val Value to set
+   * @param desc Short explanation, or undefined where there is nothing to explain
+   * @param states Plain-text value list for the admin, where the value is a code
+   * @returns true when the broker actually wrote the value (it differed or the
+   *   state was new) — the DB-backed "did anything change" signal driving
+   *   `lastUpdated` (v0.10.0, M5)
+   */
   private async createAndSet(
     id: string,
     name: ioBroker.StringOrTranslated,
@@ -795,9 +830,11 @@ export class StateManager {
     role: string,
     val: ioBroker.StateValue,
     desc?: ioBroker.StringOrTranslated,
+    states?: Record<string, string>,
   ): Promise<boolean> {
-    await this.ensureStateObject(id, name, type, role, desc);
-    // The bundled @iobroker/types 7.1.2 types this promise as `string`, but
+    await this.ensureStateObject(id, name, type, role, desc, states);
+    // The installed @iobroker/types 7.2.2 still types this promise as `string` (shared.d.ts:
+    // `SetStateChangedPromise` = the first callback argument, the id), but
     // js-controller ≥7.2.2 (our dependency floor) resolves { id, notChanged }
     // — verified at v7.2.2: adapter.ts invokes the callback with
     // (null, res.id, res.notChanged) and tools.promisify(['id','notChanged'])

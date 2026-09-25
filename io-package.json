@@ -9,11 +9,11 @@
         "ru": "Названия перевозчиков снова работают после смены формата в parcel.app, каждая посылка показывает знак перевозчика, скрипты могут передавать индекс или e-mail.",
         "pt": "Os nomes das transportadoras voltam a funcionar após uma mudança de formato no parcel.app, cada encomenda mostra o símbolo da transportadora e os scripts podem enviar código postal ou e-mail.",
         "nl": "Vervoerdersnamen werken weer na een formaatwijziging bij parcel.app, elk pakket toont het teken van zijn vervoerder en scripts kunnen postcode of e-mail meegeven.",
-        "fr": "Les noms des transporteurs fonctionnent à nouveau après un changement de format chez parcel.app, chaque colis affiche le symbole de son transporteur et les scripts peuvent transmettre un code postal.",
+        "fr": "Les noms des transporteurs fonctionnent à nouveau après un changement de format chez parcel.app, chaque colis affiche le symbole de son transporteur et les scripts peuvent transmettre un code postal ou un e-mail.",
         "it": "I nomi dei corrieri funzionano di nuovo dopo un cambio di formato in parcel.app, ogni pacco mostra il simbolo del suo corriere e gli script possono passare codice postale o e-mail.",
-        "es": "Los nombres de los transportistas vuelven a funcionar tras un cambio de formato en parcel.app, cada paquete muestra el símbolo de su transportista y los scripts pueden enviar código postal.",
-        "pl": "Nazwy przewoźników znów działają po zmianie formatu w parcel.app, każda przesyłka pokazuje znak swojego przewoźnika, a skrypty mogą przekazać kod pocztowy.",
-        "uk": "Назви перевізників знову працюють після зміни формату в parcel.app, кожна посилка показує знак свого перевізника, а скрипти можуть передавати індекс.",
+        "es": "Los nombres de los transportistas vuelven a funcionar tras un cambio de formato en parcel.app, cada paquete muestra el símbolo de su transportista y los scripts pueden enviar código postal o correo electrónico.",
+        "pl": "Nazwy przewoźników znów działają po zmianie formatu w parcel.app, każda przesyłka pokazuje znak swojego przewoźnika, a skrypty mogą przekazać kod pocztowy lub e-mail.",
+        "uk": "Назви перевізників знову працюють після зміни формату в parcel.app, кожна посилка показує знак свого перевізника, а скрипти можуть передавати індекс або e-mail.",
         "zh-cn": "parcel.app 更改格式后承运商名称恢复正常，每个包裹显示其承运商标识，脚本还可传入邮编或邮箱。"
       },
       "0.12.1": {
@@ -115,7 +115,7 @@
     },
     "desc": {
       "en": "ioBroker adapter for the parcel.app API. Supports all carriers that parcel.app tracks.",
-      "de": "ioBroker-Adapter für die parcel.app-API. Unterstützt alle Carrier, die parcel.app verfolgt.",
+      "de": "ioBroker-Adapter für die parcel.app-API. Unterstützt alle Zusteller, die parcel.app verfolgt.",
       "ru": "ioBroker-адаптер для API parcel.app. Поддерживает всех перевозчиков, которых отслеживает parcel.app.",
       "pt": "Adaptador ioBroker para a API parcel.app. Suporta todas as transportadoras que parcel.app rastreia.",
       "nl": "ioBroker-adapter voor de parcel.app-API. Ondersteunt alle vervoerders die parcel.app volgt.",
