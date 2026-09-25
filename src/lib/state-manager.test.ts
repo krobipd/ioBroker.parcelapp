@@ -2369,6 +2369,90 @@ describe("StateManager", () => {
     });
   });
 
+  describe("lastUpdated follows the PARCEL, not the calendar (audit B4a)", () => {
+    it("a new day that only moves the estimate does not stamp lastUpdated", async () => {
+      const delivery = makeDelivery({ status_code: 2, date_expected: "2026-06-17" });
+      const pkgId = manager.packageId(delivery);
+      await updateDeliveryT(manager, delivery, "DHL");
+      const stamped = adapter.states.get(`deliveries.${pkgId}.lastUpdated`)?.val;
+      const estimateBefore = adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`)?.val;
+
+      vi.setSystemTime(new Date(2026, 5, 16, 12, 0, 0));
+      await updateDeliveryT(manager, delivery, "DHL");
+
+      expect(adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`)?.val).not.toBe(estimateBefore);
+      expect(adapter.states.get(`deliveries.${pkgId}.lastUpdated`)?.val).toBe(stamped);
+    });
+
+    it("a new display name for the same carrier code does not stamp lastUpdated", async () => {
+      const delivery = makeDelivery({ status_code: 2 });
+      const pkgId = manager.packageId(delivery);
+      await updateDeliveryT(manager, delivery, "Bartolini");
+      const stamped = adapter.states.get(`deliveries.${pkgId}.lastUpdated`)?.val;
+
+      vi.setSystemTime(new Date(Date.now() + 5_000));
+      await updateDeliveryT(manager, delivery, "BRT");
+
+      expect(adapter.states.get(`deliveries.${pkgId}.carrier`)?.val).toBe("BRT");
+      expect(adapter.states.get(`deliveries.${pkgId}.lastUpdated`)?.val).toBe(stamped);
+    });
+
+    it("a new tracking event still stamps it", async () => {
+      const delivery = makeDelivery({ status_code: 2, events: [{ event: "Picked up" }] });
+      const pkgId = manager.packageId(delivery);
+      await updateDeliveryT(manager, delivery, "DHL");
+      const stamped = adapter.states.get(`deliveries.${pkgId}.lastUpdated`)?.val;
+
+      vi.setSystemTime(new Date(Date.now() + 5_000));
+      await updateDeliveryT(manager, { ...delivery, events: [{ event: "Arrived at hub" }] }, "DHL");
+
+      expect(adapter.states.get(`deliveries.${pkgId}.lastUpdated`)?.val).not.toBe(stamped);
+    });
+  });
+
+  describe("midnight refresh (audit O10)", () => {
+    it("moves 'tomorrow' to 'today' and counts the package, without touching lastUpdated", async () => {
+      const delivery = makeDelivery({ status_code: 2, date_expected: "2026-06-16" });
+      const pkgId = manager.packageId(delivery);
+      await updateDeliveryT(manager, delivery, "DHL");
+      await manager.updateSummary([delivery]);
+      expect(adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`)?.val).toBe(i18nData.de.estimateTomorrow);
+      expect(adapter.states.get("summary.todayCount")?.val).toBe(0);
+      const stamped = adapter.states.get(`deliveries.${pkgId}.lastUpdated`)?.val;
+
+      vi.setSystemTime(new Date(2026, 5, 16, 0, 0, 5));
+      await manager.refreshDerived([delivery], [pkgId], [delivery]);
+
+      expect(adapter.states.get(`deliveries.${pkgId}.deliveryEstimate`)?.val).toBe(i18nData.de.estimateToday);
+      expect(adapter.states.get("summary.todayCount")?.val).toBe(1);
+      expect(adapter.states.get(`deliveries.${pkgId}.lastUpdated`)?.val).toBe(stamped);
+    });
+
+    it("the summary counts every active delivery, also those without states this time", async () => {
+      const shown = makeDelivery({ status_code: 2, tracking_number: "A", date_expected: "2026-06-15" });
+      const failed = makeDelivery({ status_code: 2, tracking_number: "B", date_expected: "2026-06-15" });
+      await manager.refreshDerived([shown], [manager.packageId(shown)], [shown, failed]);
+      expect(adapter.states.get("summary.activeCount")?.val).toBe(2);
+      expect(adapter.states.get("summary.todayCount")?.val).toBe(2);
+      expect(adapter.states.has(`deliveries.${manager.packageId(failed)}.deliveryEstimate`)).toBe(false);
+    });
+
+    it("reports a drift line again on the new day", async () => {
+      const delivery = makeDelivery({ status_code: 2, date_expected: "15/06/2026" });
+      const pkgId = manager.packageId(delivery);
+      const lines: string[] = [];
+      adapter.log.debug = (msg: string): void => {
+        lines.push(msg);
+      };
+      const drift = (): number => lines.filter(m => m.includes("15/06/2026")).length;
+      await updateDeliveryT(manager, delivery, "DHL");
+      await updateDeliveryT(manager, delivery, "DHL");
+      expect(drift()).toBe(1);
+      await manager.refreshDerived([delivery], [pkgId], [delivery]);
+      expect(drift()).toBe(2);
+    });
+  });
+
   describe("cleanupDeliveries in-memory model (v0.7.2)", () => {
     it("queries the object view only once across multiple cleanups", async () => {
       const adapter = createMockAdapter();

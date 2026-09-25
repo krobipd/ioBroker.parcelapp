@@ -125,5 +125,76 @@
     "tracking_number": "INV-NO-DESCRIPTION",
     "carrier_code": "ups",
     "status_code": 2
+  },
+  {
+    "tracking_number": "INV-DAY-RANGE",
+    "carrier_code": "amzlde",
+    "description": "Day range, midnight to midnight",
+    "status_code": 2,
+    "date_expected": "2026-06-14 00:00:00",
+    "date_expected_end": "2026-06-16 00:00:00"
+  },
+  {
+    "tracking_number": "INV-HOUR-WINDOW",
+    "carrier_code": "amzlus",
+    "description": "Hour window on one day",
+    "status_code": 2,
+    "date_expected": "2026-06-15 14:00:00",
+    "date_expected_end": "2026-06-15 18:00:00"
+  },
+  {
+    "tracking_number": "INV-BARE-DATE",
+    "carrier_code": "dhl",
+    "description": "Bare expected date",
+    "status_code": 2,
+    "date_expected": "2026-06-18"
+  },
+  {
+    "tracking_number": "INV-EVENT-EN-DAY-MONTH",
+    "carrier_code": "amzlde",
+    "description": "Out for delivery, English day-month event date",
+    "status_code": 4,
+    "events": [
+      {
+        "event": "Out for delivery",
+        "date": "Monday, 15 June 7:12 am"
+      }
+    ]
+  },
+  {
+    "tracking_number": "INV-EVENT-EN-MONTH-DAY",
+    "carrier_code": "amzlus",
+    "description": "Out for delivery, English month-day event date",
+    "status_code": 4,
+    "events": [
+      {
+        "event": "Out for delivery",
+        "date": "Monday, June 15 "
+      }
+    ]
+  },
+  {
+    "tracking_number": "INV-EVENT-DE",
+    "carrier_code": "dhl",
+    "description": "Out for delivery, German event date",
+    "status_code": 4,
+    "events": [
+      {
+        "event": "Die Sendung wird zugestellt",
+        "date": "Montag, 15. Juni 5:50"
+      }
+    ]
+  },
+  {
+    "tracking_number": "INV-EVENT-UPS-DOTTED",
+    "carrier_code": "ups",
+    "description": "Out for delivery, UPS dotted event date",
+    "status_code": 4,
+    "events": [
+      {
+        "event": "Out For Delivery Today",
+        "date": "06.15.2026 13:31"
+      }
+    ]
   }
 ]

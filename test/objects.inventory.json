@@ -19,6 +19,812 @@
     },
     "native": {}
   },
+  "parcelapp.0.deliveries.inv_bare_date": {
+    "type": "device",
+    "common": {
+      "name": "Bare expected date",
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPgogIDxnIHRyYW5zZm9ybT0ic2tld1goLTE0KSB0cmFuc2xhdGUoNCAwKSI+PHBhdGggdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNCAyMCkiIGQ9Ik0wIDB2MjRoNmExMiAxMiAwIDAgMCAwLTI0eiIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDI1IDIwKSIgZD0iTTAgMHYyNE0xNCAwdjI0TTAgMTJoMTQiLz48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSg0NiAyMCkiIGQ9Ik0wIDB2MjRoMTQiLz48L2c+Cjwvc3ZnPgo="
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_bare_date"
+  },
+  "parcelapp.0.deliveries.inv_bare_date.carrier": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Versanddienst",
+        "en": "Carrier",
+        "es": "Transportista",
+        "fr": "Transporteur",
+        "it": "Corriere",
+        "nl": "Vervoerder",
+        "pl": "Przewoźnik",
+        "pt": "Transportadora",
+        "ru": "Перевозчик",
+        "uk": "Перевізник",
+        "zh-cn": "承运商"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Anzeigename des Zustellers; ersatzweise das Zustellerkürzel in Großbuchstaben, wenn parcel.app keinen Namen kennt.",
+        "en": "Display name of the carrier; falls back to the uppercase carrier code when parcel.app knows no name for it.",
+        "es": "Nombre visible del transportista; en su defecto, el código del transportista en mayúsculas cuando parcel.app no conoce ningún nombre.",
+        "fr": "Nom d'affichage du transporteur ; à défaut, le code du transporteur en majuscules lorsque parcel.app n'en connaît pas le nom.",
+        "it": "Nome visualizzato del corriere; in mancanza, il codice del corriere in maiuscolo quando parcel.app non ne conosce il nome.",
+        "nl": "Weergavenaam van de vervoerder; anders de vervoerderscode in hoofdletters, wanneer parcel.app geen naam kent.",
+        "pl": "Nazwa wyświetlana przewoźnika; zamiennie kod przewoźnika wielkimi literami, gdy parcel.app nie zna nazwy.",
+        "pt": "Nome de apresentação da transportadora; em alternativa, o código da transportadora em maiúsculas quando o parcel.app não sabe o nome.",
+        "ru": "Отображаемое название перевозчика; при отсутствии - код перевозчика заглавными буквами, если parcel.app не знает названия.",
+        "uk": "Відображувана назва перевізника; за відсутності - код перевізника великими літерами, якщо parcel.app не знає назви.",
+        "zh-cn": "承运商的显示名称；若 parcel.app 不知道其名称，则回退为大写的承运商代码。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_bare_date.carrier"
+  },
+  "parcelapp.0.deliveries.inv_bare_date.deliveryEstimate": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Voraussichtliche Zustellung",
+        "en": "Delivery Estimate",
+        "es": "Entrega estimada",
+        "fr": "Livraison estimée",
+        "it": "Consegna prevista",
+        "nl": "Verwachte bezorging",
+        "pl": "Szacowana dostawa",
+        "pt": "Previsão de entrega",
+        "ru": "Ожидаемая доставка",
+        "uk": "Очікувана доставка",
+        "zh-cn": "预计送达"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
+        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
+        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
+        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_bare_date.deliveryEstimate"
+  },
+  "parcelapp.0.deliveries.inv_bare_date.deliveryWindow": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Zustellfenster",
+        "en": "Delivery Window",
+        "es": "Ventana de entrega",
+        "fr": "Créneau de livraison",
+        "it": "Finestra di consegna",
+        "nl": "Bezorgvenster",
+        "pl": "Okno dostawy",
+        "pt": "Janela de entrega",
+        "ru": "Окно доставки",
+        "uk": "Вікно доставки",
+        "zh-cn": "派送时段"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Erwartetes Zustellfenster; ein über mehrere Tage reichendes Fenster trägt auf beiden Seiten das Datum.",
+        "en": "Expected delivery time window; a window spanning several days carries the date on both sides.",
+        "es": "Ventana de entrega prevista; una ventana de varios días lleva la fecha a ambos lados.",
+        "fr": "Créneau de livraison prévu ; un créneau sur plusieurs jours porte la date de chaque côté.",
+        "it": "Finestra di consegna prevista; una finestra su più giorni riporta la data su entrambi i lati.",
+        "nl": "Verwacht bezorgvenster; een venster over meerdere dagen toont aan beide kanten de datum.",
+        "pl": "Przewidywane okno dostawy; okno obejmujące kilka dni zawiera datę po obu stronach.",
+        "pt": "Janela de entrega prevista; uma janela que abrange vários dias mostra a data de ambos os lados.",
+        "ru": "Ожидаемое временное окно доставки; окно, охватывающее несколько дней, содержит дату с обеих сторон.",
+        "uk": "Очікуване вікно доставки; вікно, що охоплює кілька днів, містить дату з обох боків.",
+        "zh-cn": "预计派送时间段；跨越多天的时间段会在两侧显示日期。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_bare_date.deliveryWindow"
+  },
+  "parcelapp.0.deliveries.inv_bare_date.description": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Beschreibung",
+        "en": "Description",
+        "es": "Descripción",
+        "fr": "Description",
+        "it": "Descrizione",
+        "nl": "Beschrijving",
+        "pl": "Opis",
+        "pt": "Descrição",
+        "ru": "Описание",
+        "uk": "Опис",
+        "zh-cn": "描述"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Die Beschreibung, die du der Sendung in parcel.app gegeben hast; anders als der Gerätename zeigt sie immer den aktuellen Wert.",
+        "en": "The description you gave the shipment in parcel.app; unlike the device name it always shows the current value.",
+        "es": "La descripción que diste al envío en parcel.app; a diferencia del nombre del dispositivo, siempre muestra el valor actual.",
+        "fr": "La description que vous avez donnée à l'envoi dans parcel.app ; contrairement au nom de l'appareil, elle affiche toujours la valeur actuelle.",
+        "it": "La descrizione che hai dato alla spedizione in parcel.app; a differenza del nome del dispositivo mostra sempre il valore attuale.",
+        "nl": "De omschrijving die je de zending in parcel.app hebt gegeven; anders dan de apparaatnaam toont deze altijd de actuele waarde.",
+        "pl": "Opis, który nadałeś przesyłce w parcel.app; w przeciwieństwie do nazwy urządzenia zawsze pokazuje aktualną wartość.",
+        "pt": "A descrição que deu ao envio no parcel.app; ao contrário do nome do dispositivo, mostra sempre o valor atual.",
+        "ru": "Описание, которое вы задали отправлению в parcel.app; в отличие от имени устройства оно всегда показывает текущее значение.",
+        "uk": "Опис, який ви дали відправленню в parcel.app; на відміну від назви пристрою він завжди показує поточне значення.",
+        "zh-cn": "你在 parcel.app 中为该寄件填写的描述；与设备名称不同，它始终显示当前值。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_bare_date.description"
+  },
+  "parcelapp.0.deliveries.inv_bare_date.extraInfo": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Zusatz-Information",
+        "en": "Extra Information",
+        "es": "Información adicional",
+        "fr": "Informations supplémentaires",
+        "it": "Informazioni aggiuntive",
+        "nl": "Extra informatie",
+        "pl": "Dodatkowe informacje",
+        "pt": "Informação adicional",
+        "ru": "Дополнительная информация",
+        "uk": "Додаткова інформація",
+        "zh-cn": "附加信息"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Zusatzangabe, die der Zusteller benötigt, etwa Postleitzahl oder E-Mail-Adresse.",
+        "en": "Additional detail the carrier needs, such as a postal code or e-mail address.",
+        "es": "Dato adicional que necesita el transportista, por ejemplo un código postal o una dirección de correo.",
+        "fr": "Information complémentaire exigée par le transporteur, par exemple un code postal ou une adresse e-mail.",
+        "it": "Dato aggiuntivo richiesto dal corriere, ad esempio un codice postale o un indirizzo e-mail.",
+        "nl": "Aanvullend gegeven dat de vervoerder nodig heeft, zoals postcode of e-mailadres.",
+        "pl": "Dodatkowa informacja wymagana przez przewoźnika, np. kod pocztowy lub adres e-mail.",
+        "pt": "Detalhe adicional exigido pela transportadora, como código postal ou endereço de e-mail.",
+        "ru": "Дополнительные данные, нужные перевозчику, например почтовый индекс или адрес электронной почты.",
+        "uk": "Додаткові дані, потрібні перевізникові, наприклад поштовий індекс або адреса електронної пошти.",
+        "zh-cn": "承运商所需的附加信息，例如邮政编码或电子邮件地址。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_bare_date.extraInfo"
+  },
+  "parcelapp.0.deliveries.inv_bare_date.lastEvent": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Letztes Ereignis",
+        "en": "Last Event",
+        "es": "Último evento",
+        "fr": "Dernier événement",
+        "it": "Ultimo evento",
+        "nl": "Laatste gebeurtenis",
+        "pl": "Ostatnie zdarzenie",
+        "pt": "Último evento",
+        "ru": "Последнее событие",
+        "uk": "Остання подія",
+        "zh-cn": "最近事件"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Jüngste Sendungsmeldung des Zustellers mit Datum.",
+        "en": "Most recent tracking event reported by the carrier, with its date.",
+        "es": "Evento de seguimiento más reciente comunicado por el transportista, con su fecha.",
+        "fr": "Dernier événement de suivi communiqué par le transporteur, avec sa date.",
+        "it": "Evento di tracciamento più recente comunicato dal corriere, con la data.",
+        "nl": "Meest recente zendingsmelding van de vervoerder, met datum.",
+        "pl": "Najnowsze zdarzenie śledzenia zgłoszone przez przewoźnika, wraz z datą.",
+        "pt": "Evento de rastreio mais recente comunicado pela transportadora, com a data.",
+        "ru": "Последнее событие отслеживания от перевозчика с датой.",
+        "uk": "Найновіша подія відстеження від перевізника, разом із датою.",
+        "zh-cn": "承运商报告的最新跟踪事件及其日期。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_bare_date.lastEvent"
+  },
+  "parcelapp.0.deliveries.inv_bare_date.lastLocation": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Letzter Standort",
+        "en": "Last Location",
+        "es": "Última ubicación",
+        "fr": "Dernier emplacement",
+        "it": "Ultima posizione",
+        "nl": "Laatste locatie",
+        "pl": "Ostatnia lokalizacja",
+        "pt": "Última localização",
+        "ru": "Последнее местоположение",
+        "uk": "Останнє місцезнаходження",
+        "zh-cn": "最近位置"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Wo der Zusteller die Sendung zuletzt erfasst hat - keine Live-Position.",
+        "en": "Where the carrier last scanned the package - not a live position.",
+        "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
+        "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
+        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
+        "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
+        "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
+        "ru": "Где перевозчик в последний раз отсканировал посылку - это не текущее местоположение.",
+        "uk": "Де перевізник востаннє відсканував посилку - це не поточне місцезнаходження.",
+        "zh-cn": "承运商最后一次扫描包裹的地点 - 不是实时位置。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_bare_date.lastLocation"
+  },
+  "parcelapp.0.deliveries.inv_bare_date.lastUpdated": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Zuletzt aktualisiert",
+        "en": "Last Updated",
+        "es": "Última actualización",
+        "fr": "Dernière mise à jour",
+        "it": "Ultimo aggiornamento",
+        "nl": "Laatst bijgewerkt",
+        "pl": "Ostatnia aktualizacja",
+        "pt": "Última atualização",
+        "ru": "Последнее обновление",
+        "uk": "Останнє оновлення",
+        "zh-cn": "最后更新"
+      },
+      "type": "string",
+      "role": "date",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Zeitpunkt der letzten Änderung der Sendungsdaten - nicht der letzte Abruf.",
+        "en": "When the tracking data last changed - not when the adapter last polled.",
+        "es": "Momento del último cambio de los datos de seguimiento - no de la última consulta.",
+        "fr": "Moment du dernier changement des données de suivi - pas de la dernière interrogation.",
+        "it": "Momento dell'ultima variazione dei dati di tracciamento - non dell'ultima interrogazione.",
+        "nl": "Moment waarop de zendinggegevens voor het laatst zijn gewijzigd - niet de laatste opvraging.",
+        "pl": "Moment ostatniej zmiany danych śledzenia - nie ostatniego odpytania.",
+        "pt": "Momento da última alteração dos dados de rastreio - não da última consulta.",
+        "ru": "Момент последнего изменения данных отслеживания - не время последнего опроса.",
+        "uk": "Момент останньої зміни даних відстеження - не останнього опитування.",
+        "zh-cn": "跟踪数据最后一次发生变化的时间——不是最后一次轮询的时间。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_bare_date.lastUpdated"
+  },
+  "parcelapp.0.deliveries.inv_bare_date.status": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Status",
+        "en": "Status",
+        "es": "Estado",
+        "fr": "État",
+        "it": "Stato",
+        "nl": "Status",
+        "pl": "Status",
+        "pt": "Estado",
+        "ru": "Статус",
+        "uk": "Статус",
+        "zh-cn": "状态"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
+        "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
+        "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
+        "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
+        "pl": "Status jako czytelny tekst w języku systemowym ioBroker - w skryptach należy używać statusCode, który nie zmienia się wraz z językiem.",
+        "pt": "O estado como texto legível no idioma do sistema ioBroker - nos scripts utilize statusCode, que não muda com o idioma.",
+        "ru": "Статус в виде читаемого текста на системном языке ioBroker - в скриптах используйте statusCode, он не меняется вместе с языком.",
+        "uk": "Статус як читабельний текст системною мовою ioBroker - у скриптах використовуйте statusCode, він не змінюється разом з мовою.",
+        "zh-cn": "以 ioBroker 系统语言显示的可读状态文本 - 在脚本中请使用 statusCode，它不随语言变化。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_bare_date.status"
+  },
+  "parcelapp.0.deliveries.inv_bare_date.statusCode": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Status-Code",
+        "en": "Status Code",
+        "es": "Código de estado",
+        "fr": "Code d'état",
+        "it": "Codice di stato",
+        "nl": "Statuscode",
+        "pl": "Kod statusu",
+        "pt": "Código de estado",
+        "ru": "Код статуса",
+        "uk": "Код статусу",
+        "zh-cn": "状态代码"
+      },
+      "type": "number",
+      "role": "value",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Numerischer Status von parcel.app (0-8); -1 bedeutet, dass der Wert nicht gedeutet werden konnte.",
+        "en": "Numeric status from parcel.app (0-8); -1 means the value could not be interpreted.",
+        "es": "Estado numérico de parcel.app (0-8); -1 significa que el valor no se pudo interpretar.",
+        "fr": "Statut numérique de parcel.app (0-8) ; -1 signifie que la valeur n'a pas pu être interprétée.",
+        "it": "Stato numerico di parcel.app (0-8); -1 significa che il valore non è stato interpretabile.",
+        "nl": "Numerieke status van parcel.app (0-8); -1 betekent dat de waarde niet kon worden geduid.",
+        "pl": "Status liczbowy z parcel.app (0-8); -1 oznacza, że wartości nie dało się zinterpretować.",
+        "pt": "Estado numérico do parcel.app (0-8); -1 significa que o valor não pôde ser interpretado.",
+        "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
+        "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
+        "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_bare_date.statusCode"
+  },
+  "parcelapp.0.deliveries.inv_bare_date.trackingNumber": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Sendungsnummer",
+        "en": "Tracking Number",
+        "es": "Número de seguimiento",
+        "fr": "Numéro de suivi",
+        "it": "Numero di tracciamento",
+        "nl": "Trackingnummer",
+        "pl": "Numer śledzenia",
+        "pt": "Número de rastreio",
+        "ru": "Трек-номер",
+        "uk": "Номер відстеження",
+        "zh-cn": "追踪号"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_bare_date.trackingNumber"
+  },
+  "parcelapp.0.deliveries.inv_day_range": {
+    "type": "device",
+    "common": {
+      "name": "Day range, midnight to midnight",
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPgogIDxwYXRoIGQ9Ik04IDM0YzEwIDEyIDM4IDEyIDQ4LTIiLz48cGF0aCBkPSJNNDcgMjRsOSA4LTExIDMiLz4KPC9zdmc+Cg=="
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_day_range"
+  },
+  "parcelapp.0.deliveries.inv_day_range.carrier": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Versanddienst",
+        "en": "Carrier",
+        "es": "Transportista",
+        "fr": "Transporteur",
+        "it": "Corriere",
+        "nl": "Vervoerder",
+        "pl": "Przewoźnik",
+        "pt": "Transportadora",
+        "ru": "Перевозчик",
+        "uk": "Перевізник",
+        "zh-cn": "承运商"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Anzeigename des Zustellers; ersatzweise das Zustellerkürzel in Großbuchstaben, wenn parcel.app keinen Namen kennt.",
+        "en": "Display name of the carrier; falls back to the uppercase carrier code when parcel.app knows no name for it.",
+        "es": "Nombre visible del transportista; en su defecto, el código del transportista en mayúsculas cuando parcel.app no conoce ningún nombre.",
+        "fr": "Nom d'affichage du transporteur ; à défaut, le code du transporteur en majuscules lorsque parcel.app n'en connaît pas le nom.",
+        "it": "Nome visualizzato del corriere; in mancanza, il codice del corriere in maiuscolo quando parcel.app non ne conosce il nome.",
+        "nl": "Weergavenaam van de vervoerder; anders de vervoerderscode in hoofdletters, wanneer parcel.app geen naam kent.",
+        "pl": "Nazwa wyświetlana przewoźnika; zamiennie kod przewoźnika wielkimi literami, gdy parcel.app nie zna nazwy.",
+        "pt": "Nome de apresentação da transportadora; em alternativa, o código da transportadora em maiúsculas quando o parcel.app não sabe o nome.",
+        "ru": "Отображаемое название перевозчика; при отсутствии - код перевозчика заглавными буквами, если parcel.app не знает названия.",
+        "uk": "Відображувана назва перевізника; за відсутності - код перевізника великими літерами, якщо parcel.app не знає назви.",
+        "zh-cn": "承运商的显示名称；若 parcel.app 不知道其名称，则回退为大写的承运商代码。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_day_range.carrier"
+  },
+  "parcelapp.0.deliveries.inv_day_range.deliveryEstimate": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Voraussichtliche Zustellung",
+        "en": "Delivery Estimate",
+        "es": "Entrega estimada",
+        "fr": "Livraison estimée",
+        "it": "Consegna prevista",
+        "nl": "Verwachte bezorging",
+        "pl": "Szacowana dostawa",
+        "pt": "Previsão de entrega",
+        "ru": "Ожидаемая доставка",
+        "uk": "Очікувана доставка",
+        "zh-cn": "预计送达"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
+        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
+        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
+        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_day_range.deliveryEstimate"
+  },
+  "parcelapp.0.deliveries.inv_day_range.deliveryWindow": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Zustellfenster",
+        "en": "Delivery Window",
+        "es": "Ventana de entrega",
+        "fr": "Créneau de livraison",
+        "it": "Finestra di consegna",
+        "nl": "Bezorgvenster",
+        "pl": "Okno dostawy",
+        "pt": "Janela de entrega",
+        "ru": "Окно доставки",
+        "uk": "Вікно доставки",
+        "zh-cn": "派送时段"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Erwartetes Zustellfenster; ein über mehrere Tage reichendes Fenster trägt auf beiden Seiten das Datum.",
+        "en": "Expected delivery time window; a window spanning several days carries the date on both sides.",
+        "es": "Ventana de entrega prevista; una ventana de varios días lleva la fecha a ambos lados.",
+        "fr": "Créneau de livraison prévu ; un créneau sur plusieurs jours porte la date de chaque côté.",
+        "it": "Finestra di consegna prevista; una finestra su più giorni riporta la data su entrambi i lati.",
+        "nl": "Verwacht bezorgvenster; een venster over meerdere dagen toont aan beide kanten de datum.",
+        "pl": "Przewidywane okno dostawy; okno obejmujące kilka dni zawiera datę po obu stronach.",
+        "pt": "Janela de entrega prevista; uma janela que abrange vários dias mostra a data de ambos os lados.",
+        "ru": "Ожидаемое временное окно доставки; окно, охватывающее несколько дней, содержит дату с обеих сторон.",
+        "uk": "Очікуване вікно доставки; вікно, що охоплює кілька днів, містить дату з обох боків.",
+        "zh-cn": "预计派送时间段；跨越多天的时间段会在两侧显示日期。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_day_range.deliveryWindow"
+  },
+  "parcelapp.0.deliveries.inv_day_range.description": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Beschreibung",
+        "en": "Description",
+        "es": "Descripción",
+        "fr": "Description",
+        "it": "Descrizione",
+        "nl": "Beschrijving",
+        "pl": "Opis",
+        "pt": "Descrição",
+        "ru": "Описание",
+        "uk": "Опис",
+        "zh-cn": "描述"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Die Beschreibung, die du der Sendung in parcel.app gegeben hast; anders als der Gerätename zeigt sie immer den aktuellen Wert.",
+        "en": "The description you gave the shipment in parcel.app; unlike the device name it always shows the current value.",
+        "es": "La descripción que diste al envío en parcel.app; a diferencia del nombre del dispositivo, siempre muestra el valor actual.",
+        "fr": "La description que vous avez donnée à l'envoi dans parcel.app ; contrairement au nom de l'appareil, elle affiche toujours la valeur actuelle.",
+        "it": "La descrizione che hai dato alla spedizione in parcel.app; a differenza del nome del dispositivo mostra sempre il valore attuale.",
+        "nl": "De omschrijving die je de zending in parcel.app hebt gegeven; anders dan de apparaatnaam toont deze altijd de actuele waarde.",
+        "pl": "Opis, który nadałeś przesyłce w parcel.app; w przeciwieństwie do nazwy urządzenia zawsze pokazuje aktualną wartość.",
+        "pt": "A descrição que deu ao envio no parcel.app; ao contrário do nome do dispositivo, mostra sempre o valor atual.",
+        "ru": "Описание, которое вы задали отправлению в parcel.app; в отличие от имени устройства оно всегда показывает текущее значение.",
+        "uk": "Опис, який ви дали відправленню в parcel.app; на відміну від назви пристрою він завжди показує поточне значення.",
+        "zh-cn": "你在 parcel.app 中为该寄件填写的描述；与设备名称不同，它始终显示当前值。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_day_range.description"
+  },
+  "parcelapp.0.deliveries.inv_day_range.extraInfo": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Zusatz-Information",
+        "en": "Extra Information",
+        "es": "Información adicional",
+        "fr": "Informations supplémentaires",
+        "it": "Informazioni aggiuntive",
+        "nl": "Extra informatie",
+        "pl": "Dodatkowe informacje",
+        "pt": "Informação adicional",
+        "ru": "Дополнительная информация",
+        "uk": "Додаткова інформація",
+        "zh-cn": "附加信息"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Zusatzangabe, die der Zusteller benötigt, etwa Postleitzahl oder E-Mail-Adresse.",
+        "en": "Additional detail the carrier needs, such as a postal code or e-mail address.",
+        "es": "Dato adicional que necesita el transportista, por ejemplo un código postal o una dirección de correo.",
+        "fr": "Information complémentaire exigée par le transporteur, par exemple un code postal ou une adresse e-mail.",
+        "it": "Dato aggiuntivo richiesto dal corriere, ad esempio un codice postale o un indirizzo e-mail.",
+        "nl": "Aanvullend gegeven dat de vervoerder nodig heeft, zoals postcode of e-mailadres.",
+        "pl": "Dodatkowa informacja wymagana przez przewoźnika, np. kod pocztowy lub adres e-mail.",
+        "pt": "Detalhe adicional exigido pela transportadora, como código postal ou endereço de e-mail.",
+        "ru": "Дополнительные данные, нужные перевозчику, например почтовый индекс или адрес электронной почты.",
+        "uk": "Додаткові дані, потрібні перевізникові, наприклад поштовий індекс або адреса електронної пошти.",
+        "zh-cn": "承运商所需的附加信息，例如邮政编码或电子邮件地址。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_day_range.extraInfo"
+  },
+  "parcelapp.0.deliveries.inv_day_range.lastEvent": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Letztes Ereignis",
+        "en": "Last Event",
+        "es": "Último evento",
+        "fr": "Dernier événement",
+        "it": "Ultimo evento",
+        "nl": "Laatste gebeurtenis",
+        "pl": "Ostatnie zdarzenie",
+        "pt": "Último evento",
+        "ru": "Последнее событие",
+        "uk": "Остання подія",
+        "zh-cn": "最近事件"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Jüngste Sendungsmeldung des Zustellers mit Datum.",
+        "en": "Most recent tracking event reported by the carrier, with its date.",
+        "es": "Evento de seguimiento más reciente comunicado por el transportista, con su fecha.",
+        "fr": "Dernier événement de suivi communiqué par le transporteur, avec sa date.",
+        "it": "Evento di tracciamento più recente comunicato dal corriere, con la data.",
+        "nl": "Meest recente zendingsmelding van de vervoerder, met datum.",
+        "pl": "Najnowsze zdarzenie śledzenia zgłoszone przez przewoźnika, wraz z datą.",
+        "pt": "Evento de rastreio mais recente comunicado pela transportadora, com a data.",
+        "ru": "Последнее событие отслеживания от перевозчика с датой.",
+        "uk": "Найновіша подія відстеження від перевізника, разом із датою.",
+        "zh-cn": "承运商报告的最新跟踪事件及其日期。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_day_range.lastEvent"
+  },
+  "parcelapp.0.deliveries.inv_day_range.lastLocation": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Letzter Standort",
+        "en": "Last Location",
+        "es": "Última ubicación",
+        "fr": "Dernier emplacement",
+        "it": "Ultima posizione",
+        "nl": "Laatste locatie",
+        "pl": "Ostatnia lokalizacja",
+        "pt": "Última localização",
+        "ru": "Последнее местоположение",
+        "uk": "Останнє місцезнаходження",
+        "zh-cn": "最近位置"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Wo der Zusteller die Sendung zuletzt erfasst hat - keine Live-Position.",
+        "en": "Where the carrier last scanned the package - not a live position.",
+        "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
+        "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
+        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
+        "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
+        "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
+        "ru": "Где перевозчик в последний раз отсканировал посылку - это не текущее местоположение.",
+        "uk": "Де перевізник востаннє відсканував посилку - це не поточне місцезнаходження.",
+        "zh-cn": "承运商最后一次扫描包裹的地点 - 不是实时位置。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_day_range.lastLocation"
+  },
+  "parcelapp.0.deliveries.inv_day_range.lastUpdated": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Zuletzt aktualisiert",
+        "en": "Last Updated",
+        "es": "Última actualización",
+        "fr": "Dernière mise à jour",
+        "it": "Ultimo aggiornamento",
+        "nl": "Laatst bijgewerkt",
+        "pl": "Ostatnia aktualizacja",
+        "pt": "Última atualização",
+        "ru": "Последнее обновление",
+        "uk": "Останнє оновлення",
+        "zh-cn": "最后更新"
+      },
+      "type": "string",
+      "role": "date",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Zeitpunkt der letzten Änderung der Sendungsdaten - nicht der letzte Abruf.",
+        "en": "When the tracking data last changed - not when the adapter last polled.",
+        "es": "Momento del último cambio de los datos de seguimiento - no de la última consulta.",
+        "fr": "Moment du dernier changement des données de suivi - pas de la dernière interrogation.",
+        "it": "Momento dell'ultima variazione dei dati di tracciamento - non dell'ultima interrogazione.",
+        "nl": "Moment waarop de zendinggegevens voor het laatst zijn gewijzigd - niet de laatste opvraging.",
+        "pl": "Moment ostatniej zmiany danych śledzenia - nie ostatniego odpytania.",
+        "pt": "Momento da última alteração dos dados de rastreio - não da última consulta.",
+        "ru": "Момент последнего изменения данных отслеживания - не время последнего опроса.",
+        "uk": "Момент останньої зміни даних відстеження - не останнього опитування.",
+        "zh-cn": "跟踪数据最后一次发生变化的时间——不是最后一次轮询的时间。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_day_range.lastUpdated"
+  },
+  "parcelapp.0.deliveries.inv_day_range.status": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Status",
+        "en": "Status",
+        "es": "Estado",
+        "fr": "État",
+        "it": "Stato",
+        "nl": "Status",
+        "pl": "Status",
+        "pt": "Estado",
+        "ru": "Статус",
+        "uk": "Статус",
+        "zh-cn": "状态"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
+        "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
+        "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
+        "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
+        "pl": "Status jako czytelny tekst w języku systemowym ioBroker - w skryptach należy używać statusCode, który nie zmienia się wraz z językiem.",
+        "pt": "O estado como texto legível no idioma do sistema ioBroker - nos scripts utilize statusCode, que não muda com o idioma.",
+        "ru": "Статус в виде читаемого текста на системном языке ioBroker - в скриптах используйте statusCode, он не меняется вместе с языком.",
+        "uk": "Статус як читабельний текст системною мовою ioBroker - у скриптах використовуйте statusCode, він не змінюється разом з мовою.",
+        "zh-cn": "以 ioBroker 系统语言显示的可读状态文本 - 在脚本中请使用 statusCode，它不随语言变化。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_day_range.status"
+  },
+  "parcelapp.0.deliveries.inv_day_range.statusCode": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Status-Code",
+        "en": "Status Code",
+        "es": "Código de estado",
+        "fr": "Code d'état",
+        "it": "Codice di stato",
+        "nl": "Statuscode",
+        "pl": "Kod statusu",
+        "pt": "Código de estado",
+        "ru": "Код статуса",
+        "uk": "Код статусу",
+        "zh-cn": "状态代码"
+      },
+      "type": "number",
+      "role": "value",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Numerischer Status von parcel.app (0-8); -1 bedeutet, dass der Wert nicht gedeutet werden konnte.",
+        "en": "Numeric status from parcel.app (0-8); -1 means the value could not be interpreted.",
+        "es": "Estado numérico de parcel.app (0-8); -1 significa que el valor no se pudo interpretar.",
+        "fr": "Statut numérique de parcel.app (0-8) ; -1 signifie que la valeur n'a pas pu être interprétée.",
+        "it": "Stato numerico di parcel.app (0-8); -1 significa che il valore non è stato interpretabile.",
+        "nl": "Numerieke status van parcel.app (0-8); -1 betekent dat de waarde niet kon worden geduid.",
+        "pl": "Status liczbowy z parcel.app (0-8); -1 oznacza, że wartości nie dało się zinterpretować.",
+        "pt": "Estado numérico do parcel.app (0-8); -1 significa que o valor não pôde ser interpretado.",
+        "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
+        "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
+        "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_day_range.statusCode"
+  },
+  "parcelapp.0.deliveries.inv_day_range.trackingNumber": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Sendungsnummer",
+        "en": "Tracking Number",
+        "es": "Número de seguimiento",
+        "fr": "Numéro de suivi",
+        "it": "Numero di tracciamento",
+        "nl": "Trackingnummer",
+        "pl": "Numer śledzenia",
+        "pt": "Número de rastreio",
+        "ru": "Трек-номер",
+        "uk": "Номер відстеження",
+        "zh-cn": "追踪号"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_day_range.trackingNumber"
+  },
   "parcelapp.0.deliveries.inv_drift_format": {
     "type": "device",
     "common": {
@@ -1228,6 +2034,1618 @@
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_drift_unknown.trackingNumber"
   },
+  "parcelapp.0.deliveries.inv_event_de": {
+    "type": "device",
+    "common": {
+      "name": "Out for delivery, German event date",
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPgogIDxnIHRyYW5zZm9ybT0ic2tld1goLTE0KSB0cmFuc2xhdGUoNCAwKSI+PHBhdGggdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNCAyMCkiIGQ9Ik0wIDB2MjRoNmExMiAxMiAwIDAgMCAwLTI0eiIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDI1IDIwKSIgZD0iTTAgMHYyNE0xNCAwdjI0TTAgMTJoMTQiLz48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSg0NiAyMCkiIGQ9Ik0wIDB2MjRoMTQiLz48L2c+Cjwvc3ZnPgo="
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_de"
+  },
+  "parcelapp.0.deliveries.inv_event_de.carrier": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Versanddienst",
+        "en": "Carrier",
+        "es": "Transportista",
+        "fr": "Transporteur",
+        "it": "Corriere",
+        "nl": "Vervoerder",
+        "pl": "Przewoźnik",
+        "pt": "Transportadora",
+        "ru": "Перевозчик",
+        "uk": "Перевізник",
+        "zh-cn": "承运商"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Anzeigename des Zustellers; ersatzweise das Zustellerkürzel in Großbuchstaben, wenn parcel.app keinen Namen kennt.",
+        "en": "Display name of the carrier; falls back to the uppercase carrier code when parcel.app knows no name for it.",
+        "es": "Nombre visible del transportista; en su defecto, el código del transportista en mayúsculas cuando parcel.app no conoce ningún nombre.",
+        "fr": "Nom d'affichage du transporteur ; à défaut, le code du transporteur en majuscules lorsque parcel.app n'en connaît pas le nom.",
+        "it": "Nome visualizzato del corriere; in mancanza, il codice del corriere in maiuscolo quando parcel.app non ne conosce il nome.",
+        "nl": "Weergavenaam van de vervoerder; anders de vervoerderscode in hoofdletters, wanneer parcel.app geen naam kent.",
+        "pl": "Nazwa wyświetlana przewoźnika; zamiennie kod przewoźnika wielkimi literami, gdy parcel.app nie zna nazwy.",
+        "pt": "Nome de apresentação da transportadora; em alternativa, o código da transportadora em maiúsculas quando o parcel.app não sabe o nome.",
+        "ru": "Отображаемое название перевозчика; при отсутствии - код перевозчика заглавными буквами, если parcel.app не знает названия.",
+        "uk": "Відображувана назва перевізника; за відсутності - код перевізника великими літерами, якщо parcel.app не знає назви.",
+        "zh-cn": "承运商的显示名称；若 parcel.app 不知道其名称，则回退为大写的承运商代码。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_de.carrier"
+  },
+  "parcelapp.0.deliveries.inv_event_de.deliveryEstimate": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Voraussichtliche Zustellung",
+        "en": "Delivery Estimate",
+        "es": "Entrega estimada",
+        "fr": "Livraison estimée",
+        "it": "Consegna prevista",
+        "nl": "Verwachte bezorging",
+        "pl": "Szacowana dostawa",
+        "pt": "Previsão de entrega",
+        "ru": "Ожидаемая доставка",
+        "uk": "Очікувана доставка",
+        "zh-cn": "预计送达"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
+        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
+        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
+        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_de.deliveryEstimate"
+  },
+  "parcelapp.0.deliveries.inv_event_de.deliveryWindow": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Zustellfenster",
+        "en": "Delivery Window",
+        "es": "Ventana de entrega",
+        "fr": "Créneau de livraison",
+        "it": "Finestra di consegna",
+        "nl": "Bezorgvenster",
+        "pl": "Okno dostawy",
+        "pt": "Janela de entrega",
+        "ru": "Окно доставки",
+        "uk": "Вікно доставки",
+        "zh-cn": "派送时段"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Erwartetes Zustellfenster; ein über mehrere Tage reichendes Fenster trägt auf beiden Seiten das Datum.",
+        "en": "Expected delivery time window; a window spanning several days carries the date on both sides.",
+        "es": "Ventana de entrega prevista; una ventana de varios días lleva la fecha a ambos lados.",
+        "fr": "Créneau de livraison prévu ; un créneau sur plusieurs jours porte la date de chaque côté.",
+        "it": "Finestra di consegna prevista; una finestra su più giorni riporta la data su entrambi i lati.",
+        "nl": "Verwacht bezorgvenster; een venster over meerdere dagen toont aan beide kanten de datum.",
+        "pl": "Przewidywane okno dostawy; okno obejmujące kilka dni zawiera datę po obu stronach.",
+        "pt": "Janela de entrega prevista; uma janela que abrange vários dias mostra a data de ambos os lados.",
+        "ru": "Ожидаемое временное окно доставки; окно, охватывающее несколько дней, содержит дату с обеих сторон.",
+        "uk": "Очікуване вікно доставки; вікно, що охоплює кілька днів, містить дату з обох боків.",
+        "zh-cn": "预计派送时间段；跨越多天的时间段会在两侧显示日期。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_de.deliveryWindow"
+  },
+  "parcelapp.0.deliveries.inv_event_de.description": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Beschreibung",
+        "en": "Description",
+        "es": "Descripción",
+        "fr": "Description",
+        "it": "Descrizione",
+        "nl": "Beschrijving",
+        "pl": "Opis",
+        "pt": "Descrição",
+        "ru": "Описание",
+        "uk": "Опис",
+        "zh-cn": "描述"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Die Beschreibung, die du der Sendung in parcel.app gegeben hast; anders als der Gerätename zeigt sie immer den aktuellen Wert.",
+        "en": "The description you gave the shipment in parcel.app; unlike the device name it always shows the current value.",
+        "es": "La descripción que diste al envío en parcel.app; a diferencia del nombre del dispositivo, siempre muestra el valor actual.",
+        "fr": "La description que vous avez donnée à l'envoi dans parcel.app ; contrairement au nom de l'appareil, elle affiche toujours la valeur actuelle.",
+        "it": "La descrizione che hai dato alla spedizione in parcel.app; a differenza del nome del dispositivo mostra sempre il valore attuale.",
+        "nl": "De omschrijving die je de zending in parcel.app hebt gegeven; anders dan de apparaatnaam toont deze altijd de actuele waarde.",
+        "pl": "Opis, który nadałeś przesyłce w parcel.app; w przeciwieństwie do nazwy urządzenia zawsze pokazuje aktualną wartość.",
+        "pt": "A descrição que deu ao envio no parcel.app; ao contrário do nome do dispositivo, mostra sempre o valor atual.",
+        "ru": "Описание, которое вы задали отправлению в parcel.app; в отличие от имени устройства оно всегда показывает текущее значение.",
+        "uk": "Опис, який ви дали відправленню в parcel.app; на відміну від назви пристрою він завжди показує поточне значення.",
+        "zh-cn": "你在 parcel.app 中为该寄件填写的描述；与设备名称不同，它始终显示当前值。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_de.description"
+  },
+  "parcelapp.0.deliveries.inv_event_de.extraInfo": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Zusatz-Information",
+        "en": "Extra Information",
+        "es": "Información adicional",
+        "fr": "Informations supplémentaires",
+        "it": "Informazioni aggiuntive",
+        "nl": "Extra informatie",
+        "pl": "Dodatkowe informacje",
+        "pt": "Informação adicional",
+        "ru": "Дополнительная информация",
+        "uk": "Додаткова інформація",
+        "zh-cn": "附加信息"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Zusatzangabe, die der Zusteller benötigt, etwa Postleitzahl oder E-Mail-Adresse.",
+        "en": "Additional detail the carrier needs, such as a postal code or e-mail address.",
+        "es": "Dato adicional que necesita el transportista, por ejemplo un código postal o una dirección de correo.",
+        "fr": "Information complémentaire exigée par le transporteur, par exemple un code postal ou une adresse e-mail.",
+        "it": "Dato aggiuntivo richiesto dal corriere, ad esempio un codice postale o un indirizzo e-mail.",
+        "nl": "Aanvullend gegeven dat de vervoerder nodig heeft, zoals postcode of e-mailadres.",
+        "pl": "Dodatkowa informacja wymagana przez przewoźnika, np. kod pocztowy lub adres e-mail.",
+        "pt": "Detalhe adicional exigido pela transportadora, como código postal ou endereço de e-mail.",
+        "ru": "Дополнительные данные, нужные перевозчику, например почтовый индекс или адрес электронной почты.",
+        "uk": "Додаткові дані, потрібні перевізникові, наприклад поштовий індекс або адреса електронної пошти.",
+        "zh-cn": "承运商所需的附加信息，例如邮政编码或电子邮件地址。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_de.extraInfo"
+  },
+  "parcelapp.0.deliveries.inv_event_de.lastEvent": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Letztes Ereignis",
+        "en": "Last Event",
+        "es": "Último evento",
+        "fr": "Dernier événement",
+        "it": "Ultimo evento",
+        "nl": "Laatste gebeurtenis",
+        "pl": "Ostatnie zdarzenie",
+        "pt": "Último evento",
+        "ru": "Последнее событие",
+        "uk": "Остання подія",
+        "zh-cn": "最近事件"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Jüngste Sendungsmeldung des Zustellers mit Datum.",
+        "en": "Most recent tracking event reported by the carrier, with its date.",
+        "es": "Evento de seguimiento más reciente comunicado por el transportista, con su fecha.",
+        "fr": "Dernier événement de suivi communiqué par le transporteur, avec sa date.",
+        "it": "Evento di tracciamento più recente comunicato dal corriere, con la data.",
+        "nl": "Meest recente zendingsmelding van de vervoerder, met datum.",
+        "pl": "Najnowsze zdarzenie śledzenia zgłoszone przez przewoźnika, wraz z datą.",
+        "pt": "Evento de rastreio mais recente comunicado pela transportadora, com a data.",
+        "ru": "Последнее событие отслеживания от перевозчика с датой.",
+        "uk": "Найновіша подія відстеження від перевізника, разом із датою.",
+        "zh-cn": "承运商报告的最新跟踪事件及其日期。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_de.lastEvent"
+  },
+  "parcelapp.0.deliveries.inv_event_de.lastLocation": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Letzter Standort",
+        "en": "Last Location",
+        "es": "Última ubicación",
+        "fr": "Dernier emplacement",
+        "it": "Ultima posizione",
+        "nl": "Laatste locatie",
+        "pl": "Ostatnia lokalizacja",
+        "pt": "Última localização",
+        "ru": "Последнее местоположение",
+        "uk": "Останнє місцезнаходження",
+        "zh-cn": "最近位置"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Wo der Zusteller die Sendung zuletzt erfasst hat - keine Live-Position.",
+        "en": "Where the carrier last scanned the package - not a live position.",
+        "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
+        "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
+        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
+        "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
+        "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
+        "ru": "Где перевозчик в последний раз отсканировал посылку - это не текущее местоположение.",
+        "uk": "Де перевізник востаннє відсканував посилку - це не поточне місцезнаходження.",
+        "zh-cn": "承运商最后一次扫描包裹的地点 - 不是实时位置。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_de.lastLocation"
+  },
+  "parcelapp.0.deliveries.inv_event_de.lastUpdated": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Zuletzt aktualisiert",
+        "en": "Last Updated",
+        "es": "Última actualización",
+        "fr": "Dernière mise à jour",
+        "it": "Ultimo aggiornamento",
+        "nl": "Laatst bijgewerkt",
+        "pl": "Ostatnia aktualizacja",
+        "pt": "Última atualização",
+        "ru": "Последнее обновление",
+        "uk": "Останнє оновлення",
+        "zh-cn": "最后更新"
+      },
+      "type": "string",
+      "role": "date",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Zeitpunkt der letzten Änderung der Sendungsdaten - nicht der letzte Abruf.",
+        "en": "When the tracking data last changed - not when the adapter last polled.",
+        "es": "Momento del último cambio de los datos de seguimiento - no de la última consulta.",
+        "fr": "Moment du dernier changement des données de suivi - pas de la dernière interrogation.",
+        "it": "Momento dell'ultima variazione dei dati di tracciamento - non dell'ultima interrogazione.",
+        "nl": "Moment waarop de zendinggegevens voor het laatst zijn gewijzigd - niet de laatste opvraging.",
+        "pl": "Moment ostatniej zmiany danych śledzenia - nie ostatniego odpytania.",
+        "pt": "Momento da última alteração dos dados de rastreio - não da última consulta.",
+        "ru": "Момент последнего изменения данных отслеживания - не время последнего опроса.",
+        "uk": "Момент останньої зміни даних відстеження - не останнього опитування.",
+        "zh-cn": "跟踪数据最后一次发生变化的时间——不是最后一次轮询的时间。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_de.lastUpdated"
+  },
+  "parcelapp.0.deliveries.inv_event_de.status": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Status",
+        "en": "Status",
+        "es": "Estado",
+        "fr": "État",
+        "it": "Stato",
+        "nl": "Status",
+        "pl": "Status",
+        "pt": "Estado",
+        "ru": "Статус",
+        "uk": "Статус",
+        "zh-cn": "状态"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
+        "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
+        "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
+        "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
+        "pl": "Status jako czytelny tekst w języku systemowym ioBroker - w skryptach należy używać statusCode, który nie zmienia się wraz z językiem.",
+        "pt": "O estado como texto legível no idioma do sistema ioBroker - nos scripts utilize statusCode, que não muda com o idioma.",
+        "ru": "Статус в виде читаемого текста на системном языке ioBroker - в скриптах используйте statusCode, он не меняется вместе с языком.",
+        "uk": "Статус як читабельний текст системною мовою ioBroker - у скриптах використовуйте statusCode, він не змінюється разом з мовою.",
+        "zh-cn": "以 ioBroker 系统语言显示的可读状态文本 - 在脚本中请使用 statusCode，它不随语言变化。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_de.status"
+  },
+  "parcelapp.0.deliveries.inv_event_de.statusCode": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Status-Code",
+        "en": "Status Code",
+        "es": "Código de estado",
+        "fr": "Code d'état",
+        "it": "Codice di stato",
+        "nl": "Statuscode",
+        "pl": "Kod statusu",
+        "pt": "Código de estado",
+        "ru": "Код статуса",
+        "uk": "Код статусу",
+        "zh-cn": "状态代码"
+      },
+      "type": "number",
+      "role": "value",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Numerischer Status von parcel.app (0-8); -1 bedeutet, dass der Wert nicht gedeutet werden konnte.",
+        "en": "Numeric status from parcel.app (0-8); -1 means the value could not be interpreted.",
+        "es": "Estado numérico de parcel.app (0-8); -1 significa que el valor no se pudo interpretar.",
+        "fr": "Statut numérique de parcel.app (0-8) ; -1 signifie que la valeur n'a pas pu être interprétée.",
+        "it": "Stato numerico di parcel.app (0-8); -1 significa che il valore non è stato interpretabile.",
+        "nl": "Numerieke status van parcel.app (0-8); -1 betekent dat de waarde niet kon worden geduid.",
+        "pl": "Status liczbowy z parcel.app (0-8); -1 oznacza, że wartości nie dało się zinterpretować.",
+        "pt": "Estado numérico do parcel.app (0-8); -1 significa que o valor não pôde ser interpretado.",
+        "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
+        "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
+        "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_de.statusCode"
+  },
+  "parcelapp.0.deliveries.inv_event_de.trackingNumber": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Sendungsnummer",
+        "en": "Tracking Number",
+        "es": "Número de seguimiento",
+        "fr": "Numéro de suivi",
+        "it": "Numero di tracciamento",
+        "nl": "Trackingnummer",
+        "pl": "Numer śledzenia",
+        "pt": "Número de rastreio",
+        "ru": "Трек-номер",
+        "uk": "Номер відстеження",
+        "zh-cn": "追踪号"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_de.trackingNumber"
+  },
+  "parcelapp.0.deliveries.inv_event_en_day_month": {
+    "type": "device",
+    "common": {
+      "name": "Out for delivery, English day-month event date",
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPgogIDxwYXRoIGQ9Ik04IDM0YzEwIDEyIDM4IDEyIDQ4LTIiLz48cGF0aCBkPSJNNDcgMjRsOSA4LTExIDMiLz4KPC9zdmc+Cg=="
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_en_day_month"
+  },
+  "parcelapp.0.deliveries.inv_event_en_day_month.carrier": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Versanddienst",
+        "en": "Carrier",
+        "es": "Transportista",
+        "fr": "Transporteur",
+        "it": "Corriere",
+        "nl": "Vervoerder",
+        "pl": "Przewoźnik",
+        "pt": "Transportadora",
+        "ru": "Перевозчик",
+        "uk": "Перевізник",
+        "zh-cn": "承运商"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Anzeigename des Zustellers; ersatzweise das Zustellerkürzel in Großbuchstaben, wenn parcel.app keinen Namen kennt.",
+        "en": "Display name of the carrier; falls back to the uppercase carrier code when parcel.app knows no name for it.",
+        "es": "Nombre visible del transportista; en su defecto, el código del transportista en mayúsculas cuando parcel.app no conoce ningún nombre.",
+        "fr": "Nom d'affichage du transporteur ; à défaut, le code du transporteur en majuscules lorsque parcel.app n'en connaît pas le nom.",
+        "it": "Nome visualizzato del corriere; in mancanza, il codice del corriere in maiuscolo quando parcel.app non ne conosce il nome.",
+        "nl": "Weergavenaam van de vervoerder; anders de vervoerderscode in hoofdletters, wanneer parcel.app geen naam kent.",
+        "pl": "Nazwa wyświetlana przewoźnika; zamiennie kod przewoźnika wielkimi literami, gdy parcel.app nie zna nazwy.",
+        "pt": "Nome de apresentação da transportadora; em alternativa, o código da transportadora em maiúsculas quando o parcel.app não sabe o nome.",
+        "ru": "Отображаемое название перевозчика; при отсутствии - код перевозчика заглавными буквами, если parcel.app не знает названия.",
+        "uk": "Відображувана назва перевізника; за відсутності - код перевізника великими літерами, якщо parcel.app не знає назви.",
+        "zh-cn": "承运商的显示名称；若 parcel.app 不知道其名称，则回退为大写的承运商代码。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_en_day_month.carrier"
+  },
+  "parcelapp.0.deliveries.inv_event_en_day_month.deliveryEstimate": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Voraussichtliche Zustellung",
+        "en": "Delivery Estimate",
+        "es": "Entrega estimada",
+        "fr": "Livraison estimée",
+        "it": "Consegna prevista",
+        "nl": "Verwachte bezorging",
+        "pl": "Szacowana dostawa",
+        "pt": "Previsão de entrega",
+        "ru": "Ожидаемая доставка",
+        "uk": "Очікувана доставка",
+        "zh-cn": "预计送达"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
+        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
+        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
+        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_en_day_month.deliveryEstimate"
+  },
+  "parcelapp.0.deliveries.inv_event_en_day_month.deliveryWindow": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Zustellfenster",
+        "en": "Delivery Window",
+        "es": "Ventana de entrega",
+        "fr": "Créneau de livraison",
+        "it": "Finestra di consegna",
+        "nl": "Bezorgvenster",
+        "pl": "Okno dostawy",
+        "pt": "Janela de entrega",
+        "ru": "Окно доставки",
+        "uk": "Вікно доставки",
+        "zh-cn": "派送时段"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Erwartetes Zustellfenster; ein über mehrere Tage reichendes Fenster trägt auf beiden Seiten das Datum.",
+        "en": "Expected delivery time window; a window spanning several days carries the date on both sides.",
+        "es": "Ventana de entrega prevista; una ventana de varios días lleva la fecha a ambos lados.",
+        "fr": "Créneau de livraison prévu ; un créneau sur plusieurs jours porte la date de chaque côté.",
+        "it": "Finestra di consegna prevista; una finestra su più giorni riporta la data su entrambi i lati.",
+        "nl": "Verwacht bezorgvenster; een venster over meerdere dagen toont aan beide kanten de datum.",
+        "pl": "Przewidywane okno dostawy; okno obejmujące kilka dni zawiera datę po obu stronach.",
+        "pt": "Janela de entrega prevista; uma janela que abrange vários dias mostra a data de ambos os lados.",
+        "ru": "Ожидаемое временное окно доставки; окно, охватывающее несколько дней, содержит дату с обеих сторон.",
+        "uk": "Очікуване вікно доставки; вікно, що охоплює кілька днів, містить дату з обох боків.",
+        "zh-cn": "预计派送时间段；跨越多天的时间段会在两侧显示日期。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_en_day_month.deliveryWindow"
+  },
+  "parcelapp.0.deliveries.inv_event_en_day_month.description": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Beschreibung",
+        "en": "Description",
+        "es": "Descripción",
+        "fr": "Description",
+        "it": "Descrizione",
+        "nl": "Beschrijving",
+        "pl": "Opis",
+        "pt": "Descrição",
+        "ru": "Описание",
+        "uk": "Опис",
+        "zh-cn": "描述"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Die Beschreibung, die du der Sendung in parcel.app gegeben hast; anders als der Gerätename zeigt sie immer den aktuellen Wert.",
+        "en": "The description you gave the shipment in parcel.app; unlike the device name it always shows the current value.",
+        "es": "La descripción que diste al envío en parcel.app; a diferencia del nombre del dispositivo, siempre muestra el valor actual.",
+        "fr": "La description que vous avez donnée à l'envoi dans parcel.app ; contrairement au nom de l'appareil, elle affiche toujours la valeur actuelle.",
+        "it": "La descrizione che hai dato alla spedizione in parcel.app; a differenza del nome del dispositivo mostra sempre il valore attuale.",
+        "nl": "De omschrijving die je de zending in parcel.app hebt gegeven; anders dan de apparaatnaam toont deze altijd de actuele waarde.",
+        "pl": "Opis, który nadałeś przesyłce w parcel.app; w przeciwieństwie do nazwy urządzenia zawsze pokazuje aktualną wartość.",
+        "pt": "A descrição que deu ao envio no parcel.app; ao contrário do nome do dispositivo, mostra sempre o valor atual.",
+        "ru": "Описание, которое вы задали отправлению в parcel.app; в отличие от имени устройства оно всегда показывает текущее значение.",
+        "uk": "Опис, який ви дали відправленню в parcel.app; на відміну від назви пристрою він завжди показує поточне значення.",
+        "zh-cn": "你在 parcel.app 中为该寄件填写的描述；与设备名称不同，它始终显示当前值。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_en_day_month.description"
+  },
+  "parcelapp.0.deliveries.inv_event_en_day_month.extraInfo": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Zusatz-Information",
+        "en": "Extra Information",
+        "es": "Información adicional",
+        "fr": "Informations supplémentaires",
+        "it": "Informazioni aggiuntive",
+        "nl": "Extra informatie",
+        "pl": "Dodatkowe informacje",
+        "pt": "Informação adicional",
+        "ru": "Дополнительная информация",
+        "uk": "Додаткова інформація",
+        "zh-cn": "附加信息"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Zusatzangabe, die der Zusteller benötigt, etwa Postleitzahl oder E-Mail-Adresse.",
+        "en": "Additional detail the carrier needs, such as a postal code or e-mail address.",
+        "es": "Dato adicional que necesita el transportista, por ejemplo un código postal o una dirección de correo.",
+        "fr": "Information complémentaire exigée par le transporteur, par exemple un code postal ou une adresse e-mail.",
+        "it": "Dato aggiuntivo richiesto dal corriere, ad esempio un codice postale o un indirizzo e-mail.",
+        "nl": "Aanvullend gegeven dat de vervoerder nodig heeft, zoals postcode of e-mailadres.",
+        "pl": "Dodatkowa informacja wymagana przez przewoźnika, np. kod pocztowy lub adres e-mail.",
+        "pt": "Detalhe adicional exigido pela transportadora, como código postal ou endereço de e-mail.",
+        "ru": "Дополнительные данные, нужные перевозчику, например почтовый индекс или адрес электронной почты.",
+        "uk": "Додаткові дані, потрібні перевізникові, наприклад поштовий індекс або адреса електронної пошти.",
+        "zh-cn": "承运商所需的附加信息，例如邮政编码或电子邮件地址。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_en_day_month.extraInfo"
+  },
+  "parcelapp.0.deliveries.inv_event_en_day_month.lastEvent": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Letztes Ereignis",
+        "en": "Last Event",
+        "es": "Último evento",
+        "fr": "Dernier événement",
+        "it": "Ultimo evento",
+        "nl": "Laatste gebeurtenis",
+        "pl": "Ostatnie zdarzenie",
+        "pt": "Último evento",
+        "ru": "Последнее событие",
+        "uk": "Остання подія",
+        "zh-cn": "最近事件"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Jüngste Sendungsmeldung des Zustellers mit Datum.",
+        "en": "Most recent tracking event reported by the carrier, with its date.",
+        "es": "Evento de seguimiento más reciente comunicado por el transportista, con su fecha.",
+        "fr": "Dernier événement de suivi communiqué par le transporteur, avec sa date.",
+        "it": "Evento di tracciamento più recente comunicato dal corriere, con la data.",
+        "nl": "Meest recente zendingsmelding van de vervoerder, met datum.",
+        "pl": "Najnowsze zdarzenie śledzenia zgłoszone przez przewoźnika, wraz z datą.",
+        "pt": "Evento de rastreio mais recente comunicado pela transportadora, com a data.",
+        "ru": "Последнее событие отслеживания от перевозчика с датой.",
+        "uk": "Найновіша подія відстеження від перевізника, разом із датою.",
+        "zh-cn": "承运商报告的最新跟踪事件及其日期。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_en_day_month.lastEvent"
+  },
+  "parcelapp.0.deliveries.inv_event_en_day_month.lastLocation": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Letzter Standort",
+        "en": "Last Location",
+        "es": "Última ubicación",
+        "fr": "Dernier emplacement",
+        "it": "Ultima posizione",
+        "nl": "Laatste locatie",
+        "pl": "Ostatnia lokalizacja",
+        "pt": "Última localização",
+        "ru": "Последнее местоположение",
+        "uk": "Останнє місцезнаходження",
+        "zh-cn": "最近位置"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Wo der Zusteller die Sendung zuletzt erfasst hat - keine Live-Position.",
+        "en": "Where the carrier last scanned the package - not a live position.",
+        "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
+        "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
+        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
+        "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
+        "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
+        "ru": "Где перевозчик в последний раз отсканировал посылку - это не текущее местоположение.",
+        "uk": "Де перевізник востаннє відсканував посилку - це не поточне місцезнаходження.",
+        "zh-cn": "承运商最后一次扫描包裹的地点 - 不是实时位置。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_en_day_month.lastLocation"
+  },
+  "parcelapp.0.deliveries.inv_event_en_day_month.lastUpdated": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Zuletzt aktualisiert",
+        "en": "Last Updated",
+        "es": "Última actualización",
+        "fr": "Dernière mise à jour",
+        "it": "Ultimo aggiornamento",
+        "nl": "Laatst bijgewerkt",
+        "pl": "Ostatnia aktualizacja",
+        "pt": "Última atualização",
+        "ru": "Последнее обновление",
+        "uk": "Останнє оновлення",
+        "zh-cn": "最后更新"
+      },
+      "type": "string",
+      "role": "date",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Zeitpunkt der letzten Änderung der Sendungsdaten - nicht der letzte Abruf.",
+        "en": "When the tracking data last changed - not when the adapter last polled.",
+        "es": "Momento del último cambio de los datos de seguimiento - no de la última consulta.",
+        "fr": "Moment du dernier changement des données de suivi - pas de la dernière interrogation.",
+        "it": "Momento dell'ultima variazione dei dati di tracciamento - non dell'ultima interrogazione.",
+        "nl": "Moment waarop de zendinggegevens voor het laatst zijn gewijzigd - niet de laatste opvraging.",
+        "pl": "Moment ostatniej zmiany danych śledzenia - nie ostatniego odpytania.",
+        "pt": "Momento da última alteração dos dados de rastreio - não da última consulta.",
+        "ru": "Момент последнего изменения данных отслеживания - не время последнего опроса.",
+        "uk": "Момент останньої зміни даних відстеження - не останнього опитування.",
+        "zh-cn": "跟踪数据最后一次发生变化的时间——不是最后一次轮询的时间。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_en_day_month.lastUpdated"
+  },
+  "parcelapp.0.deliveries.inv_event_en_day_month.status": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Status",
+        "en": "Status",
+        "es": "Estado",
+        "fr": "État",
+        "it": "Stato",
+        "nl": "Status",
+        "pl": "Status",
+        "pt": "Estado",
+        "ru": "Статус",
+        "uk": "Статус",
+        "zh-cn": "状态"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
+        "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
+        "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
+        "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
+        "pl": "Status jako czytelny tekst w języku systemowym ioBroker - w skryptach należy używać statusCode, który nie zmienia się wraz z językiem.",
+        "pt": "O estado como texto legível no idioma do sistema ioBroker - nos scripts utilize statusCode, que não muda com o idioma.",
+        "ru": "Статус в виде читаемого текста на системном языке ioBroker - в скриптах используйте statusCode, он не меняется вместе с языком.",
+        "uk": "Статус як читабельний текст системною мовою ioBroker - у скриптах використовуйте statusCode, він не змінюється разом з мовою.",
+        "zh-cn": "以 ioBroker 系统语言显示的可读状态文本 - 在脚本中请使用 statusCode，它不随语言变化。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_en_day_month.status"
+  },
+  "parcelapp.0.deliveries.inv_event_en_day_month.statusCode": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Status-Code",
+        "en": "Status Code",
+        "es": "Código de estado",
+        "fr": "Code d'état",
+        "it": "Codice di stato",
+        "nl": "Statuscode",
+        "pl": "Kod statusu",
+        "pt": "Código de estado",
+        "ru": "Код статуса",
+        "uk": "Код статусу",
+        "zh-cn": "状态代码"
+      },
+      "type": "number",
+      "role": "value",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Numerischer Status von parcel.app (0-8); -1 bedeutet, dass der Wert nicht gedeutet werden konnte.",
+        "en": "Numeric status from parcel.app (0-8); -1 means the value could not be interpreted.",
+        "es": "Estado numérico de parcel.app (0-8); -1 significa que el valor no se pudo interpretar.",
+        "fr": "Statut numérique de parcel.app (0-8) ; -1 signifie que la valeur n'a pas pu être interprétée.",
+        "it": "Stato numerico di parcel.app (0-8); -1 significa che il valore non è stato interpretabile.",
+        "nl": "Numerieke status van parcel.app (0-8); -1 betekent dat de waarde niet kon worden geduid.",
+        "pl": "Status liczbowy z parcel.app (0-8); -1 oznacza, że wartości nie dało się zinterpretować.",
+        "pt": "Estado numérico do parcel.app (0-8); -1 significa que o valor não pôde ser interpretado.",
+        "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
+        "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
+        "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_en_day_month.statusCode"
+  },
+  "parcelapp.0.deliveries.inv_event_en_day_month.trackingNumber": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Sendungsnummer",
+        "en": "Tracking Number",
+        "es": "Número de seguimiento",
+        "fr": "Numéro de suivi",
+        "it": "Numero di tracciamento",
+        "nl": "Trackingnummer",
+        "pl": "Numer śledzenia",
+        "pt": "Número de rastreio",
+        "ru": "Трек-номер",
+        "uk": "Номер відстеження",
+        "zh-cn": "追踪号"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_en_day_month.trackingNumber"
+  },
+  "parcelapp.0.deliveries.inv_event_en_month_day": {
+    "type": "device",
+    "common": {
+      "name": "Out for delivery, English month-day event date",
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPgogIDxwYXRoIGQ9Ik04IDM0YzEwIDEyIDM4IDEyIDQ4LTIiLz48cGF0aCBkPSJNNDcgMjRsOSA4LTExIDMiLz4KPC9zdmc+Cg=="
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_en_month_day"
+  },
+  "parcelapp.0.deliveries.inv_event_en_month_day.carrier": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Versanddienst",
+        "en": "Carrier",
+        "es": "Transportista",
+        "fr": "Transporteur",
+        "it": "Corriere",
+        "nl": "Vervoerder",
+        "pl": "Przewoźnik",
+        "pt": "Transportadora",
+        "ru": "Перевозчик",
+        "uk": "Перевізник",
+        "zh-cn": "承运商"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Anzeigename des Zustellers; ersatzweise das Zustellerkürzel in Großbuchstaben, wenn parcel.app keinen Namen kennt.",
+        "en": "Display name of the carrier; falls back to the uppercase carrier code when parcel.app knows no name for it.",
+        "es": "Nombre visible del transportista; en su defecto, el código del transportista en mayúsculas cuando parcel.app no conoce ningún nombre.",
+        "fr": "Nom d'affichage du transporteur ; à défaut, le code du transporteur en majuscules lorsque parcel.app n'en connaît pas le nom.",
+        "it": "Nome visualizzato del corriere; in mancanza, il codice del corriere in maiuscolo quando parcel.app non ne conosce il nome.",
+        "nl": "Weergavenaam van de vervoerder; anders de vervoerderscode in hoofdletters, wanneer parcel.app geen naam kent.",
+        "pl": "Nazwa wyświetlana przewoźnika; zamiennie kod przewoźnika wielkimi literami, gdy parcel.app nie zna nazwy.",
+        "pt": "Nome de apresentação da transportadora; em alternativa, o código da transportadora em maiúsculas quando o parcel.app não sabe o nome.",
+        "ru": "Отображаемое название перевозчика; при отсутствии - код перевозчика заглавными буквами, если parcel.app не знает названия.",
+        "uk": "Відображувана назва перевізника; за відсутності - код перевізника великими літерами, якщо parcel.app не знає назви.",
+        "zh-cn": "承运商的显示名称；若 parcel.app 不知道其名称，则回退为大写的承运商代码。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_en_month_day.carrier"
+  },
+  "parcelapp.0.deliveries.inv_event_en_month_day.deliveryEstimate": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Voraussichtliche Zustellung",
+        "en": "Delivery Estimate",
+        "es": "Entrega estimada",
+        "fr": "Livraison estimée",
+        "it": "Consegna prevista",
+        "nl": "Verwachte bezorging",
+        "pl": "Szacowana dostawa",
+        "pt": "Previsão de entrega",
+        "ru": "Ожидаемая доставка",
+        "uk": "Очікувана доставка",
+        "zh-cn": "预计送达"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
+        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
+        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
+        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_en_month_day.deliveryEstimate"
+  },
+  "parcelapp.0.deliveries.inv_event_en_month_day.deliveryWindow": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Zustellfenster",
+        "en": "Delivery Window",
+        "es": "Ventana de entrega",
+        "fr": "Créneau de livraison",
+        "it": "Finestra di consegna",
+        "nl": "Bezorgvenster",
+        "pl": "Okno dostawy",
+        "pt": "Janela de entrega",
+        "ru": "Окно доставки",
+        "uk": "Вікно доставки",
+        "zh-cn": "派送时段"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Erwartetes Zustellfenster; ein über mehrere Tage reichendes Fenster trägt auf beiden Seiten das Datum.",
+        "en": "Expected delivery time window; a window spanning several days carries the date on both sides.",
+        "es": "Ventana de entrega prevista; una ventana de varios días lleva la fecha a ambos lados.",
+        "fr": "Créneau de livraison prévu ; un créneau sur plusieurs jours porte la date de chaque côté.",
+        "it": "Finestra di consegna prevista; una finestra su più giorni riporta la data su entrambi i lati.",
+        "nl": "Verwacht bezorgvenster; een venster over meerdere dagen toont aan beide kanten de datum.",
+        "pl": "Przewidywane okno dostawy; okno obejmujące kilka dni zawiera datę po obu stronach.",
+        "pt": "Janela de entrega prevista; uma janela que abrange vários dias mostra a data de ambos os lados.",
+        "ru": "Ожидаемое временное окно доставки; окно, охватывающее несколько дней, содержит дату с обеих сторон.",
+        "uk": "Очікуване вікно доставки; вікно, що охоплює кілька днів, містить дату з обох боків.",
+        "zh-cn": "预计派送时间段；跨越多天的时间段会在两侧显示日期。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_en_month_day.deliveryWindow"
+  },
+  "parcelapp.0.deliveries.inv_event_en_month_day.description": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Beschreibung",
+        "en": "Description",
+        "es": "Descripción",
+        "fr": "Description",
+        "it": "Descrizione",
+        "nl": "Beschrijving",
+        "pl": "Opis",
+        "pt": "Descrição",
+        "ru": "Описание",
+        "uk": "Опис",
+        "zh-cn": "描述"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Die Beschreibung, die du der Sendung in parcel.app gegeben hast; anders als der Gerätename zeigt sie immer den aktuellen Wert.",
+        "en": "The description you gave the shipment in parcel.app; unlike the device name it always shows the current value.",
+        "es": "La descripción que diste al envío en parcel.app; a diferencia del nombre del dispositivo, siempre muestra el valor actual.",
+        "fr": "La description que vous avez donnée à l'envoi dans parcel.app ; contrairement au nom de l'appareil, elle affiche toujours la valeur actuelle.",
+        "it": "La descrizione che hai dato alla spedizione in parcel.app; a differenza del nome del dispositivo mostra sempre il valore attuale.",
+        "nl": "De omschrijving die je de zending in parcel.app hebt gegeven; anders dan de apparaatnaam toont deze altijd de actuele waarde.",
+        "pl": "Opis, który nadałeś przesyłce w parcel.app; w przeciwieństwie do nazwy urządzenia zawsze pokazuje aktualną wartość.",
+        "pt": "A descrição que deu ao envio no parcel.app; ao contrário do nome do dispositivo, mostra sempre o valor atual.",
+        "ru": "Описание, которое вы задали отправлению в parcel.app; в отличие от имени устройства оно всегда показывает текущее значение.",
+        "uk": "Опис, який ви дали відправленню в parcel.app; на відміну від назви пристрою він завжди показує поточне значення.",
+        "zh-cn": "你在 parcel.app 中为该寄件填写的描述；与设备名称不同，它始终显示当前值。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_en_month_day.description"
+  },
+  "parcelapp.0.deliveries.inv_event_en_month_day.extraInfo": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Zusatz-Information",
+        "en": "Extra Information",
+        "es": "Información adicional",
+        "fr": "Informations supplémentaires",
+        "it": "Informazioni aggiuntive",
+        "nl": "Extra informatie",
+        "pl": "Dodatkowe informacje",
+        "pt": "Informação adicional",
+        "ru": "Дополнительная информация",
+        "uk": "Додаткова інформація",
+        "zh-cn": "附加信息"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Zusatzangabe, die der Zusteller benötigt, etwa Postleitzahl oder E-Mail-Adresse.",
+        "en": "Additional detail the carrier needs, such as a postal code or e-mail address.",
+        "es": "Dato adicional que necesita el transportista, por ejemplo un código postal o una dirección de correo.",
+        "fr": "Information complémentaire exigée par le transporteur, par exemple un code postal ou une adresse e-mail.",
+        "it": "Dato aggiuntivo richiesto dal corriere, ad esempio un codice postale o un indirizzo e-mail.",
+        "nl": "Aanvullend gegeven dat de vervoerder nodig heeft, zoals postcode of e-mailadres.",
+        "pl": "Dodatkowa informacja wymagana przez przewoźnika, np. kod pocztowy lub adres e-mail.",
+        "pt": "Detalhe adicional exigido pela transportadora, como código postal ou endereço de e-mail.",
+        "ru": "Дополнительные данные, нужные перевозчику, например почтовый индекс или адрес электронной почты.",
+        "uk": "Додаткові дані, потрібні перевізникові, наприклад поштовий індекс або адреса електронної пошти.",
+        "zh-cn": "承运商所需的附加信息，例如邮政编码或电子邮件地址。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_en_month_day.extraInfo"
+  },
+  "parcelapp.0.deliveries.inv_event_en_month_day.lastEvent": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Letztes Ereignis",
+        "en": "Last Event",
+        "es": "Último evento",
+        "fr": "Dernier événement",
+        "it": "Ultimo evento",
+        "nl": "Laatste gebeurtenis",
+        "pl": "Ostatnie zdarzenie",
+        "pt": "Último evento",
+        "ru": "Последнее событие",
+        "uk": "Остання подія",
+        "zh-cn": "最近事件"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Jüngste Sendungsmeldung des Zustellers mit Datum.",
+        "en": "Most recent tracking event reported by the carrier, with its date.",
+        "es": "Evento de seguimiento más reciente comunicado por el transportista, con su fecha.",
+        "fr": "Dernier événement de suivi communiqué par le transporteur, avec sa date.",
+        "it": "Evento di tracciamento più recente comunicato dal corriere, con la data.",
+        "nl": "Meest recente zendingsmelding van de vervoerder, met datum.",
+        "pl": "Najnowsze zdarzenie śledzenia zgłoszone przez przewoźnika, wraz z datą.",
+        "pt": "Evento de rastreio mais recente comunicado pela transportadora, com a data.",
+        "ru": "Последнее событие отслеживания от перевозчика с датой.",
+        "uk": "Найновіша подія відстеження від перевізника, разом із датою.",
+        "zh-cn": "承运商报告的最新跟踪事件及其日期。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_en_month_day.lastEvent"
+  },
+  "parcelapp.0.deliveries.inv_event_en_month_day.lastLocation": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Letzter Standort",
+        "en": "Last Location",
+        "es": "Última ubicación",
+        "fr": "Dernier emplacement",
+        "it": "Ultima posizione",
+        "nl": "Laatste locatie",
+        "pl": "Ostatnia lokalizacja",
+        "pt": "Última localização",
+        "ru": "Последнее местоположение",
+        "uk": "Останнє місцезнаходження",
+        "zh-cn": "最近位置"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Wo der Zusteller die Sendung zuletzt erfasst hat - keine Live-Position.",
+        "en": "Where the carrier last scanned the package - not a live position.",
+        "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
+        "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
+        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
+        "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
+        "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
+        "ru": "Где перевозчик в последний раз отсканировал посылку - это не текущее местоположение.",
+        "uk": "Де перевізник востаннє відсканував посилку - це не поточне місцезнаходження.",
+        "zh-cn": "承运商最后一次扫描包裹的地点 - 不是实时位置。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_en_month_day.lastLocation"
+  },
+  "parcelapp.0.deliveries.inv_event_en_month_day.lastUpdated": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Zuletzt aktualisiert",
+        "en": "Last Updated",
+        "es": "Última actualización",
+        "fr": "Dernière mise à jour",
+        "it": "Ultimo aggiornamento",
+        "nl": "Laatst bijgewerkt",
+        "pl": "Ostatnia aktualizacja",
+        "pt": "Última atualização",
+        "ru": "Последнее обновление",
+        "uk": "Останнє оновлення",
+        "zh-cn": "最后更新"
+      },
+      "type": "string",
+      "role": "date",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Zeitpunkt der letzten Änderung der Sendungsdaten - nicht der letzte Abruf.",
+        "en": "When the tracking data last changed - not when the adapter last polled.",
+        "es": "Momento del último cambio de los datos de seguimiento - no de la última consulta.",
+        "fr": "Moment du dernier changement des données de suivi - pas de la dernière interrogation.",
+        "it": "Momento dell'ultima variazione dei dati di tracciamento - non dell'ultima interrogazione.",
+        "nl": "Moment waarop de zendinggegevens voor het laatst zijn gewijzigd - niet de laatste opvraging.",
+        "pl": "Moment ostatniej zmiany danych śledzenia - nie ostatniego odpytania.",
+        "pt": "Momento da última alteração dos dados de rastreio - não da última consulta.",
+        "ru": "Момент последнего изменения данных отслеживания - не время последнего опроса.",
+        "uk": "Момент останньої зміни даних відстеження - не останнього опитування.",
+        "zh-cn": "跟踪数据最后一次发生变化的时间——不是最后一次轮询的时间。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_en_month_day.lastUpdated"
+  },
+  "parcelapp.0.deliveries.inv_event_en_month_day.status": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Status",
+        "en": "Status",
+        "es": "Estado",
+        "fr": "État",
+        "it": "Stato",
+        "nl": "Status",
+        "pl": "Status",
+        "pt": "Estado",
+        "ru": "Статус",
+        "uk": "Статус",
+        "zh-cn": "状态"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
+        "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
+        "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
+        "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
+        "pl": "Status jako czytelny tekst w języku systemowym ioBroker - w skryptach należy używać statusCode, który nie zmienia się wraz z językiem.",
+        "pt": "O estado como texto legível no idioma do sistema ioBroker - nos scripts utilize statusCode, que não muda com o idioma.",
+        "ru": "Статус в виде читаемого текста на системном языке ioBroker - в скриптах используйте statusCode, он не меняется вместе с языком.",
+        "uk": "Статус як читабельний текст системною мовою ioBroker - у скриптах використовуйте statusCode, він не змінюється разом з мовою.",
+        "zh-cn": "以 ioBroker 系统语言显示的可读状态文本 - 在脚本中请使用 statusCode，它不随语言变化。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_en_month_day.status"
+  },
+  "parcelapp.0.deliveries.inv_event_en_month_day.statusCode": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Status-Code",
+        "en": "Status Code",
+        "es": "Código de estado",
+        "fr": "Code d'état",
+        "it": "Codice di stato",
+        "nl": "Statuscode",
+        "pl": "Kod statusu",
+        "pt": "Código de estado",
+        "ru": "Код статуса",
+        "uk": "Код статусу",
+        "zh-cn": "状态代码"
+      },
+      "type": "number",
+      "role": "value",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Numerischer Status von parcel.app (0-8); -1 bedeutet, dass der Wert nicht gedeutet werden konnte.",
+        "en": "Numeric status from parcel.app (0-8); -1 means the value could not be interpreted.",
+        "es": "Estado numérico de parcel.app (0-8); -1 significa que el valor no se pudo interpretar.",
+        "fr": "Statut numérique de parcel.app (0-8) ; -1 signifie que la valeur n'a pas pu être interprétée.",
+        "it": "Stato numerico di parcel.app (0-8); -1 significa che il valore non è stato interpretabile.",
+        "nl": "Numerieke status van parcel.app (0-8); -1 betekent dat de waarde niet kon worden geduid.",
+        "pl": "Status liczbowy z parcel.app (0-8); -1 oznacza, że wartości nie dało się zinterpretować.",
+        "pt": "Estado numérico do parcel.app (0-8); -1 significa que o valor não pôde ser interpretado.",
+        "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
+        "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
+        "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_en_month_day.statusCode"
+  },
+  "parcelapp.0.deliveries.inv_event_en_month_day.trackingNumber": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Sendungsnummer",
+        "en": "Tracking Number",
+        "es": "Número de seguimiento",
+        "fr": "Numéro de suivi",
+        "it": "Numero di tracciamento",
+        "nl": "Trackingnummer",
+        "pl": "Numer śledzenia",
+        "pt": "Número de rastreio",
+        "ru": "Трек-номер",
+        "uk": "Номер відстеження",
+        "zh-cn": "追踪号"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_en_month_day.trackingNumber"
+  },
+  "parcelapp.0.deliveries.inv_event_ups_dotted": {
+    "type": "device",
+    "common": {
+      "name": "Out for delivery, UPS dotted event date",
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSJjdXJyZW50Q29sb3IiPgogIDxnIHRyYW5zZm9ybT0ic2NhbGUoMi42NjY2NjY2NykiPjxwYXRoIGQ9Ik0xMS42NjggMTQuNTQ0bC0uMDI4LTUuMjI2Yy4xMzgtLjA1NS4zODctLjExMS42MDgtLjExMS45OTUgMCAxLjQxLjc3NCAxLjQxIDIuNjgyIDAgMS44NTMtLjQ3IDIuNzY1LTEuNDM4IDIuNzY1LS4yMiAwLS40NDEtLjA1NS0uNTUyLS4xMXpNMy4xMjQgNy40MzhjNC4yMDMtMy44NDMgOS4yOS00Ljg2NiAxNC4wMTgtNC44NjYgMS4zIDAgMi41NDQuMDgzIDMuNzYuMTk0aC0uMDI4djExLjI1M2MwIDIuMTg0LS43NzQgMy45MjYtMi4yOTUgNS4xNzEtMS4zNTUgMS4xMzQtNS40NDcgMi45NTktNi41ODEgMy40NTYtMS4xNjEtLjUyNS01LjI1My0yLjM3OC02LjU4MS0zLjQ1Ni0xLjQ5My0xLjI0NC0yLjI5NS0zLjAxNC0yLjI5NS01LjE3MVY3LjQzOHptMTIuNjY0IDIuNTk5Yy4wMjguOTEyLjI3NiAxLjU3NiAxLjY4NyAyLjQwNi43NDcuNDQyIDEuMDUxLjc0NyAxLjA1MSAxLjI3MiAwIC41ODEtLjM4Ny45NC0xLjAyMy45NC0uNTUzIDAtMS4xODktLjMwNC0xLjYzMS0uNjkxdjEuNTc2Yy41NTMuMzA0IDEuMjE3LjUyNSAxLjg4LjUyNSAxLjY4NyAwIDIuNDMzLTEuMTg5IDIuNDYxLTIuMjY3LjAyOC0uOTk1LS4yNDktMS43NDItMS42NTktMi41NzEtLjYwOC0uMzg3LTEuMTM0LS42MzYtMS4xMDYtMS4yNDQgMC0uNTgxLjUyNS0uODAyLjk5NS0uODAyLjU4MSAwIDEuMTYxLjMzMiAxLjUyMS42OTFWOC4zNzhjLS4zMDQtLjIyMS0uOTQtLjU4MS0xLjg4LS41NTMtMS4xMzUuMDI4LTIuMjk2LjgyOS0yLjI5NiAyLjIxMnptLTUuODM0IDkuNDg0aDEuNzE0bC0uMDI4LTMuNTk0Yy4xNjYuMDI4LjQxNS4wODMuNzc0LjA4MyAxLjkwOCAwIDIuOTg2LTEuNjg3IDIuOTg2LTQuMTc1IDAtMi40NjEtMS4xMDYtNC4wMDktMy4xNTItNC4wMDktLjk0IDAtMS42ODcuMjIxLTIuMjk1LjYwOHYxMS4wODd6bS01Ljk0NS02LjE2NmMwIDEuNzk3LjgyOSAyLjcxIDIuNTE2IDIuNzEgMS4wNTEgMCAxLjkwOC0uMjQ5IDIuNTcxLS42OTFWNy45OTFINy40MXY2LjM4N2MtLjE5NC4xMzgtLjQ3LjIyMS0uODAyLjIyMS0uNzc0IDAtLjg4NS0uNzE5LS44ODUtMS4xODlWNy45OTFINC4wMDl2NS4zNjR6TTIyLjEyIDIuMjk1djExLjcyM2MwIDIuNTE2LS45NCA0LjY0NS0yLjc2NSA2LjExMS0xLjU0OSAxLjMtNi4zMzIgMy40MjktNy4zNTUgMy44NzEtMS4wMjMtLjQ0Mi01LjgwNi0yLjU3MS03LjM1NS0zLjg0My0xLjc5Ny0xLjQ2NS0yLjc2NS0zLjU5NC0yLjc2NS02LjExMVYyLjI5NUM0Ljc1Ni43NDcgOC4wNzQgMCAxMiAwczcuMjQ0Ljc0NyAxMC4xMiAyLjI5NXptLS4zMDQuMjIxYy0yLjcxLTEuNDY1LTYtMi4xODQtOS43ODgtMi4xODRzLTcuMDc5Ljc0Ni05Ljc4OCAyLjE4NHYxMS41MDJjMCAyLjQzMy45MTIgNC40NTIgMi42MjcgNS44NjIgMS41NzYgMS4zIDYuNTgxIDMuNDg0IDcuMTYxIDMuNzYuNTgxLS4yNDkgNS41ODUtMi40MzMgNy4xNjEtMy43MzMgMS43MTQtMS40MSAyLjYyNy0zLjQyOSAyLjYyNy01Ljg2MlYyLjUxNnptLTIuNDMzIDIwLjI5NWMwIC40Ny0uMzg3LjgyOS0uODI5LjgyOWEuODMxLjgzMSAwIDAgMS0uODI5LS44MjljMC0uNDcuMzg3LS44MjkuODI5LS44MjkuNDQxIDAgLjgwMS4zNTkuODI5LjgyOXptLS4xNjYgMGEuNjc5LjY3OSAwIDAgMC0uNjY0LS42OTFjLS4zNTkgMC0uNjY0LjMzMi0uNjY0LjY5MSAwIC4zNTkuMzA0LjY2NC42NjQuNjY0YS42NzMuNjczIDAgMCAwIC42NjQtLjY2NHptLS41NTMuMDU1Yy4wMjguMDU1LjMwNC40NDIuMzA0LjQ0MmgtLjIyMXMtLjI3Ni0uMzg3LS4yNzYtLjQxNWgtLjAyOHYuNDE1aC0uMTk0di0uOTk1bC4zMDQtLjAyOGMuMjQ5IDAgLjMzMi4xNjYuMzMyLjMwNHMtLjA4My4yNS0uMjIxLjI3N3ptLjAyNy0uMjc2YzAtLjA1NSAwLS4xMzgtLjE2Ni0uMTM4aC0uMDgzdi4zMDRoLjAyOGMuMTk0IDAgLjIyMS0uMDgzLjIyMS0uMTY2eiIvPjwvZz4KPC9zdmc+Cg=="
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_ups_dotted"
+  },
+  "parcelapp.0.deliveries.inv_event_ups_dotted.carrier": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Versanddienst",
+        "en": "Carrier",
+        "es": "Transportista",
+        "fr": "Transporteur",
+        "it": "Corriere",
+        "nl": "Vervoerder",
+        "pl": "Przewoźnik",
+        "pt": "Transportadora",
+        "ru": "Перевозчик",
+        "uk": "Перевізник",
+        "zh-cn": "承运商"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Anzeigename des Zustellers; ersatzweise das Zustellerkürzel in Großbuchstaben, wenn parcel.app keinen Namen kennt.",
+        "en": "Display name of the carrier; falls back to the uppercase carrier code when parcel.app knows no name for it.",
+        "es": "Nombre visible del transportista; en su defecto, el código del transportista en mayúsculas cuando parcel.app no conoce ningún nombre.",
+        "fr": "Nom d'affichage du transporteur ; à défaut, le code du transporteur en majuscules lorsque parcel.app n'en connaît pas le nom.",
+        "it": "Nome visualizzato del corriere; in mancanza, il codice del corriere in maiuscolo quando parcel.app non ne conosce il nome.",
+        "nl": "Weergavenaam van de vervoerder; anders de vervoerderscode in hoofdletters, wanneer parcel.app geen naam kent.",
+        "pl": "Nazwa wyświetlana przewoźnika; zamiennie kod przewoźnika wielkimi literami, gdy parcel.app nie zna nazwy.",
+        "pt": "Nome de apresentação da transportadora; em alternativa, o código da transportadora em maiúsculas quando o parcel.app não sabe o nome.",
+        "ru": "Отображаемое название перевозчика; при отсутствии - код перевозчика заглавными буквами, если parcel.app не знает названия.",
+        "uk": "Відображувана назва перевізника; за відсутності - код перевізника великими літерами, якщо parcel.app не знає назви.",
+        "zh-cn": "承运商的显示名称；若 parcel.app 不知道其名称，则回退为大写的承运商代码。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_ups_dotted.carrier"
+  },
+  "parcelapp.0.deliveries.inv_event_ups_dotted.deliveryEstimate": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Voraussichtliche Zustellung",
+        "en": "Delivery Estimate",
+        "es": "Entrega estimada",
+        "fr": "Livraison estimée",
+        "it": "Consegna prevista",
+        "nl": "Verwachte bezorging",
+        "pl": "Szacowana dostawa",
+        "pt": "Previsão de entrega",
+        "ru": "Ожидаемая доставка",
+        "uk": "Очікувана доставка",
+        "zh-cn": "预计送达"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
+        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
+        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
+        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_ups_dotted.deliveryEstimate"
+  },
+  "parcelapp.0.deliveries.inv_event_ups_dotted.deliveryWindow": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Zustellfenster",
+        "en": "Delivery Window",
+        "es": "Ventana de entrega",
+        "fr": "Créneau de livraison",
+        "it": "Finestra di consegna",
+        "nl": "Bezorgvenster",
+        "pl": "Okno dostawy",
+        "pt": "Janela de entrega",
+        "ru": "Окно доставки",
+        "uk": "Вікно доставки",
+        "zh-cn": "派送时段"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Erwartetes Zustellfenster; ein über mehrere Tage reichendes Fenster trägt auf beiden Seiten das Datum.",
+        "en": "Expected delivery time window; a window spanning several days carries the date on both sides.",
+        "es": "Ventana de entrega prevista; una ventana de varios días lleva la fecha a ambos lados.",
+        "fr": "Créneau de livraison prévu ; un créneau sur plusieurs jours porte la date de chaque côté.",
+        "it": "Finestra di consegna prevista; una finestra su più giorni riporta la data su entrambi i lati.",
+        "nl": "Verwacht bezorgvenster; een venster over meerdere dagen toont aan beide kanten de datum.",
+        "pl": "Przewidywane okno dostawy; okno obejmujące kilka dni zawiera datę po obu stronach.",
+        "pt": "Janela de entrega prevista; uma janela que abrange vários dias mostra a data de ambos os lados.",
+        "ru": "Ожидаемое временное окно доставки; окно, охватывающее несколько дней, содержит дату с обеих сторон.",
+        "uk": "Очікуване вікно доставки; вікно, що охоплює кілька днів, містить дату з обох боків.",
+        "zh-cn": "预计派送时间段；跨越多天的时间段会在两侧显示日期。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_ups_dotted.deliveryWindow"
+  },
+  "parcelapp.0.deliveries.inv_event_ups_dotted.description": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Beschreibung",
+        "en": "Description",
+        "es": "Descripción",
+        "fr": "Description",
+        "it": "Descrizione",
+        "nl": "Beschrijving",
+        "pl": "Opis",
+        "pt": "Descrição",
+        "ru": "Описание",
+        "uk": "Опис",
+        "zh-cn": "描述"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Die Beschreibung, die du der Sendung in parcel.app gegeben hast; anders als der Gerätename zeigt sie immer den aktuellen Wert.",
+        "en": "The description you gave the shipment in parcel.app; unlike the device name it always shows the current value.",
+        "es": "La descripción que diste al envío en parcel.app; a diferencia del nombre del dispositivo, siempre muestra el valor actual.",
+        "fr": "La description que vous avez donnée à l'envoi dans parcel.app ; contrairement au nom de l'appareil, elle affiche toujours la valeur actuelle.",
+        "it": "La descrizione che hai dato alla spedizione in parcel.app; a differenza del nome del dispositivo mostra sempre il valore attuale.",
+        "nl": "De omschrijving die je de zending in parcel.app hebt gegeven; anders dan de apparaatnaam toont deze altijd de actuele waarde.",
+        "pl": "Opis, który nadałeś przesyłce w parcel.app; w przeciwieństwie do nazwy urządzenia zawsze pokazuje aktualną wartość.",
+        "pt": "A descrição que deu ao envio no parcel.app; ao contrário do nome do dispositivo, mostra sempre o valor atual.",
+        "ru": "Описание, которое вы задали отправлению в parcel.app; в отличие от имени устройства оно всегда показывает текущее значение.",
+        "uk": "Опис, який ви дали відправленню в parcel.app; на відміну від назви пристрою він завжди показує поточне значення.",
+        "zh-cn": "你在 parcel.app 中为该寄件填写的描述；与设备名称不同，它始终显示当前值。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_ups_dotted.description"
+  },
+  "parcelapp.0.deliveries.inv_event_ups_dotted.extraInfo": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Zusatz-Information",
+        "en": "Extra Information",
+        "es": "Información adicional",
+        "fr": "Informations supplémentaires",
+        "it": "Informazioni aggiuntive",
+        "nl": "Extra informatie",
+        "pl": "Dodatkowe informacje",
+        "pt": "Informação adicional",
+        "ru": "Дополнительная информация",
+        "uk": "Додаткова інформація",
+        "zh-cn": "附加信息"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Zusatzangabe, die der Zusteller benötigt, etwa Postleitzahl oder E-Mail-Adresse.",
+        "en": "Additional detail the carrier needs, such as a postal code or e-mail address.",
+        "es": "Dato adicional que necesita el transportista, por ejemplo un código postal o una dirección de correo.",
+        "fr": "Information complémentaire exigée par le transporteur, par exemple un code postal ou une adresse e-mail.",
+        "it": "Dato aggiuntivo richiesto dal corriere, ad esempio un codice postale o un indirizzo e-mail.",
+        "nl": "Aanvullend gegeven dat de vervoerder nodig heeft, zoals postcode of e-mailadres.",
+        "pl": "Dodatkowa informacja wymagana przez przewoźnika, np. kod pocztowy lub adres e-mail.",
+        "pt": "Detalhe adicional exigido pela transportadora, como código postal ou endereço de e-mail.",
+        "ru": "Дополнительные данные, нужные перевозчику, например почтовый индекс или адрес электронной почты.",
+        "uk": "Додаткові дані, потрібні перевізникові, наприклад поштовий індекс або адреса електронної пошти.",
+        "zh-cn": "承运商所需的附加信息，例如邮政编码或电子邮件地址。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_ups_dotted.extraInfo"
+  },
+  "parcelapp.0.deliveries.inv_event_ups_dotted.lastEvent": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Letztes Ereignis",
+        "en": "Last Event",
+        "es": "Último evento",
+        "fr": "Dernier événement",
+        "it": "Ultimo evento",
+        "nl": "Laatste gebeurtenis",
+        "pl": "Ostatnie zdarzenie",
+        "pt": "Último evento",
+        "ru": "Последнее событие",
+        "uk": "Остання подія",
+        "zh-cn": "最近事件"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Jüngste Sendungsmeldung des Zustellers mit Datum.",
+        "en": "Most recent tracking event reported by the carrier, with its date.",
+        "es": "Evento de seguimiento más reciente comunicado por el transportista, con su fecha.",
+        "fr": "Dernier événement de suivi communiqué par le transporteur, avec sa date.",
+        "it": "Evento di tracciamento più recente comunicato dal corriere, con la data.",
+        "nl": "Meest recente zendingsmelding van de vervoerder, met datum.",
+        "pl": "Najnowsze zdarzenie śledzenia zgłoszone przez przewoźnika, wraz z datą.",
+        "pt": "Evento de rastreio mais recente comunicado pela transportadora, com a data.",
+        "ru": "Последнее событие отслеживания от перевозчика с датой.",
+        "uk": "Найновіша подія відстеження від перевізника, разом із датою.",
+        "zh-cn": "承运商报告的最新跟踪事件及其日期。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_ups_dotted.lastEvent"
+  },
+  "parcelapp.0.deliveries.inv_event_ups_dotted.lastLocation": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Letzter Standort",
+        "en": "Last Location",
+        "es": "Última ubicación",
+        "fr": "Dernier emplacement",
+        "it": "Ultima posizione",
+        "nl": "Laatste locatie",
+        "pl": "Ostatnia lokalizacja",
+        "pt": "Última localização",
+        "ru": "Последнее местоположение",
+        "uk": "Останнє місцезнаходження",
+        "zh-cn": "最近位置"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Wo der Zusteller die Sendung zuletzt erfasst hat - keine Live-Position.",
+        "en": "Where the carrier last scanned the package - not a live position.",
+        "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
+        "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
+        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
+        "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
+        "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
+        "ru": "Где перевозчик в последний раз отсканировал посылку - это не текущее местоположение.",
+        "uk": "Де перевізник востаннє відсканував посилку - це не поточне місцезнаходження.",
+        "zh-cn": "承运商最后一次扫描包裹的地点 - 不是实时位置。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_ups_dotted.lastLocation"
+  },
+  "parcelapp.0.deliveries.inv_event_ups_dotted.lastUpdated": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Zuletzt aktualisiert",
+        "en": "Last Updated",
+        "es": "Última actualización",
+        "fr": "Dernière mise à jour",
+        "it": "Ultimo aggiornamento",
+        "nl": "Laatst bijgewerkt",
+        "pl": "Ostatnia aktualizacja",
+        "pt": "Última atualização",
+        "ru": "Последнее обновление",
+        "uk": "Останнє оновлення",
+        "zh-cn": "最后更新"
+      },
+      "type": "string",
+      "role": "date",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Zeitpunkt der letzten Änderung der Sendungsdaten - nicht der letzte Abruf.",
+        "en": "When the tracking data last changed - not when the adapter last polled.",
+        "es": "Momento del último cambio de los datos de seguimiento - no de la última consulta.",
+        "fr": "Moment du dernier changement des données de suivi - pas de la dernière interrogation.",
+        "it": "Momento dell'ultima variazione dei dati di tracciamento - non dell'ultima interrogazione.",
+        "nl": "Moment waarop de zendinggegevens voor het laatst zijn gewijzigd - niet de laatste opvraging.",
+        "pl": "Moment ostatniej zmiany danych śledzenia - nie ostatniego odpytania.",
+        "pt": "Momento da última alteração dos dados de rastreio - não da última consulta.",
+        "ru": "Момент последнего изменения данных отслеживания - не время последнего опроса.",
+        "uk": "Момент останньої зміни даних відстеження - не останнього опитування.",
+        "zh-cn": "跟踪数据最后一次发生变化的时间——不是最后一次轮询的时间。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_ups_dotted.lastUpdated"
+  },
+  "parcelapp.0.deliveries.inv_event_ups_dotted.status": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Status",
+        "en": "Status",
+        "es": "Estado",
+        "fr": "État",
+        "it": "Stato",
+        "nl": "Status",
+        "pl": "Status",
+        "pt": "Estado",
+        "ru": "Статус",
+        "uk": "Статус",
+        "zh-cn": "状态"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
+        "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
+        "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
+        "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
+        "pl": "Status jako czytelny tekst w języku systemowym ioBroker - w skryptach należy używać statusCode, który nie zmienia się wraz z językiem.",
+        "pt": "O estado como texto legível no idioma do sistema ioBroker - nos scripts utilize statusCode, que não muda com o idioma.",
+        "ru": "Статус в виде читаемого текста на системном языке ioBroker - в скриптах используйте statusCode, он не меняется вместе с языком.",
+        "uk": "Статус як читабельний текст системною мовою ioBroker - у скриптах використовуйте statusCode, він не змінюється разом з мовою.",
+        "zh-cn": "以 ioBroker 系统语言显示的可读状态文本 - 在脚本中请使用 statusCode，它不随语言变化。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_ups_dotted.status"
+  },
+  "parcelapp.0.deliveries.inv_event_ups_dotted.statusCode": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Status-Code",
+        "en": "Status Code",
+        "es": "Código de estado",
+        "fr": "Code d'état",
+        "it": "Codice di stato",
+        "nl": "Statuscode",
+        "pl": "Kod statusu",
+        "pt": "Código de estado",
+        "ru": "Код статуса",
+        "uk": "Код статусу",
+        "zh-cn": "状态代码"
+      },
+      "type": "number",
+      "role": "value",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Numerischer Status von parcel.app (0-8); -1 bedeutet, dass der Wert nicht gedeutet werden konnte.",
+        "en": "Numeric status from parcel.app (0-8); -1 means the value could not be interpreted.",
+        "es": "Estado numérico de parcel.app (0-8); -1 significa que el valor no se pudo interpretar.",
+        "fr": "Statut numérique de parcel.app (0-8) ; -1 signifie que la valeur n'a pas pu être interprétée.",
+        "it": "Stato numerico di parcel.app (0-8); -1 significa che il valore non è stato interpretabile.",
+        "nl": "Numerieke status van parcel.app (0-8); -1 betekent dat de waarde niet kon worden geduid.",
+        "pl": "Status liczbowy z parcel.app (0-8); -1 oznacza, że wartości nie dało się zinterpretować.",
+        "pt": "Estado numérico do parcel.app (0-8); -1 significa que o valor não pôde ser interpretado.",
+        "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
+        "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
+        "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_ups_dotted.statusCode"
+  },
+  "parcelapp.0.deliveries.inv_event_ups_dotted.trackingNumber": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Sendungsnummer",
+        "en": "Tracking Number",
+        "es": "Número de seguimiento",
+        "fr": "Numéro de suivi",
+        "it": "Numero di tracciamento",
+        "nl": "Trackingnummer",
+        "pl": "Numer śledzenia",
+        "pt": "Número de rastreio",
+        "ru": "Трек-номер",
+        "uk": "Номер відстеження",
+        "zh-cn": "追踪号"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_event_ups_dotted.trackingNumber"
+  },
   "parcelapp.0.deliveries.inv_extra_50733": {
     "type": "device",
     "common": {
@@ -1630,6 +4048,409 @@
     },
     "native": {},
     "_id": "parcelapp.0.deliveries.inv_extra_50733.trackingNumber"
+  },
+  "parcelapp.0.deliveries.inv_hour_window": {
+    "type": "device",
+    "common": {
+      "name": "Hour window on one day",
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPgogIDxwYXRoIGQ9Ik04IDM0YzEwIDEyIDM4IDEyIDQ4LTIiLz48cGF0aCBkPSJNNDcgMjRsOSA4LTExIDMiLz4KPC9zdmc+Cg=="
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_hour_window"
+  },
+  "parcelapp.0.deliveries.inv_hour_window.carrier": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Versanddienst",
+        "en": "Carrier",
+        "es": "Transportista",
+        "fr": "Transporteur",
+        "it": "Corriere",
+        "nl": "Vervoerder",
+        "pl": "Przewoźnik",
+        "pt": "Transportadora",
+        "ru": "Перевозчик",
+        "uk": "Перевізник",
+        "zh-cn": "承运商"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Anzeigename des Zustellers; ersatzweise das Zustellerkürzel in Großbuchstaben, wenn parcel.app keinen Namen kennt.",
+        "en": "Display name of the carrier; falls back to the uppercase carrier code when parcel.app knows no name for it.",
+        "es": "Nombre visible del transportista; en su defecto, el código del transportista en mayúsculas cuando parcel.app no conoce ningún nombre.",
+        "fr": "Nom d'affichage du transporteur ; à défaut, le code du transporteur en majuscules lorsque parcel.app n'en connaît pas le nom.",
+        "it": "Nome visualizzato del corriere; in mancanza, il codice del corriere in maiuscolo quando parcel.app non ne conosce il nome.",
+        "nl": "Weergavenaam van de vervoerder; anders de vervoerderscode in hoofdletters, wanneer parcel.app geen naam kent.",
+        "pl": "Nazwa wyświetlana przewoźnika; zamiennie kod przewoźnika wielkimi literami, gdy parcel.app nie zna nazwy.",
+        "pt": "Nome de apresentação da transportadora; em alternativa, o código da transportadora em maiúsculas quando o parcel.app não sabe o nome.",
+        "ru": "Отображаемое название перевозчика; при отсутствии - код перевозчика заглавными буквами, если parcel.app не знает названия.",
+        "uk": "Відображувана назва перевізника; за відсутності - код перевізника великими літерами, якщо parcel.app не знає назви.",
+        "zh-cn": "承运商的显示名称；若 parcel.app 不知道其名称，则回退为大写的承运商代码。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_hour_window.carrier"
+  },
+  "parcelapp.0.deliveries.inv_hour_window.deliveryEstimate": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Voraussichtliche Zustellung",
+        "en": "Delivery Estimate",
+        "es": "Entrega estimada",
+        "fr": "Livraison estimée",
+        "it": "Consegna prevista",
+        "nl": "Verwachte bezorging",
+        "pl": "Szacowana dostawa",
+        "pt": "Previsão de entrega",
+        "ru": "Ожидаемая доставка",
+        "uk": "Очікувана доставка",
+        "zh-cn": "预计送达"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Erwartete Zustellung in Worten - heute, morgen oder in einigen Tagen.",
+        "en": "Expected delivery in words - today, tomorrow or in a number of days.",
+        "es": "Entrega prevista en palabras - hoy, mañana o dentro de unos días.",
+        "fr": "Livraison prévue en toutes lettres - aujourd'hui, demain ou dans quelques jours.",
+        "it": "Consegna prevista a parole - oggi, domani o fra alcuni giorni.",
+        "nl": "Verwachte bezorging in woorden - vandaag, morgen of over een aantal dagen.",
+        "pl": "Przewidywana dostawa słownie - dziś, jutro lub za kilka dni.",
+        "pt": "Entrega prevista por extenso - hoje, amanhã ou dentro de alguns dias.",
+        "ru": "Ожидаемая доставка словами - сегодня, завтра или через несколько дней.",
+        "uk": "Очікувана доставка словами - сьогодні, завтра або за кілька днів.",
+        "zh-cn": "以文字表示的预计派送时间——今天、明天或若干天后。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_hour_window.deliveryEstimate"
+  },
+  "parcelapp.0.deliveries.inv_hour_window.deliveryWindow": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Zustellfenster",
+        "en": "Delivery Window",
+        "es": "Ventana de entrega",
+        "fr": "Créneau de livraison",
+        "it": "Finestra di consegna",
+        "nl": "Bezorgvenster",
+        "pl": "Okno dostawy",
+        "pt": "Janela de entrega",
+        "ru": "Окно доставки",
+        "uk": "Вікно доставки",
+        "zh-cn": "派送时段"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Erwartetes Zustellfenster; ein über mehrere Tage reichendes Fenster trägt auf beiden Seiten das Datum.",
+        "en": "Expected delivery time window; a window spanning several days carries the date on both sides.",
+        "es": "Ventana de entrega prevista; una ventana de varios días lleva la fecha a ambos lados.",
+        "fr": "Créneau de livraison prévu ; un créneau sur plusieurs jours porte la date de chaque côté.",
+        "it": "Finestra di consegna prevista; una finestra su più giorni riporta la data su entrambi i lati.",
+        "nl": "Verwacht bezorgvenster; een venster over meerdere dagen toont aan beide kanten de datum.",
+        "pl": "Przewidywane okno dostawy; okno obejmujące kilka dni zawiera datę po obu stronach.",
+        "pt": "Janela de entrega prevista; uma janela que abrange vários dias mostra a data de ambos os lados.",
+        "ru": "Ожидаемое временное окно доставки; окно, охватывающее несколько дней, содержит дату с обеих сторон.",
+        "uk": "Очікуване вікно доставки; вікно, що охоплює кілька днів, містить дату з обох боків.",
+        "zh-cn": "预计派送时间段；跨越多天的时间段会在两侧显示日期。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_hour_window.deliveryWindow"
+  },
+  "parcelapp.0.deliveries.inv_hour_window.description": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Beschreibung",
+        "en": "Description",
+        "es": "Descripción",
+        "fr": "Description",
+        "it": "Descrizione",
+        "nl": "Beschrijving",
+        "pl": "Opis",
+        "pt": "Descrição",
+        "ru": "Описание",
+        "uk": "Опис",
+        "zh-cn": "描述"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Die Beschreibung, die du der Sendung in parcel.app gegeben hast; anders als der Gerätename zeigt sie immer den aktuellen Wert.",
+        "en": "The description you gave the shipment in parcel.app; unlike the device name it always shows the current value.",
+        "es": "La descripción que diste al envío en parcel.app; a diferencia del nombre del dispositivo, siempre muestra el valor actual.",
+        "fr": "La description que vous avez donnée à l'envoi dans parcel.app ; contrairement au nom de l'appareil, elle affiche toujours la valeur actuelle.",
+        "it": "La descrizione che hai dato alla spedizione in parcel.app; a differenza del nome del dispositivo mostra sempre il valore attuale.",
+        "nl": "De omschrijving die je de zending in parcel.app hebt gegeven; anders dan de apparaatnaam toont deze altijd de actuele waarde.",
+        "pl": "Opis, który nadałeś przesyłce w parcel.app; w przeciwieństwie do nazwy urządzenia zawsze pokazuje aktualną wartość.",
+        "pt": "A descrição que deu ao envio no parcel.app; ao contrário do nome do dispositivo, mostra sempre o valor atual.",
+        "ru": "Описание, которое вы задали отправлению в parcel.app; в отличие от имени устройства оно всегда показывает текущее значение.",
+        "uk": "Опис, який ви дали відправленню в parcel.app; на відміну від назви пристрою він завжди показує поточне значення.",
+        "zh-cn": "你在 parcel.app 中为该寄件填写的描述；与设备名称不同，它始终显示当前值。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_hour_window.description"
+  },
+  "parcelapp.0.deliveries.inv_hour_window.extraInfo": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Zusatz-Information",
+        "en": "Extra Information",
+        "es": "Información adicional",
+        "fr": "Informations supplémentaires",
+        "it": "Informazioni aggiuntive",
+        "nl": "Extra informatie",
+        "pl": "Dodatkowe informacje",
+        "pt": "Informação adicional",
+        "ru": "Дополнительная информация",
+        "uk": "Додаткова інформація",
+        "zh-cn": "附加信息"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Zusatzangabe, die der Zusteller benötigt, etwa Postleitzahl oder E-Mail-Adresse.",
+        "en": "Additional detail the carrier needs, such as a postal code or e-mail address.",
+        "es": "Dato adicional que necesita el transportista, por ejemplo un código postal o una dirección de correo.",
+        "fr": "Information complémentaire exigée par le transporteur, par exemple un code postal ou une adresse e-mail.",
+        "it": "Dato aggiuntivo richiesto dal corriere, ad esempio un codice postale o un indirizzo e-mail.",
+        "nl": "Aanvullend gegeven dat de vervoerder nodig heeft, zoals postcode of e-mailadres.",
+        "pl": "Dodatkowa informacja wymagana przez przewoźnika, np. kod pocztowy lub adres e-mail.",
+        "pt": "Detalhe adicional exigido pela transportadora, como código postal ou endereço de e-mail.",
+        "ru": "Дополнительные данные, нужные перевозчику, например почтовый индекс или адрес электронной почты.",
+        "uk": "Додаткові дані, потрібні перевізникові, наприклад поштовий індекс або адреса електронної пошти.",
+        "zh-cn": "承运商所需的附加信息，例如邮政编码或电子邮件地址。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_hour_window.extraInfo"
+  },
+  "parcelapp.0.deliveries.inv_hour_window.lastEvent": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Letztes Ereignis",
+        "en": "Last Event",
+        "es": "Último evento",
+        "fr": "Dernier événement",
+        "it": "Ultimo evento",
+        "nl": "Laatste gebeurtenis",
+        "pl": "Ostatnie zdarzenie",
+        "pt": "Último evento",
+        "ru": "Последнее событие",
+        "uk": "Остання подія",
+        "zh-cn": "最近事件"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Jüngste Sendungsmeldung des Zustellers mit Datum.",
+        "en": "Most recent tracking event reported by the carrier, with its date.",
+        "es": "Evento de seguimiento más reciente comunicado por el transportista, con su fecha.",
+        "fr": "Dernier événement de suivi communiqué par le transporteur, avec sa date.",
+        "it": "Evento di tracciamento più recente comunicato dal corriere, con la data.",
+        "nl": "Meest recente zendingsmelding van de vervoerder, met datum.",
+        "pl": "Najnowsze zdarzenie śledzenia zgłoszone przez przewoźnika, wraz z datą.",
+        "pt": "Evento de rastreio mais recente comunicado pela transportadora, com a data.",
+        "ru": "Последнее событие отслеживания от перевозчика с датой.",
+        "uk": "Найновіша подія відстеження від перевізника, разом із датою.",
+        "zh-cn": "承运商报告的最新跟踪事件及其日期。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_hour_window.lastEvent"
+  },
+  "parcelapp.0.deliveries.inv_hour_window.lastLocation": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Letzter Standort",
+        "en": "Last Location",
+        "es": "Última ubicación",
+        "fr": "Dernier emplacement",
+        "it": "Ultima posizione",
+        "nl": "Laatste locatie",
+        "pl": "Ostatnia lokalizacja",
+        "pt": "Última localização",
+        "ru": "Последнее местоположение",
+        "uk": "Останнє місцезнаходження",
+        "zh-cn": "最近位置"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Wo der Zusteller die Sendung zuletzt erfasst hat - keine Live-Position.",
+        "en": "Where the carrier last scanned the package - not a live position.",
+        "es": "Dónde escaneó el transportista el paquete por última vez, no es la posición actual.",
+        "fr": "Où le transporteur a scanné le colis pour la dernière fois - ce n'est pas une position en direct.",
+        "it": "Dove il corriere ha registrato il pacco l'ultima volta - non è la posizione attuale.",
+        "nl": "Waar de vervoerder het pakket het laatst scande - geen live positie.",
+        "pl": "Gdzie przewoźnik ostatnio zeskanował przesyłkę - to nie jest pozycja na żywo.",
+        "pt": "Onde a transportadora leu a encomenda pela última vez - não é a posição atual.",
+        "ru": "Где перевозчик в последний раз отсканировал посылку - это не текущее местоположение.",
+        "uk": "Де перевізник востаннє відсканував посилку - це не поточне місцезнаходження.",
+        "zh-cn": "承运商最后一次扫描包裹的地点 - 不是实时位置。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_hour_window.lastLocation"
+  },
+  "parcelapp.0.deliveries.inv_hour_window.lastUpdated": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Zuletzt aktualisiert",
+        "en": "Last Updated",
+        "es": "Última actualización",
+        "fr": "Dernière mise à jour",
+        "it": "Ultimo aggiornamento",
+        "nl": "Laatst bijgewerkt",
+        "pl": "Ostatnia aktualizacja",
+        "pt": "Última atualização",
+        "ru": "Последнее обновление",
+        "uk": "Останнє оновлення",
+        "zh-cn": "最后更新"
+      },
+      "type": "string",
+      "role": "date",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Zeitpunkt der letzten Änderung der Sendungsdaten - nicht der letzte Abruf.",
+        "en": "When the tracking data last changed - not when the adapter last polled.",
+        "es": "Momento del último cambio de los datos de seguimiento - no de la última consulta.",
+        "fr": "Moment du dernier changement des données de suivi - pas de la dernière interrogation.",
+        "it": "Momento dell'ultima variazione dei dati di tracciamento - non dell'ultima interrogazione.",
+        "nl": "Moment waarop de zendinggegevens voor het laatst zijn gewijzigd - niet de laatste opvraging.",
+        "pl": "Moment ostatniej zmiany danych śledzenia - nie ostatniego odpytania.",
+        "pt": "Momento da última alteração dos dados de rastreio - não da última consulta.",
+        "ru": "Момент последнего изменения данных отслеживания - не время последнего опроса.",
+        "uk": "Момент останньої зміни даних відстеження - не останнього опитування.",
+        "zh-cn": "跟踪数据最后一次发生变化的时间——不是最后一次轮询的时间。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_hour_window.lastUpdated"
+  },
+  "parcelapp.0.deliveries.inv_hour_window.status": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Status",
+        "en": "Status",
+        "es": "Estado",
+        "fr": "État",
+        "it": "Stato",
+        "nl": "Status",
+        "pl": "Status",
+        "pt": "Estado",
+        "ru": "Статус",
+        "uk": "Статус",
+        "zh-cn": "状态"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Der Status als lesbarer Text in der ioBroker-Systemsprache - in Skripten statusCode verwenden, der ändert sich nicht mit der Sprache.",
+        "en": "The status as readable text in the ioBroker system language - use statusCode in scripts, it does not change with the language.",
+        "es": "El estado como texto legible en el idioma del sistema ioBroker - en los scripts use statusCode, que no cambia con el idioma.",
+        "fr": "L'état en texte lisible dans la langue système d'ioBroker - dans les scripts, utilisez statusCode, qui ne change pas avec la langue.",
+        "it": "Lo stato come testo leggibile nella lingua di sistema di ioBroker - negli script usare statusCode, che non cambia con la lingua.",
+        "nl": "De status als leesbare tekst in de systeemtaal van ioBroker - gebruik in scripts statusCode, die verandert niet met de taal.",
+        "pl": "Status jako czytelny tekst w języku systemowym ioBroker - w skryptach należy używać statusCode, który nie zmienia się wraz z językiem.",
+        "pt": "O estado como texto legível no idioma do sistema ioBroker - nos scripts utilize statusCode, que não muda com o idioma.",
+        "ru": "Статус в виде читаемого текста на системном языке ioBroker - в скриптах используйте statusCode, он не меняется вместе с языком.",
+        "uk": "Статус як читабельний текст системною мовою ioBroker - у скриптах використовуйте statusCode, він не змінюється разом з мовою.",
+        "zh-cn": "以 ioBroker 系统语言显示的可读状态文本 - 在脚本中请使用 statusCode，它不随语言变化。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_hour_window.status"
+  },
+  "parcelapp.0.deliveries.inv_hour_window.statusCode": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Status-Code",
+        "en": "Status Code",
+        "es": "Código de estado",
+        "fr": "Code d'état",
+        "it": "Codice di stato",
+        "nl": "Statuscode",
+        "pl": "Kod statusu",
+        "pt": "Código de estado",
+        "ru": "Код статуса",
+        "uk": "Код статусу",
+        "zh-cn": "状态代码"
+      },
+      "type": "number",
+      "role": "value",
+      "read": true,
+      "write": false,
+      "desc": {
+        "de": "Numerischer Status von parcel.app (0-8); -1 bedeutet, dass der Wert nicht gedeutet werden konnte.",
+        "en": "Numeric status from parcel.app (0-8); -1 means the value could not be interpreted.",
+        "es": "Estado numérico de parcel.app (0-8); -1 significa que el valor no se pudo interpretar.",
+        "fr": "Statut numérique de parcel.app (0-8) ; -1 signifie que la valeur n'a pas pu être interprétée.",
+        "it": "Stato numerico di parcel.app (0-8); -1 significa che il valore non è stato interpretabile.",
+        "nl": "Numerieke status van parcel.app (0-8); -1 betekent dat de waarde niet kon worden geduid.",
+        "pl": "Status liczbowy z parcel.app (0-8); -1 oznacza, że wartości nie dało się zinterpretować.",
+        "pt": "Estado numérico do parcel.app (0-8); -1 significa que o valor não pôde ser interpretado.",
+        "ru": "Числовой статус от parcel.app (0-8); -1 означает, что значение не удалось распознать.",
+        "uk": "Числовий статус від parcel.app (0-8); -1 означає, що значення не вдалося розпізнати.",
+        "zh-cn": "来自 parcel.app 的数字状态（0-8）；-1 表示该值无法识别。"
+      }
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_hour_window.statusCode"
+  },
+  "parcelapp.0.deliveries.inv_hour_window.trackingNumber": {
+    "type": "state",
+    "common": {
+      "name": {
+        "de": "Sendungsnummer",
+        "en": "Tracking Number",
+        "es": "Número de seguimiento",
+        "fr": "Numéro de suivi",
+        "it": "Numero di tracciamento",
+        "nl": "Trackingnummer",
+        "pl": "Numer śledzenia",
+        "pt": "Número de rastreio",
+        "ru": "Трек-номер",
+        "uk": "Номер відстеження",
+        "zh-cn": "追踪号"
+      },
+      "type": "string",
+      "role": "text",
+      "read": true,
+      "write": false
+    },
+    "native": {},
+    "_id": "parcelapp.0.deliveries.inv_hour_window.trackingNumber"
   },
   "parcelapp.0.deliveries.inv_no_description": {
     "type": "device",

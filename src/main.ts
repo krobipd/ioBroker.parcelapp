@@ -80,7 +80,13 @@ type ClientLike = Pick<
 >;
 type StateManagerLike = Pick<
   StateManager,
-  "resetPollState" | "packageId" | "parseStatus" | "updateDelivery" | "updateSummary" | "cleanupDeliveries"
+  | "resetPollState"
+  | "packageId"
+  | "parseStatus"
+  | "updateDelivery"
+  | "updateSummary"
+  | "cleanupDeliveries"
+  | "refreshDerived"
 >;
 
 /**
@@ -110,6 +116,10 @@ export class ParcelappAdapter extends utils.Adapter {
     );
   private makeStateManager: () => StateManagerLike = () => new StateManager(this);
   private pollTimer: ioBroker.Interval | undefined = undefined;
+  /** Fires shortly after local midnight to move the day-dependent states on (O10). */
+  private midnightTimer: ioBroker.Timeout | undefined = undefined;
+  /** The deliveries of the last successful poll — what the midnight refresh recomputes (O10). */
+  private lastPollView: { visible: ParcelDelivery[]; pkgIds: string[]; active: ParcelDelivery[] } | null = null;
   private isPolling = false;
   private lastPollTime = 0;
   private rateLimitedUntil = 0;
@@ -350,6 +360,7 @@ export class ParcelappAdapter extends utils.Adapter {
       this.pollTimer = this.setInterval(() => {
         void this.poll().catch(err => this.log.error(`Scheduled poll failed: ${errText(err)}`));
       }, intervalMs);
+      this.armMidnightRefresh();
 
       this.log.info(`Parcel tracking started — polling every ${interval} minutes`);
     } catch (err: unknown) {
@@ -379,12 +390,65 @@ export class ParcelappAdapter extends utils.Adapter {
     return coerceClampedInt(raw, MIN_POLL_INTERVAL, MAX_POLL_INTERVAL, DEFAULT_POLL_INTERVAL);
   }
 
+  /**
+   * v0.14.0 (audit O10): arm the timer for five seconds past the next local midnight. Built from the
+   * local calendar, so a DST switch moves it with the clock.
+   */
+  private armMidnightRefresh(): void {
+    const now = new Date();
+    const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 5);
+    this.midnightTimer = this.setTimeout(() => void this.refreshAtMidnight(), next.getTime() - now.getTime());
+  }
+
+  /**
+   * v0.14.0 (audit O10): "tomorrow" becomes "today" at midnight, not with the first poll after it —
+   * the estimate and the summary are recomputed from the last poll's deliveries, without a request
+   * to parcel.app. A running poll does the same work anyway, so the refresh steps aside for it.
+   */
+  private async refreshAtMidnight(): Promise<void> {
+    this.midnightTimer = undefined;
+    try {
+      if (this.unloaded) {
+        return;
+      }
+      this.armMidnightRefresh();
+      const view = this.lastPollView;
+      if (this.isPolling || !this.stateManager || !view) {
+        this.log.debug("Midnight refresh skipped — a poll is running or none has completed yet");
+        return;
+      }
+      // A package whose last write failed keeps its stale states until the next poll heals it —
+      // the refresh must not write half a package. The summary counts every active one, like the poll.
+      const visible: ParcelDelivery[] = [];
+      const pkgIds: string[] = [];
+      view.visible.forEach((delivery, index) => {
+        if (!this.failedDeliveries.has(view.pkgIds[index])) {
+          visible.push(delivery);
+          pkgIds.push(view.pkgIds[index]);
+        }
+      });
+      this.isPolling = true;
+      try {
+        await this.stateManager.refreshDerived(visible, pkgIds, view.active);
+        this.log.debug(`Midnight refresh: ${visible.length} estimate(s) and the summary recomputed`);
+      } finally {
+        this.isPolling = false;
+      }
+    } catch (err) {
+      this.log.warn(`Midnight refresh failed (the next poll catches up): ${errText(err)}`);
+    }
+  }
+
   private onUnload(callback: () => void): void {
     this.unloaded = true;
     try {
       if (this.pollTimer) {
         this.clearInterval(this.pollTimer);
         this.pollTimer = undefined;
+      }
+      if (this.midnightTimer) {
+        this.clearTimeout(this.midnightTimer);
+        this.midnightTimer = undefined;
       }
       // v0.4.2 (M11+P1): cancel every in-flight HTTPS request so a slow
       // parcel.app endpoint doesn't keep the adapter alive past
@@ -996,6 +1060,9 @@ export class ParcelappAdapter extends utils.Adapter {
       } catch (err) {
         this.log.warn(`Updating the summary failed (API connection is fine, retrying next poll): ${errText(err)}`);
       }
+
+      // v0.14.0 (audit O10): what the midnight refresh works from.
+      this.lastPollView = { visible: visibleDeliveries, pkgIds, active: activeDeliveries };
 
       // Keep failedDeliveries bounded: drop entries for package ids no longer
       // present, so packages that vanish from the API don't linger forever.

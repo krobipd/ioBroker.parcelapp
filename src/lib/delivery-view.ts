@@ -52,34 +52,152 @@ const MONTH_NAMES: Record<string, number> = {
 const ISO_LIKE_RE = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/;
 /** `Month D, YYYY`, optionally followed by `H:MM[:SS]`. Unambiguous — the month is spelled out. */
 const MONTH_NAME_RE = /^([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/;
+/** `a.b.yyyy[ H:MM[:SS]]` — only read in tracking events, and only where day and month can be told apart. */
+const DOTTED_RE = /^(\d{1,2})\.(\d{1,2})\.(\d{4})(?: (\d{1,2}):(\d{2})(?::(\d{2}))?)?$/;
+/**
+ * The weekday form of tracking events, without a year: `Saturday, 6 December 1:21 am`,
+ * `Tuesday, May 13 1:31 PM`, `Freitag, 25. September 5:50`, `domingo 24 agosto 11:23 PM`,
+ * `domingo, 24 de agosto`. Weekday optional, day before or after the month name, a dot after the
+ * day, the Spanish/Portuguese/Catalan `de`/`d'` before the month, a 12- or 24-hour clock. Applied to
+ * the lower-cased, whitespace-collapsed string with every apostrophe folded to `'`.
+ */
+const WEEKDAY_FORM_RE =
+  /^(?:([\p{L}'-]+)\.?,? )?(?:(\d{1,2})\.? (?:de |d')?([\p{L}'-]+)|([\p{L}'-]+) (\d{1,2})\.?)(?:,? (\d{1,2}):(\d{2})(?::(\d{2}))?(?: ?([ap])\.?m\.?)?)?$/u;
 
-/** Date/time components pulled out of a raw string before they are range-checked. */
-interface DateParts {
-  year: number;
-  /** 0-based, like `Date`. */
-  month: number;
-  day: number;
-  hour: number;
-  minute: number;
-  second: number;
-  /** Whether the string carried a clock at all (midnight still counts as "no time of day"). */
-  hasClock: boolean;
+/** One local calendar day — only ever used to round the distance between two local midnights. */
+const DAY_MS = 24 * 60 * 60 * 1000;
+/**
+ * A Unix timestamp in SECONDS above this lies beyond the year 5000 — such a value is milliseconds,
+ * and multiplying it by 1000 again would put the delivery thousands of years ahead (audit O9).
+ */
+const MAX_EPOCH_SECONDS = 1e11;
+
+/** The languages the parcel.app app ships in — the language of the event texts follows the delivery. */
+const APP_LANGUAGES = ["en", "ca", "da", "nl", "fi", "fr", "de", "it", "ja", "pl", "pt", "ru", "es", "sv", "uk"];
+
+/**
+ * Lower-case a name the way the event parser compares it: every apostrophe variant becomes `'`.
+ *
+ * @param text Raw text
+ * @returns the comparable form
+ */
+function foldName(text: string): string {
+  return text.toLowerCase().replace(/[’ʼ]/g, "'");
 }
 
 /**
- * Pull the calendar components out of a raw string, without judging their ranges.
+ * Month and weekday names of every app language, from the runtime's own locale data — the format
+ * form (`września`, `de setembre`) and the standalone form (`wrzesień`, `setembre`). A name that
+ * means different things in two languages would be a guess, so it is dropped; names that are not
+ * words (the Japanese `9月`) never match the word pattern and are left out.
  *
- * Two formats are accepted, both unambiguous. The dotted (`dd.MM.yyyy` vs `MM.dd.yyyy`) and
- * weekday-only forms other clients guess at are deliberately NOT parsed — a wrong date is worse
- * than none. They now leave a drift line instead of vanishing silently.
- *
- * @param raw Trimmed date/time string from the API
- * @returns the components, or null when neither format matches
+ * @param languages Locales to read — the app languages; a test passes two that disagree
+ * @returns name → 0-based month, name → 0-based weekday (0 = Sunday)
  */
-function matchDateParts(raw: string): DateParts | null {
+export function buildNameTables(languages: readonly string[] = APP_LANGUAGES): {
+  months: Map<string, number>;
+  weekdays: Map<string, number>;
+} {
+  const collect = (entries: [string, number][]): Map<string, number> => {
+    const seen = new Map<string, number>();
+    const conflicting = new Set<string>();
+    for (const [raw, index] of entries) {
+      const name = foldName(raw).replace(/^(?:de |d')/, "");
+      if (!/^[\p{L}'-]+$/u.test(name)) {
+        continue;
+      }
+      const known = seen.get(name);
+      if (known !== undefined && known !== index) {
+        conflicting.add(name);
+      }
+      seen.set(name, index);
+    }
+    for (const name of conflicting) {
+      seen.delete(name);
+    }
+    return seen;
+  };
+  const monthEntries: [string, number][] = [];
+  const weekdayEntries: [string, number][] = [];
+  for (const lang of languages) {
+    const inContext = new Intl.DateTimeFormat(lang, { day: "numeric", month: "long" });
+    const standalone = new Intl.DateTimeFormat(lang, { month: "long" });
+    const weekday = new Intl.DateTimeFormat(lang, { weekday: "long" });
+    for (let month = 0; month < 12; month++) {
+      const date = new Date(2026, month, 15);
+      const part = inContext.formatToParts(date).find(p => p.type === "month");
+      if (part) {
+        monthEntries.push([part.value, month]);
+      }
+      monthEntries.push([standalone.format(date), month]);
+    }
+    for (let day = 0; day < 7; day++) {
+      // 2026-06-14 is a Sunday.
+      const date = new Date(2026, 5, 14 + day);
+      weekdayEntries.push([weekday.format(date), date.getDay()]);
+    }
+  }
+  return { months: collect(monthEntries), weekdays: collect(weekdayEntries) };
+}
+
+let nameTables: ReturnType<typeof buildNameTables> | null = null;
+
+/**
+ * The name tables, built on first use — most polls never see a weekday-form date.
+ *
+ * @returns the month and weekday tables
+ */
+function getNameTables(): ReturnType<typeof buildNameTables> {
+  nameTables ??= buildNameTables();
+  return nameTables;
+}
+
+/** Why a raw date string was not accepted. */
+type DateRejection = "format" | "range-date" | "range-time" | "calendar" | "ambiguous";
+
+/** A parsed date: LOCAL epoch-millis, and whether it carried a real time of day. */
+interface ParsedDate {
+  ms: number;
+  hasTime: boolean;
+}
+
+/**
+ * Collapse every whitespace run to one space (audit X14). Lossless and unambiguous — a doubled
+ * space between date and time must not cost a package its window.
+ *
+ * @param raw Raw string
+ * @returns the trimmed, collapsed string
+ */
+function collapseWhitespace(raw: string): string {
+  return raw.trim().replace(/\s+/g, " ");
+}
+
+/**
+ * Parse a date string with a YEAR, silently, with every component range-checked. The two accepted
+ * forms are unambiguous; the reason for a rejection goes back to the caller, which decides whether
+ * and how to report it.
+ *
+ * The components are applied to the local calendar so the value lands on the intended local
+ * day/time (`new Date("YYYY-MM-DD")` would be UTC midnight). `hasTime` is false for a bare date or
+ * a midnight time (a day, not an hour-window).
+ *
+ * @param raw Trimmed, whitespace-collapsed date/time string
+ * @returns the parsed date, or the reason it was rejected
+ */
+function parseDateParts(raw: string): ParsedDate | { reason: DateRejection } {
+  let parts: {
+    year: number;
+    month: number;
+    day: number;
+    hour: number;
+    minute: number;
+    second: number;
+    hasClock: boolean;
+  };
   const iso = ISO_LIKE_RE.exec(raw);
+  const named = iso ? null : MONTH_NAME_RE.exec(raw);
   if (iso) {
-    return {
+    parts = {
       year: Number(iso[1]),
       month: Number(iso[2]) - 1,
       day: Number(iso[3]),
@@ -88,14 +206,12 @@ function matchDateParts(raw: string): DateParts | null {
       second: iso[6] !== undefined ? Number(iso[6]) : 0,
       hasClock: iso[4] !== undefined,
     };
-  }
-  const named = MONTH_NAME_RE.exec(raw);
-  if (named) {
+  } else if (named) {
     const month = MONTH_NAMES[named[1].toLowerCase()];
     if (month === undefined) {
-      return null;
+      return { reason: "format" };
     }
-    return {
+    parts = {
       year: Number(named[3]),
       month,
       day: Number(named[2]),
@@ -104,8 +220,25 @@ function matchDateParts(raw: string): DateParts | null {
       second: named[6] !== undefined ? Number(named[6]) : 0,
       hasClock: named[4] !== undefined,
     };
+  } else {
+    return { reason: "format" };
   }
-  return null;
+  // Range-validate the components. The patterns only check digit COUNT, not value range, and
+  // `new Date(2026, 12, 40, 25, …)` silently ROLLS OVER to a wrong date (getTime() is NOT NaN).
+  if (parts.month < 0 || parts.month > 11 || parts.day < 1 || parts.day > 31) {
+    return { reason: "range-date" };
+  }
+  if (parts.hour > 23 || parts.minute > 59 || parts.second > 59) {
+    return { reason: "range-time" };
+  }
+  const date = new Date(parts.year, parts.month, parts.day, parts.hour, parts.minute, parts.second);
+  // Catch day-of-month overflow the range check misses (Feb 30, Apr 31, …): a real date
+  // round-trips the month and day it was built from.
+  if (Number.isNaN(date.getTime()) || date.getMonth() !== parts.month || date.getDate() !== parts.day) {
+    return { reason: "calendar" };
+  }
+  const hasTime = parts.hasClock && !(parts.hour === 0 && parts.minute === 0 && parts.second === 0);
+  return { ms: date.getTime(), hasTime };
 }
 
 /**
@@ -120,18 +253,40 @@ function quoteForLog(raw: string): string {
 }
 
 /**
+ * The drift wording for a rejected date — one text per reason, shared by both date fields.
+ *
+ * @param reason Why the value was rejected
+ * @param raw The rejected value
+ * @returns the reason as a log fragment
+ */
+function rejectionText(reason: DateRejection, raw: string): string {
+  switch (reason) {
+    case "range-date":
+      return `month/day out of range in '${quoteForLog(raw)}'`;
+    case "range-time":
+      return `time out of range in '${quoteForLog(raw)}'`;
+    case "calendar":
+      return `'${quoteForLog(raw)}' is not a real calendar date`;
+    case "ambiguous":
+      return `ambiguous dotted date '${quoteForLog(raw)}' — day and month cannot be told apart`;
+    default:
+      return `unsupported format '${quoteForLog(raw)}'`;
+  }
+}
+
+/**
  * Parse a parcel.app expected-date string to LOCAL epoch-millis.
  *
- * The API delivers `date_expected`/`date_expected_end` "without specific timezone information";
- * the components are applied to the local calendar so the value lands on the intended local
- * day/time (`new Date("YYYY-MM-DD")` would be UTC midnight). `hasTime` is false for a bare date or
- * a midnight time (a day, not an hour-window).
+ * The API delivers `date_expected`/`date_expected_end` "without specific timezone information".
+ * Only forms with a year are read here — every public recording of these two fields carries the
+ * ISO form; the weekday and dotted forms other clients guess at were never seen in them, and
+ * without a year the year would have to be guessed. They leave a drift line instead.
  *
  * @param value Raw date/time string from the API
  * @param log Optional trace sink — every rejected value leaves one line
  * @returns epoch millis plus whether a real time of day was given, or null when unparseable
  */
-export function parseExpectedToMs(value: unknown, log?: DriftLogger): { ms: number; hasTime: boolean } | null {
+export function parseExpectedToMs(value: unknown, log?: DriftLogger): ParsedDate | null {
   if (typeof value !== "string") {
     // undefined is the normal "carrier reports nothing" case and must stay quiet; anything else
     // present but wrong-typed is drift worth seeing.
@@ -140,34 +295,132 @@ export function parseExpectedToMs(value: unknown, log?: DriftLogger): { ms: numb
     }
     return null;
   }
-  const raw = value.trim();
+  const raw = collapseWhitespace(value);
   if (raw.length === 0) {
     return null;
   }
-  const parts = matchDateParts(raw);
-  if (!parts) {
-    log?.debug(`expected-date drift: unsupported format '${quoteForLog(raw)}' — no window/estimate for this package`);
+  const parsed = parseDateParts(raw);
+  if ("reason" in parsed) {
+    const hint = parsed.reason === "format" ? " — no window/estimate for this package" : "";
+    log?.debug(`expected-date drift: ${rejectionText(parsed.reason, raw)}${hint}`);
     return null;
   }
-  // Range-validate the components. The patterns only check digit COUNT, not value range, and
-  // `new Date(2026, 12, 40, 25, …)` silently ROLLS OVER to a wrong date (getTime() is NOT NaN).
-  if (parts.month < 0 || parts.month > 11 || parts.day < 1 || parts.day > 31) {
-    log?.debug(`expected-date drift: month/day out of range in '${quoteForLog(raw)}'`);
+  return parsed;
+}
+
+/**
+ * Local midnight of the day an epoch-millis value falls on.
+ *
+ * @param ms Epoch milliseconds
+ * @returns epoch milliseconds of that local day's start
+ */
+function localDayStart(ms: number): number {
+  const d = new Date(ms);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+}
+
+/**
+ * Read one of the Unix-timestamp fields (`timestamp_expected[_end]`, seconds) as epoch-millis.
+ * One helper for the window and the day range, so both see the same value (audit O9).
+ *
+ * @param value Raw field value
+ * @param field Field name for the drift line
+ * @param log Optional trace sink
+ * @returns epoch milliseconds, or null when the field is absent or unusable
+ */
+function epochSecondsToMs(value: unknown, field: string, log?: DriftLogger): number | null {
+  const seconds = coerceFiniteNumber(value);
+  if (seconds === null || seconds <= 0) {
     return null;
   }
-  if (parts.hour > 23 || parts.minute > 59 || parts.second > 59) {
-    log?.debug(`expected-date drift: time out of range in '${quoteForLog(raw)}'`);
+  if (seconds > MAX_EPOCH_SECONDS) {
+    log?.debug(`expected-date drift: ${field} ${seconds} is milliseconds, not seconds — ignored`);
     return null;
   }
-  const date = new Date(parts.year, parts.month, parts.day, parts.hour, parts.minute, parts.second);
-  // Catch day-of-month overflow the range check misses (Feb 30, Apr 31, …): a real date
-  // round-trips the month and day it was built from.
-  if (Number.isNaN(date.getTime()) || date.getMonth() !== parts.month || date.getDate() !== parts.day) {
-    log?.debug(`expected-date drift: '${quoteForLog(raw)}' is not a real calendar date`);
-    return null;
+  return seconds * 1000;
+}
+
+/**
+ * Whether a tracking event's date is today. The event dates come in more shapes than the expected
+ * date, and in the language of the delivery (§0 of the 2026-09-25 audit): the forms with a year,
+ * the dotted form of UPS (`05.13.2025 13:31` — month first, read only where day and month can be
+ * told apart) and the weekday form without a year in all app languages. A missing date is silent;
+ * a date that is read but not today is silent too; a form nobody reads leaves a drift line.
+ *
+ * @param value Raw `events[].date`
+ * @param log Optional trace sink
+ * @returns true when the event happened today (local calendar)
+ */
+export function eventIsToday(value: unknown, log?: DriftLogger): boolean {
+  if (typeof value !== "string") {
+    if (value !== undefined && value !== null) {
+      log?.debug(`event-date drift: not a string (got ${typeof value})`);
+    }
+    return false;
   }
-  const hasTime = parts.hasClock && !(parts.hour === 0 && parts.minute === 0 && parts.second === 0);
-  return { ms: date.getTime(), hasTime };
+  const raw = collapseWhitespace(value);
+  if (raw.length === 0) {
+    return false;
+  }
+  const now = new Date();
+  const reject = (reason: DateRejection): boolean => {
+    log?.debug(`event-date drift: ${rejectionText(reason, raw)}`);
+    return false;
+  };
+
+  // 1. The forms with a year — the same range-checked parser as the expected date.
+  const withYear = parseDateParts(raw);
+  if (!("reason" in withYear)) {
+    return sameLocalDay(withYear.ms, now.getTime());
+  }
+  if (withYear.reason !== "format") {
+    return reject(withYear.reason);
+  }
+
+  // 2. The dotted form, only where it is unambiguous.
+  const dotted = DOTTED_RE.exec(raw);
+  if (dotted) {
+    const a = Number(dotted[1]);
+    const b = Number(dotted[2]);
+    let month: number;
+    let day: number;
+    if (a === b || (a > 12 && b <= 12)) {
+      [day, month] = [a, b];
+    } else if (b > 12 && a <= 12) {
+      [month, day] = [a, b];
+    } else {
+      return reject(a > 12 ? "range-date" : "ambiguous");
+    }
+    const pad = (n: number | string): string => String(n).padStart(2, "0");
+    const clock = dotted[4] !== undefined ? ` ${pad(dotted[4])}:${dotted[5]}${dotted[6] ? `:${dotted[6]}` : ""}` : "";
+    const rebuilt = parseDateParts(`${dotted[3]}-${pad(month)}-${pad(day)}${clock}`);
+    return "reason" in rebuilt ? reject(rebuilt.reason) : sameLocalDay(rebuilt.ms, now.getTime());
+  }
+
+  // 3. The weekday form without a year.
+  const form = WEEKDAY_FORM_RE.exec(foldName(raw));
+  if (!form) {
+    return reject("format");
+  }
+  const { months, weekdays } = getNameTables();
+  const monthName = form[3] ?? form[4];
+  const month = months.get(monthName);
+  const weekday = form[1] !== undefined ? weekdays.get(form[1]) : null;
+  if (month === undefined || weekday === undefined) {
+    return reject("format");
+  }
+  const day = Number(form[2] ?? form[5]);
+  if (day < 1 || day > 31) {
+    return reject("range-date");
+  }
+  if (form[6] !== undefined) {
+    const hour = Number(form[6]);
+    const twelveHour = form[9] !== undefined;
+    if ((twelveHour ? hour < 1 || hour > 12 : hour > 23) || Number(form[7]) > 59 || Number(form[8] ?? 0) > 59) {
+      return reject("range-time");
+    }
+  }
+  return month === now.getMonth() && day === now.getDate() && (weekday === null || weekday === now.getDay());
 }
 
 /**
@@ -191,23 +444,18 @@ export function windowBoundsMs(
   if (!TRACKABLE_STATUSES.has(statusCode)) {
     return null;
   }
-  const toMs = (timestamp: unknown): number | null => {
-    const ts = coerceFiniteNumber(timestamp);
-    if (ts === null || ts <= 0) {
-      return null;
-    }
-    const ms = ts * 1000;
-    return Number.isNaN(new Date(ms).getTime()) ? null : ms;
-  };
   const dateMs = (value: unknown): number | null => {
     const parsed = parseExpectedToMs(value, log);
     return parsed && parsed.hasTime ? parsed.ms : null;
   };
-  const start = toMs(delivery.timestamp_expected) ?? dateMs(delivery.date_expected);
+  const start =
+    epochSecondsToMs(delivery.timestamp_expected, "timestamp_expected", log) ?? dateMs(delivery.date_expected);
   if (start === null) {
     return null;
   }
-  const end = toMs(delivery.timestamp_expected_end) ?? dateMs(delivery.date_expected_end);
+  const end =
+    epochSecondsToMs(delivery.timestamp_expected_end, "timestamp_expected_end", log) ??
+    dateMs(delivery.date_expected_end);
   return { start, end };
 }
 
@@ -284,7 +532,45 @@ export function calculateDeliveryWindow(delivery: ParcelDelivery, statusCode: nu
 }
 
 /**
- * Days from today to the expected delivery date. Returns null when the delivery has no usable
+ * The local calendar days the delivery is expected on (audit B1). parcel.app reports a RANGE as
+ * often as a single day — a start and an end, as timestamps or as date strings, often at midnight
+ * (`2025-12-06 00:00:00` → `2025-12-08 00:00:00`). Unlike the window, a bare date or a midnight
+ * counts here: it names a day.
+ *
+ * @param delivery The delivery data
+ * @param log Optional trace sink for unparseable dates
+ * @returns the local midnights of the first and the last expected day, or null without a start
+ */
+export function expectedDayRange(
+  delivery: ParcelDelivery,
+  log?: DriftLogger,
+): { startDay: number; endDay: number } | null {
+  const start =
+    epochSecondsToMs(delivery.timestamp_expected, "timestamp_expected", log) ??
+    parseExpectedToMs(delivery.date_expected, log)?.ms ??
+    null;
+  if (start === null) {
+    return null;
+  }
+  const startDay = localDayStart(start);
+  let end =
+    epochSecondsToMs(delivery.timestamp_expected_end, "timestamp_expected_end", log) ??
+    parseExpectedToMs(delivery.date_expected_end, log)?.ms ??
+    null;
+  if (end === null || end < start) {
+    return { startDay, endDay: startDay };
+  }
+  // An end at exactly midnight after a start with a time of day closes the day before: a window
+  // "20:00 until 00:00" is over when the next day begins.
+  if (end > start && end === localDayStart(end) && start !== startDay) {
+    end -= 1;
+  }
+  return { startDay, endDay: localDayStart(end) };
+}
+
+/**
+ * Days from today to the expected delivery: positive before the first expected day, 0 on any day
+ * of the range, negative (counted from the last day) after it. Null when the delivery has no usable
  * expected date or is in a non-trackable status.
  *
  * @param delivery The delivery data
@@ -296,44 +582,28 @@ export function computeDiffDays(delivery: ParcelDelivery, statusCode: number, lo
   if (!TRACKABLE_STATUSES.has(statusCode)) {
     return null;
   }
-
-  let expectedDate: Date | null = null;
-  const ts = coerceFiniteNumber(delivery.timestamp_expected);
-  if (ts !== null && ts > 0) {
-    expectedDate = new Date(ts * 1000);
-  } else {
-    // Shares the window's date parser (one source of format-truth). Only the calendar day matters
-    // here, so the time-of-day flag is ignored; the local-component parse keeps the day
-    // timezone-stable.
-    const parsed = parseExpectedToMs(delivery.date_expected, log);
-    expectedDate = parsed ? new Date(parsed.ms) : null;
-  }
-
-  if (!expectedDate || Number.isNaN(expectedDate.getTime())) {
-    // v0.13.0 (audit O1): plenty of carriers report "out for delivery" without any
-    // expected date. The parcel is on the van, but it was missing from todayCount
-    // and had no estimate. The day of the last scan decides: scanned today → today
-    // (the window stays empty, there is no time to show); an older scan is not
-    // evidence for today, so it stays unknown.
-    if (statusCode === OUT_FOR_DELIVERY) {
-      const scanned = parseExpectedToMs(getLatestEvent(delivery)?.date, log);
-      if (scanned) {
-        const scanDate = new Date(scanned.ms);
-        const scanStart = new Date(scanDate.getFullYear(), scanDate.getMonth(), scanDate.getDate());
-        const nowForScan = new Date();
-        const todayForScan = new Date(nowForScan.getFullYear(), nowForScan.getMonth(), nowForScan.getDate());
-        if (scanStart.getTime() === todayForScan.getTime()) {
-          return 0;
-        }
-      }
+  const range = expectedDayRange(delivery, log);
+  let diff: number | null = null;
+  if (range) {
+    const today = localDayStart(Date.now());
+    if (today < range.startDay) {
+      diff = Math.round((range.startDay - today) / DAY_MS);
+    } else if (today > range.endDay) {
+      diff = Math.round((range.endDay - today) / DAY_MS);
+    } else {
+      diff = 0;
     }
-    return null;
   }
-
-  const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const expectedStart = new Date(expectedDate.getFullYear(), expectedDate.getMonth(), expectedDate.getDate());
-  return Math.round((expectedStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24));
+  // v0.13.0 (audit O1), v0.14.0 (audit B3): "out for delivery" with no expected date — or with
+  // one that already lies in the past — is today when the carrier scanned the parcel today. The
+  // parcel is on the van; an old date only means the carrier did not update it. An older scan is no
+  // evidence for today, so the diff stays what it was.
+  if (statusCode === OUT_FOR_DELIVERY && (diff === null || diff < 0)) {
+    if (eventIsToday(getLatestEvent(delivery)?.date, log)) {
+      return 0;
+    }
+  }
+  return diff;
 }
 
 /**
@@ -393,9 +663,13 @@ export interface StatusedDelivery {
  * @returns the combined window string, or "" when no package reports one
  */
 export function calculateCombinedWindow(todayDeliveries: StatusedDelivery[], log?: DriftLogger): string {
+  // v0.14.0 (audit 2026-09-25, X15): a package counts as today by its SCAN when its window already
+  // lies in the past (out for delivery, stale date — B3). That old window is not today's; it must
+  // not stretch the combined window back into yesterday.
+  const todayStart = localDayStart(Date.now());
   const bounds = todayDeliveries
     .map(e => windowBoundsMs(e.delivery, e.statusCode, log))
-    .filter((b): b is { start: number; end: number | null } => b !== null);
+    .filter((b): b is { start: number; end: number | null } => b !== null && (b.end ?? b.start) >= todayStart);
 
   if (bounds.length === 0) {
     return "";

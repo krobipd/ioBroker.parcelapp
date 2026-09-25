@@ -30,9 +30,25 @@ const MAX_ID_LENGTH = 50;
 /**
  * v0.10.0 (I2): cap the parallel recursive deletes in cleanupDeliveries the
  * same way main.ts caps the update fan-out — a poll that suddenly loses many
- * packages must not flood the broker in one burst.
+ * packages must not flood the broker in one burst. The midnight refresh uses the same cap.
  */
 const DELETE_BATCH_SIZE = 25;
+
+/**
+ * One row of a package's datapoint table — the ONE list behind the writes and the `lastUpdated`
+ * decision (v0.10.0, M5). `tracksChange` says whether a new value means the TRACKING changed
+ * (v0.14.0, audit B4a): the carrier's display name, the status text in the system language and the
+ * estimate ("in 2 days" → "tomorrow") change without the parcel moving.
+ */
+type StateDef = [
+  id: string,
+  name: ioBroker.StringOrTranslated,
+  type: ioBroker.CommonType,
+  role: string,
+  val: ioBroker.StateValue,
+  desc: ioBroker.StringOrTranslated | undefined,
+  tracksChange: boolean,
+];
 
 /** Manages ioBroker states for parcel deliveries */
 export class StateManager {
@@ -79,13 +95,14 @@ export class StateManager {
    * updateSummary's pre-pass); memoizing keyed by the object means the parse —
    * and its drift debug line — runs ONCE per delivery
    * instead of per site. No reset needed: each poll's deliveries are fresh
-   * objects (JSON.parse) and GC'd afterwards, and nothing holds a long-lived
-   * delivery reference (idOwner/failedDeliveries/knownDeliveryIds store strings).
+   * objects (JSON.parse); main.ts keeps only the LAST poll's list for the midnight
+   * refresh (v0.14.0, O10) and drops it with the next poll, so the memo never grows
+   * past one poll (idOwner/failedDeliveries/knownDeliveryIds store strings).
    */
   private readonly statusMemo = new WeakMap<ParcelDelivery, number>();
 
   /**
-   * v0.12.0 (B2): raw date values already reported as drift during this poll. The same
+   * v0.12.0 (B2): raw date values already reported as drift during this poll (or since the midnight refresh). The same
    * unparseable string is seen up to four times per poll (window, estimate, today filter,
    * combined window); without this the log would carry four identical lines per package. Cleared
    * in `resetPollState()`, the same way the collision tracker is.
@@ -366,20 +383,21 @@ export class StateManager {
     // would be worse than none (fleet standard, 2026-09-02). Every `undefined`
     // here needs its counterpart in `test/self-explaining.json`, which is where
     // the fleet gate D08 reads the decision (2026-09-07).
-    const stateDefs: [
-      id: string,
-      name: ioBroker.StringOrTranslated,
-      type: ioBroker.CommonType,
-      role: string,
-      val: ioBroker.StateValue,
-      desc: ioBroker.StringOrTranslated | undefined,
-    ][] = [
-      [`${devicePath}.carrier`, tName("carrier"), "string", "text", carrierName, tName("descCarrier")],
-      [`${devicePath}.status`, tName("status"), "string", "text", statusText, tName("descStatus")],
-      [`${devicePath}.statusCode`, tName("statusCode"), "number", "value", statusCode, tName("descStatusCode")],
-      [`${devicePath}.description`, tName("description"), "string", "text", description, tName("descDescription")],
-      [`${devicePath}.trackingNumber`, tName("trackingNumber"), "string", "text", trackingNumber, undefined],
-      [`${devicePath}.extraInfo`, tName("extraInfo"), "string", "text", extraInfo, tName("descExtraInfo")],
+    const stateDefs: StateDef[] = [
+      [`${devicePath}.carrier`, tName("carrier"), "string", "text", carrierName, tName("descCarrier"), false],
+      [`${devicePath}.status`, tName("status"), "string", "text", statusText, tName("descStatus"), false],
+      [`${devicePath}.statusCode`, tName("statusCode"), "number", "value", statusCode, tName("descStatusCode"), true],
+      [
+        `${devicePath}.description`,
+        tName("description"),
+        "string",
+        "text",
+        description,
+        tName("descDescription"),
+        true,
+      ],
+      [`${devicePath}.trackingNumber`, tName("trackingNumber"), "string", "text", trackingNumber, undefined, true],
+      [`${devicePath}.extraInfo`, tName("extraInfo"), "string", "text", extraInfo, tName("descExtraInfo"), true],
       [
         `${devicePath}.deliveryWindow`,
         tName("deliveryWindow"),
@@ -387,20 +405,26 @@ export class StateManager {
         "text",
         deliveryWindow,
         tName("descDeliveryWindow"),
+        true,
       ],
+      StateManager.estimateDef(devicePath, deliveryEstimate),
+      [`${devicePath}.lastEvent`, tName("lastEvent"), "string", "text", lastEvent, tName("descLastEvent"), true],
       [
-        `${devicePath}.deliveryEstimate`,
-        tName("deliveryEstimate"),
+        `${devicePath}.lastLocation`,
+        tName("lastLocation"),
         "string",
         "text",
-        deliveryEstimate,
-        tName("descDeliveryEstimate"),
+        lastLocation,
+        tName("descLastLocation"),
+        true,
       ],
-      [`${devicePath}.lastEvent`, tName("lastEvent"), "string", "text", lastEvent, tName("descLastEvent")],
-      [`${devicePath}.lastLocation`, tName("lastLocation"), "string", "text", lastLocation, tName("descLastLocation")],
     ];
+    // A write counts for `lastUpdated` only where the row tracks the parcel (audit B4a).
     const changed = await Promise.all(
-      stateDefs.map(([id, name, type, role, val, desc]) => this.createAndSet(id, name, type, role, val, desc)),
+      stateDefs.map(
+        async ([id, name, type, role, val, desc, tracksChange]) =>
+          (await this.createAndSet(id, name, type, role, val, desc)) && tracksChange,
+      ),
     );
 
     // v0.10.0 (M5): `lastUpdated` = "when the tracking data last CHANGED".
@@ -430,6 +454,54 @@ export class StateManager {
         new Date().toISOString(),
       );
     }
+  }
+
+  /**
+   * The estimate row of a package — shared by the poll and the midnight refresh, so both write the
+   * same object.
+   *
+   * @param devicePath Relative object id of the package device
+   * @param estimate The estimate wording
+   * @returns the datapoint row
+   */
+  private static estimateDef(devicePath: string, estimate: string): StateDef {
+    return [
+      `${devicePath}.deliveryEstimate`,
+      tName("deliveryEstimate"),
+      "string",
+      "text",
+      estimate,
+      tName("descDeliveryEstimate"),
+      false,
+    ];
+  }
+
+  /**
+   * v0.14.0 (audit O10): recompute what depends on the DATE alone — each package's estimate and the
+   * summary — without asking parcel.app. main.ts calls it right after local midnight with the
+   * deliveries of the last poll, so "tomorrow" turns into "today" at the start of the day and not
+   * with the first poll after it. No `lastUpdated`: nothing about the parcel changed.
+   *
+   * @param visible Deliveries that carry states, from the last poll (minus failed writes)
+   * @param pkgIds Their package ids, index-aligned to `visible`
+   * @param active Every active delivery of the last poll — the summary counts them all, like the poll
+   */
+  async refreshDerived(visible: ParcelDelivery[], pkgIds: string[], active: ParcelDelivery[]): Promise<void> {
+    // A new day: a drift line reported yesterday may be reported once more.
+    this.driftReported.clear();
+    for (let start = 0; start < visible.length; start += DELETE_BATCH_SIZE) {
+      await Promise.all(
+        visible.slice(start, start + DELETE_BATCH_SIZE).map((delivery, offset) => {
+          const estimate = calculateDeliveryEstimate(delivery, this.parseStatus(delivery), this.viewLog);
+          const [id, name, type, role, val, desc] = StateManager.estimateDef(
+            `deliveries.${pkgIds[start + offset]}`,
+            estimate,
+          );
+          return this.createAndSet(id, name, type, role, val, desc);
+        }),
+      );
+    }
+    await this.updateSummary(active);
   }
 
   /**

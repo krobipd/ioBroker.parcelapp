@@ -55,5 +55,8 @@
   "tntpitp": {
     "name": "PostNL (International)",
     "extra_required": 5
+  },
+  "amzlus": {
+    "name": "Amazon US"
   }
 }

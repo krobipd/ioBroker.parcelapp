@@ -82,6 +82,7 @@ interface FakeStateMgr {
   updateDelivery: ReturnType<typeof vi.fn>;
   cleanupDeliveries: ReturnType<typeof vi.fn>;
   updateSummary: ReturnType<typeof vi.fn>;
+  refreshDerived: ReturnType<typeof vi.fn>;
 }
 
 function makeDelivery(overrides: Partial<ParcelDelivery> = {}): ParcelDelivery {
@@ -137,6 +138,10 @@ function internalOf(adapter: ParcelappAdapter): {
   setStateChangedAsync: ReturnType<typeof vi.fn>;
   setInterval: ReturnType<typeof vi.fn>;
   clearInterval: ReturnType<typeof vi.fn>;
+  setTimeout: ReturnType<typeof vi.fn>;
+  clearTimeout: ReturnType<typeof vi.fn>;
+  midnightTimer: unknown;
+  refreshAtMidnight: () => Promise<void>;
   sendTo: ReturnType<typeof vi.fn>;
   terminate: ReturnType<typeof vi.fn>;
   classifyError: (err: Error & { code?: string }) => string;
@@ -198,6 +203,7 @@ function setup(configOverrides: Record<string, unknown> = {}): {
     updateDelivery: vi.fn(async () => {}),
     cleanupDeliveries: vi.fn(async () => {}),
     updateSummary: vi.fn(async () => {}),
+    refreshDerived: vi.fn(async () => {}),
   };
   const internal = adapter as unknown as {
     makeClient: () => FakeClient;
@@ -1553,6 +1559,84 @@ describe("ParcelappAdapter request budget and auth backoff (audit 2026-09-25)", 
     await add(i, 1);
     await settle();
     expect(i.log.error).toHaveBeenCalledWith(expect.stringContaining("Poll after addDelivery failed"));
+  });
+});
+
+describe("ParcelappAdapter midnight refresh (audit O10)", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("the start arms a timer for five seconds past the next local midnight", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 5, 15, 23, 59, 0));
+    const { adapter } = await setupReady();
+    const i = internalOf(adapter);
+    expect(i.setTimeout).toHaveBeenCalledTimes(1);
+    expect(i.setTimeout.mock.calls[0][1]).toBe(65_000);
+  });
+
+  it("the timer recomputes the last poll's packages, re-arms, and sends no request", async () => {
+    const { adapter, client, stateMgr } = await setupReady();
+    const i = internalOf(adapter);
+    const callback = i.setTimeout.mock.calls[0][0] as () => void;
+    client.getDeliveries.mockClear();
+    callback();
+    await vi.waitFor(() => expect(stateMgr.refreshDerived).toHaveBeenCalledTimes(1));
+    const [visible, pkgIds, active] = stateMgr.refreshDerived.mock.calls[0] as [ParcelDelivery[], string[], unknown[]];
+    expect(visible.map(d => d.tracking_number)).toEqual(["TRK1"]);
+    expect(pkgIds).toEqual(["trk1"]);
+    expect(active).toHaveLength(1);
+    expect(i.setTimeout).toHaveBeenCalledTimes(2);
+    expect(client.getDeliveries).not.toHaveBeenCalled();
+    expect(i.isPolling).toBe(false);
+  });
+
+  it("a package whose last write failed is left out, the summary still counts it", async () => {
+    const { adapter, stateMgr } = await setupReady();
+    const i = internalOf(adapter);
+    i.failedDeliveries.add("trk1");
+    await i.refreshAtMidnight();
+    expect(stateMgr.refreshDerived).toHaveBeenCalledWith(
+      [],
+      [],
+      [expect.objectContaining({ tracking_number: "TRK1" })],
+    );
+  });
+
+  it("steps aside while a poll runs, and before the first poll completed", async () => {
+    const { adapter, stateMgr } = await setupReady();
+    const i = internalOf(adapter);
+    i.isPolling = true;
+    await i.refreshAtMidnight();
+    expect(stateMgr.refreshDerived).not.toHaveBeenCalled();
+    expect(i.setTimeout).toHaveBeenCalledTimes(2); // re-armed all the same
+
+    const fresh = setup();
+    const f = internalOf(fresh.adapter);
+    f.stateManager = fresh.stateMgr;
+    await f.refreshAtMidnight();
+    expect(fresh.stateMgr.refreshDerived).not.toHaveBeenCalled();
+  });
+
+  it("a broker failure is a warning, and the poll lock is released", async () => {
+    const { adapter, stateMgr } = await setupReady();
+    const i = internalOf(adapter);
+    stateMgr.refreshDerived.mockRejectedValueOnce(new Error("objects DB gone"));
+    await i.refreshAtMidnight();
+    expect(i.log.warn).toHaveBeenCalledWith(expect.stringContaining("Midnight refresh failed"));
+    expect(i.isPolling).toBe(false);
+  });
+
+  it("the stop clears the timer, and a late tick neither refreshes nor re-arms", async () => {
+    const { adapter, stateMgr } = await setupReady();
+    const i = internalOf(adapter);
+    const handle = i.midnightTimer;
+    i.onUnload(() => {});
+    expect(i.clearTimeout).toHaveBeenCalledWith(handle);
+    await i.refreshAtMidnight();
+    expect(stateMgr.refreshDerived).not.toHaveBeenCalled();
+    expect(i.setTimeout).toHaveBeenCalledTimes(1);
   });
 });
 
