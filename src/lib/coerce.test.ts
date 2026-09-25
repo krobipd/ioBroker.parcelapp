@@ -176,7 +176,7 @@ describe("errText", () => {
   });
 });
 
-// Fleet master test of the error-text helper (Entwicklung/CLAUDE_CODING.md, "Fehlertext nur über den Helfer").
+// Fleet master test of the error-text helper (Entwicklung/CLAUDE_CODING.md, section on error text only through the helper).
 /** A port nothing listens on. */
 async function closedPort(): Promise<number> {
   const s = net.createServer().listen(0);
