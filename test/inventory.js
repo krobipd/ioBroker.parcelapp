@@ -31,12 +31,13 @@ const COMPARED = ["name", "desc", "role", "type", "unit"];
 // Fixture provenance (audit 2026-09-25, T6). `deliveries.json` is written by hand, but every BASIC
 // shape in it is one seen in a public recording of a real `GET /deliveries/` answer:
 //   - `date_expected` as `YYYY-MM-DD HH:MM:SS`, a day range at midnight (`… 00:00:00` → `… 00:00:00`,
-//     Amazon DE) and an hour window on one day (Amazon US): datadrowner/parcel-app-cli DEVELOPER.md
-//     (https://github.com/datadrowner), home-assistant parcel integration issues #51 and #55
-//     (https://github.com/ParcelTracking/parcel-ha/issues/55);
+//     Amazon DE) and an hour window on one day (Amazon US): the DEVELOPER.md of datadrowner/parcelappnet
+//     (https://github.com/datadrowner/parcelappnet/blob/main/DEVELOPER.md) and the Home Assistant
+//     integration jmdevita/parcel-ha, issues #51 and #55 (https://github.com/jmdevita/parcel-ha/issues/55);
 //   - event dates in the weekday form without a year (English day-month and month-day, German with
 //     a dot after the day), the UPS dotted month-first form `MM.dd.yyyy HH:mm`: the same sources and
-//     the parcel.app developer's reply in raycast/extensions PR #22239;
+//     the parcel.app developer's reply in raycast/extensions PR #22239
+//     (https://github.com/raycast/extensions/pull/22239);
 //   - `events[].additional`: documented at https://parcelapp.net/help/api-view-deliveries.html
 //     ("Additional information from the carrier"), read by the adapter nowhere.
 // SYNTHETIC drift cases, marked by their tracking number: INV-DRIFT-NUMSTR (status as a numeric

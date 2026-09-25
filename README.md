@@ -28,7 +28,7 @@ ioBroker adapter for the [parcel.app](https://parcelapp.net) API. Supports all c
 
 ## Sentry / Error reporting
 
-**This adapter uses Sentry libraries to automatically report exceptions and code errors to the developers.** Reporting only happens if you have enabled error reporting in the ioBroker diagnostics (**System settings → Diagnostics and error reporting**). Only an anonymous installation ID is transmitted — no name, e-mail address or IP address.
+**This adapter uses Sentry libraries to automatically report exceptions and code errors to the developers.** Reporting is active unless it is switched off: the ioBroker plugin reports as long as the system's diagnostics setting (**System settings → Statistics**) is not set to _none_ — the js-controller default is _extended_ — and data reporting is not disabled for the host or the instance. Only an anonymous installation ID is transmitted — no name, e-mail address or IP address.
 
 For details and how to disable it, see the [Sentry plugin documentation](https://github.com/ioBroker/plugin-sentry#plugin-sentry). Error reporting requires js-controller 3.0 or newer.
 
@@ -47,11 +47,11 @@ For details and how to disable it, see the [Sentry plugin documentation](https:/
 
 ## Configuration
 
-| Option                    | Description                                                                                                                                                               | Default |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| **API Key**               | Your parcel.app API key (get it at [web.parcelapp.net](https://web.parcelapp.net))                                                                                        | —       |
-| **Poll Interval**         | How often to fetch updates (minutes). parcel.app serves the list from a ~45–90 min server cache, so shorter intervals mostly reduce the delay until a refresh is noticed. | 10      |
-| **Auto-remove delivered** | Remove delivered packages from states automatically. When disabled, they stay until parcel.app no longer lists them as recent.                                            | Yes     |
+| Option                    | Description                                                                                                                                                                                                                   | Default |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| **API Key**               | Your parcel.app API key (get it at [web.parcelapp.net](https://web.parcelapp.net))                                                                                                                                            | —       |
+| **Poll Interval**         | How often to fetch updates (minutes). parcel.app itself is on average 45 and at most about 90 minutes behind the carrier's website, so shorter intervals only shorten the delay until ioBroker notices what parcel.app knows. | 10      |
+| **Auto-remove delivered** | Remove delivered packages from states automatically. When disabled, they stay until parcel.app no longer lists them as recent.                                                                                                | Yes     |
 
 Status labels (`Delivered`, `In Transit`, …) and delivery estimates (`today`, `tomorrow`, `in X days`) are rendered in the ioBroker system language.
 
@@ -110,13 +110,13 @@ sendTo("parcelapp.0", "addDelivery", {
 });
 ```
 
-`tracking_number`, `carrier_code` and `description` are required; `language`, `send_push_confirmation`, `postcode` and `email` are optional. Some carriers need the postcode or the e-mail address of the order to track at all — parcel.app tells you in the reply when one is missing, and its carrier list (`https://api.parcel.app/external/supported_carriers.json`) marks them. The delivery is added to your parcel.app account and a poll follows right away (at most one poll per minute) — but freshly added deliveries usually have no tracking data yet (see the note below).
+`tracking_number`, `carrier_code` and `description` are required; `language`, `send_push_confirmation`, `postcode` and `email` are optional. Some carriers need the postcode or the e-mail address of the order to track at all — parcel.app tells you in the reply when one is missing, and its carrier list (`https://api.parcel.app/external/supported_carriers.json`) marks them. The callback is optional — without one the delivery is added all the same and the result is logged at info level. The delivery is added to your parcel.app account and one extra poll follows right away (at most one per poll interval, at least 60 seconds after the previous poll, and only within the hourly request budget) — but freshly added deliveries usually have no tracking data yet (see the note below).
 
 **Notes:**
 
 - **POST rate limit: 20 deliveries per day** — failed attempts (e.g. wrong `carrier_code`) also count against this limit.
-- **Each field may be at most 512 characters**, and the adapter accepts at most **20 addDelivery calls per minute** — beyond either limit the call returns `success: false` with an explanatory `error_message` instead of reaching parcel.app.
-- Fresh deliveries usually have no tracking events for **45–90 minutes** after they are added. That's a parcel.app-side delay, not an adapter issue.
+- **Each field may be at most 512 characters**, and the adapter accepts at most **20 addDelivery calls in any 24 hours** — beyond either limit the call returns `success: false` with an explanatory `error_message` instead of reaching parcel.app.
+- Fresh deliveries usually have no tracking events for **45–90 minutes** after they are added — parcel.app is on average 45 and at most about 90 minutes behind the carrier's website. That's a parcel.app-side delay, not an adapter issue.
 - **Deleting packages is only possible in the parcel.app app/web UI** — the API has no delete endpoint. With `autoRemoveDelivered` enabled, the adapter still drops delivered packages from ioBroker states automatically.
 
 ---
@@ -131,12 +131,13 @@ sendTo("parcelapp.0", "addDelivery", {
 
 ### No deliveries shown
 
-- The API returns cached data — new deliveries and fresh tracking events can take **45–90 minutes** to appear (parcel.app-side cache)
+- parcel.app is on average 45 and at most about 90 minutes behind the carrier's website — new deliveries and fresh tracking events can take that long to appear
+- Amazon shipments are updated by parcel.app only on an iPhone with the parcel.app app (open, or through its background refresh)
 - Check if you have active deliveries in the parcel.app
 
 ### Rate limit
 
-- GET (polling): **20 requests per hour** — the minimum poll interval is 5 minutes to stay within this limit
+- GET (polling, the extra poll after an `addDelivery`, the connection test): **20 requests per hour** — the adapter keeps count and never asks for the 21st; the minimum poll interval is 5 minutes to stay within this limit
 - POST (adding deliveries): **20 requests per day**, failed attempts count too
 
 ---
@@ -147,6 +148,23 @@ sendTo("parcelapp.0", "addDelivery", {
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+
+### **WORK IN PROGRESS**
+
+- Fixed: A package expected over several days turned overdue after the first one — every day of the range now counts as today.
+- Fixed: A parcel out for delivery with an outdated date counts as today when the carrier scanned it today.
+- Improved: Scan dates in the weekday form of all app languages and the UPS dotted form are read, so today's deliveries are recognised more often.
+- New: Tomorrow turns into today right after midnight, without waiting for the next poll.
+- Fixed: lastUpdated no longer moves every day — a moving estimate or a renamed carrier is not a tracking change; a new carrier code is.
+- Fixed: Three packages with the same tracking number no longer overwrite each other, and a restart never swaps the ids of two packages.
+- Improved: Correcting the carrier of a shipment in parcel.app keeps its datapoints instead of deleting and recreating them.
+- New: statusCode shows the meaning of every code in the admin, and an unknown status is shown in the system language.
+- Changed: The adapter keeps parcel.app's limits itself — at most 20 addDelivery calls a day and never more than 20 requests an hour.
+- Changed: A network outage shows in the connection indicator only, not as a warning; a rejected API key is retried less and less often.
+- Fixed: addDelivery without a callback now adds the delivery; the result is written to the log.
+- Fixed: One damaged entry from parcel.app no longer stops the whole poll, and a garbled status is never taken for delivered.
+- Improved: The carrier list is refreshed daily; FedEx and InPost have their own pictogram, PostNL, PostNord and Bring the envelope.
+- Fixed: The documentation said error reporting is off by default — it is on unless switched off in the system settings.
 
 ### 0.13.0 (2026-09-15) — stable
 

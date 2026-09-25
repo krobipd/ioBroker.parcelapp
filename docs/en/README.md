@@ -45,15 +45,16 @@ Press **Test Connection**. The button performs one real request against the API 
 actual result — a wrong key, an expired subscription or a network problem is named, not hidden
 behind a green "Ok". Save afterwards; the instance starts and the first poll follows immediately.
 
-> Note: the test uses the same request budget as polling (20 requests per hour). Pressing it a few
-> times while setting up is fine; hammering it is not.
+> Note: the test uses the same request budget as polling (20 requests per hour). The adapter keeps
+> count: when the hour's budget is used up, the button says so instead of asking parcel.app.
 
 ### Choosing a poll interval
 
-parcel.app serves the delivery list from a server-side cache that is roughly **45 to 90 minutes**
-old. A shorter interval therefore does not make tracking data fresher — it only shortens the delay
-between parcel.app refreshing its cache and ioBroker noticing. The default of 10 minutes is a good
-compromise; anything below 5 minutes would break the hourly request budget and is refused.
+parcel.app itself is, by its own FAQ, on average **45 and at most about 90 minutes** behind the
+carrier's website. A shorter interval therefore does not make tracking data fresher — it only
+shortens the delay between parcel.app learning something and ioBroker noticing. The default of
+10 minutes is a good compromise; anything below 5 minutes would break the hourly request budget and
+is refused.
 
 ---
 
@@ -108,22 +109,22 @@ stick — for a label of your own use an alias or a datapoint in `0_userdata`.
 Every package also carries the **pictogram of its carrier** in the object tree, so you can see who
 is delivering before you read the name: DHL, Deutsche Post, Hermes/Evri, DPD, GLS, UPS, Amazon,
 USPS, TNT, FedEx, InPost, Apple, Vinted and DoorDash have their own mark, national postal operators
-and their express arms share an envelope, and every other carrier gets a delivery van. The marks are drawn monochrome and follow
-your admin theme.
+and their express arms share an envelope, and every other carrier gets a delivery van. The marks are
+drawn monochrome and follow your admin theme.
 
 | Datapoint          | Type   | Meaning                                                                                                                                                                                                                                                                                                                   |
 | ------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `carrier`          | string | Display name of the carrier (e.g. `DHL Express`). Falls back to the uppercase carrier code when parcel.app has no name for it.                                                                                                                                                                                            |
 | `status`           | string | The status as readable text, in your ioBroker system language.                                                                                                                                                                                                                                                            |
-| `statusCode`       | number | The status as a number — **this is the datapoint to use in scripts**, because it does not change with the language. See the table below.                                                                                                                                                                                  |
+| `statusCode`       | number | The status as a number — **this is the datapoint to use in scripts**, because it does not change with the language. The admin shows the meaning of every code next to it. See the table below.                                                                                                                            |
 | `description`      | string | The description from parcel.app — the same text the device name carries.                                                                                                                                                                                                                                                  |
 | `trackingNumber`   | string | The tracking number.                                                                                                                                                                                                                                                                                                      |
 | `extraInfo`        | string | Additional detail the carrier needs, such as a postal code or e-mail address. Empty for most shipments.                                                                                                                                                                                                                   |
 | `deliveryWindow`   | string | Expected delivery time window, e.g. `14:00 - 16:00`. A window spanning several days carries the date on both sides (`12-06 14:30 - 12-08 18:30`). Empty when there is no usable window — either the carrier reports none, or it reports a date in a format the adapter does not read (a debug line then names the value). |
-| `deliveryEstimate` | string | The same information in words: _today_, _tomorrow_, _in 3 days_, _overdue_. Rendered in the system language.                                                                                                                                                                                                              |
+| `deliveryEstimate` | string | The same information in words: _today_, _tomorrow_, _in 3 days_, _overdue_. Rendered in the system language. Every day of a reported range counts as _today_; the value moves on right after midnight, without a request.                                                                                                 |
 | `lastEvent`        | string | The most recent tracking event with its date, e.g. `Arrived at delivery depot - 2026-09-02`.                                                                                                                                                                                                                              |
 | `lastLocation`     | string | Where that event happened, when the carrier reports a location.                                                                                                                                                                                                                                                           |
-| `lastUpdated`      | string | When the tracking data last **changed** — not when the adapter last polled. A package that sits still for two days keeps a two-day-old timestamp; that is intentional.                                                                                                                                                    |
+| `lastUpdated`      | string | When the tracking data last **changed** — not when the adapter last polled. A package that sits still for two days keeps a two-day-old timestamp; that is intentional. The estimate moving on, a new carrier display name or another system language do not count; a new carrier code does.                               |
 
 ### Status codes
 
