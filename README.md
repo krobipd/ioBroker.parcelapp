@@ -158,7 +158,7 @@ sendTo("parcelapp.0", "addDelivery", {
 - Fixed: lastUpdated no longer moves every day — a moving estimate or a renamed carrier is not a tracking change; a new carrier code is.
 - Fixed: Three packages with the same tracking number no longer overwrite each other, and a restart never swaps the ids of two packages.
 - Improved: Correcting the carrier of a shipment in parcel.app keeps its datapoints instead of deleting and recreating them.
-- New: statusCode shows the meaning of every code in the admin, and an unknown status is shown in the system language.
+- New: statusCode shows the meaning of every code in the admin, and an unknown status is shown in your language.
 - Changed: The adapter keeps parcel.app's limits itself — at most 20 addDelivery calls a day and never more than 20 requests an hour.
 - Changed: A network outage shows in the connection indicator only, not as a warning; a rejected API key is retried less and less often.
 - Fixed: addDelivery without a callback now adds the delivery; the result is written to the log.
