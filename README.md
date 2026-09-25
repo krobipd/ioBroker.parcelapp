@@ -28,7 +28,7 @@ ioBroker adapter for the [parcel.app](https://parcelapp.net) API. Supports all c
 
 ## Sentry / Error reporting
 
-**This adapter uses Sentry libraries to automatically report exceptions and code errors to the developers.** Reporting is active unless it is switched off: the ioBroker plugin reports as long as the system's diagnostics setting (**System settings → Statistics**) is not set to _none_ — the js-controller default is _extended_ — and data reporting is not disabled for the host or the instance. Only an anonymous installation ID is transmitted — no name, e-mail address or IP address.
+**This adapter uses Sentry libraries to automatically report exceptions and code errors to the developers.** Reporting is active by default. It stays off when the ioBroker diagnostics setting is `none` (`diag` in the system configuration), when data reporting is disabled for this instance or its host (`disableDataReporting`), and on CI systems. A report contains the error with its stack trace and technical context such as versions and platform, plus an anonymous installation ID.
 
 For details and how to disable it, see the [Sentry plugin documentation](https://github.com/ioBroker/plugin-sentry#plugin-sentry). Error reporting requires js-controller 3.0 or newer.
 

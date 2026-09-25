@@ -377,10 +377,8 @@ export class ParcelappAdapter extends utils.Adapter {
       // to leave a green-looking zombie — no client, no timer, no retry until
       // a manual restart. Terminate instead: js-controller restarts the
       // instance, which self-heals the transient case; its restart-loop guard
-      // backstops a persistent one.
-      if (!this.unloaded) {
-        this.terminate("startup failed — requesting restart", utils.EXIT_CODES.START_IMMEDIATELY_AFTER_STOP);
-      }
+      // backstops a persistent one. (A stop mid-start returned above — no restart is requested then.)
+      this.terminate("startup failed — requesting restart", utils.EXIT_CODES.START_IMMEDIATELY_AFTER_STOP);
     }
   }
 

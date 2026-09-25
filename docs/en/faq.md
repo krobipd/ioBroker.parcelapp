@@ -186,8 +186,8 @@ Your API key is stored encrypted in the instance object and is never written to 
 Error reporting via Sentry is **on** unless it is switched off: the ioBroker plugin reports as long as
 the diagnostics setting of the system (_System settings → Statistics_) is not set to _none_ — the
 js-controller default is _extended_ — and data reporting is not disabled for the host or this
-instance. With a report only an anonymous installation ID is transmitted along with the crash — no
-name, e-mail address, IP address or tracking data. See the
+instance, and never on CI systems. A report contains the error with its stack trace and technical
+context such as versions and platform, plus an anonymous installation ID. See the
 [plugin documentation](https://github.com/ioBroker/plugin-sentry#plugin-sentry) for every way to
 turn it off.
 

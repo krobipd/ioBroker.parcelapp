@@ -412,6 +412,24 @@ describe("ParcelappAdapter onReady", () => {
     expect(i.setInterval).not.toHaveBeenCalled();
   });
 
+  it("a stop during the connection write builds no client either (audit B5)", async () => {
+    // The last await before the client is built is the info.connection write.
+    const { adapter, client } = setup();
+    const i = internalOf(adapter);
+    let built = 0;
+    i.makeClient = () => {
+      built += 1;
+      return client;
+    };
+    i.setState.mockImplementationOnce(() => {
+      i.onUnload(vi.fn());
+      return Promise.resolve();
+    });
+    await i.onReady();
+    expect(built).toBe(0);
+    expect(client.getDeliveries).not.toHaveBeenCalled();
+  });
+
   it("the armed interval actually polls — the adapter's recurring work (C10)", async () => {
     // Until 2026-08-22 nothing drove this callback: emptying it left all tests
     // green while the adapter would have polled ONCE at startup and then never

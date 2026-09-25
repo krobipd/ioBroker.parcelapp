@@ -196,9 +196,9 @@ Log geschrieben.
 Die Fehlerberichte über Sentry sind **an**, solange sie nicht abgeschaltet sind: das ioBroker-Plugin
 meldet, solange die Diagnose-Einstellung des Systems (_Systemeinstellungen → Statistik_) nicht auf
 _keine_ steht — die Vorgabe des js-controllers ist _erweitert_ — und die Datenübermittlung weder für
-den Host noch für diese Instanz abgeschaltet ist. Mit einem Bericht wird nur eine anonyme
-Installationskennung übertragen — kein Name, keine E-Mail-Adresse, keine IP-Adresse, keine
-Sendungsdaten. Alle Wege zum Abschalten nennt die
+den Host noch für diese Instanz abgeschaltet ist, und nie auf CI-Systemen. Ein Bericht enthält den
+Fehler mit seinem Stacktrace und technischen Kontext wie Versionen und Plattform, dazu eine anonyme
+Installationskennung. Alle Wege zum Abschalten nennt die
 [Plugin-Dokumentation](https://github.com/ioBroker/plugin-sentry#plugin-sentry).
 
 ## Wo melde ich ein Problem?
