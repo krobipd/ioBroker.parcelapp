@@ -34,6 +34,7 @@ src/lib/package-id.ts    → reine Id-Regel ohne adapter-core: sanitize, identit
 src/lib/state-manager.ts → Broker-Arbeit: Objekte per extendObject, Kennungs-Besitz (idOwner, presentKeys, storedIdentity), loadExisting, lastUpdated über tracksChange + notChanged, refreshDerived, Cleanup
 src/lib/delivery-view.ts → reine Darstellung: Datumsparser (parseDateParts + Gründe), Tagesbereich, Ereignisdatum (15 App-Sprachen), Fenster, Schätzung, Gesamtfenster
 src/lib/device-icons.ts  → Carrier-Piktogramme: Karte `carrier_code` → Datei in `admin/icons/`, Inline-URI, Cache je Datei
+src/lib/native-key-migration.ts → Flotten-Master (byte-gleich, samt Test): nullt verwaiste native-Schlüssel beim Start
 src/lib/i18n.ts          → tName/tText/statusLabel/packageName/KNOWN_STATUS_CODES (Schlüssel aus admin/i18n/en.json)
 test/inventory.js        → Objekt-Inventar aus Fixtures (Herkunft im Kopf) + Werte-Prüfungen; ⚠️ vorher `npm run build`
 test/self-explaining.json → Beschreibungs-Entscheidung für D08 und den desc-Test — nie eine zweite Liste
@@ -57,7 +58,7 @@ _Jede Entscheidung steht hier als Regel-Satz; Beleg, Messung und Verlauf stehen 
 11. **Mitternachts-Auffrischung** — Timer auf lokale 00:00:05 rechnet Schätzung und Summe aus dem letzten Poll neu, ohne GET, Pakete mit gescheitertem Schreibvorgang ausgelassen.
 12. **Strikter Status-Parser** — ein String muss eine ganze Zahl sein, sonst −1 (nie „0abc" = zugestellt); eine Zahl wird abgeschnitten; `statusCode.common.states` als reine Strings (React #31).
 13. **Sprache** — alles über adapter-core `I18n` (Systemsprache, Fallback en); Sprachwechsel wirkt auf Werte nach Neustart.
-14. **`supportedMessages` ist als GANZES verboten** — `correctInstanceObject()` löscht den Schlüssel (nie `{stopInstance:false}`), zusammen mit verwaisten `native`-Schlüsseln in EINEM Schreibvorgang.
+14. **`supportedMessages` ist als GANZES verboten** — `correctInstanceObject()` löscht den Schlüssel (nie `{stopInstance:false}`); verwaiste `native`-Schlüssel (`filterMode`, `language`) nullt der Flotten-Helfer `native-key-migration.ts` (`{ drop }`, Master-Kopie byte-gleich), keine eigene Bereinigung daneben.
 15. **Objekt-Schreibvorgang nie hinter der Bedingung des Wertes** — `ensureStateObject()` läuft bedingungslos, nur der Wert von `lastUpdated` hat eine Bedingung.
 16. **Objekt-Texte erreichen bestehende Anlagen** — `extendObject` statt `setObjectNotExists`, `refreshManifestObjects()` mit ausgeschriebenen Kennungen.
 17. **`common.desc` = Erklärung, sonst leer** — Entscheidung gehört D08 über `test/self-explaining.json`.

@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { coerceClampedInt, errText, isTrueish, oneLine } from "./lib/coerce";
 import { tName } from "./lib/i18n";
 import { FORBIDDEN_HINT, ParcelClient, RETRY_AFTER_DEFAULT_SEC } from "./lib/parcel-client";
+import { migrateNativeKeys, type NativeKeyMigration } from "./lib/native-key-migration";
 import { StateManager } from "./lib/state-manager";
 import { DELIVERED_STATUS_CODE } from "./lib/types";
 import type { AddDeliveryRequest, ParcelDelivery } from "./lib/types";
@@ -44,12 +45,12 @@ const UPDATE_BATCH_SIZE = 25;
 const MAX_ADDS_PER_DAY = 20;
 const ADD_WINDOW_MS = 24 * 60 * 60_000;
 /**
- * v0.11.0: config keys past versions wrote into the instance object and that nothing reads any
- * more — `filterMode` was replaced by `autoRemoveDelivered` in v0.2.0, `language` by the system
- * language before v0.5.0. An upgrade merges the manifest in and never removes a key, so they
- * survive in every installation old enough to have them. See `correctInstanceObject`.
+ * Config keys past versions wrote into the instance object and that nothing reads any more —
+ * `filterMode` was replaced by `autoRemoveDelivered` in v0.2.0, `language` by the system language
+ * before v0.5.0. An upgrade merges the manifest in and never removes a key, so they survive in every
+ * installation old enough to have them. Since v0.14.0 the fleet helper nulls them (`{ drop }`).
  */
-const OBSOLETE_NATIVE_KEYS = ["filterMode", "language"] as const;
+const NATIVE_KEY_MIGRATIONS: NativeKeyMigration[] = [{ drop: "filterMode" }, { drop: "language" }];
 
 /**
  * Node transport-level error codes treated as (transient) NETWORK problems:
@@ -185,9 +186,9 @@ export class ParcelappAdapter extends utils.Adapter {
    * Repair leftovers an upgrade cannot remove from this instance's own object.
    *
    * js-controller MERGES the manifest into an existing instance object and never drops a key,
-   * so anything a past version wrote survives forever. Two such leftovers exist:
-   *
-   * 1. `common.supportedMessages` (dropped from the manifest in v0.10.3). The whole key is
+   * so anything a past version wrote survives forever. The leftover handled here is
+   * `common.supportedMessages` (dropped from the manifest in v0.10.3); obsolete `native` keys go
+   * through the fleet helper `migrateNativeKeys` (v0.14.0). The whole key is
    *    removed, and setting it to `{stopInstance: false}` — what v0.10.3 through v0.10.4 did —
    *    is NOT a fix but a second, worse defect. `isMessageboxSupported()` in the adapter package
    *    stops looking at `common.messagebox` the moment `supportedMessages` is an object, and then
@@ -202,13 +203,9 @@ export class ParcelappAdapter extends utils.Adapter {
    *    the error branch next to that call only fires for `options.message`, and we register via
    *    `this.on("message", …)`. The old `{stopInstance: true}` kept the box open by accident
    *    (`true !== false`), which is why this only broke with the v0.10.3 correction.
-   * 2. `native.filterMode` (dropped in v0.2.0) and `native.language` (dropped before v0.5.0).
-   *    Dead config keys nothing reads — the adapter owns its own configuration inventory the
-   *    same way it owns its states.
    *
-   * Both are corrected in ONE write, because every instance-object change restarts the instance:
-   * two writes would mean two restarts. And it is written only when something is actually stale,
-   * otherwise the correction would be a restart loop.
+   * It is written only when something is actually stale, otherwise the correction would be a
+   * restart loop (every instance-object change restarts the instance).
    *
    * `extendObject` cannot do this: its deep merge (`node.extend`) SETS a key given as `null`
    * instead of dropping it — measured against the bundled js-controller. Removing a key needs a
@@ -230,21 +227,12 @@ export class ParcelappAdapter extends utils.Adapter {
       // stops looking at common.messagebox the moment supportedMessages is an object, and then
       // only accepts it when some value is not false — `{stopInstance: false}` closes the box.
       const staleSupportedMessages = "supportedMessages" in (obj.common ?? {});
-      const native = (obj.native ?? {}) as Record<string, unknown>;
-      const staleNativeKeys = OBSOLETE_NATIVE_KEYS.filter(key => key in native);
-      if (!staleSupportedMessages && staleNativeKeys.length === 0) {
+      if (!staleSupportedMessages) {
         return false;
       }
       this.log.info("Correcting leftover settings from an earlier version — this instance restarts once");
-      if (staleSupportedMessages) {
-        this.log.debug("Removing the obsolete supportedMessages entry so the message box stays open");
-        delete obj.common.supportedMessages;
-      }
-      for (const key of staleNativeKeys) {
-        this.log.debug(`Removing obsolete configuration key: native.${key}`);
-        delete native[key];
-      }
-      obj.native = native;
+      this.log.debug("Removing the obsolete supportedMessages entry so the message box stays open");
+      delete obj.common.supportedMessages;
       await this.setForeignObject(id, obj);
       return true;
     } catch (err) {
@@ -303,6 +291,10 @@ export class ParcelappAdapter extends utils.Adapter {
       // First: without this the whole shutdown path stays dead on an updated install.
       // A correction means the host is restarting us — no point starting a poll cycle.
       if (await this.correctInstanceObject()) {
+        return;
+      }
+      // v0.14.0: obsolete native keys are nulled by the fleet helper; a write restarts the instance.
+      if (await migrateNativeKeys(this, NATIVE_KEY_MIGRATIONS, errText)) {
         return;
       }
       // v0.14.0 (audit B11): every await below can outlive a stop — check before each next step.

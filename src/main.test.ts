@@ -45,6 +45,16 @@ vi.mock("@iobroker/adapter-core", () => {
     );
     // setForeignObject, not extendObject: the deep merge behind extendObject SETS a key given
     // as null instead of dropping it, so removing an obsolete native key needs a full write.
+    // The fleet native-key helper merges only the touched keys; null survives the merge.
+    public extendForeignObjectAsync = vi.fn((_id: string, obj: { native?: Record<string, unknown> }) => {
+      if (this.instanceObject) {
+        this.instanceObject = structuredClone({
+          ...this.instanceObject,
+          native: { ...(this.instanceObject.native ?? {}), ...(obj.native ?? {}) },
+        });
+      }
+      return Promise.resolve();
+    });
     public setForeignObject = vi.fn(
       (_id: string, obj: { common?: Record<string, unknown>; native?: Record<string, unknown> }) => {
         this.instanceObject = structuredClone(obj);
@@ -149,6 +159,7 @@ function internalOf(adapter: ParcelappAdapter): {
   instanceObject: { common?: Record<string, unknown>; native?: Record<string, unknown> } | null;
   getForeignObjectAsync: ReturnType<typeof vi.fn>;
   setForeignObject: ReturnType<typeof vi.fn>;
+  extendForeignObjectAsync: ReturnType<typeof vi.fn>;
   extendObject: ReturnType<typeof vi.fn>;
   objects: Map<string, { type?: string; common?: Record<string, unknown> }>;
   onReady: () => Promise<void>;
@@ -645,10 +656,11 @@ describe("ParcelappAdapter instance-object self-correction", () => {
     expect(isMessageboxSupported(common)).toBe(true);
   });
 
-  it("removes obsolete native keys, keeps the rest, and aborts the start", async () => {
+  it("nulls obsolete native keys through the fleet helper, keeps the rest, and aborts the start", async () => {
     // filterMode (gone in v0.2.0) and language (gone before v0.5.0) survive in every
     // installation old enough to have them: js-controller merges the manifest in and never
-    // removes a key. apiKey is encrypted and must ride along untouched.
+    // removes a key. Since v0.14.0 the fleet helper nulls them in ONE merge of the touched keys;
+    // apiKey stays untouched.
     const { adapter, client } = setup();
     const i = internalOf(adapter);
     i.instanceObject = {
@@ -664,29 +676,43 @@ describe("ParcelappAdapter instance-object self-correction", () => {
 
     await i.onReady();
 
-    expect(i.setForeignObject).toHaveBeenCalledTimes(1);
+    expect(i.setForeignObject).not.toHaveBeenCalled();
+    expect(i.extendForeignObjectAsync).toHaveBeenCalledTimes(1);
+    expect(i.extendForeignObjectAsync).toHaveBeenCalledWith("system.adapter.parcelapp.0", {
+      native: { filterMode: null, language: null },
+    });
     expect(i.instanceObject?.native).toEqual({
       apiKey: "encrypted-secret",
       pollInterval: 25,
+      filterMode: null,
+      language: null,
       autoRemoveDelivered: false,
     });
     expect(client.getDeliveries).not.toHaveBeenCalled();
     expect(i.setInterval).not.toHaveBeenCalled();
   });
 
-  it("corrects both leftovers in ONE write — two writes would mean two restarts", async () => {
-    const { adapter } = setup();
+  it("one write per start, and no restart loop: supportedMessages, then the native keys, then a normal start", async () => {
+    const { adapter, client } = setup();
     const i = internalOf(adapter);
     i.instanceObject = {
       common: { supportedMessages: { stopInstance: true } },
       native: { apiKey: "k", filterMode: "active", language: "de" },
     };
 
-    await i.onReady();
-
+    await i.onReady(); // start 1: supportedMessages removed, restart
     expect(i.setForeignObject).toHaveBeenCalledTimes(1);
+    expect(i.extendForeignObjectAsync).not.toHaveBeenCalled();
     expect(i.instanceObject?.common).not.toHaveProperty("supportedMessages");
-    expect(i.instanceObject?.native).toEqual({ apiKey: "k" });
+
+    await i.onReady(); // start 2: native keys nulled, restart
+    expect(i.extendForeignObjectAsync).toHaveBeenCalledTimes(1);
+    expect(client.getDeliveries).not.toHaveBeenCalled();
+
+    await i.onReady(); // start 3: nothing left to write — the start goes on
+    expect(i.setForeignObject).toHaveBeenCalledTimes(1);
+    expect(i.extendForeignObjectAsync).toHaveBeenCalledTimes(1);
+    expect(client.getDeliveries).toHaveBeenCalledTimes(1);
   });
 
   it("leaves a healthy instance object alone and starts normally", async () => {
