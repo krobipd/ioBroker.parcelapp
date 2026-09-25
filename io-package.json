@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "parcelapp",
-    "version": "0.13.0",
+    "version": "0.14.0",
     "news": {
+      "0.14.0": {
+        "en": "Packages expected over several days or out for delivery count as today, dates in all app languages are read, ids stay stable and parcel.app's limits are kept.",
+        "de": "Sendungen über mehrere Tage oder in Zustellung zählen als heute, Datumsangaben aller App-Sprachen werden gelesen, Kennungen bleiben stabil, die Grenzen von parcel.app werden eingehalten.",
+        "ru": "Посылки с многодневным сроком или в доставке считаются сегодняшними, даты на всех языках приложения читаются, ID стабильны, лимиты parcel.app соблюдаются.",
+        "pt": "Encomendas previstas para vários dias ou em entrega contam como hoje, as datas em todas as línguas da app são lidas, os IDs ficam estáveis e os limites do parcel.app são respeitados.",
+        "nl": "Pakketten over meerdere dagen of in bezorging tellen als vandaag, datums in alle app-talen worden gelezen, ID's blijven stabiel en de limieten van parcel.app worden gerespecteerd.",
+        "fr": "Les colis attendus sur plusieurs jours ou en livraison comptent pour aujourd'hui, les dates de toutes les langues sont lues, les ID restent stables et les limites de parcel.app sont respectées.",
+        "it": "Le spedizioni attese su più giorni o in consegna contano come oggi, le date in tutte le lingue dell'app vengono lette, gli ID restano stabili e i limiti di parcel.app sono rispettati.",
+        "es": "Los envíos previstos para varios días o en reparto cuentan como hoy, se leen las fechas en todos los idiomas de la app, los ID son estables y se respetan los límites de parcel.app.",
+        "pl": "Przesyłki oczekiwane przez kilka dni lub w doręczeniu liczą się jako dzisiejsze, daty we wszystkich językach aplikacji są odczytywane, ID są stabilne, a limity parcel.app przestrzegane.",
+        "uk": "Посилки з багатоденним терміном або в доставці вважаються сьогоднішніми, дати всіма мовами застосунку читаються, ID стабільні, ліміти parcel.app дотримуються.",
+        "zh-cn": "跨多天预计送达或正在派送的包裹计为今天，可读取所有应用语言的日期，对象 ID 保持稳定，并遵守 parcel.app 的请求限额。"
+      },
       "0.13.0": {
         "en": "Carrier names work again after a format change at parcel.app, every package shows its carrier's pictogram, and scripts can pass a postcode or e-mail.",
         "de": "Zustellernamen kommen nach einer Formatänderung bei parcel.app wieder an, jedes Paket zeigt das Zeichen seines Zustellers, Skripte können Postleitzahl oder E-Mail mitgeben.",
@@ -80,19 +93,6 @@
         "pl": "Wadliwe odpowiedzi parcel.app i nietypowe dane w checkConnection dostają jasną odpowiedź; krótka czkawka bazy danych nie zmienia już wskaźnika połączenia na czerwony.",
         "uk": "Некоректні відповіді parcel.app і неправильний ввід у checkConnection отримують зрозумілу відповідь; короткий збій бази даних більше не робить індикатор з'єднання червоним.",
         "zh-cn": "parcel.app 的异常回复和 checkConnection 的异常输入会得到明确回应；数据库的短暂中断不再使连接指示变红。"
-      },
-      "0.10.3": {
-        "en": "Stopping or restarting the adapter was cut short — the stopped instance kept claiming a live connection to parcel.app instead of showing as disconnected.",
-        "de": "Beenden oder Neustart des Adapters brach vorzeitig ab — die gestoppte Instanz meldete weiterhin eine bestehende Verbindung zu parcel.app statt getrennt zu sein.",
-        "ru": "Остановка или перезапуск адаптера обрывались — остановленный экземпляр продолжал сообщать о действующем соединении с parcel.app вместо разрыва.",
-        "pt": "Parar ou reiniciar o adaptador era interrompido — a instância parada continuava a indicar uma ligação ativa ao parcel.app em vez de aparecer desligada.",
-        "nl": "Stoppen of herstarten van de adapter werd afgebroken — de gestopte instantie meldde nog steeds een actieve verbinding met parcel.app in plaats van verbroken.",
-        "fr": "L'arrêt ou le redémarrage de l'adaptateur était interrompu — l'instance arrêtée indiquait toujours une connexion active à parcel.app au lieu d'être déconnectée.",
-        "it": "L'arresto o il riavvio dell'adattatore veniva interrotto — l'istanza fermata continuava a segnalare una connessione attiva a parcel.app invece di risultare disconnessa.",
-        "es": "Detener o reiniciar el adaptador se interrumpía — la instancia detenida seguía indicando una conexión activa con parcel.app en lugar de aparecer desconectada.",
-        "pl": "Zatrzymanie lub restart adaptera był przerywany — zatrzymana instancja nadal zgłaszała aktywne połączenie z parcel.app zamiast rozłączenia.",
-        "uk": "Зупинка або перезапуск адаптера обривалися — зупинений екземпляр далі повідомляв про активне з'єднання з parcel.app замість роз'єднання.",
-        "zh-cn": "停止或重启适配器时过程被中断——已停止的实例仍显示与 parcel.app 保持连接，而不是显示为已断开。"
       }
     },
     "plugins": {
@@ -262,7 +262,7 @@
           "pt": "Entregas",
           "nl": "Zendingen",
           "fr": "Livraisons",
-          "it": "Consegne",
+          "it": "Spedizioni",
           "es": "Envíos",
           "pl": "Przesyłki",
           "uk": "Доставки",

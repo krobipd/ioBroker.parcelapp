@@ -1,5 +1,13 @@
 # Older Changes
 
+## 0.11.0 (2026-09-04)
+
+- Fixed: Since version 0.10.3 the Test Connection button gave no response at all, and packages added from a script never showed up — both work again.
+- Fixed: On installations that already existed, the summary datapoints and the connection state kept their old English names — an update now reaches every datapoint.
+- New: Datapoints whose name alone does not explain them now carry a short description in the object tree, in all eleven languages.
+- New: Detailed user documentation in English and German, shown in the ioBroker documentation portal.
+- Fixed: Two settings from much older versions were still listed in the instance configuration although nothing used them any more.
+
 ## 0.10.4 (2026-09-02)
 
 - Fixed: A malformed reply from parcel.app (empty body or a broken delivery entry) no longer aborts the poll with a cryptic internal message — it is reported as an API problem and retried next poll.

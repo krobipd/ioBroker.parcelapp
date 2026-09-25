@@ -149,7 +149,7 @@ sendTo("parcelapp.0", "addDelivery", {
     ### **WORK IN PROGRESS**
 -->
 
-### **WORK IN PROGRESS**
+### 0.14.0 (2026-09-25)
 
 - Fixed: A package expected over several days turned overdue after the first one — every day of the range now counts as today.
 - Fixed: A parcel out for delivery with an outdated date counts as today when the carrier scanned it today.
@@ -194,14 +194,6 @@ sendTo("parcelapp.0", "addDelivery", {
 ### 0.11.1 (2026-09-04)
 
 - Fixed: The last-changed timestamp of a package kept its old label and had no description as long as the package did not move.
-
-### 0.11.0 (2026-09-04)
-
-- Fixed: Since version 0.10.3 the Test Connection button gave no response at all, and packages added from a script never showed up — both work again.
-- Fixed: On installations that already existed, the summary datapoints and the connection state kept their old English names — an update now reaches every datapoint.
-- New: Datapoints whose name alone does not explain them now carry a short description in the object tree, in all eleven languages.
-- New: Detailed user documentation in English and German, shown in the ioBroker documentation portal.
-- Fixed: Two settings from much older versions were still listed in the instance configuration although nothing used them any more.
 
 [Older changelogs can be found there](CHANGELOG_OLD.md)
 
