@@ -149,7 +149,7 @@ sendTo("parcelapp.0", "addDelivery", {
     ### **WORK IN PROGRESS**
 -->
 
-### 0.14.0 (2026-09-25)
+### 0.14.0 (2026-09-25) — stable
 
 - Fixed: A package expected over several days turned overdue after the first one — every day of the range now counts as today.
 - Fixed: A parcel out for delivery with an outdated date counts as today when the carrier scanned it today.
